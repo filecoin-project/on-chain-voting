@@ -2,7 +2,7 @@
 
 ## ${\color{black}{1 \ Overview}}$
 
-PowerVoting is going to enable people voting in trustless based on FEVM, and it uses the timelock feature based on drand which can make sure the data security during the voting process. Timelock feature gives you time based encryption and decryption capabilities by relying on a drand threshold network. please refer to https://drand.love/ for drand network details, which is verifiable, unpredictable and unbiased random numbers as a service. Per encryption/decryption time based, the secret info can’t be leaked before end time, thus it doesn’t need a centralized public notary to monitor the process and justify the result.
+Power Voting is going to enable people voting in trustless based on FEVM, and it uses the timelock feature based on drand which can make sure the data security during the voting process. Timelock feature gives you time based encryption and decryption capabilities by relying on a drand threshold network. please refer to https://drand.love/ for drand network details, which is verifiable, unpredictable and unbiased random numbers as a service. Per encryption/decryption time based, the secret info can’t be leaked before end time, thus it doesn’t need a centralized public notary to monitor the process and justify the result.
 
 ## ${\color{black}{2 \ Problem}}$
 
