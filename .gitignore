@@ -14,4 +14,8 @@ yarn-error.log*
 cache
 artifacts
 
+# dist
 dist
+
+#mac 
+.DS_Store
