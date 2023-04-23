@@ -21,13 +21,11 @@ const VotingResults = () => {
       const resa = await axios.get(ipfs)
       let num = 0
       let asd = {} as any
-      console.log(resa.data.string, 'sdasdasdas');
 
       if (resa.data.string) {
         resa.data.string.map((item: any, index: number) => {
           num += item[1] //获得一个多少投票
           asd[index] = item[1]
-          console.log(asd);
           setdata({ ...data1, data: asd, Total: num, option: state.option })
         })
       }

@@ -16,18 +16,20 @@ const App: React.FC = () => {
   const element = useRoutes(routes)
   const { openConnectModal } = useConnectModal()
   const navigate = useNavigate()
-  const isLogin = (path: string, params?: any) => {
-    const res = localStorage.getItem('isConnect');
-    if (res !== 'undefined' ) {
-      params ? navigate(path, { state: params }) : navigate(path)
-    } else if (openConnectModal) {
-      openConnectModal();
+  // 判断是否登录了钱包
+  const isLogin = () => {
+    const res = localStorage.getItem("isConnect")
+    console.log(res)
+    if (res == "undefined" && openConnectModal) {
+      openConnectModal()
     }
   }
-  // const handler = (isConnected:boolean)=>{
-  //   setConnect(isConnected);
-  //   localStorage.setItem('isConnect',JSON.stringify(isConnected));
-  // }
+
+  // 处理函数
+  const handlerNavigate = (path: string, params?: any) => {
+    isLogin();
+    params ? navigate(path, params) : navigate(path)
+  }
   return (
     <Layout className="layout">
       <Header
@@ -50,7 +52,7 @@ const App: React.FC = () => {
             className="menu_btn"
             type="primary"
             onClick={() => {
-              isLogin("/createpoll")
+              handlerNavigate("/createpoll")
             }}
           >
             Create A Poll

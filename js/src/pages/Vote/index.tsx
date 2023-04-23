@@ -58,16 +58,21 @@ const Vote = () => {
       const res = await nftStorage(ciphertext) // 保存到 ipfs
 
       if (res) {
-        setLoading(false)
         if (voteApi) {
           voteApi(location.state.cid, res, address)
             .then((result) => {
-              message.success("Creation successful!")
-              navigate("/")
+              setLoading(false);
+              message.success("Creation successful!", 3)
+              setTimeout(() => {
+                navigate("/")
+              }, 3000)
             })
             .catch((error) => {
-              message.success("一个用户不能多次投票")
-              navigate("/")
+              setLoading(false);
+              message.warning("A user cannot vote more than once!",3)
+              setTimeout(() => {
+                navigate("/")
+              }, 3000)
             })
         }
       }

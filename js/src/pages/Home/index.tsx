@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from "react"
-import { Button, Alert, Table } from "antd"
+import { Button, Alert, Table, message } from "antd"
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table"
 import Tabulation from "../../components/Tabulation"
-import {
-  useConnectModal,
-  useAccountModal,
-  useChainModal,
-} from "@rainbow-me/rainbowkit"
+import MyButton from "../../components/MyButton"
+import { useConnectModal } from "@rainbow-me/rainbowkit"
 import { useLocation, useNavigate } from "react-router-dom"
 import { usePowerVotingContract } from "../../hooks"
 import useGetWallet from "../../hooks/getWallet"
@@ -25,18 +22,25 @@ export default function Home() {
   const [visibale, setVisibale] = useState(false)
   const [page, setPage] = useState(1)
   const [count, setCount] = useState(0)
+  const [loading, setLoading] = useState(false);
+  const [change,setChange] = useState(true);
   const pageSize = 10
 
-  const { getVotingList, getVoteDataApi, updateVotingResultFun, isFinishVoteFun, updateVotingResultBatchFun } = usePowerVotingContract()
+  const {
+    getVotingList,
+    getVoteDataApi,
+    updateVotingResultFun,
+    isFinishVoteFun,
+  } = usePowerVotingContract()
   // console.log(getVotingList(),'getVotingList()');
   useEffect(() => {
-    // getList()
     getIpfsCid()
     if (state) {
       setVisibale(true)
       closeMessage()
     }
-  }, [page])
+    console.log("执行次数")
+  }, [])
 
   // 获取投票数据
   const getIpfsCid = async () => {
@@ -44,91 +48,85 @@ export default function Home() {
       const res = await getVotingList()
       setIpfsCid(res)
       setCount(res.length)
-      getList(res)
+      const list = await getList(res)
+      setVotingList(list)
     }
   }
+  // 获取投票项目列表
   const getList = async (prop: any) => {
-    const date = new Date().getTime()
-    console.log(page);
-    const data = prop.slice((page - 1) * pageSize, page * pageSize);
-    const arr = data.map(async (_item: any) => {
-      // 所有的投票项目
-      // 将cid进行拼接 https://bafkreihw6rmsatp7x43v4zf5d2d6xrsnilpzbhsduf6szowdggbx5ji4re.ipfs.nftstorage.link/
-      const ipfs = `https://${_item.cid}.ipfs.nftstorage.link/`
-      const res = await axios.get(ipfs)
-      const dataa = { ...res.data.string, cid: _item.cid }
-      return dataa
-    })
+    const data = prop.slice((page - 1) * pageSize, page * pageSize)
+    const ipfsUrls = data.map(
+      (_item: any) => `https://${_item.cid}.ipfs.nftstorage.link/`
+    )
+    try {
+      const responses = await Promise.all(
+        ipfsUrls.map((url: string) => axios.get(url))
+      )
+      return responses.map((res, i) => ({
+        ...res.data.string,
+        cid: data[i].cid,
+      }))
+    } catch (error) {
+      console.error(error)
+    }
+  }
 
-    Promise.all(arr)
-      .then((results) => {
-        let arr = [] as any;
-        // 每个投票项目对应的数据
-        // 这里打印出每个Promise对象的结果 results
-        setVotingList(results)
-        results.map(async (item) => {
-          // let myMap = new Map();
-          if (item.Time <= date) {
-            // 遍历每个投票项目有没有过期
-            if (getVoteDataApi) {
-              getVoteDataApi(item.cid).then((res) => {
-                let myMap = new Map()
-                const promises = res.map(async (i: any) => {
-                  const ipfs = `https://${i}.ipfs.nftstorage.link/`
-                  const r = await axios.get(ipfs)
-                  const dataString = await timelockDecrypt(
-                    r.data.string,
-                    mainnetClient()
-                  )
-                  const data = JSON.parse(dataString)
-                  if (myMap.get(data.index) === undefined) {
-                    myMap.set(data.index, 1)
-                  } else {
-                    myMap.set(data.index, myMap.get(data.index) + 1)
-                  }
-                })
-
-                Promise.all(promises)
-                  .then(async () => {
-                    const sortedArray = Array.from(myMap.entries())
-                    const cid = await nftStorage(sortedArray)
-                    arr = [...arr,[item.cid,cid]];
-                    console.log(arr);
-                    // const res = await updateVotingResultFun(item.cid, cid);
-
-
-                  })
-                  .catch((err) => {
-                    console.error(err)
-                  })
-              })
-            }
+  // 点击计票按钮,开始计票
+  const startCounting = async (record: any) => {
+    let myMap = new Map()
+    if (isLogin()) {
+      if (getVoteDataApi) {
+        setLoading(true)
+        message.success("Waiting for confirmation of transactions", 3)
+        // 获取投票数据
+        const res = await getVoteDataApi(record.cid)
+        res.map(async (_item: any) => {
+          // 生成ipfs 请求得到原始数据
+          const ipfs = `https://${_item}.ipfs.nftstorage.link/`
+          const r = await axios.get(ipfs)
+          // 进行解密
+          const dataString = await timelockDecrypt(
+            r.data.string,
+            mainnetClient()
+          )
+          const data = JSON.parse(dataString)
+          if (myMap.get(data.index) === undefined) {
+            myMap.set(data.index, 1)
+          } else {
+            myMap.set(data.index, myMap.get(data.index) + 1)
           }
         })
-        contract(arr);
-      })
-      .catch((error) => {
-        console.error(error)
-      })
-  }
-  const contract = async (arr:any)=>{
-    if(updateVotingResultBatchFun){
-      const res = await updateVotingResultBatchFun(arr);
-      console.log(res);
+        // 将计票结果上传nftStorage
+        const sortedArray = Array.from(myMap.entries())
+        const cid = await nftStorage(sortedArray)
+        const result = await updateVotingResultFun(record.cid, cid)
+        if (result) {
+          setLoading(false);
+          setChange(false);
+          message.success("Successful vote counting", 3)
+          setVisibale(true)
+          closeMessage()
+        }
+        console.log(result)
+      }
     }
-
   }
 
   // 判断是否登录了钱包
-  const isLogin = (path: string, params?: any) => {
+  const isLogin = () => {
     const res = localStorage.getItem("isConnect")
     console.log(res)
-    if (res !== "undefined") {
-      console.log(res)
-      console.log(params)
-      params ? navigate(path, params) : navigate(path)
-    } else if (openConnectModal) {
+    if (res == "undefined" && openConnectModal) {
       openConnectModal()
+    } else {
+      return true
+    }
+  }
+
+  // 处理函数
+  const handlerNavigate = (path: string, params?: any) => {
+    if (isLogin()) {
+      params ? navigate(path, params) : navigate(path)
     }
   }
 
@@ -141,9 +139,9 @@ export default function Home() {
 
   // 分页
   const onchange = (pagination: any) => {
-    console.log(pagination.current);
+    console.log(pagination.current)
     pagination.current && setPage(pagination.current)
-    getList(ipfsCid);
+    getList(ipfsCid)
   }
 
   const cloumns = [
@@ -171,14 +169,13 @@ export default function Home() {
       dataIndex: "Operations",
       render: (text: string, record: any) => {
         const date = new Date().getTime()
-        console.log(date, record.Time)
         return (
           <>
             {date <= record.Time ? (
               <div>
                 <Button
                   onClick={() => {
-                    isLogin("/acquireNFT", { state: record })
+                    handlerNavigate("/acquireNFT", { state: record })
                   }}
                   className="menu_btn"
                   type="primary"
@@ -187,7 +184,7 @@ export default function Home() {
                 </Button>
                 <Button
                   onClick={() => {
-                    isLogin("/vote", { state: record })
+                    handlerNavigate("/vote", { state: record })
                   }}
                   className="menu_btn"
                   type="primary"
@@ -196,15 +193,15 @@ export default function Home() {
                 </Button>
               </div>
             ) : (
-              <Button
-                onClick={() => {
-                  isLogin("/votingResults", { state: record })
+              <MyButton
+                startCounting={() => {
+                  startCounting(record)
                 }}
-                className="menu_btn"
-                type="primary"
-              >
-                View
-              </Button>
+                handlerNavigate={() => {
+                  handlerNavigate("/votingResults", { state: record })
+                }}
+                change={change}
+              />
             )}
           </>
         )
@@ -223,15 +220,6 @@ export default function Home() {
       ) : (
         ""
       )}
-      {/* <Tabulation
-        className="rowStyle"
-        rowKey={(record) => {
-          return record.Name
-        }}
-        dataConf={dataConf}
-        onChange={onchange}
-        tableDataTypeConfig={cloumns}
-      /> */}
       <Table
         className="rowStyle"
         rowKey={(record) => record.Name}
@@ -239,6 +227,7 @@ export default function Home() {
         columns={cloumns}
         pagination={pagingConfig({ count, page, pageSize })}
         onChange={onchange}
+        loading={loading}
       />
     </div>
   )
