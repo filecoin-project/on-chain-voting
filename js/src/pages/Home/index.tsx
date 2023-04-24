@@ -22,8 +22,8 @@ export default function Home() {
   const [visibale, setVisibale] = useState(false)
   const [page, setPage] = useState(1)
   const [count, setCount] = useState(0)
-  const [loading, setLoading] = useState(false);
-  const [change,setChange] = useState(true);
+  const [loading, setLoading] = useState(false)
+  const [change, setChange] = useState(true)
   const pageSize = 10
 
   const {
@@ -62,10 +62,18 @@ export default function Home() {
       const responses = await Promise.all(
         ipfsUrls.map((url: string) => axios.get(url))
       )
-      return responses.map((res, i) => ({
-        ...res.data.string,
-        cid: data[i].cid,
-      }))
+      const results = []
+      if (isFinishVoteFun) {
+        for (let i = 0; i < responses.length; i++) {
+          const bool = await isFinishVoteFun(data[i].cid)
+          results.push({
+            ...responses[i].data.string,
+            cid: data[i].cid,
+            bool,
+          })
+        }
+      }
+      return results
     } catch (error) {
       console.error(error)
     }
@@ -101,8 +109,8 @@ export default function Home() {
         const cid = await nftStorage(sortedArray)
         const result = await updateVotingResultFun(record.cid, cid)
         if (result) {
-          setLoading(false);
-          setChange(false);
+          setLoading(false)
+          setChange(false)
           message.success("Successful vote counting", 3)
           setVisibale(true)
           closeMessage()
@@ -169,6 +177,7 @@ export default function Home() {
       dataIndex: "Operations",
       render: (text: string, record: any) => {
         const date = new Date().getTime()
+        console.log(record.bool)
         return (
           <>
             {date <= record.Time ? (
@@ -192,16 +201,35 @@ export default function Home() {
                   Vote
                 </Button>
               </div>
-            ) : (
-              <MyButton
-                startCounting={() => {
+            ) : // <MyButton
+            //   startCounting={() => {
+            //     startCounting(record)
+            //   }}
+            //   handlerNavigate={() => {
+            //     handlerNavigate("/votingResults", { state: record })
+            //   }}
+            //   change={change}
+            // />
+            record.bool ? (
+              <Button
+                className="menu_btn"
+                type="primary"
+                onClick={() => {
                   startCounting(record)
                 }}
-                handlerNavigate={() => {
+              >
+                Vote Counting
+              </Button>
+            ) : (
+              <Button
+                className="menu_btn"
+                type="primary"
+                onClick={() => {
                   handlerNavigate("/votingResults", { state: record })
                 }}
-                change={change}
-              />
+              >
+                View
+              </Button>
             )}
           </>
         )
