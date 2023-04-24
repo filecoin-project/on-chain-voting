@@ -211,15 +211,15 @@ export default function Home() {
             //   change={change}
             // />
             record.bool ? (
-              <Button
-                className="menu_btn"
-                type="primary"
-                onClick={() => {
+              <MyButton
+                startCounting={() => {
                   startCounting(record)
                 }}
-              >
-                Vote Counting
-              </Button>
+                handlerNavigate={() => {
+                  handlerNavigate("/votingResults", { state: record })
+                }}
+                change={change}
+              />
             ) : (
               <Button
                 className="menu_btn"
