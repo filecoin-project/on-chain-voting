@@ -19,7 +19,7 @@ const App: React.FC = () => {
   // 判断是否登录了钱包
   const isLogin = () => {
     const res = localStorage.getItem("isConnect")
-    console.log(res)
+    // console.log(res)
     if (res == "undefined" && openConnectModal) {
       openConnectModal()
     }

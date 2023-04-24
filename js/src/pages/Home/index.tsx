@@ -39,7 +39,7 @@ export default function Home() {
       setVisibale(true)
       closeMessage()
     }
-    console.log("执行次数")
+    // console.log("执行次数")
   }, [])
 
   // 获取投票数据
@@ -115,7 +115,7 @@ export default function Home() {
           setVisibale(true)
           closeMessage()
         }
-        console.log(result)
+        // console.log(result)
       }
     }
   }
@@ -123,7 +123,7 @@ export default function Home() {
   // 判断是否登录了钱包
   const isLogin = () => {
     const res = localStorage.getItem("isConnect")
-    console.log(res)
+    // console.log(res)
     if (res == "undefined" && openConnectModal) {
       openConnectModal()
     } else {
@@ -177,7 +177,7 @@ export default function Home() {
       dataIndex: "Operations",
       render: (text: string, record: any) => {
         const date = new Date().getTime()
-        console.log(record.bool)
+        // console.log(record.bool)
         return (
           <>
             {date <= record.Time ? (

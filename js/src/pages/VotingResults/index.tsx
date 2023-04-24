@@ -55,7 +55,7 @@ const VotingResults = () => {
         <>
           {
             data1.option && data1.option.map((item: any, index: number) => {
-              console.log((data1.data[index] ? data1.data[index] : 0) / data1.Total * 100);
+              // console.log((data1.data[index] ? data1.data[index] : 0) / data1.Total * 100);
 
               return <div>
                 {item} <Progress percent={(data1.data[index] ? data1.data[index] : 0) / data1.Total * 100} format={(percent) => `${data1.data[index] ? data1.data[index] : 0}`} />

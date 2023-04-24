@@ -105,10 +105,10 @@ const CreatePoll = () => {
       if (cid) {
         setLoading(false)
         message.success("Waiting for the transaction to be chained!")
-        console.log(cid)
+        // console.log(cid)
         if (createVotingApi) {
           const res = await createVotingApi(cid)
-          console.log(res, "res")
+          // console.log(res, "res")
           if (res) {
             message.success("Preparing to wind the chain!")
             navigate("/", { state: true })
