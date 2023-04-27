@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from "react"
 import { Button, Alert, Table, message } from "antd"
-import type { ColumnsType, TablePaginationConfig } from "antd/es/table"
-import Tabulation from "../../components/Tabulation"
 import MyButton from "../../components/MyButton"
 import { useConnectModal } from "@rainbow-me/rainbowkit"
 import { useLocation, useNavigate } from "react-router-dom"
 import { usePowerVotingContract } from "../../hooks"
-import useGetWallet from "../../hooks/getWallet"
 import axios from "axios"
 import { mainnetClient, timelockDecrypt } from "tlock-js"
 // @ts-ignore
@@ -22,7 +19,7 @@ export default function Home() {
   const [visibale, setVisibale] = useState(false)
   const [page, setPage] = useState(1)
   const [count, setCount] = useState(0)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [change, setChange] = useState(true)
   const pageSize = 10
 
@@ -39,8 +36,8 @@ export default function Home() {
       setVisibale(true)
       closeMessage()
     }
-    // console.log("执行次数")
-  }, [])
+    console.log("执行次数")
+  }, [page])
 
   // 获取投票数据
   const getIpfsCid = async () => {
@@ -48,13 +45,15 @@ export default function Home() {
       const res = await getVotingList()
       setIpfsCid(res)
       setCount(res.length)
-      const list = await getList(res)
+      const list = await getList(res);
+      setLoading(false);
       setVotingList(list)
     }
   }
   // 获取投票项目列表
   const getList = async (prop: any) => {
-    const data = prop.slice((page - 1) * pageSize, page * pageSize)
+    setLoading(true);
+    const data = prop.slice((page - 1) * pageSize, page * pageSize);
     const ipfsUrls = data.map(
       (_item: any) => `https://${_item.cid}.ipfs.nftstorage.link/`
     )
@@ -75,7 +74,7 @@ export default function Home() {
       }
       return results
     } catch (error) {
-      console.error(error)
+      console.error(error);
     }
   }
 
@@ -115,7 +114,6 @@ export default function Home() {
           setVisibale(true)
           closeMessage()
         }
-        // console.log(result)
       }
     }
   }
