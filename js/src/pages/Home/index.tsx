@@ -12,10 +12,12 @@ import { mainnetClient, timelockDecrypt } from "tlock-js"
 // @ts-ignore
 import nftStorage from "../../utils/storeNFT.js"
 import pagingConfig from "../../common/js/pagingConfig"
+import { ethers } from "ethers"
 
 export default function Home() {
   const { openConnectModal } = useConnectModal()
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const [addr,setAddr] = useState(false);
   const { state } = useLocation()
   const [ipfsCid, setIpfsCid] = useState<any>([])
   const [votingList, setVotingList] = useState<any>([])
@@ -34,18 +36,36 @@ export default function Home() {
   } = usePowerVotingContract()
   // console.log(getVotingList(),'getVotingList()');
   useEffect(() => {
-   
     getIpfsCid()
     if (state) {
       setVisibale(true)
       closeMessage()
     }
-    console.log("执行次数")
-  }, [page]);
+  }, [page])
 
-  useEffect(()=>{
-    isLogin();
-  },[])
+  useEffect(() => {
+    if (typeof window.ethereum !== 'undefined' && window.ethereum.isConnected()) {
+      // MetaMask is installed and user is logged in
+      // const provider = new ethers.providers.Web3Provider(window.ethereum);
+      // const signer = provider.getSigner();
+      setAddr(true);
+      window.location.reload();
+    } else if (typeof window.ethereum !== 'undefined') {
+      // MetaMask is installed but user is not logged in
+      // console.log('Please log in to MetaMask to use this dApp.');
+      isLogin();
+    } else {
+      // MetaMask is not installed
+      // console.log('Please install MetaMask to use this dApp.');
+      isLogin();
+    }
+  }, [openConnectModal]);
+
+  // 判断是否安装小狐狸插件
+  // const isMetaMask = ()=>{
+  //   !window.ethereum || 
+
+  // }
 
   // 获取投票数据
   const getIpfsCid = async () => {
@@ -53,15 +73,15 @@ export default function Home() {
       const res = await getVotingList()
       setIpfsCid(res)
       setCount(res.length)
-      const list = await getList(res);
-      setLoading(false);
+      const list = await getList(res)
+      setLoading(false)
       setVotingList(list)
     }
   }
   // 获取投票项目列表
   const getList = async (prop: any) => {
-    setLoading(true);
-    const data = prop.slice((page - 1) * pageSize, page * pageSize);
+    setLoading(true)
+    const data = prop.slice((page - 1) * pageSize, page * pageSize)
     const ipfsUrls = data.map(
       (_item: any) => `https://${_item.cid}.ipfs.nftstorage.link/`
     )
@@ -82,7 +102,7 @@ export default function Home() {
       }
       return results
     } catch (error) {
-      console.error(error);
+      console.error(error)
     }
   }
 
@@ -122,7 +142,7 @@ export default function Home() {
           setVisibale(true)
           closeMessage()
         }
-        console.log(result);
+        console.log(result)
       }
     }
   }
@@ -131,7 +151,7 @@ export default function Home() {
   const isLogin = () => {
     const res = localStorage.getItem("isConnect")
     console.log(res)
-    if ((res == "undefined" || res == 'false') && openConnectModal) {
+    if ((res == "undefined" || res == "false") && openConnectModal) {
       openConnectModal()
     } else {
       return true
