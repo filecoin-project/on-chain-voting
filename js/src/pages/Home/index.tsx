@@ -34,13 +34,18 @@ export default function Home() {
   } = usePowerVotingContract()
   // console.log(getVotingList(),'getVotingList()');
   useEffect(() => {
+   
     getIpfsCid()
     if (state) {
       setVisibale(true)
       closeMessage()
     }
     console.log("执行次数")
-  }, [page])
+  }, [page]);
+
+  useEffect(()=>{
+    isLogin();
+  },[])
 
   // 获取投票数据
   const getIpfsCid = async () => {
@@ -126,7 +131,7 @@ export default function Home() {
   const isLogin = () => {
     const res = localStorage.getItem("isConnect")
     console.log(res)
-    if (res == "undefined" && openConnectModal) {
+    if ((res == "undefined" || res == 'false') && openConnectModal) {
       openConnectModal()
     } else {
       return true
