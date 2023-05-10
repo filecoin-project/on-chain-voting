@@ -23,7 +23,7 @@ export const usePowerVotingContract = () => {
 
   if (!window.ethereum) {
     return {}
-  } 
+  }
   const provider = new ethers.providers.Web3Provider(window.ethereum);
   const signer = provider.getSigner()
   // 创建合约实例
@@ -80,7 +80,6 @@ export const usePowerVotingContract = () => {
     const data = await contract.updateVotingResultBatch(arr)
     return data
   }
-
 
   // 导出模块方法
   return {

@@ -12,12 +12,13 @@ import { mainnetClient, timelockDecrypt } from "tlock-js"
 // @ts-ignore
 import nftStorage from "../../utils/storeNFT.js"
 import pagingConfig from "../../common/js/pagingConfig"
-import { ethers } from "ethers"
+import { getChain } from "../../utils/helpers/chain"
+import { Chain } from "wagmi"
 
 export default function Home() {
   const { openConnectModal } = useConnectModal()
-  const navigate = useNavigate();
-  const [addr,setAddr] = useState(false);
+  const navigate = useNavigate()
+  const [addr, setAddr] = useState(false)
   const { state } = useLocation()
   const [ipfsCid, setIpfsCid] = useState<any>([])
   const [votingList, setVotingList] = useState<any>([])
@@ -27,6 +28,21 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [change, setChange] = useState(true)
   const pageSize = 10
+  const network = {
+    chainId: "0xc45", // 此处为链ID
+    chainName: "Filecoin — HyperSpace testnet", // 此处为网络名称
+    rpcUrls: [
+      "https://api.hyperspace.node.glif.io/rpc/v1",
+      "https://filecoin-hyperspace.chainstacklabs.com/rpc/v1",
+      "https://filecoin-hyperspace.chainstacklabs.com/rpc/v1",
+    ], // 此处为RPC URL
+    nativeCurrency: {
+      name: "Test Filecoin", // 此处为货币名称
+      symbol: "tFIL", // 此处为货币符号
+      decimals: 18,
+    },
+    blockExplorerUrls: ["https://imfil.io"], // 此处为区块浏览器URL
+  }
 
   const {
     getVotingList,
@@ -44,28 +60,34 @@ export default function Home() {
   }, [page])
 
   useEffect(() => {
-    if (typeof window.ethereum !== 'undefined' && window.ethereum.isConnected()) {
-      // MetaMask is installed and user is logged in
-      // const provider = new ethers.providers.Web3Provider(window.ethereum);
-      // const signer = provider.getSigner();
-      setAddr(true);
-      window.location.reload();
-    } else if (typeof window.ethereum !== 'undefined') {
-      // MetaMask is installed but user is not logged in
-      // console.log('Please log in to MetaMask to use this dApp.');
-      isLogin();
-    } else {
-      // MetaMask is not installed
-      // console.log('Please install MetaMask to use this dApp.');
-      isLogin();
-    }
-  }, [openConnectModal]);
+    isMetaMask()
+  }, [])
 
   // 判断是否安装小狐狸插件
-  // const isMetaMask = ()=>{
-  //   !window.ethereum || 
 
-  // }
+  const isMetaMask = async () => {
+    const provider = await window.ethereum
+    if (typeof window.ethereum == "undefined") {
+      console.log("1")
+      // 小狐狸钱包未安装
+      isLogin()
+    } else {
+      // 小狐狸钱包已经安装
+      console.log("2")
+      if (!provider.selectedAddress) {
+        // 钱包未链接
+        console.log("3")
+        // window.ethereum.enable()
+        await provider.request({
+          method: "wallet_addEthereumChain",
+          params: [network],
+        })
+        await provider.request({
+          method: "eth_requestAccounts",
+        })
+      }
+    }
+  }
 
   // 获取投票数据
   const getIpfsCid = async () => {

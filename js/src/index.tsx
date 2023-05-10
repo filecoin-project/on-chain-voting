@@ -9,7 +9,6 @@ import {
   RainbowKitProvider,
 } from "@rainbow-me/rainbowkit"
 import { Chain, configureChains, createClient, WagmiConfig } from "wagmi"
-// import { mainnet, polygon, optimism, arbitrum } from "wagmi/chains"
 import { publicProvider } from "wagmi/providers/public"
 import {getChain} from "./utils/helpers/chain"
 
