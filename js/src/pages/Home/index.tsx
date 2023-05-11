@@ -110,6 +110,9 @@ export default function Home() {
       const responses = await Promise.all(
         ipfsUrls.map((url: string) => axios.get(url))
       )
+      responses.sort(
+        (a, b) => b.data.string.Time - a.data.string.Time
+      )
       const results = []
       if (isFinishVoteFun) {
         for (let i = 0; i < responses.length; i++) {
