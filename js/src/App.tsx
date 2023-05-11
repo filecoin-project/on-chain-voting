@@ -1,11 +1,10 @@
-import React, { useState } from "react";
-import { useRoutes, useNavigate } from "react-router-dom";
-import routes from "./router";
-import { Breadcrumb, Button, Layout, Menu } from "antd";
-import { ConnectWeb3Button } from "./components/ConnectWeb3Button";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
-import usegetWallet from "./hooks/getWallet";
-
+import React, { useState } from "react"
+import { useRoutes, useNavigate } from "react-router-dom"
+import routes from "./router"
+import { Breadcrumb, Button, Layout, Menu } from "antd"
+import { ConnectWeb3Button } from "./components/ConnectWeb3Button"
+import { useConnectModal, connectorsForWallets } from "@rainbow-me/rainbowkit"
+import usegetWallet from "./hooks/getWallet"
 
 import "./common/styles/reset.less"
 import "./app.less"
@@ -16,6 +15,11 @@ const App: React.FC = () => {
   const element = useRoutes(routes)
   const { openConnectModal } = useConnectModal()
   const navigate = useNavigate()
+  const needsInjectedWalletFallback =
+    typeof window !== "undefined" &&
+    window.ethereum &&
+    !window.ethereum.isMetaMask &&
+    !window.ethereum.isCoinbaseWallet
   // 判断是否登录了钱包
   const isLogin = () => {
     const res = localStorage.getItem("isConnect")
@@ -27,7 +31,7 @@ const App: React.FC = () => {
 
   // 处理函数
   const handlerNavigate = (path: string, params?: any) => {
-    isLogin();
+    isLogin()
     params ? navigate(path, params) : navigate(path)
   }
   return (

@@ -6,14 +6,11 @@ import MyButton from "../../components/MyButton"
 import { useConnectModal } from "@rainbow-me/rainbowkit"
 import { useLocation, useNavigate } from "react-router-dom"
 import { usePowerVotingContract } from "../../hooks"
-import useGetWallet from "../../hooks/getWallet"
 import axios from "axios"
 import { mainnetClient, timelockDecrypt } from "tlock-js"
 // @ts-ignore
 import nftStorage from "../../utils/storeNFT.js"
 import pagingConfig from "../../common/js/pagingConfig"
-import { getChain } from "../../utils/helpers/chain"
-import { Chain } from "wagmi"
 
 export default function Home() {
   const { openConnectModal } = useConnectModal()
@@ -51,6 +48,7 @@ export default function Home() {
     isFinishVoteFun,
   } = usePowerVotingContract()
   // console.log(getVotingList(),'getVotingList()');
+
   useEffect(() => {
     getIpfsCid()
     if (state) {
@@ -60,7 +58,8 @@ export default function Home() {
   }, [page])
 
   useEffect(() => {
-    isMetaMask()
+    isLogin()
+    // isMetaMask()
   }, [])
 
   // 判断是否安装小狐狸插件
@@ -174,6 +173,7 @@ export default function Home() {
     const res = localStorage.getItem("isConnect")
     console.log(res)
     if ((res == "undefined" || res == "false") && openConnectModal) {
+      console.log(1)
       openConnectModal()
     } else {
       return true
