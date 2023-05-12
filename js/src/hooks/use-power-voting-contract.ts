@@ -19,16 +19,17 @@ if (!contractNFTAddress) {
   )
 }
 
-export const usePowerVotingContract = () => {
+export const useStaictContract = () => {
 
-  if (!window.ethereum) {
-    return {}
-  }
-  const provider = new ethers.providers.Web3Provider(window.ethereum);
-  const signer = provider.getSigner()
+  // if (!window.ethereum) {
+  //   return {}
+  // }
+  // const provider = new ethers.providers.Web3Provider(window.ethereum);
+  const provider = new ethers.providers.JsonRpcProvider('https://api.hyperspace.node.glif.io/rpc/v1')
+  // const signer = provider.getSigner()
   // 创建合约实例
-  const contract = new ethers.Contract(contractAddress, PowerVoting.abi, signer)
-  const contractNFT = new ethers.Contract(contractNFTAddress, PowerVotingFRC721.abi, signer)
+  const contract = new ethers.Contract(contractAddress, PowerVoting.abi, provider)
+  const contractNFT = new ethers.Contract(contractNFTAddress, PowerVotingFRC721.abi, provider)
 
   // 封装获取投票列表方法
   const getVotingList = async () => {
@@ -36,12 +37,37 @@ export const usePowerVotingContract = () => {
     return data
   }
 
+
+
+  // 判断是否需要计票
+  const isFinishVoteFun = async (_cid: string) => {
+    const data = await contract.isFinishVote(_cid)
+    return data
+  }
+
+
+  // 导出模块方法
+  return {
+    getVotingList,
+    isFinishVoteFun,
+  }
+}
+
+export const useDynamicContract = (isConnect?:boolean) => {
+  isConnect = isConnect === undefined;
+  if(!isConnect){
+    return {};
+  }
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  const signer = provider.getSigner()
+  // 创建合约实例
+  const contract = new ethers.Contract(contractAddress, PowerVoting.abi, signer)
+  const contractNFT = new ethers.Contract(contractNFTAddress, PowerVotingFRC721.abi, signer)
   // 封装创建投票方法
   const createVotingApi = async (cid: string) => {
     const data = await contract.createVoting(cid)
     return data
   }
-
   // 投票详情
   const getVoteApi = async (cid: string) => {
     const data = await contract.getVote(cid)
@@ -69,29 +95,19 @@ export const usePowerVotingContract = () => {
     const data = await contract.updateVotingResult(_cid, cid)
     return data
   }
-
-  // 判断是否需要计票
-  const isFinishVoteFun = async (_cid: string) => {
-    const data = await contract.isFinishVote(_cid)
-    return data
-  }
   // 批量更新投票数据
   const updateVotingResultBatchFun = async (arr: string[][]) => {
     const data = await contract.updateVotingResultBatch(arr)
     return data
   }
 
-  // 导出模块方法
   return {
-    getVotingList,
     createVotingApi,
     getVoteApi,
     voteApi,
     VotingNFT,
     getVoteDataApi,
     updateVotingResultFun,
-    isFinishVoteFun,
     updateVotingResultBatchFun
   }
-
 }

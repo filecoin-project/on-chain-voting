@@ -4,7 +4,7 @@ import routes from "./router"
 import { Breadcrumb, Button, Layout, Menu } from "antd"
 import { ConnectWeb3Button } from "./components/ConnectWeb3Button"
 import { useConnectModal, connectorsForWallets } from "@rainbow-me/rainbowkit"
-import usegetWallet from "./hooks/getWallet"
+import { useAccount } from "wagmi"
 
 import "./common/styles/reset.less"
 import "./app.less"
@@ -12,6 +12,7 @@ import "./app.less"
 const { Header, Content } = Layout
 
 const App: React.FC = () => {
+  const {isConnected} = useAccount();
   const element = useRoutes(routes)
   const { openConnectModal } = useConnectModal()
   const navigate = useNavigate()
@@ -22,17 +23,19 @@ const App: React.FC = () => {
     !window.ethereum.isCoinbaseWallet
   // 判断是否登录了钱包
   const isLogin = () => {
-    const res = localStorage.getItem("isConnect")
-    // console.log(res)
-    if (res == "undefined" && openConnectModal) {
-      openConnectModal()
+    if(isConnected){
+      return true;
+    }else{
+      openConnectModal && openConnectModal();
+      return false;
     }
   }
 
   // 处理函数
   const handlerNavigate = (path: string, params?: any) => {
-    isLogin()
-    params ? navigate(path, params) : navigate(path)
+    if (isLogin()) {
+      params ? navigate(path, params) : navigate(path)
+    }
   }
   return (
     <Layout className="layout">

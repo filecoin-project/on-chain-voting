@@ -1,7 +1,7 @@
 import { message, Form, Input, Radio, Space, Button } from "antd"
 import React, { useEffect, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
-import { usePowerVotingContract } from "../../hooks"
+import { useDynamicContract } from "../../hooks/use-power-voting-contract"
 
 const contractAddress = process.env.VOTING_CONTRACT_ADDRESS
 if (!contractAddress) {
@@ -10,7 +10,7 @@ if (!contractAddress) {
 
 const AcquireNFT = () => {
   const navigate = useNavigate()
-  const { VotingNFT } = usePowerVotingContract()
+  const { VotingNFT } = useDynamicContract()
 
   const { state } = useLocation()
   const [loading, setLoading] = useState(false)

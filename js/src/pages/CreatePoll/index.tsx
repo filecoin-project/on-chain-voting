@@ -14,14 +14,14 @@ import { Buffer } from "buffer"
 import { PlusCircleOutlined, PlusOutlined } from "@ant-design/icons"
 // @ts-ignore
 import nftStorage from "../../utils/storeNFT.js"
-import { mainnetClient, timelockEncrypt, roundAt } from 'tlock-js';
+import { mainnetClient, timelockEncrypt, roundAt } from "tlock-js"
 import { RangePickerProps } from "antd/es/date-picker/index"
 import dayjs from "dayjs"
-import { usePowerVotingContract } from "../../hooks/use-power-voting-contract"
+import { useDynamicContract } from "../../hooks/use-power-voting-contract"
 import { useNavigate } from "react-router-dom"
 import create from "@ant-design/icons/lib/components/IconFont.js"
 
-const { createVotingApi } = usePowerVotingContract()
+const { createVotingApi } = useDynamicContract()
 
 interface Values {
   title: string
@@ -83,10 +83,8 @@ const { RangePicker } = DatePicker
 const { TextArea } = Input
 
 const CreatePoll = () => {
-  
   const navigate = useNavigate()
   const onFinish = async (values: any) => {
-
     console.log("Success:", values)
     if (radio.length <= 0) {
       message.error("Please confirm if you want to add a voting option")
@@ -103,16 +101,18 @@ const CreatePoll = () => {
       const cid = await nftStorage(_values)
 
       if (cid) {
-        setLoading(false)
         message.success("Waiting for the transaction to be chained!")
         // console.log(cid)
         if (createVotingApi) {
           const res = await createVotingApi(cid)
           // console.log(res, "res")
           if (res) {
+            setLoading(false)
             message.success("Preparing to wind the chain!")
             navigate("/", { state: true })
           }
+        }else{
+          console.log(111);
         }
       }
     }
@@ -205,10 +205,9 @@ const CreatePoll = () => {
           ]}
         >
           <DatePicker
-            showTime={{ format: 'HH:mm' }}
+            showTime={{ format: "HH:mm" }}
             format="YYYY-MM-DD HH:mm"
-          // disabledDate={disabledDate}
-
+            // disabledDate={disabledDate}
           />
         </Form.Item>
 

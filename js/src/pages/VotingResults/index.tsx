@@ -1,12 +1,12 @@
 import { Progress } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { usePowerVotingContract } from '../../hooks'
+import { useDynamicContract } from '../../hooks/use-power-voting-contract'
 import axios from "axios"
 const VotingResults = () => {
 
   const { state } = useLocation()
-  const { getVoteApi } = usePowerVotingContract()
+  const { getVoteApi } = useDynamicContract()
   const [data1, setdata] = useState({
     Total: 0,
     data: {} as any,

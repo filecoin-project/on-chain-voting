@@ -9,13 +9,13 @@ import {
 } from "tlock-js"
 // @ts-ignore
 import nftStorage from "../../utils/storeNFT"
-import { usePowerVotingContract } from "../../hooks/use-power-voting-contract"
+import { useDynamicContract } from "../../hooks/use-power-voting-contract"
 import { ethers } from "ethers"
 const Vote = () => {
   const [loading, setLoading] = useState<boolean>(false)
   const location = useLocation()
   const navigate = useNavigate()
-  const { voteApi } = usePowerVotingContract()
+  const { voteApi } = useDynamicContract()
   const [address, setAddress] = useState("")
 
   useEffect(() => {

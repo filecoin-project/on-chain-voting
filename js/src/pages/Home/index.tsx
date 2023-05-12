@@ -3,17 +3,18 @@ import { Button, Alert, Table, message } from "antd"
 import MyButton from "../../components/MyButton"
 import { useConnectModal } from "@rainbow-me/rainbowkit"
 import { useLocation, useNavigate } from "react-router-dom"
-import { usePowerVotingContract } from "../../hooks"
+import { useStaictContract,useDynamicContract } from "js/src/hooks/use-power-voting-contract"
 import axios from "axios"
 import { mainnetClient, timelockDecrypt } from "tlock-js"
 // @ts-ignore
 import nftStorage from "../../utils/storeNFT.js"
 import pagingConfig from "../../common/js/pagingConfig"
+import { useAccount } from "wagmi"
 
 export default function Home() {
+  const {isConnected,address } = useAccount();
   const { openConnectModal } = useConnectModal()
   const navigate = useNavigate()
-  const [addr, setAddr] = useState(false)
   const { state } = useLocation()
   const [ipfsCid, setIpfsCid] = useState<any>([])
   const [votingList, setVotingList] = useState<any>([])
@@ -22,30 +23,12 @@ export default function Home() {
   const [count, setCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [change, setChange] = useState(true)
+  const [api,setApi] = useState({} as any);
   const pageSize = 10
-  const network = {
-    chainId: "0xc45", // 此处为链ID
-    chainName: "Filecoin — HyperSpace testnet", // 此处为网络名称
-    rpcUrls: [
-      "https://api.hyperspace.node.glif.io/rpc/v1",
-      "https://filecoin-hyperspace.chainstacklabs.com/rpc/v1",
-      "https://filecoin-hyperspace.chainstacklabs.com/rpc/v1",
-    ], // 此处为RPC URL
-    nativeCurrency: {
-      name: "Test Filecoin", // 此处为货币名称
-      symbol: "tFIL", // 此处为货币符号
-      decimals: 18,
-    },
-    blockExplorerUrls: ["https://imfil.io"], // 此处为区块浏览器URL
-  }
-
   const {
     getVotingList,
-    getVoteDataApi,
-    updateVotingResultFun,
-    isFinishVoteFun,
-  } = usePowerVotingContract()
-  // console.log(getVotingList(),'getVotingList()');
+    isFinishVoteFun
+  } = useStaictContract()
 
   useEffect(() => {
     getIpfsCid()
@@ -54,37 +37,14 @@ export default function Home() {
       closeMessage()
     }
   }, [page])
-
   useEffect(() => {
-    isLogin()
-    // isMetaMask()
+    isLogin();
+    const {getVoteDataApi,updateVotingResultFun} = useDynamicContract(isConnected);
+    setApi({
+      getVoteDataApi,
+      updateVotingResultFun
+    })
   }, [])
-
-  // 判断是否安装小狐狸插件
-
-  const isMetaMask = async () => {
-    const provider = await window.ethereum
-    if (typeof window.ethereum == "undefined") {
-      console.log("1")
-      // 小狐狸钱包未安装
-      isLogin()
-    } else {
-      // 小狐狸钱包已经安装
-      console.log("2")
-      if (!provider.selectedAddress) {
-        // 钱包未链接
-        console.log("3")
-        // window.ethereum.enable()
-        await provider.request({
-          method: "wallet_addEthereumChain",
-          params: [network],
-        })
-        await provider.request({
-          method: "eth_requestAccounts",
-        })
-      }
-    }
-  }
 
   // 获取投票数据
   const getIpfsCid = async () => {
@@ -108,7 +68,7 @@ export default function Home() {
       const responses = await Promise.all(
         ipfsUrls.map((url: string) => axios.get(url))
       )
-      responses.sort((a, b) => b.data.string.Time - a.data.string.Time)
+      // responses.sort((a, b) => a.data.string.Time - b.data.string.Time)
       const results = []
       if (isFinishVoteFun) {
         for (let i = 0; i < responses.length; i++) {
@@ -130,11 +90,11 @@ export default function Home() {
   const startCounting = async (record: any) => {
     let myMap = new Map()
     if (isLogin()) {
-      if (getVoteDataApi) {
+      if (api.getVoteDataApi) {
         setLoading(true)
         message.success("Waiting for confirmation of transactions", 3)
         // 获取投票数据
-        const res = await getVoteDataApi(record.cid)
+        const res = await api.getVoteDataApi(record.cid)
         res.map(async (_item: any) => {
           // 生成ipfs 请求得到原始数据
           const ipfs = `https://${_item}.ipfs.nftstorage.link/`
@@ -154,7 +114,7 @@ export default function Home() {
         // 将计票结果上传nftStorage
         const sortedArray = Array.from(myMap.entries())
         const cid = await nftStorage(sortedArray)
-        const result = await updateVotingResultFun(record.cid, cid)
+        const result = await api.updateVotingResultFun(record.cid, cid)
         if (result) {
           setLoading(false)
           setChange(false)
@@ -168,14 +128,11 @@ export default function Home() {
 
   // 判断是否登录了钱包
   const isLogin = () => {
-    const res = localStorage.getItem("isConnect")
-    console.log(res)
-    if ((res == "undefined" || res == "false") && openConnectModal) {
-      console.log(1)
-      // console.log(res)
-      openConnectModal()
-    } else {
-      return true
+    if(isConnected){
+      return true;
+    }else{
+      openConnectModal && openConnectModal();
+      return false;
     }
   }
 
@@ -249,16 +206,7 @@ export default function Home() {
                   Vote
                 </Button>
               </div>
-            ) : // <MyButton
-            //   startCounting={() => {
-            //     startCounting(record)
-            //   }}
-            //   handlerNavigate={() => {
-            //     handlerNavigate("/votingResults", { state: record })
-            //   }}
-            //   change={change}
-            // />
-            record.bool ? (
+            ) : record.bool ? (
               <MyButton
                 startCounting={() => {
                   startCounting(record)
