@@ -1,0 +1,230 @@
+@md-bgcolor: #273141;
+@md-title-icon-font-color: #ccc;
+@md-title-icon-font-color-hover: #fff;
+@md-title-collor: #fff;
+@md-text-color: #8896AA;
+@md-code-bg: #51607940;
+@md-code-color: #c6c3c3;
+@md-border-color: #313D4F;
+
+.MDEditor {
+  .wmde-markdown {
+    background: #1b2331;
+    font-family: Calibre, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif, Apple Color Emoji;
+    //font-size: 18px !important;
+    //color: #7F8FA3;
+    //line-height: 28px !important;
+  }
+
+  .section-container {
+    .custom-html-style {
+      word-break: break-word !important;
+    }
+  }
+}
+
+.rcmd {
+  border: 1px solid @md-border-color;
+  background: @md-bgcolor;
+
+  .rc-md-navigation {
+    background: @md-bgcolor;
+    border-bottom-color: @md-border-color;
+
+    .button-wrap {
+      .button {
+        color: @md-title-icon-font-color;
+
+      }
+
+      .button:hover {
+        color: @md-title-icon-font-color-hover;
+      }
+
+      .button-type-header {
+
+        .list-item:hover {
+          background: #8e8d8d;
+        }
+      }
+
+      .button-type-table {
+        .list-item {
+          background: #505050;
+        }
+
+        .list-item:hover {
+          background: #8e8d8d;
+        }
+
+        .active {
+          background: #8e8d8d;
+        }
+      }
+    }
+
+    .drop-wrap {
+      background: @md-bgcolor;
+      border-color: @md-border-color;
+    }
+  }
+
+
+
+  .editor-container {
+    .sec-md {
+      .input {
+        background: @md-bgcolor;
+        color: #fff;
+      }
+    }
+
+    .sec-wrap {
+      overflow: visible !important;
+
+    }
+
+    .html-wrap {
+      overflow: hidden !important;
+    }
+
+    .section {
+      border: none;
+    }
+  }
+
+  .custom-html-style {
+
+    ol,
+    ul {
+      list-style: revert;
+    }
+
+    h1 {
+      font-size: 24px;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 500;
+    }
+
+    h3 {
+      font-size: 18px;
+    }
+
+    a,
+    code {
+      color: #fff;
+    }
+
+    a:hover {
+      opacity: .8;
+      ;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      color: @md-title-collor;
+    }
+
+    p,
+    li {
+      color: @md-text-color;
+      font-size: 18px;
+      line-height: 28px;
+    }
+
+    // Table表格样式
+    table {
+      border-color: @md-border-color;
+      color: @md-text-color;
+
+      thead>tr {
+        color: #c6c6c6;
+      }
+
+      th,
+      td {
+        background-color: transparent;
+        border-color: @md-border-color;
+      }
+    }
+
+    // 行内代码块样式
+    code {
+      background: @md-code-bg;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+
+    // 代码块样式
+    pre {
+      background-color: @md-code-bg;
+      border-radius: 8px;
+      margin-bottom: 8px;
+
+      code {
+        color: @md-title-collor;
+        padding: 0;
+        border: none;
+        background: none;
+
+      }
+    }
+
+    // 块缩进
+    blockquote {
+      border-left: 6px solid @md-code-bg;
+      background: none repeat scroll 0 0 transparent;
+      opacity: .8;
+      padding: 4px 8px 4px 24px;
+    }
+  }
+}
+
+.katex-mathml {
+  position: inherit !important;
+  display: contents;
+  font-size: 16px;
+}
+
+// FIXME: 暂时隐藏————用于解决公式重复渲染的问题
+.katex-html {
+  display: none !important;
+}
+
+#back-to-top-btn {
+  display: none ;
+  transform: scale(0.95);
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+/* 修改滚动条样式 */
+
+.scrollD ::-webkit-scrollbar,
+.scrollL ::-webkit-scrollbar {
+  width: 10px;
+  /* 滚动条宽度 */
+  height: 10px;
+  /* 滚动条高度 */
+}
+
+/* 修改滚动条拖动块样式 */
+.scrollD ::-webkit-scrollbar-thumb {
+  background-color: #5d5c5c;
+  /* 拖动块颜色 */
+  border-radius: 5px;
+  /* 拖动块圆角 */
+}
+
+
+/* 修改滚动条背景样式 */
+.scrollD ::-webkit-scrollbar-track {
+  background-color: #454343;
+  /* 背景颜色 */
+}

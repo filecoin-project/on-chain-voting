@@ -18,8 +18,13 @@
     "baseUrl": ".",
     "paths": {
       "@Contracts/*": ["artifacts/contracts/*"],
-    }
-  }
+    },
+  },
+  "exclude": [
+    "node_modules",
+    "tlock-js",
+    "the-graph",
+  ],
 }
 
 

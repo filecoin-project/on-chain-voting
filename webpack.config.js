@@ -3,13 +3,15 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const Dotenv = require('dotenv-webpack');
 const webpack = require('webpack');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 
 module.exports = {
   target:'web',
-  entry: './js/src/index.tsx',
+  entry: './src/index.tsx',
   output: {
-    path: path.join(__dirname, '/dist'),
+    path: path.resolve(__dirname, 'dist'),
+    publicPath: '/',
     filename: 'index_bundle.js'
   },
   resolve: {
@@ -19,17 +21,22 @@ module.exports = {
       "os":require.resolve("os-browserify"),
       "fs":require.resolve("browserify-fs")
     },
-    plugins: [new TsconfigPathsPlugin({/* options: see below */})]
+    plugins: [
+      new TsconfigPathsPlugin({
+        configFile: './tsconfig.json',
+      })
+    ]
   },
   devServer: {
     static: path.join(__dirname, 'public'),
-    port: 3000,
+    port: 3001,
     open: true,
-    historyApiFallback: true
+    historyApiFallback: true,
   },
   stats: {
     warningsFilter: [
       /Failed to parse source map from/,
+      /Critical dependency: the request of a dependency is an expression/
     ],
   },
   performance: {
@@ -52,6 +59,7 @@ module.exports = {
         use: [
           "style-loader",
           "css-loader",
+          'postcss-loader'
         ]
       },
       {
@@ -65,17 +73,20 @@ module.exports = {
     ],
   },
   plugins: [
-    new Dotenv({
-      path:"./.env"
-    }),
-    new HtmlWebpackPlugin({
-      template: './js/public/index.html',
-    }),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer']
-    })
-    
-
+    }),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: 'public/images',
+          to: 'images'
+        }
+      ]
+    }),
+    new HtmlWebpackPlugin({
+      template: './public/index.html',
+    }),
   ],
   devtool: 'source-map',
 };

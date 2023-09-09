@@ -1,8 +1,4 @@
 node_modules
-# .env
-coverage
-coverage.json
-typechain
 typechain-types
 
 # debug
@@ -16,6 +12,9 @@ artifacts
 
 # dist
 dist
+dist.zip
 
-#mac 
+#IDE
+.vscode/
+.idea
 .DS_Store

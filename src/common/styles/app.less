@@ -1,0 +1,39 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  color: #7F8FA3;
+  header {
+    padding: 0 2rem;
+    .logo {
+      height: 64px;
+    }
+    .lang {
+      display: flex;
+
+      .ant-select-selector {
+        padding: 0 !important;
+        .ant-select-selection-item {
+          color: #ffffff;
+        }
+      }
+
+      .ant-select-arrow {
+        right: -2px;
+      }
+
+      .ant-select-selection-item {
+        font-weight: 500;
+      }
+    }
+  }
+  .content {
+    flex: 1;
+    min-height: calc(100vh - 231px);
+    .voting, .voting-result, .voteList {
+      .border, .border-skin-border, .border-md, .border-lg, .border-b, .border-t, .border-r, .border-l {
+        border-color: #313D4F;
+        border-style: solid;
+      }
+    }
+  }
+}

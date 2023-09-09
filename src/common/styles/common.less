@@ -1,0 +1,31 @@
+.ellipsis-sp {
+	width: 100%;
+	display:  flex;
+	justify-content: center;
+	// flex-wrap: nowrap;
+	color: inherit !important;
+}
+.ellipsis {
+	position: relative;
+	display: inline-block;
+	word-break: normal;
+	word-wrap: normal;
+	overflow: hidden;
+	line-height: 1;
+	width: 1em !important;
+	text-indent: 2em;
+}
+
+.ellipsis:after {
+	position: absolute;
+	display: block;
+	bottom: 4px;
+	content: "";
+	left: 50%;
+	transform: translateX(-50%);
+	width: 2px;
+	height: 2px;
+	border-radius: 1px;
+	background-color: currentColor;
+	box-shadow: -0.3em 0 currentColor, 0 0 currentColor, 0.3em 0 currentColor;
+}

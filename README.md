@@ -1,29 +1,51 @@
-# Power Voting
+# StorSwift Power Voting
 
-## ${\color{black}{1 \ Overview}}$
+## 1. Overview
 
-Power Voting is going to enable people voting in trustless based on FEVM, and it uses the timelock feature based on drand which can make sure the data security during the voting process. Timelock feature gives you time based encryption and decryption capabilities by relying on a drand threshold network. please refer to https://drand.love/ for drand network details, which is verifiable, unpredictable and unbiased random numbers as a service. Per encryption/decryption time based, the secret info can’t be leaked before end time, thus it doesn’t need a centralized public notary to monitor the process and justify the result.
+Power Voting dApp utilizes Drand timelock and StorSwift ZK-KYC technology to achieve fair and private voting. Before the voting deadline, no one’s voting results will be seen by others, and the voting process will not be disturbed by other participant’s voting results. After the voting deadline, anyone can count the votes in a decentralized manner, and the results of the counting will executed and stored by smart contract and will not be manipulated by any centralized organization or individual. 
 
-## ${\color{black}{2 \ Problem}}$
+Power Voting dApp aims to become the infrastructure of DAO governance.
 
-In the centralized voting process, since the vote counting power is in the hands of the centralized organization, it will cause problems such as vote fraud and black box operation of vote counting, resulting in the voting results being manipulated by others, which cannot truly reflect the wishes of the community. 
+## 2. Problem
 
 In the community voting process governed by DAO, since the voting data of other community members can be seen before the vote counting time, the community members will be affected by the existing voting data before voting, and some members will even take advantage of a large number of voting rights in their hands to vote at the end of the voting process to make the voting results are reversed, resulting in unfair voting.
 
-## ${\color{black}{3 \ Solution}}$
-Power Voting stores voting information on the blockchain, and makes voting rights into NFTs. All voting operations are completed on the chain, which is open and transparent. When community members vote, they use the timelock feature based on drand to encrypt the voting content, and it cannot be decrypted until the counting time arrives, so that no one can know the voting information of other members before the counting time arrives. After the counting time arrives, any voting participant can initiate a vote count without being affected by any centralized organization.
+In the centralized voting process, since the vote counting power is in the hands of the centralized organization, it will cause problems such as vote fraud and black box operation of vote counting, resulting in the voting results being manipulated by others, which cannot truly reflect the wishes of the community.
 
-## ${\color{black}{5 \ Smart \ Contract \ Functionalities}}$
-* Makes voting rights into NFTs
-* Stores voting information and states to the filecoin storage network
-* Uses drand timelock feature to to encrypt the voting content and decrypt after time ends
+## 3. Solution
 
-## ${\color{black}{7 \ Roadmap}}$
-| Time  | Status |
-| ------------- | ------------- |
-| 2023-01-30  | System research and requirement analysis |
-| 2023-02-15  | Develop roadmap |
-| 2023-02-20  |  NFT contract, voting contract and voting based on timelock feature design |
-| 2023-03-03  |  NFT contract, voting contract and voting based on timelock feature development |
-| 2023-03-25  |  Power Voting frontend Development |
-| 2023-04-12   |  Release beta version |
+Power Voting dApp stores voting information on the blockchain, and all voting operations are executed on the chain, which is open and transparent. 
+
+When community members vote, they use the timelock technology to lock the voting content, and voting content cannot be viewed until the voting expiration time reaches, so that no one can know the voting information of other members before voting expiration time reaches. 
+
+After the counting time arrives, any voting participant can initiate a vote count without being affected by any centralized organization.
+
+
+## 4. ZK-KYC
+
+Power Voting dApp integrates with StorSwift ZK-KYC to protect user's privacy. Before user creating a proposal or voting on a proposal, user needs to login to StorSwift ZK-KYC platform to generate a UCAN specified DID with user roles and voting power properties, then ZK-KYC platform will interact with Power Voting dApp on-chain automatically to save user DID into Power Voting dApp allow-list. Only the users that have DID listed in Power Voting dApp allow-list can create a proposal or vote on a proposal.
+
+## 5. Timelock
+
+When creating a proposal, the creator will enter a voting expiration time, and Power Voting dApp will store the proposal content and voting expiration time together on the blockchain. When user votes on a proposal, Power Voting dApp will call Drand Timelock API to encrypt user's voting data and store the encrypt data into contract, the encrypt data won't be decrypt until the proposal expiration time. When proposal expiration time reached, Power Voting dApp will call Drand Timelock API to decrypt user's voting data to count the proposal. Power Voting dApp will lock all users' voting content and not allow anyone to query voting content until voting expiration time, to make sure no one can know the voting information of other members before voting expiration time reaches.
+
+## 6. Voting Power Snapshot
+
+When creating a proposal, Power Voting dApp will get the current `block.height` and store it together with proposal content on the blockchain. When a user votes, Power Voting dApp will obtain the $FIL asset of the user's `address` corresponding to the `block.height` when the proposal was created at, and then use the asset amount as the voting power to vote.
+
+## 7. Architecture Diagram
+
+![](./asset/architecture.jpg)
+
+## 8. Timing Diagram
+
+![](./asset/timing_graph.jpg)
+
+## 9. Proposal State Flow
+
+![](./asset/state_flow.jpg)
+
+## 10. Proposal Type
+
+Power Voting dApp supports Single Answer and Multiple Answers proposals and can customize at most 10 options.
+![](./asset/proposal_type.png)
