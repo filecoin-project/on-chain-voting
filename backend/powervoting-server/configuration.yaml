@@ -47,6 +47,6 @@ network:
       abiPath: /Users/lijianrong/workspace/PV/powervoting/contracts/powervoting/PowerVoting.json
       subgraphUrl: http://192.168.11.94:8000/subgraphs/name/powervoting
       contractAddress: 0x23E33253ca50B7E59EDc6d1377208dcD4F54C019
-      privateKey: f57bab2a7684433d7bb6250fa23a3aff2cb3f01ec86ea062ccc44eeeb119146c
-      walletAddress: 0xe95c3dbbb10583b0524f2619ba2fbb51a9fa0249
+      privateKey: 
+      walletAddress: 
       gasLimit: 3000000
