@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-Power Voting dApp utilizes Drand timelock and StorSwift ZK-KYC technology to achieve fair and private voting. Before the voting deadline, no one’s voting results will be seen by others, and the voting process will not be disturbed by other participant’s voting results. After the voting deadline, anyone can count the votes in a decentralized manner, and the results of the counting will executed and stored by smart contract and will not be manipulated by any centralized organization or individual. 
+Power Voting dApp utilizes Drand Timelock, StorSwift ZK-KYC and Subgraphs technologies to achieve fair and private voting. Before the voting deadline, no one’s voting results will be seen by others, and the voting process will not be disturbed by other participant’s voting results. After the voting deadline, anyone can count the votes in a decentralized manner, and the results of the counting will executed and stored by smart contract and will not be manipulated by any centralized organization or individual. 
 
 Power Voting dApp aims to become the infrastructure of DAO governance.
 
@@ -31,7 +31,14 @@ When creating a proposal, the creator will enter a voting expiration time, and P
 
 ## 6. Voting Power Snapshot
 
-When creating a proposal, Power Voting dApp will get the current `block.height` and store it together with proposal content on the blockchain. When a user votes, Power Voting dApp will obtain the $FIL asset of the user's `address` corresponding to the `block.height` when the proposal was created at, and then use the asset amount as the voting power to vote.
+When creating a proposal, Power Voting dApp will get the current `block.height` and store it together with proposal content on the blockchain. When a user votes, Power Voting dApp will obtain the balance of the user's `address` corresponding to the `block.height` when the proposal was created at, and then use the asset amount as the voting power to vote.
+
+### zkSync ###
+
+When on zkSync, contract is deployed on L2, Power Voting dApp will obtain both of L1 and L2 balances of the user's `address` to calculate voting power.
+
+![](./asset/zksync.jpg)
+
 
 ## 7. Architecture Diagram
 

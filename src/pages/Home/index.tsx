@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {Empty, Skeleton} from "antd";
+import { Empty } from "antd";
 import InfiniteScroll from 'react-infinite-scroll-component';
 import {useNetwork, useAccount} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
@@ -156,7 +156,6 @@ const Home = () => {
       console.error(error);
     }
   };
-
   const handleFilter = async (status: number) => {
     setVoteStatus(status);
   }

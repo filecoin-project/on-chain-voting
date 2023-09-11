@@ -98,6 +98,42 @@ func GetClient(id int64) (GoEthClient, error) {
 	return ethClient, nil
 }
 
+func GetEthMainClient() (GoEthClient, error) {
+	client, ok := instanceMap[1]
+	if ok {
+		log.Println("get eth main client")
+		return client, nil
+	}
+	ethClient, err := ethclient.Dial("https://ethereum.publicnode.com")
+	if err != nil {
+		log.Panic(err)
+	}
+	goEthClient := GoEthClient{
+		Client: ethClient,
+	}
+	instanceMap[1] = goEthClient
+	log.Println("init eth main client")
+	return goEthClient, err
+}
+
+func GetGoerliClient() (GoEthClient, error) {
+	client, ok := instanceMap[5]
+	if ok {
+		log.Println("get goerli client")
+		return client, nil
+	}
+	ethClient, err := ethclient.Dial("https://ethereum-goerli.publicnode.com")
+	if err != nil {
+		log.Panic(err)
+	}
+	goEthClient := GoEthClient{
+		Client: ethClient,
+	}
+	instanceMap[5] = goEthClient
+	log.Println("init goerli client")
+	return goEthClient, err
+}
+
 // getGoEthClient get go-ethereum client
 func getGoEthClient(clientConfig ClientConfig) (GoEthClient, error) {
 	client, err := ethclient.Dial(clientConfig.Rpc)

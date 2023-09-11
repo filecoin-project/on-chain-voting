@@ -1,17 +1,14 @@
 import {Chain} from "wagmi";
-import { filecoin, filecoinCalibration, sepolia } from 'wagmi/chains';
+import { filecoin, filecoinCalibration, sepolia, zkSyncTestnet } from 'wagmi/chains';
 
-export const SUBGRAPH_URL = '/subgraphs/name/powervoting';
+export const SUBGRAPH_URL = 'http://192.168.11.94:8000/subgraphs/name/powervoting';
 export const NFT_STORAGE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDZERTcyMURDYzgzNTdkQURkZTRiMWU3ODdhZTg5MDhiMDA0RTkwNGIiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTY4MDk0Nzc1ODU3NCwibmFtZSI6InBvd2Vydm90aW5nIn0.rwczQpqkJ_NGguD26gGpQOjLaS9Mz6p7XmBYdbFe4f8';
 export const filecoinMainnetRpcAddress = "https://vote.storswift.io/rpc/v1";
 export const filecoinMainnetContractAddress = '0x01fb6C1b62aBA3A94ef471525dD9b0c212Db2eEe';
-
-// export const filecoinCalibrationContractAddress = '0x42d20D5989AA43347e7b33e6472e80a899Cd5Cdc';
-// export const filecoinCalibrationContractAddress = '0xdE1C33d7d76E9F429BaCF7BAA9Ed9094B0092bC3';
 export const filecoinCalibrationContractAddress = '0x0DdD07785F39E463c7c1EAe16645397946c2CAdc';
-
 export const sepoliaContractAddress = '0xf86c7125810D1120e278399926a95eD9F6DD8Fc5';
 export const zetaContractAddress = '0x1C6DF7B8F665c974C203B4BCeA9FF9C04b422f74';
+export const zkSyncTestnetContractAddress = '0xaB5Aa7a9b3b67DA9459815497CeD335042F7CC06';
 
 export const filecoinMainnetChain: Chain = {
   id: 314,
@@ -116,6 +113,7 @@ export const walletChainList = [
   },
   // filecoinCalibration,
   ethSepoliaChain,
+  zkSyncTestnet,
   // zetaChain
 ];
 
@@ -135,6 +133,10 @@ export const contractAddressList = [
   {
     id: zetaChain.id,
     address: zetaContractAddress
+  },
+  {
+    id: zkSyncTestnet.id,
+    address: zkSyncTestnetContractAddress
   }
 ];
 export const IN_PROGRESS_STATUS = 0;

@@ -1,7 +1,6 @@
 import React, {useState, useEffect} from "react";
 import {message, DatePicker} from "antd";
 import dayjs from "dayjs";
-import { ethers } from 'ethers';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import {useNavigate, Link} from "react-router-dom";

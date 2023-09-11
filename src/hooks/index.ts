@@ -1,6 +1,8 @@
-import { ethers } from "ethers";
+import { ethers, utils } from "ethers";
+import * as zksync from "zksync-web3";
+import { Provider } from "zksync-web3";
 import { NFTStorage, Blob } from 'nft.storage';
-import abi from "../../contracts/powervoting/PowerVoting.json";
+import abi from "../../public/abi/power-voting.json";
 import {
   filecoinMainnetContractAddress,
   contractAddressList,
@@ -28,7 +30,8 @@ export const useDynamicContract = (chainId: number) => {
     let code = 200;
     let msg = 'success';
     if (type === 'error') {
-      const encodeData = data?.error?.data?.originalError.data;
+      console.log(data?.error?.data);
+      const encodeData = data?.error?.data?.originalError?.data;
       if (encodeData) {
         code = 401
         msg = decodeError(encodeData);
@@ -88,10 +91,27 @@ export const useDynamicContract = (chainId: number) => {
     }
   }
 
+  const zkSyncDepositApi = async () => {
+    const zkSyncProvider = new Provider("https://testnet.era.zksync.dev");
+    const ethProvider = ethers.getDefaultProvider("goerli");
+    // const signingKey = await signer.getSigningKey();
+    //console.log(signingKey);
+    // const zkSyncWallet = new zksync.Wallet(signingKey, zkSyncProvider, ethProvider);
+
+
+    // const deposit = await zkSyncWallet.deposit({
+    //   token: zksync.utils.ETH_ADDRESS,
+    //   amount: ethers.utils.parseEther("1.0"),
+    // });
+    //
+    // return deposit;
+  }
+
   return {
     createVotingApi,
     cancelVotingApi,
     voteApi,
+    zkSyncDepositApi,
   }
 }
 

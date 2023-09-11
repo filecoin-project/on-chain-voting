@@ -58,7 +58,9 @@
     "tailwindcss": "latest",
     "tlock-js": "^0.6.1",
     "viem": "^1.5.3",
-    "wagmi": "^1.3.9"
+    "wagmi": "^1.3.9",
+    "zksync": "^0.13.1",
+    "zksync-web3": "^0.14.3"
   },
   "devDependencies": {
     "@ethersproject/providers": "^5.4.7",

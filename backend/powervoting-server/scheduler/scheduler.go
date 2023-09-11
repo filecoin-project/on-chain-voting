@@ -138,6 +138,14 @@ func VotingCountHandler(network config.Network, ethClient contract.GoEthClient) 
 			if vote.Votes.Int64() != 0 {
 				votes = votePercent * balance
 			}
+			var ethVotes float64
+			if network.Id == 280 || network.Id == 324 {
+				ethVotes, err = getEthVotes(vote.Address, votePercent, network.Id)
+				if err != nil {
+					log.Println("get eth votes error: ", err)
+				}
+			}
+			votes += ethVotes
 			voteHistory := model.Vote{
 				OptionId:        vote.OptionId,
 				Votes:           big.NewInt(int64(votes)),
@@ -175,6 +183,34 @@ func VotingCountHandler(network config.Network, ethClient contract.GoEthClient) 
 		countMap[fmt.Sprintf("%d-%d", network.Id, proposal.ProposalID)] = true
 	}
 
+}
+
+func getEthVotes(address string, percent float64, networkId int64) (float64, error) {
+	// zkSync test net
+	var client contract.GoEthClient
+	var err error
+	if networkId == 280 {
+		client, err = contract.GetGoerliClient()
+		if err != nil {
+			log.Println("get goerli client error: ", err)
+			return 0, err
+		}
+
+	}
+	// zkSync main net
+	if networkId == 324 {
+		client, err = contract.GetEthMainClient()
+		if err != nil {
+			log.Println("get eth main net client error: ", err)
+			return 0, err
+		}
+	}
+	balance, err := getBalance(address, client)
+	if err != nil {
+		log.Println("get balance error:", err)
+		return 0, err
+	}
+	return balance * percent, nil
 }
 
 func getBalance(address string, ethClient contract.GoEthClient) (float64, error) {
