@@ -104,6 +104,7 @@ const UcanDelegate = () => {
     const chainId = chain?.id || 0;
     const { ucanDelegate } = useDynamicContract(chainId);
     const cid = await getIpfsId(ucan);
+    console.log(cid);
     const res = await ucanDelegate(cid);
     if (res.code === 200) {
       message.success(STORING_DATA_MSG);

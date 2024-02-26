@@ -262,8 +262,8 @@ const Home = () => {
                               </svg>
                           }
                           {option.name}</div>
-                        <div className="absolute right-0 mr-3 leading-[40px] text-white">{option.name === 'Yes' ? 25 : option.count}%</div>
-                        <div className="h-[40px] rounded-md bg-[#1b2331]" style={{width: `${option.name === 'Yes' ? 25 : option.count}%`}}></div>
+                        <div className="absolute right-0 mr-3 leading-[40px] text-white">{option.count}%</div>
+                        <div className="h-[40px] rounded-md bg-[#1b2331]" style={{width: `${option.count}%`}}></div>
                       </div>
                     )
                   })

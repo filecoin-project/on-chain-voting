@@ -13,12 +13,12 @@
 // limitations under the License.
 
 import { filecoin, filecoinCalibration } from 'wagmi/chains';
-export const NFT_STORAGE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDZERTcyMURDYzgzNTdkQURkZTRiMWU3ODdhZTg5MDhiMDA0RTkwNGIiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTY4MDk0Nzc1ODU3NCwibmFtZSI6InBvd2Vydm90aW5nIn0.rwczQpqkJ_NGguD26gGpQOjLaS9Mz6p7XmBYdbFe4f8';
 export const powerVotingMainNetContractAddress = '';
-export const powerVotingCalibrationContractAddress = '0x1882C5e2EceE66eA97AdB0A0B7944c7B7896C3D3';
 export const oracleMainNetContractAddress = '';
-export const oracleCalibrationContractAddress = '0x2241f7E8be8D697488b78ba001F3e4E29Dd2ba20';
-export const walletConnectProjectId = '43a5e091da6b7d42e521c6cce175bc94';
+export const powerVotingCalibrationContractAddress = '';
+export const oracleCalibrationContractAddress = '';
+export const NFT_STORAGE_KEY = '';
+export const walletConnectProjectId = '';
 
 export const walletChainList = [
   {
