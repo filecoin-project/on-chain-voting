@@ -1,12 +1,25 @@
-/**
- * format 路由表
- */
+// Copyright (C) 2023-2024 StorSwift Inc.
+// This file is part of the PowerVoting library.
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at:
+// http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import React from "react";
 import Home from "../pages/Home";
-import CreatePoll from "../pages/CreatePoll";
+import CreateVote from "../pages/CreateVote";
+import UcanDelegateAdd from "../pages/UcanDelegate/add/index";
+import UcanDelegateDelete from "../pages/UcanDelegate/delete/index";
+import UcanDelegateHelp from "../pages/UcanDelegate/help/index";
 import Vote from "../pages/Vote";
 import VotingResults from "../pages/VotingResults";
-import PVDocument from "src/pages/Documents/PVDocument";
 
 const routes = [
   {
@@ -14,8 +27,20 @@ const routes = [
     element: <Home />,
   },
   {
-    path: "/createPoll",
-    element: <CreatePoll />,
+    path: "/createVote",
+    element: <CreateVote />,
+  },
+  {
+    path: "/ucanDelegate/add",
+    element: <UcanDelegateAdd />,
+  },
+  {
+    path: "/ucanDelegate/delete",
+    element: <UcanDelegateDelete />,
+  },
+  {
+    path: "/ucanDelegate/help",
+    element: <UcanDelegateHelp />,
   },
   {
     path: "/vote/:id/:cid",
@@ -24,10 +49,6 @@ const routes = [
   {
     path: "/votingResults/:id/:cid",
     element: <VotingResults />,
-  },
-  {
-    path: '/document',
-    element: <PVDocument />
   },
   {
     path: "*",

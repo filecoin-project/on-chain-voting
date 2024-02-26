@@ -1,12 +1,24 @@
+// Copyright (C) 2023-2024 StorSwift Inc.
+// This file is part of the PowerVoting library.
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at:
+// http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { ethers } from 'ethers';
-import { zkSyncTestnet } from "wagmi/chains";
-import { InputNumber, Space, Button, message } from "antd";
+import { Input, InputNumber, message } from "antd";
 import axios from 'axios';
 import dayjs from 'dayjs';
-import {getIpfsId, useDynamicContract} from "../../hooks";
+import {getIpfsId, useDynamicContract, useStaticContract} from "../../hooks";
 import { useAccount, useNetwork } from "wagmi";
 import { useConnectModal, useChainModal } from "@rainbow-me/rainbowkit";
 import MDEditor from "../../components/MDEditor";
@@ -15,28 +27,29 @@ import {
   IN_PROGRESS_STATUS,
   SINGLE_VOTE,
   MULTI_VOTE,
-  VOTE_COUNTING_STATUS,
   WRONG_NET_STATUS,
-  web3AvatarUrl
+  web3AvatarUrl, VOTE_SUCCESS_MSG, CHOOSE_VOTE_MSG, WRONG_MINER_ID_MSG,
 } from "../../common/consts";
-import { timelockEncrypt, roundAt, mainnetClient, Buffer } from "../../../tlock-js/src"
+import { timelockEncrypt, roundAt, mainnetClient, Buffer } from "../../../tlock-js/src";
+import {ProposalList, ProposalOption} from "../../common/types";
 import "./index.less";
-
 
 const totalPercentValue = 100;
 
 const Vote = () => {
   const { chain } = useNetwork();
   const chainId = chain?.id || 0;
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
 
   const { id, cid } = useParams();
-  const [votingData, setVotingData] = useState({} as any);
+  const [votingData, setVotingData] = useState({} as ProposalList);
   const { openConnectModal } = useConnectModal();
   const { openChainModal } = useChainModal();
 
-  const navigate = useNavigate()
-  const [options, setOptions] = useState([] as any)
+  const navigate = useNavigate();
+  const [options, setOptions] = useState([] as ProposalOption[]);
+  const [minerIds, setMinerIds] = useState(['']);
+  const [minerError, setMinerError] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
@@ -44,18 +57,39 @@ const Vote = () => {
     formState: { errors }
   } = useForm({
     defaultValues: {
-      option: votingData?.VoteType === MULTI_VOTE ? [] : null
+      option: votingData?.voteType === MULTI_VOTE ? [] : null
     }
   })
 
   useEffect(() => {
     initState();
-  }, [chain])
+  }, [chain]);
+
+  const addMinerIdPrefix = (minerIds: number[]) => {
+    return minerIds.map(minerId => `f0${minerId}`);
+  }
+
+  const removeMinerIdPrefix = (minerIds: string[]) => {
+    return minerIds.map(minerId => {
+      const str = minerId.replace(/f0/g, '');
+      if (isNaN(Number(str))) {
+        setMinerError(true);
+        return 0;
+      } else {
+        setMinerError(false);
+        return Number(str)
+      }
+    });
+  }
 
   const initState = async () => {
+    const { getMinerIds } = await useStaticContract(chainId);
+    const { code, data: { minerIds } } = await getMinerIds(address);
+    if (code === 200) {
+      setMinerIds(addMinerIdPrefix(minerIds.map((id: any) => id.toNumber())));
+    }
     const res = await axios.get(`https://${cid}.ipfs.nftstorage.link/`);
     const data = res.data;
-    const now = dayjs().unix();
     let voteStatus = null;
     if (data.chainId !== chainId) {
       voteStatus = WRONG_NET_STATUS;
@@ -65,11 +99,7 @@ const Vote = () => {
         openConnectModal && openConnectModal();
       }
     } else {
-      if (now <= res.data.Time) {
-        voteStatus = IN_PROGRESS_STATUS;
-      } else {
-        voteStatus = VOTE_COUNTING_STATUS;
-      }
+      voteStatus = IN_PROGRESS_STATUS;
     }
     const option = data.option?.map((item: string) => {
       return {
@@ -87,25 +117,18 @@ const Vote = () => {
     setOptions(option);
   }
 
-/*  const handleDeposit = async () => {
-    // @ts-ignore
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const signer = provider.getSigner();
-    console.log(signer);
-    const { zkSyncDepositApi } = useDynamicContract(chainId);
-    const deposit = await zkSyncDepositApi();
-    console.log(deposit);
-    // await deposit.wait();
-  }*/
-
-  const handleEncrypt = async (value: any) => {
+  /**
+   * timelock encrypt
+   * @param value
+   */
+  const handleEncrypt = async (value: string[][]) => {
     const payload = Buffer.from(JSON.stringify(value));
 
     const chainInfo = await mainnetClient().chain().info();
 
-    const time = new Date().valueOf();
+    const time = votingData?.expTime ? new Date(votingData.expTime * 1000).valueOf() : 0;
 
-    const roundNumber = roundAt(time, chainInfo) // drand 随机数索引
+    const roundNumber = roundAt(time, chainInfo);
 
     const ciphertext = await timelockEncrypt(
       roundNumber,
@@ -117,37 +140,40 @@ const Vote = () => {
   }
 
   const startVoting = async () => {
-    // 获取有投票的索引，判断是否填写了投票
-
-    const countIndex = options.findIndex((item: any) => item.count > 0);
+    const countIndex = options.findIndex((item: ProposalOption) => item.count > 0);
     if (countIndex < 0) {
-      message.warning("Please choose a option to vote");
+      message.warning(CHOOSE_VOTE_MSG);
     } else {
+      if (minerError) {
+        message.warning(WRONG_MINER_ID_MSG);
+        return;
+      }
       setLoading(true);
       // vote params
-      let params = [];
-      if (votingData?.VoteType === SINGLE_VOTE) {
+      let params: string[][] = [];
+      if (votingData?.voteType === SINGLE_VOTE) {
         params.push([`${countIndex}`, `${options[countIndex].count}`])
       } else {
-        options.map((item: any, index: number) => {
+        options.map((item: ProposalOption, index: number) => {
           params.push([`${index}`, `${item.count}`])
         })
       }
       const encryptValue = await handleEncrypt(params);
       const optionId = await getIpfsId(encryptValue);
+      const ids = removeMinerIdPrefix(minerIds);
 
       if (isConnected) {
         const { voteApi } = useDynamicContract(chainId);
-        const res = await voteApi(Number(id), optionId);
+        const res = await voteApi(Number(id), optionId, ids);
         if (res.code === 200) {
-          message.success("Vote successful!", 3);
+          message.success(VOTE_SUCCESS_MSG, 3);
           setTimeout(() => {
             navigate("/")
           }, 3000)
-        } else if (res.code === 401) {
+        } else {
           message.error(res.msg)
         }
-        setLoading(false);
+        setLoading(false)
       } else {
         // @ts-ignore
         openConnectModal && openConnectModal()
@@ -155,29 +181,14 @@ const Vote = () => {
     }
   }
 
-  const cancelVoting= async () => {
-    if (isConnected) {
-      setLoading(true);
-      const { cancelVotingApi } = useDynamicContract(chainId);
-      const res = await cancelVotingApi(Number(id));
-      if (res.code === 200) {
-        message.success("Cancel successful!", 3);
-        setTimeout(() => {
-          navigate("/")
-        }, 3000)
-      } else if (res.code === 401) {
-        message.error(res.msg)
-      }
-      setLoading(false)
-    } else {
-      // @ts-ignore
-      openConnectModal && openConnectModal()
-    }
+  const handleMinerChange = (value: string) => {
+    const arr = value.split(',');
+    setMinerIds(arr);
   }
 
   const handleOptionChange = (index: number, count: number) => {
-    setOptions((prevState: any[]) => {
-      return prevState.map((item: any, preIndex) => {
+    setOptions((prevState: ProposalOption[]) => {
+      return prevState.map((item: ProposalOption, preIndex) => {
         let currentTotal = 0;
         currentTotal += count;
         if (preIndex === index) {
@@ -188,18 +199,18 @@ const Vote = () => {
         } else {
           return {
             ...item,
-            disabled: votingData?.VoteType === SINGLE_VOTE && count > 0 || votingData?.VoteType === MULTI_VOTE && currentTotal === 100
+            disabled: votingData?.voteType === SINGLE_VOTE && count > 0 || votingData?.voteType === MULTI_VOTE && currentTotal === 100
           }
         }
       })
     })
   }
 
-  const handleCountChange = (type: string, index: number, item: any) => {
+  const handleCountChange = (type: string, index: number, item: ProposalOption) => {
     if (item.disabled) return false;
 
     let currentCount: number;
-    const restTotal = options.reduce(((acc: number, current: any) => acc + current.count), 0) - item.count;
+    const restTotal = options.reduce(((acc: number, current: ProposalOption) => acc + current.count), 0) - item.count;
     const max = totalPercentValue - restTotal;
     const min = 0
     if (type === "decrease") {
@@ -210,8 +221,8 @@ const Vote = () => {
     handleOptionChange(index, currentCount);
   }
 
-  const countMax = (options: any, count: number) => {
-    const restTotal = options.reduce(((acc: number, current: any) => acc + current.count), 0) - count;
+  const countMax = (options: ProposalOption[], count: number) => {
+    const restTotal = options.reduce(((acc: number, current: ProposalOption) => acc + current.count), 0) - count;
     return totalPercentValue - restTotal;
   }
 
@@ -226,11 +237,6 @@ const Vote = () => {
         return {
           name: 'In Progress',
           color: 'bg-green-700',
-        };
-      case VOTE_COUNTING_STATUS:
-        return {
-          name: 'Vote Counting',
-          color: 'bg-yellow-700',
         };
       default:
         return {
@@ -258,10 +264,10 @@ const Vote = () => {
         </div>
         <div className="px-3 md:px-0 ">
           <h1 className="mb-6 text-3xl text-white break-words break-all leading-12" style={{overflowWrap: 'break-word'}}>
-            {votingData?.Name}
+            {votingData?.name}
           </h1>
           {
-            (votingData.voteStatus || votingData.voteStatus === 0) &&
+            (votingData?.voteStatus || votingData?.voteStatus === 0) &&
               <div className="flex justify-between mb-6">
                   <div className="flex items-center justify-between w-full mb-1 sm:mb-0">
                       <button
@@ -269,14 +275,14 @@ const Vote = () => {
                         {handleVoteStatusTag(votingData.voteStatus).name}
                       </button>
                       <div className="flex items-center justify-center">
-                          <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${votingData.Address}`} alt="" />
+                          <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${votingData.address}`} alt="" />
                           <a
                               className="text-white"
                               target="_blank"
                               rel="noopener"
-                              href={`${chain?.blockExplorers?.default.url}/address/${votingData?.Address}`}
+                              href={`${chain?.blockExplorers?.default.url}/address/${votingData?.address}`}
                           >
-                            {EllipsisMiddle({ suffixCount: 4, children: votingData?.Address })}
+                            {EllipsisMiddle({ suffixCount: 4, children: votingData?.address })}
                           </a>
                       </div>
                   </div>
@@ -287,7 +293,7 @@ const Vote = () => {
               className="border-none rounded-[16px] bg-transparent"
               style={{ height: 'auto' }}
               moreButton={true}
-              value={votingData?.Descriptions}
+              value={votingData?.descriptions}
               readOnly={true}
               view={{ menu: false, md: false, html: true, both: false, fullScreen: true, hideMenu: false }}
               onChange={() => {
@@ -296,62 +302,63 @@ const Vote = () => {
           </div>
           {
             votingData?.voteStatus === IN_PROGRESS_STATUS &&
-              <div className="border-[#313D4F] mt-6 border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border border-solid">
-                  <div className="group flex h-[57px] !border-[#313D4F] justify-between items-center border-b px-4 pb-[12px] pt-3 border-solid">
-                      <h4 className="text-xl">
-                          Cast Your Vote
-                      </h4>
-                      <div className='text-base'>{totalPercentValue} %</div>
-                  </div>
-                  <div className="p-4 text-center">
-                    {
-                      options.map((item: any, index: number) => {
+              <div className='mt-5'>
+                  <Input
+                      defaultValue={minerIds.toString()}
+                      onChange={(e) => { handleMinerChange(e.target.value) }}
+                      className='form-input w-full rounded bg-[#212B3C] border border-[#313D4F] text-white'
+                      placeholder='Input minerId'
+                  />
+                  <div className="border-[#313D4F] mt-6 border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border border-solid">
+                      <div className="group flex h-[57px] !border-[#313D4F] justify-between items-center border-b px-4 pb-[12px] pt-3 border-solid">
+                          <h4 className="text-xl">
+                              Cast Your Vote
+                          </h4>
+                          <div className='text-base'>{totalPercentValue} %</div>
+                      </div>
+                      <div className="p-4 text-center">
+                        {
+                          options.map((item: ProposalOption, index: number) => {
 
-                        return (
-                          <div className="mb-4 space-y-3 leading-10" key={item.name + index}>
-                            <div
-                              className="w-full h-[45px] !border-[#313D4F] flex justify-between items-center pl-4 md:border border-solid rounded-full">
-                              <div className="text-ellipsis h-[100%] overflow-hidden">{item.name}</div>
-                              <div className="w-[180px] h-[45px] flex items-center">
-                                <div onClick={() => {
-                                  handleCountChange("decrease", index, item)
-                                }}
-                                     className={`w-[35px] border-x border-solid !border-[#313D4F] text-white font-semibold ${item.disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>-
+                            return (
+                              <div className="mb-4 space-y-3 leading-10" key={item.name + index}>
+                                <div
+                                  className="w-full h-[45px] !border-[#313D4F] flex justify-between items-center pl-4 md:border border-solid rounded-full">
+                                  <div className="text-ellipsis h-[100%] overflow-hidden">{item.name}</div>
+                                  <div className="w-[180px] h-[45px] flex items-center">
+                                    <div onClick={() => {
+                                      handleCountChange("decrease", index, item)
+                                    }}
+                                         className={`w-[35px] border-x border-solid !border-[#313D4F] text-white font-semibold ${item.disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>-
+                                    </div>
+                                    <InputNumber
+                                      disabled={item.disabled}
+                                      className="text-white bg-transparent focus:outline-none"
+                                      controls={false}
+                                      min={0}
+                                      max={countMax(options, item.count)}
+                                      precision={0}
+                                      value={item.count}
+                                      onChange={(value) => {
+                                        handleOptionChange(index, Number(value))
+                                      }}
+                                    />
+                                    <div onClick={() => {
+                                      handleCountChange("increase", index, item)
+                                    }}
+                                         className={`w-[35px] border-x border-solid !border-[#313D4F] text-white font-semibold ${item.disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>+
+                                    </div>
+                                    <div className="w-[40px] text-center">%</div>
+                                  </div>
                                 </div>
-                                <InputNumber
-                                  disabled={item.disabled}
-                                  className="text-white bg-transparent focus:outline-none"
-                                  controls={false}
-                                  min={0}
-                                  max={countMax(options, item.count)}
-                                  precision={0}
-                                  value={item.count}
-                                  onChange={(value) => {
-                                    handleOptionChange(index, Number(value))
-                                  }}
-                                />
-                                <div onClick={() => {
-                                  handleCountChange("increase", index, item)
-                                }}
-                                     className={`w-[35px] border-x border-solid !border-[#313D4F] text-white font-semibold ${item.disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>+
-                                </div>
-                                <div className="w-[40px] text-center">%</div>
                               </div>
-                            </div>
-                          </div>
-                        )
-                      })
-                    }
-                    {/*{
-                      chainId === zkSyncTestnet.id &&
-                        <Space.Compact style={{ width: '100%' }}>
-                            <InputNumber min={1} max={10} defaultValue={3} />
-                            <Button type="primary" onClick={handleDeposit}>Submit</Button>
-                        </Space.Compact>
-                    }*/}
-                    <button onClick={startVoting} className="w-full h-[40px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-6 rounded-full" type="submit" disabled={loading}>
-                        Vote
-                    </button>
+                            )
+                          })
+                        }
+                          <button onClick={startVoting} className="w-full h-[40px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-6 rounded-full" type="submit" disabled={loading}>
+                              Vote
+                          </button>
+                      </div>
                   </div>
               </div>
           }
@@ -372,7 +379,7 @@ const Vote = () => {
                 <div>
                   <b>Vote Type</b>
                   <span
-                    className="float-right text-white">{["Single", "Multiple"][votingData?.VoteType - 1]} Choice Voting</span>
+                    className="float-right text-white">{["Single", "Multiple"][votingData?.voteType - 1]} Choice Voting</span>
                 </div>
                 <div>
                   <b>Exp. Time</b>
@@ -394,12 +401,6 @@ const Vote = () => {
             </div>
           </div>
         </div>
-        {
-          votingData?.voteStatus === IN_PROGRESS_STATUS &&
-          <button onClick={cancelVoting} className="w-full h-[40px] bg-red-500 hover:bg-red-700 text-white py-2 px-6 rounded-full mt-6" type="submit" disabled={loading}>
-            Cancel Proposal
-          </button>
-        }
       </div>
     </div>
   )

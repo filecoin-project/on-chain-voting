@@ -1,117 +1,235 @@
-import { ethers, utils } from "ethers";
-import * as zksync from "zksync-web3";
-import { Provider } from "zksync-web3";
+// Copyright (C) 2023-2024 StorSwift Inc.
+// This file is part of the PowerVoting library.
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at:
+// http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import { ethers } from "ethers";
 import { NFTStorage, Blob } from 'nft.storage';
-import abi from "../../public/abi/power-voting.json";
+import fileCoinAbi from "../common/abi/power-voting.json";
+import oracleAbi from "../common/abi/oracle.json";
 import {
-  filecoinMainnetContractAddress,
+  powerVotingMainNetContractAddress,
+  oracleCalibrationContractAddress,
   contractAddressList,
   NFT_STORAGE_KEY,
+  oracleMainNetContractAddress,
+  SUCCESS_INFO,
+  ERROR_INFO,
+  OPERATION_FAILED_MSG,
 } from "../common/consts";
+import { filecoin, filecoinCalibration } from 'wagmi/chains';
 
-export const useDynamicContract = (chainId: number) => {
-  const contractAddress = contractAddressList.find((item: any) => item.id === chainId)?.address || filecoinMainnetContractAddress;
-
-  // @ts-ignore
-  const provider = new ethers.providers.Web3Provider(window.ethereum);
-  const signer = provider.getSigner();
-
-  const contract = new ethers.Contract(contractAddress, abi, signer);
-
-  const decodeError = (data: string) => {
-    const errorData = data.substring(0, 2) + data.substring(10);
-    const defaultAbiCoder = new ethers.utils.AbiCoder();
-    const decodedData =  defaultAbiCoder.decode(['string'], errorData)[0];
-    return decodedData;
+const decodeError = (data: string) => {
+  const errorData = data.substring(0, 2) + data.substring(10);
+  const defaultAbiCoder = new ethers.utils.AbiCoder();
+  let decodedData =  '';
+  try {
+    decodedData = defaultAbiCoder.decode(['string'], errorData)[0];
+  } catch (e) {
+    console.log(e);
   }
+  return decodedData;
+}
 
-  const handleReturn = (params: any) => {
-    const { type, data } = params
-    let code = 200;
-    let msg = 'success';
-    if (type === 'error') {
-      console.log(data?.error?.data);
-      const encodeData = data?.error?.data?.originalError?.data;
-      if (encodeData) {
-        code = 401
-        msg = decodeError(encodeData);
-      } else {
-        code = 402
-      }
+// @ts-ignore
+const handleReturn = ({ type, data }) => {
+  let code = 200;
+  let msg = SUCCESS_INFO;
+  if (type === Error) {
+    const encodeData = data?.error?.data?.originalError?.data;
+    if (encodeData) {
+      code = 401
+      msg = decodeError(encodeData) || OPERATION_FAILED_MSG;
+    } else {
+      code = 402;
+      msg = OPERATION_FAILED_MSG;
     }
-    return {
-      code,
-      msg,
-      data
-    }
-  }
-
-  const createVotingApi = async (proposalCid: string, timestamp: number, chainId:number, proposalType: number) => {
-    try {
-      const data = await contract.createProposal(proposalCid, timestamp, chainId, proposalType);
-      return handleReturn({
-        type: 'success',
-        data
-      })
-    } catch (e: any) {
-      return handleReturn({
-        type: 'error',
-        data: e
-      })
-    }
-  }
-
-  const voteApi = async (id: number, optionId: string) => {
-    try {
-      const data = await contract.vote(id, optionId);
-      return handleReturn({
-        type: 'success',
-        data
-      })
-    } catch (e: any) {
-      return handleReturn({
-        type: 'error',
-        data: e
-      })
-    }
-  }
-
-  const cancelVotingApi = async (id: number) => {
-    try {
-      const data = await contract.cancelProposal(id);
-      return handleReturn({
-        type: 'success',
-        data
-      })
-    } catch (e: any) {
-      return handleReturn({
-        type: 'error',
-        data: e
-      })
-    }
-  }
-
-  const zkSyncDepositApi = async () => {
-    const zkSyncProvider = new Provider("https://testnet.era.zksync.dev");
-    const ethProvider = ethers.getDefaultProvider("goerli");
-    // const signingKey = await signer.getSigningKey();
-    //console.log(signingKey);
-    // const zkSyncWallet = new zksync.Wallet(signingKey, zkSyncProvider, ethProvider);
-
-
-    // const deposit = await zkSyncWallet.deposit({
-    //   token: zksync.utils.ETH_ADDRESS,
-    //   amount: ethers.utils.parseEther("1.0"),
-    // });
-    //
-    // return deposit;
   }
 
   return {
+    code,
+    msg,
+    data
+  }
+}
+
+export const useStaticContract = async (chainId: number) => {
+  const rpcUrl = chainId === filecoin.id ? filecoin.rpcUrls.default.http[0] : filecoinCalibration.rpcUrls.default.http[0];
+  const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+
+  const powerVotingContractAddress = contractAddressList.find(item => item.id === chainId)?.address || powerVotingMainNetContractAddress;
+  const powerVotingContract = new ethers.Contract(powerVotingContractAddress, fileCoinAbi, provider);
+  const oracleContractAddress = chainId === filecoin.id ? oracleMainNetContractAddress : oracleCalibrationContractAddress;
+  const oracleContract = new ethers.Contract(oracleContractAddress, oracleAbi, provider);
+
+  /**
+   * get latest proposal id
+   */
+  const getLatestId = async () => {
+    try {
+      const data = await powerVotingContract.proposalId();
+      return handleReturn({
+        type: SUCCESS_INFO,
+        data
+      })
+    } catch (e) {
+      console.log(e);
+      return handleReturn({
+        type: ERROR_INFO,
+        data: e
+      })
+    }
+  }
+
+  /**
+   * get proposal detail
+   * @param id
+   */
+  const getProposal = async (id: number) => {
+    try {
+      const data = await powerVotingContract.idToProposal(id);
+      return handleReturn({
+        type: SUCCESS_INFO,
+        data
+      })
+    } catch (e) {
+      console.log(e);
+      return handleReturn({
+        type: ERROR_INFO,
+        data: e
+      })
+    }
+  }
+
+  /**
+   * get UCAN data
+   * @param address
+   */
+  const getOracleAuthorize = async (address: any) => {
+    try {
+      const data = await oracleContract.voterToInfo(address);
+      return handleReturn({
+        type: SUCCESS_INFO,
+        data
+      })
+    } catch (e) {
+      console.log(e);
+      return handleReturn({
+        type: ERROR_INFO,
+        data: e
+      })
+    }
+  }
+
+  /**
+   * get miner ID
+   * @param address
+   */
+  const getMinerIds = async (address: any) => {
+    try {
+      const data = await oracleContract.getVoterInfo(address);
+      return handleReturn({
+        type: SUCCESS_INFO,
+        data
+      })
+    } catch (e) {
+      console.log(e);
+      return handleReturn({
+        type: ERROR_INFO,
+        data: e
+      })
+    }
+  }
+
+  return {
+    getLatestId,
+    getProposal,
+    getOracleAuthorize,
+    getMinerIds
+  }
+}
+
+export const useDynamicContract = (chainId: number) => {
+  const contractAddress = contractAddressList.find(item => item.id === chainId)?.address || powerVotingMainNetContractAddress;
+  // @ts-ignore
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  const signer = provider.getSigner();
+  const contract = new ethers.Contract(contractAddress, fileCoinAbi, signer);
+
+  /**
+   * create proposal
+   * @param proposalCid
+   * @param expTime
+   * @param proposalType
+   */
+  const createVotingApi = async (proposalCid: string, expTime: number, proposalType: number) => {
+    try {
+      const data = await contract.createProposal(proposalCid, expTime, proposalType);
+      return handleReturn({
+        type: SUCCESS_INFO,
+        data
+      })
+    } catch (e) {
+      console.log(e);
+      return handleReturn({
+        type: ERROR_INFO,
+        data: e
+      })
+    }
+  }
+
+  /**
+   * proposal vote
+   * @param proposalId
+   * @param optionId
+   */
+  const voteApi = async (proposalId: number, optionId: string, minerId: number[]) => {
+    try {
+      const data = await contract.vote(proposalId, optionId, minerId);
+      return handleReturn({
+        type: SUCCESS_INFO,
+        data
+      })
+    } catch (e) {
+      return handleReturn({
+        type: ERROR_INFO,
+        data: e
+      })
+    }
+  }
+
+  /**
+   * UCAN authorize or deAuthorize
+   * @param ucanCid
+   */
+  const ucanDelegate = async (ucanCid: string) => {
+    try {
+      const data = await contract.ucanDelegate(ucanCid);
+      return handleReturn({
+        type: SUCCESS_INFO,
+        data
+      })
+    } catch (e) {
+      return handleReturn({
+        type: ERROR_INFO,
+        data: e
+      })
+    }
+  }
+
+  return {
+    ucanDelegate,
     createVotingApi,
-    cancelVotingApi,
     voteApi,
-    zkSyncDepositApi,
   }
 }
 

@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-Power Voting dApp utilizes Drand Timelock, StorSwift ZK-KYC and Subgraphs technologies to achieve fair and private voting. Before the voting deadline, no one’s voting results will be seen by others, and the voting process will not be disturbed by other participant’s voting results. After the voting deadline, anyone can count the votes in a decentralized manner, and the results of the counting will executed and stored by smart contract and will not be manipulated by any centralized organization or individual. 
+Power Voting dApp utilizes timelock based on smart contract technology to achieve fair and private voting. Before the voting deadline, no one’s voting results will be seen by others, and the voting process will not be disturbed by other participant’s voting results. After the voting deadline, anyone can count the votes in a decentralized manner, and the results of the counting will executed and stored by smart contract and will not be manipulated by any centralized organization or individual. 
 
 Power Voting dApp aims to become the infrastructure of DAO governance.
 
@@ -20,39 +20,24 @@ When community members vote, they use the timelock technology to lock the voting
 
 After the counting time arrives, any voting participant can initiate a vote count without being affected by any centralized organization.
 
-
-## 4. ZK-KYC
-
-Power Voting dApp integrates with StorSwift ZK-KYC to protect user's privacy. Before user creating a proposal or voting on a proposal, user needs to login to StorSwift ZK-KYC platform to generate a UCAN specified DID with user roles and voting power properties, then ZK-KYC platform will interact with Power Voting dApp on-chain automatically to save user DID into Power Voting dApp allow-list. Only the users that have DID listed in Power Voting dApp allow-list can create a proposal or vote on a proposal.
-
-## 5. Timelock
+## 4. Timelock
 
 When creating a proposal, the creator will enter a voting expiration time, and Power Voting dApp will store the proposal content and voting expiration time together on the blockchain. When user votes on a proposal, Power Voting dApp will call Drand Timelock API to encrypt user's voting data and store the encrypt data into contract, the encrypt data won't be decrypt until the proposal expiration time. When proposal expiration time reached, Power Voting dApp will call Drand Timelock API to decrypt user's voting data to count the proposal. Power Voting dApp will lock all users' voting content and not allow anyone to query voting content until voting expiration time, to make sure no one can know the voting information of other members before voting expiration time reaches.
 
-## 6. Voting Power Snapshot
+## 5. Voting Power Snapshot
 
-When creating a proposal, Power Voting dApp will get the current `block.height` and store it together with proposal content on the blockchain. When a user votes, Power Voting dApp will obtain the balance of the user's `address` corresponding to the `block.height` when the proposal was created at, and then use the asset amount as the voting power to vote.
+Power Oracle will request raw data from FileCoin, GitHub and other data sources to calculate role identity and voting power and save them into Power Oracle contracts. SP and Client respectively invoke the `PowerAPI.minerRawPower`(filActorld) and `DataCapAPI.balance`(filActorld) interfaces to retrieve power. Power Oracle contracts will store 60 days history of voting power. When users vote, only the percentage is recorded, not the actual voting power. During the vote counting process, a random weight will be selected from the 60 days history and multiplied by the percentage to calculate the vote.
 
-### zkSync ###
+## 6. Power Voting Flowchart
 
-When on zkSync, contract is deployed on L2, Power Voting dApp will obtain both of L1 and L2 balances of the user's `address` to calculate voting power.
+![](img/flowchart.png)
 
-![](./asset/zksync.jpg)
+## 7. Power Voting Sequence Chart
 
+![](img/timing_diagram.png)
 
-## 7. Architecture Diagram
+## 8. UCAN Design
 
-![](./asset/architecture.jpg)
+![](img/ucan1.png)
+![](img/ucan2.png)
 
-## 8. Timing Diagram
-
-![](./asset/timing_graph.jpg)
-
-## 9. Proposal State Flow
-
-![](./asset/state_flow.jpg)
-
-## 10. Proposal Type
-
-Power Voting dApp supports Single Answer and Multiple Answers proposals and can customize at most 10 options.
-![](./asset/proposal_type.png)

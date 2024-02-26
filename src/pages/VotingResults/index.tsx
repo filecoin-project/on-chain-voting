@@ -1,3 +1,17 @@
+// Copyright (C) 2023-2024 StorSwift Inc.
+// This file is part of the PowerVoting library.
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at:
+// http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { useNetwork, useAccount } from "wagmi";
@@ -7,14 +21,12 @@ import dayjs from 'dayjs';
 import EllipsisMiddle from "../../components/EllipsisMiddle";
 import MDEditor from '../../components/MDEditor';
 import {
-  filecoinMainnetChain,
   web3AvatarUrl,
   COMPLETED_STATUS,
-  WRONG_NET_STATUS
+  WRONG_NET_STATUS, VOTE_COUNTING_STATUS,
 } from "../../common/consts";
-import {apolloClient} from "../../utils/apollo";
-import {VOTE_QUERY} from "../../utils/queries";
 import VoteList from "../../components/VoteList";
+import {ProposalOption, ProposalData, ProposalResult, ProposalHistory} from "../../common/types";
 
 const VotingResults = () => {
   const { chain } = useNetwork();
@@ -30,13 +42,16 @@ const VotingResults = () => {
   }, [chain])
 
   const initState = async () => {
-    const res = await axios.get(`https://${cid}.ipfs.nftstorage.link/`);
-    const data = res.data;
-    const option: any[] = [];
+    const option: ProposalOption[] = [];
     let voteList: any[] = [];
     let voteStatus = null;
+    const params = {
+      proposalId: Number(id),
+      network: chain?.id
+    }
 
-    if (data.chainId !== chain?.id) {
+    const { data: proposalData } = await axios.get(`https://${cid}.ipfs.nftstorage.link/`);
+    if (proposalData.chainId !== chain?.id) {
       voteStatus = WRONG_NET_STATUS;
       if (isConnected) {
         openChainModal && openChainModal();
@@ -44,42 +59,33 @@ const VotingResults = () => {
         openConnectModal && openConnectModal();
       }
     } else {
-      const res = await apolloClient(chain?.id || filecoinMainnetChain.id).query({
-        query: VOTE_QUERY,
-        variables: {
-          id: id
-        }
+      const { data: { data: resultData } } = await axios.get('/api/proposal/result', {
+        params,
       })
-      const voteData = res.data.proposal;
-      if (voteData?.status === COMPLETED_STATUS) {
-        voteStatus = COMPLETED_STATUS;
-        data.option?.map((item: string, index: number) => {
-          const voteItem = voteData?.voteResults?.find((vote: any) => vote.optionId === index.toString());
-          option.push({
-            name: item,
-            count: voteItem?.votes ? Number(voteItem.votes) : 0
-          })
+      voteStatus = resultData.length > 0 ? COMPLETED_STATUS : VOTE_COUNTING_STATUS;
+      resultData.map((item: ProposalData, index: number) => {
+        const voteItem = resultData.find((vote: ProposalResult) => vote.optionId === index);
+        option.push({
+          name: proposalData.option[voteItem.optionId],
+          count: voteItem?.votes ? Number(voteItem.votes) : 0
         })
-        if (voteData.voteListCid) {
-          const res = await axios.get(`https://${voteData.voteListCid}.ipfs.nftstorage.link/`);
-          res.data?.map(((item: any) => {
-            voteList.push({
-              label: data.option[item.OptionId],
-              value: item.Votes,
-              Address: item.Address.slice(0, -3),
-              TransactionHash: item.TransactionHash
-            })
-          }))
-        }
-      }
+      })
+      const { data: { data: historyData } } = await axios.get('/api/proposal/history', {
+        params,
+      })
+      voteList = historyData.map((item: ProposalHistory) => ({
+        optionName: proposalData.option[item.optionId],
+        votes: item.votes,
+        address: item.address?.substring(0, 42),
+      }));
     }
     setVotingData({
-      ...data,
+      ...proposalData,
       id,
       cid,
       option,
       voteStatus,
-      voteList: voteList.sort((a: any, b: any) => b.value - a.value)
+      voteList: voteList.sort((a: any, b: any) => b.votes - a.votes)
     })
   }
 
@@ -89,6 +95,11 @@ const VotingResults = () => {
         return {
           name: 'Wrong network',
           color: 'bg-red-700',
+        };
+      case VOTE_COUNTING_STATUS:
+        return {
+          name: 'Vote Counting',
+          color: 'bg-yellow-700',
         };
       case COMPLETED_STATUS:
         return {
@@ -102,7 +113,7 @@ const VotingResults = () => {
         };
     }
   }
-
+5
   return (
     <div className='flex voting-result'>
       <div className='relative w-full pr-4 lg:w-8/12'>
@@ -118,10 +129,10 @@ const VotingResults = () => {
         </div>
         <div className='px-3 md:px-0'>
           <h1 className='mb-6 text-3xl font-semibold text-white break-words break-all leading-12'>
-            {votingData?.Name}
+            {votingData?.name}
           </h1>
           {
-            votingData?.voteStatus &&
+            (votingData?.voteStatus || votingData?.voteStatus === 0) &&
             <div className="flex justify-between mb-6">
               <div className="flex items-center justify-between w-full mb-1 sm:mb-0">
                 <button
@@ -129,14 +140,14 @@ const VotingResults = () => {
                   {handleVoteStatusTag(votingData.voteStatus).name}
                 </button>
                 <div className="flex items-center justify-center">
-                  <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${votingData?.Address}`} alt="" />
+                  <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${votingData?.address}`} alt="" />
                   <a
                     className="text-white"
                     target="_blank"
                     rel="noopener"
-                    href={`${chain?.blockExplorers?.default.url}/address/${votingData?.Address}`}
+                    href={`${chain?.blockExplorers?.default.url}/address/${votingData?.address}`}
                   >
-                    {EllipsisMiddle({ suffixCount: 4, children: votingData?.Address })}
+                    {EllipsisMiddle({ suffixCount: 4, children: votingData?.address })}
                   </a>
                 </div>
               </div>
@@ -146,14 +157,16 @@ const VotingResults = () => {
             <MDEditor
               className="border-none rounded-[16px] bg-transparent"
               style={{ height: 'auto' }}
-              value={votingData?.Descriptions}
+              value={votingData?.descriptions}
               moreButton
               readOnly={true}
               view={{ menu: false, md: false, html: true, both: false, fullScreen: true, hideMenu: false }}
               onChange={() => {}}
             />
           </div>
-          <VoteList voteList={votingData?.voteList} chain={chain} />
+          {
+            votingData.voteStatus === COMPLETED_STATUS && <VoteList voteList={votingData?.voteList} chain={chain} />
+          }
         </div>
       </div>
       <div className='w-full lg:w-4/12 lg:min-w-[321px]'>
@@ -171,7 +184,7 @@ const VotingResults = () => {
               <div className='space-y-1'>
                 <div>
                   <b>Vote Type</b>
-                  <span className='float-right text-white'>{ ['Single', 'Multiple'][votingData?.VoteType - 1] } Choice Voting</span>
+                  <span className='float-right text-white'>{ ['Single', 'Multiple'][votingData?.voteType - 1] } Choice Voting</span>
                 </div>
                 <div>
                   <b>Exp. Time</b>
@@ -189,7 +202,7 @@ const VotingResults = () => {
             </div>
           </div>
           {
-            votingData?.voteStatus === COMPLETED_STATUS &&
+            votingData.voteStatus === COMPLETED_STATUS &&
               <div className='text-base border-solid border-y border-skin-border bg-skin-block-bg md:rounded-xl md:border'>
                   <div className='group flex h-[57px] justify-between rounded-t-none border-b border-skin-border border-solid px-4 pb-[12px] pt-3 md:rounded-t-lg'>
                       <h4 className='flex items-center text-xl'>
@@ -206,13 +219,12 @@ const VotingResults = () => {
                             return (
                               <div key={item.name + index}>
                                 <div className='flex justify-between mb-1 text-skin-link'>
-                                  <div className='flex items-center overflow-hidden'>
+                                  <div className='w-[150px] flex items-center overflow-hidden'>
                                     <span className='mr-1 truncate'>{item.name}</span>
                                   </div>
                                   <div className='flex justify-end'>
                                     <div className='space-x-2'>
-                                      <span className='whitespace-nowrap'>{item.count} Vote(s)</span>
-                                      <span>{percent}%</span>
+                                      <span>{item.count}%</span>
                                     </div>
                                   </div>
                                 </div>
