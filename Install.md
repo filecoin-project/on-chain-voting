@@ -30,9 +30,38 @@ yarn
 
 After yarn, you will get a 'node_modules' folder in the root directory.
 
+
 <img src="img/node_modules.png" style="zoom:50%;" />
 
-### 4.Build And Package
+### 4.Update Smart Contract Address And ABI
+
+Deploying PowerVoting and Oracle contract on Filecoin main network and replace the following address in ‘/src/common/consts.ts’
+
+<img src="img/mainnet.png" style="zoom:50%;" />
+
+If you deploy the contract on Filecoin test network Calibration, you should replace the following address in ‘/src/common/consts.ts’
+
+<img src="img/testnet.png" style="zoom:50%;" />
+
+If you modify the contract code, you need to update the following abi in ‘/src/common/abi’
+
+<img src="img/abi.png" style="zoom:50%;" />
+
+
+
+### 5. Update IPFS Storage Key And Wallet Connect Project Id
+
+Create NFT storage key by https://nft.storage/manage/
+
+Create wallet connect project id by https://www.rainbowkit.com/docs/migration-guide#012x-breaking-changes
+
+Replace the following keys in ‘/src/common/consts.ts’
+
+<img src="img/key.png" style="zoom:50%;" />
+
+
+
+### 6.Build And Package
 
 Build  with the following command:
 
@@ -44,7 +73,7 @@ After building, you will get a 'dist' folder in the root directory.
 
 <img src="img/dist.png" style="zoom:50%;" />
 
-### 5.Deployment
+### 7.Deployment
 
 To deploy the 'dist ' folder generated after building your front-end project, you can follow these steps:
 
