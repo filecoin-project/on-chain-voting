@@ -1,0 +1,28 @@
+server:
+  # service startup port
+  port: :9999
+
+
+# drand api
+drand:
+  url:
+    - "https://api.drand.secureweb3.com:6875"
+    - "https://api.drand.sh/"
+    - "https://api2.drand.sh/"
+    - "https://api3.drand.sh/"
+    - "https://drand.cloudflare.com/"
+  chainHash: ""
+
+mysql:
+  url: localhost:3306
+  username: root
+  password: root
+
+network:
+  - id: 314159
+    name: FileCoin-Calibration
+    rpc: https://api.calibration.node.glif.io/rpc/v1
+    powerVotingAbi: power-voting.json
+    oracleAbi: oracle.json
+    powerVotingContract: 0x0000000000000000000000000000000000000000
+    oracleContract: 0x0000000000000000000000000000000000000000
