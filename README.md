@@ -26,7 +26,7 @@ When creating a proposal, the creator will enter a voting expiration time, and P
 
 ## 5. Voting Power Snapshot
 
-Power Oracle will request raw data from FileCoin, GitHub and other data sources to calculate role identity and voting power and save them into Power Oracle contracts. SP and Client respectively invoke the `PowerAPI.minerRawPower`(filActorld) and `DataCapAPI.balance`(filActorld) interfaces to retrieve power. Power Oracle contracts will store 60 days history of voting power. When users vote, only the percentage is recorded, not the actual voting power. During the vote counting process, a random weight will be selected from the 60 days history and multiplied by the percentage to calculate the vote.
+Power Oracle will request raw data from FileCoin, GitHub and other data sources to calculate role identity and voting power and save them into Power Oracle contracts. SP and Client respectively invoke the `PowerAPI.minerRawPower(filActorld)` and `DataCapAPI.balance(filActorld)` interfaces to retrieve power. Power Oracle contracts will store 60 days history of voting power. When users vote, only the percentage is recorded, not the actual voting power. During the vote counting process, a random weight will be selected from the 60 days history and multiplied by the percentage to calculate the vote.
 
 ## 6. Power Voting Flowchart
 
