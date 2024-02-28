@@ -3,13 +3,12 @@
 ## 1. Obtain the code for the Oracle Contract, with the repository branch set to: filecoin
 
 ```python
-git clone https://gitlab.com/storswiftlabs/wh/dapp/power-voting/kyc-oracle.git
+git clone https://github.com/black-domain/powervoting-contracts.git
 ```
 
-## 2. *Switch branch and enter the contract directory*
+## 2. *enter the contract directory*
 
 ```python
-git checkout filecoin
 cd contract
 ```
 
