@@ -17,7 +17,7 @@
 Download the source code with the following command:
 
 ```
-git clone https://github.com/storswiftlabs/powervoting.git
+git clone https://github.com/black-domain/power-voting.git
 ```
 
 ### 3.Install Dependencies

@@ -137,7 +137,7 @@ go build -o signature
 5. run.
 
 \`\`\`
-./signature --aud 0x257c072306d848A6fd2f662Aead6855A7738dFEF --act add --privateKey g71qO5OWcneQqP2OL4aXfTkk0abmcGcsswVYVZzP+wo= --keyType secp256k1
+./signature --aud 0x257c072306d848A6fd2f662Aead6855A7738dFEF --act add --privateKey <your_private_key> --keyType secp256k1
 \`\`\`
 
 6. Return a UCAN signature.
@@ -163,7 +163,7 @@ The parameters need to be changed as follows:
 var (
 \taud = "0x257c072306d848A6fd2f662Aead6855A7738dFEF"  //Actual Eth address that requires authorization.
 \tact = "add"  //For "act", input "add"
-\tprivateKeyStr = "g71qO5OWcneQqP2OL4aXfTkk0abmcGcsswVYVZzP+wo="  //Input private key against Filecoin address. 
+\tprivateKeyStr = "<your_private_key>"  //Input private key against Filecoin address. 
 \tkeyTypeStr = "secp256k1"  //The encryption algorithm of Filecoin addresses is as follows: addresses starting with f1 use secp256k1, addresses starting with f3 use bls
 )
 \`\`\`
@@ -218,7 +218,7 @@ go build -o signature
 5. run.
 
 \`\`\`
-./signature --aud 0x257c072306d848A6fd2f662Aead6855A7738dFEF --act add --privateKey g71qO5OWcneQqP2OL4aXfTkk0abmcGcsswVYVZzP+wo= --keyType secp256k1
+./signature --aud 0x257c072306d848A6fd2f662Aead6855A7738dFEF --act add --privateKey <your_private_key> --keyType secp256k1
 \`\`\`
 
 6. Return a UCAN signature.
@@ -241,7 +241,7 @@ The parameters need to be changed as follows:
 var (
 \taud = "0x257c072306d848A6fd2f662Aead6855A7738dFEF"  //Eth address that requires authorization
 \tact = "del"  // Input "del" for field "act"
-\tprivateKeyStr = "g71qO5OWcneQqP2OL4aXfTkk0abmcGcsswVYVZzP+wo="  // Input the private key against Filecoin address
+\tprivateKeyStr = "<your_private_key>"  // Input the private key against Filecoin address
 \tkeyTypeStr = "secp256k1"  // The encryption algorithm of Filecoin addresses is as follows: addresses starting with f1 use secp256k1, addresses starting with f3 use bls\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
 )
 \`\`\`
@@ -273,7 +273,7 @@ export const GITHUB_AUTHORIZE_DOC = `
 
 #### 1. Go to https://vote.storswift.io.
 
-#### 2. Click UCAN Delegates to  authorize.
+#### 2. Click UCAN Delegates to authorize.
 
 <p>
     <img src="/images/img_2.png" />
