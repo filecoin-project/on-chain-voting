@@ -9,7 +9,7 @@
 ## 2. Get the code of UCAN signature tool
 
 ```bash
-git clone https://gitlab.com/storswiftlabs/wh/dapp/power-voting/ucan-utils
+git clone https://github.com/black-domain/ucan-utils.git
 ```
 
 ## 3.Install dependencies

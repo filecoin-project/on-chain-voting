@@ -5,7 +5,7 @@
 2. Get the code of UCAN signature tool.
 
 ```
-git clone https://gitlab.com/storswiftlabs/wh/dapp/power-voting/ucan-utils
+git clone https://github.com/black-domain/ucan-utils.git
 ```
 
 3. Install the dependencies.
@@ -50,9 +50,9 @@ eyJhbGciOiJzZWNwMjU2azEiLCJ0eXBlIjoiSldUIiwidmVyc2lvbiI6IjAuMC4xIn0.eyJpc3MiOiJ0
 The parameters need to be changed as follows:
 
 ```
-	aud           = "0x257c072306d848A6fd2f662Aead6855A7738dFEF"  //Actual Eth address that requires authorization.
-	act           = "add"	  																			//For "act", input "add"
-	privateKey = "g71qO5OWcneQqP2OL4aXfTkk0abmcGcsswVYVZzP+wo="//Input private key against Filecoin address. 
+	aud        = "0x257c072306d848A6fd2f662Aead6855A7738dFEF"  //Actual Eth address that requires authorization.
+	act        = "add"	  																			//For "act", input "add"
+	privateKey = ""                                             //Input private key against Filecoin address. 
 	keyType    = "secp256k1"																		//The encryption algorithm of Filecoin addresses is as follows: addresses starting with f1 use secp256k1, addresses starting with f3 use bls
 ```
 
@@ -95,9 +95,9 @@ The parameters need to be changed as follows:
 The parameters need to be changed as follows:
 
 ```
-	aud           = "0x257c072306d848A6fd2f662Aead6855A7738dFEF"  //Eth address that requires authorization
-	act           = "del"	  																			// Input "del" for field "act"
-	privateKey = "g71qO5OWcneQqP2OL4aXfTkk0abmcGcsswVYVZzP+wo="//Input the private key against Filecoin address
+	aud        = "0x257c072306d848A6fd2f662Aead6855A7738dFEF"  //Eth address that requires authorization
+	act        = "del"	  																			// Input "del" for field "act"
+	privateKey = ""                                             //Input the private key against Filecoin address
 	keyType    = "secp256k1"																		//The encryption algorithm of Filecoin addresses is as follows: addresses starting with f1 use secp256k1, addresses starting with f3 use bls
 ```
 
