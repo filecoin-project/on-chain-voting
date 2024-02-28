@@ -4,24 +4,18 @@
 
 ## 2.Install [Docker](https://docs.docker.com/engine/install/ubuntu/)
 
-## 3.Obtain the code for the Oracle node, with the repository branch set to: filecoin
+## 3.Obtain the code for the Oracle node
 
 ```bash
-git clone https://gitlab.com/storswiftlabs/wh/dapp/power-voting/kyc-oracle.git
-```
-
-## 4.Switch branch and enter the backend directory
-
-```bash
-git checkout filecoin
+git clone https://github.com/black-domain/power-oracle-node.git
 cd backend
 ```
 
-## 5.Modify the configuration.yaml configuration file
+## 4.Modify the configuration.yaml configuration file
 
 ![Untitled](img/1.png)
 
-## 6.Build Docker image
+## 5.Build Docker image
 
 ```bash
 docker build -t oracle  .
@@ -31,7 +25,7 @@ docker build -t oracle  .
 
 
 
-## 7.Run Docker image
+## 6.Run Docker image
 
 ```bash
 docker run -d oracle
@@ -41,7 +35,7 @@ docker run -d oracle
 
 
 
-## 8.View logs
+## 7.View logs
 
 ```bash
 docker logs -f f3b24890eff07a89d7c27c92164b80983a7a12e81692e72db9a8747631aa2230
