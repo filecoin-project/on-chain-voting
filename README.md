@@ -20,12 +20,12 @@ go mod tidy
 go build -o signature .
 ```
 
-5. run.
+1. run.
+```
+./signature --aud 0x257c072306d848A6fd2f662Aead6855A7738dFEF --act add --privateKey <your_private_key> --keyType secp256k1
+```
 
-```
-./signature --aud 0x257c072306d848A6fd2f662Aead6855A7738dFEF --act add --privateKey g71qO5OWcneQqP2OL4aXfTkk0abmcGcsswVYVZzP+wo= --keyType secp256k1
-```
-6. Return a UCAN signature.
+1. Return a UCAN signature.
 
 ```
 eyJhbGciOiJzZWNwMjU2azEiLCJ0eXBlIjoiSldUIiwidmVyc2lvbiI6IjAuMC4xIn0.eyJpc3MiOiJ0MXkyNHY2Y3BiNzNwbnVkM2tlcHFoN3Zsb2h1YmNqYTR6emtrZ2MyeSIsImF1ZCI6IjB4MjU3YzA3MjMwNmQ4NDhBNmZkMmY2NjJBZWFkNjg1NUE3NzM4ZEZFRiIsImFjdCI6ImFkZCIsInByZiI6IiJ9.qYl0CQhK_EnqoKMf7Ph6x1gx1LW875y-nL__iH89s6MocYgfEZoETWAuPwwIU21LA4f-2LntzgcxdQv0Eks7bwA
@@ -51,9 +51,9 @@ The parameters need to be changed as follows:
 
 ```
 	aud        = "0x257c072306d848A6fd2f662Aead6855A7738dFEF"  //Actual Eth address that requires authorization.
-	act        = "add"	  																			//For "act", input "add"
-	privateKey = ""                                             //Input private key against Filecoin address. 
-	keyType    = "secp256k1"																		//The encryption algorithm of Filecoin addresses is as follows: addresses starting with f1 use secp256k1, addresses starting with f3 use bls
+	act        = "add"	  																		 //Input "add" for field "act"
+	privateKey = "<your_private_key>"                          //Input private key against Filecoin address. 
+	keyType    = "secp256k1"																	 //The encryption algorithm of Filecoin addresses is as follows: addresses starting with f1 use secp256k1, addresses starting with f3 use bls
 ```
 
 
@@ -96,9 +96,9 @@ The parameters need to be changed as follows:
 
 ```
 	aud        = "0x257c072306d848A6fd2f662Aead6855A7738dFEF"  //Eth address that requires authorization
-	act        = "del"	  																			// Input "del" for field "act"
-	privateKey = ""                                             //Input the private key against Filecoin address
-	keyType    = "secp256k1"																		//The encryption algorithm of Filecoin addresses is as follows: addresses starting with f1 use secp256k1, addresses starting with f3 use bls
+	act        = "del"	  																		 //Input "del" for field "act"
+	privateKey = "<your_private_key>"                          //Input the private key against Filecoin address
+	keyType    = "secp256k1"																	 //The encryption algorithm of Filecoin addresses is as follows: addresses starting with f1 use secp256k1, addresses starting with f3 use bls
 ```
 
 
