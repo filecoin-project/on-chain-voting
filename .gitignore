@@ -14,3 +14,6 @@ dist.zip
 .vscode/
 .idea
 .DS_Store
+
+#env
+.env

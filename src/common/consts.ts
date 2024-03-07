@@ -13,13 +13,14 @@
 // limitations under the License.
 
 import { filecoin, filecoinCalibration } from 'wagmi/chains';
-export const powerVotingMainNetContractAddress = '';
-export const oracleMainNetContractAddress = '';
-export const powerVotingCalibrationContractAddress = '';
-export const oracleCalibrationContractAddress = '';
-export const NFT_STORAGE_KEY = '';
-export const walletConnectProjectId = '';
 
+export const powerVotingMainNetContractAddress = process.env.POWER_VOTING_MAINNET_CONTRACT_ADDRESS || '';
+export const oracleMainNetContractAddress = process.env.ORACLE_MAINNET_CONTRACT_ADDRESS || '';
+export const powerVotingCalibrationContractAddress = process.env.POWER_VOTING_CALIBRATION_CONTRACT_ADDRESS || '';
+export const oracleCalibrationContractAddress = process.env.ORACLE_CALIBRATION_CONTRACT_ADDRESS || '';
+export const NFT_STORAGE_KEY = process.env.NFT_STORAGE_KEY || '';
+export const walletConnectProjectId = process.env.WALLET_CONNECT_ID || '';
+console.log(process.env.NODE_ENV);
 export const walletChainList = [
   {
     ...filecoin,

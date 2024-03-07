@@ -3,6 +3,19 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const dotenv = require('dotenv');
+
+// 根据 NODE_ENV 环境变量加载不同的配置文件
+let envFile = '.env';
+if (process.env.NODE_ENV === 'development') {
+  envFile = '.env.development';
+} else if (process.env.NODE_ENV === 'production') {
+  envFile = '.env.example';
+} else if (process.env.NODE_ENV === 'test') {
+  envFile = '.env.test';
+}
+
+const envConfig = dotenv.config({ path: envFile }).parsed;
 
 module.exports = {
   target:'web',
@@ -95,6 +108,9 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: './public/index.html',
     }),
+    new webpack.DefinePlugin({
+      'process.env': JSON.stringify(envConfig)
+    })
   ],
   devtool: 'source-map',
 };
