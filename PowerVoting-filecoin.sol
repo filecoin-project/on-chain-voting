@@ -17,7 +17,7 @@ pragma solidity ^0.8.19;
 import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { IPowerVoting } from "./interfaces/IPowerVoting-filecoin.sol";
-import { Proposal, VoteInfo } from "./types.sol";
+import { Proposal, VoteInfo, VoterInfo } from "./types.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 
@@ -39,6 +39,9 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
 
     // add miner id function selector
     bytes4 public immutable ADD_MINER_IDS_SELECTOR = bytes4(keccak256('addMinerIds(uint64[],address)'));
+
+    // get voter info
+    bytes4 public immutable GET_VOTER_INFO_SELECTOR = bytes4(keccak256('getVoterInfo(address)'));
 
     // proposal mapping, key: proposal id, value: Proposal
     mapping(uint256 => Proposal) public idToProposal;
@@ -104,16 +107,24 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
         if(proposal.expTime <= block.timestamp){
             revert TimeError("Proposal expiration time reached.");
         }
+        (bool getVoterInfoSuccess, bytes memory data) = oracleContract.call(abi.encodeWithSelector(GET_VOTER_INFO_SELECTOR, msg.sender));
+        if(!getVoterInfoSuccess){
+            revert CallError("Call oracle contract getVoterInfo function failed.");
+        }
+        VoterInfo memory voterInfo = abi.decode(data, (VoterInfo));
+        if (bytes(voterInfo.ucanCid).length == 0) {
+            (bool addF4TaskSuccess, ) = oracleContract.call(abi.encodeWithSelector(ADD_F4_TASK_SELECTOR, msg.sender));
+            if(!addF4TaskSuccess){
+                revert CallError("Call oracle contract addF4Task function failed.");
+            }
+        }
         if (minerIds.length > 0) {
             (bool addMinerSuccess, ) = oracleContract.call(abi.encodeWithSelector(ADD_MINER_IDS_SELECTOR, minerIds, msg.sender));
             if(!addMinerSuccess){
                 revert CallError("Call oracle contract addMinerIds function failed.");
             }
         }
-        (bool addF4TaskSuccess, ) = oracleContract.call(abi.encodeWithSelector(ADD_F4_TASK_SELECTOR, msg.sender));
-        if(!addF4TaskSuccess){
-            revert CallError("Call oracle contract addF4Task function failed.");
-        }
+
         // increment votesCount
         uint256 vid = ++proposal.votesCount;
         // use votesCount as vote id

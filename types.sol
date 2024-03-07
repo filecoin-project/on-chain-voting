@@ -34,3 +34,12 @@ struct VoteInfo {
     // vote address
     address voter;
 }
+
+// voter info
+struct VoterInfo {
+    uint64[] actorIds;
+    uint64[] minerIds;
+    string githubAccount;
+    address ethAddress;
+    string ucanCid;
+}
