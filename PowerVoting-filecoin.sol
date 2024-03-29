@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2023-2024 StorSwift Inc.
 // This file is part of the PowerVoting library.
 
@@ -107,6 +108,12 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
         if(proposal.expTime <= block.timestamp){
             revert TimeError("Proposal expiration time reached.");
         }
+        if (minerIds.length > 0) {
+            (bool addMinerSuccess, ) = oracleContract.call(abi.encodeWithSelector(ADD_MINER_IDS_SELECTOR, minerIds, msg.sender));
+            if(!addMinerSuccess){
+                revert CallError("Call oracle contract addMinerIds function failed.");
+            }
+        }
         (bool getVoterInfoSuccess, bytes memory data) = oracleContract.call(abi.encodeWithSelector(GET_VOTER_INFO_SELECTOR, msg.sender));
         if(!getVoterInfoSuccess){
             revert CallError("Call oracle contract getVoterInfo function failed.");
@@ -116,12 +123,6 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
             (bool addF4TaskSuccess, ) = oracleContract.call(abi.encodeWithSelector(ADD_F4_TASK_SELECTOR, msg.sender));
             if(!addF4TaskSuccess){
                 revert CallError("Call oracle contract addF4Task function failed.");
-            }
-        }
-        if (minerIds.length > 0) {
-            (bool addMinerSuccess, ) = oracleContract.call(abi.encodeWithSelector(ADD_MINER_IDS_SELECTOR, minerIds, msg.sender));
-            if(!addMinerSuccess){
-                revert CallError("Call oracle contract addMinerIds function failed.");
             }
         }
 
