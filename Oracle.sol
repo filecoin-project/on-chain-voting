@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2023-2024 StorSwift Inc.
 // This file is part of the PowerVoting library.
 
@@ -173,12 +174,12 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
 
         uint256 minerIdsLength = minerIds.length;
         uint64[] memory actorIds = voterInfo.actorIds;
-        uint256 actoerIdsLength = actorIds.length;
+        uint256 actorIdsLength = actorIds.length;
         uint64[] memory minerIdsRes = new uint64[](minerIdsLength);
         uint256 index;
         for (uint256 i = 0; i < minerIdsLength; i++) {
             uint64 actorId = minerIds[i].getOwner();
-            for (uint256 j = 0; j < actoerIdsLength; j++) {
+            for (uint256 j = 0; j < actorIdsLength; j++) {
                 if (actorId == actorIds[j]) {
                     minerIdsRes[index++] = minerIds[i];
                 }
