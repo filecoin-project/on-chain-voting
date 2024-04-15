@@ -47,6 +47,9 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
     // proposal mapping, key: proposal id, value: Proposal
     mapping(uint256 => Proposal) public idToProposal;
 
+    // fip map
+    mapping(address => bool) public fipMap;
+
     // proposal id to vote, out key: proposal id, inner key: vote id, value: vote info
     mapping(uint256 => mapping(uint256 => VoteInfo)) public proposalToVote;
 
@@ -76,6 +79,31 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
     }
 
     /**
+    * addFIP: add FIP
+    * @param fipAddress: address
+    */
+    function addFIP(
+        address fipAddress
+    ) external override onlyOwner nonZeroAddress(fipAddress) {
+        bool exist = fipMap[fipAddress];
+        // FIP Editor is not allowed to have other roles currently.
+        if (exist) {
+            revert AddFIPError("Add FIP editor error.");
+        }
+        fipMap[fipAddress] = true;
+    }
+
+    /**
+    * removeFIP: remove FIP
+    * @param fipAddress: address
+    */
+    function removeFIP(
+        address fipAddress
+    ) external override onlyOwner nonZeroAddress(fipAddress) {
+        fipMap[fipAddress] = false;
+    }
+
+    /**
      * create a proposal and store it into mapping
      *
      * @param proposalCid: proposal content is stored in ipfs, proposal cid is ipfs cid for proposal content
@@ -83,6 +111,11 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
      * @param proposalType: proposal type
      */
     function createProposal(string calldata proposalCid, uint248 expTime, uint256 proposalType) override external {
+        bool fip = fipMap[msg.sender];
+        if(!fip){
+            revert CallError("Not FIP.");
+        }
+
         // increment proposal id
         proposalId.increment();
         uint256 id = proposalId.current();

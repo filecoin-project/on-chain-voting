@@ -27,4 +27,7 @@ interface IPowerVotingError {
 
     // call other contract error
     error CallError(string);
+
+    // add FIP editor role error
+    error AddFIPError(string);
 }
