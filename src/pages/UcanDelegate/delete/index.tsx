@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, {useState} from "react";
+import React, {useState, useEffect, useRef} from "react";
 import {useLocation, useNavigate, Link} from "react-router-dom";
 import { ethers } from "ethers";
 import { message } from 'antd';
@@ -28,17 +28,19 @@ import {
   UCAN_TYPE_GITHUB_OPTIONS,
   UCAN_JWT_HEADER,
   UCAN_TYPE_FILECOIN_OPTIONS,
-  STORING_DATA_MSG,
+  STORING_DATA_MSG, OPERATION_CANCELED_MSG,
 } from '../../../common/consts';
 import './index.less';
 import {stringToBase64Url} from "../../../utils";
 import {getIpfsId, useDynamicContract} from "../../../hooks";
+import LoadingButton from "../../../components/LoadingButton";
 
 const UcanDelegate = () => {
   const {chain} = useNetwork();
   const {isConnected, address} = useAccount();
   const {openConnectModal} = useConnectModal();
   const navigate = useNavigate();
+  const prevAddressRef = useRef(address);
 
   const location = useLocation();
   const params = location.state?.params;
@@ -66,13 +68,25 @@ const UcanDelegate = () => {
     }
   });
 
+  useEffect(() => {
+    if (!isConnected) {
+      navigate("/home");
+      return;
+    }
+  }, []);
+
+  useEffect(() => {
+    const prevAddress = prevAddressRef.current;
+    if (prevAddress !== address) {
+      navigate("/home");
+    }
+  }, [address]);
 
   const validateValue = (value: string) => {
     return value?.trim() !== '';
   };
 
   const onSubmit = (values: any, githubStep?: number) => {
-    setLoading(true);
     if (params?.isGithubType) {
       switch (githubStep) {
         case UCAN_GITHUB_STEP_1:
@@ -85,7 +99,6 @@ const UcanDelegate = () => {
     } else {
       deAuthorizeFilecoinUcan(values);
     }
-    setLoading(false);
   }
 
   const setUcan = async (ucan: string) => {
@@ -93,15 +106,17 @@ const UcanDelegate = () => {
     const { ucanDelegate } = useDynamicContract(chainId);
     const cid = await getIpfsId(ucan);
     const res = await ucanDelegate(cid);
-    if (res.code === 200) {
+    if (res.code === 200 && res.data?.hash) {
       message.success(STORING_DATA_MSG);
       navigate("/");
     } else {
-      message.error(res.msg);
+      message.error(OPERATION_CANCELED_MSG);
     }
+    setLoading(false);
   }
 
   const deAuthorizeFilecoinUcan = async (values:  any) => {
+    setLoading(true);
     const { aud } = params;
     const { prf } = values;
     if (!aud || !prf) {
@@ -118,13 +133,21 @@ const UcanDelegate = () => {
     const signer = await provider.getSigner();
     const base64Header = stringToBase64Url(JSON.stringify(UCAN_JWT_HEADER));
     const base64Params = stringToBase64Url(JSON.stringify(ucanParams));
-    const signature = await signer.signMessage(`${base64Header}.${base64Params}`);
+    let signature = '';
+    try {
+      signature = await signer.signMessage(`${base64Header}.${base64Params}`);
+    } catch (e) {
+      message.error(OPERATION_CANCELED_MSG);
+      setLoading(false);
+      return;
+    }
     const base64Signature = stringToBase64Url(signature);
     const ucan = `${base64Header}.${base64Params}.${base64Signature}`;
     setUcan(ucan);
   }
 
   const createSignature = async () => {
+    setLoading(true);
     if (isConnected) {
       try {
         const { aud } = params;
@@ -142,7 +165,14 @@ const UcanDelegate = () => {
         const signer = await provider.getSigner();
         const base64Header = stringToBase64Url(JSON.stringify(UCAN_JWT_HEADER));
         const base64Params = stringToBase64Url(JSON.stringify(signatureParams));
-        const signature = await signer.signMessage(`${base64Header}.${base64Params}`);
+        let signature = '';
+        try {
+          signature = await signer.signMessage(`${base64Header}.${base64Params}`);
+        } catch (e) {
+          message.error(OPERATION_CANCELED_MSG);
+          setLoading(false);
+          return;
+        }
         const base64Signature = stringToBase64Url(signature);
         const githubSignatureParams = `${base64Header}.${base64Params}.${base64Signature}`;
         setGithubSignature(githubSignatureParams);
@@ -154,9 +184,11 @@ const UcanDelegate = () => {
       // @ts-ignore
       openConnectModal && openConnectModal();
     }
+    setLoading(false);
   }
 
   const deAuthorizeGithubUcan = async (values: any) => {
+    setLoading(true);
     const { url } = values;
     setUcan(url);
   }
@@ -355,11 +387,7 @@ const UcanDelegate = () => {
           />
 
           <div className='text-center'>
-            <button
-              className={`h-[40px] bg-red-500 hover:bg-red-700 text-white py-2 px-6 rounded-xl disabled:opacity-50 ${loading && 'cursor-not-allowed'}`}
-              type='submit' disabled={loading}>
-              Deauthorize
-            </button>
+            <LoadingButton className='!bg-red-500 !hover:bg-red-700' text='Deauthorize' loading={loading} />
           </div>
         </div>
       </form>
@@ -381,11 +409,7 @@ const UcanDelegate = () => {
           />
 
           <div className='text-center'>
-            <button
-              className={`h-[40px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-6 rounded-xl disabled:opacity-50 ${loading && 'cursor-not-allowed'}`}
-              type='submit' disabled={loading}>
-              Sign
-            </button>
+            <LoadingButton text='Sign' loading={loading} />
           </div>
         </div>
       </form>
@@ -404,11 +428,7 @@ const UcanDelegate = () => {
               type='button' onClick={() => { setGithubStep(UCAN_GITHUB_STEP_1) }}>
               Previous
             </button>
-            <button
-              className={`h-[40px] bg-red-500 hover:bg-red-700 text-white py-2 px-6 rounded-xl disabled:opacity-50 ${loading && 'cursor-not-allowed'}`}
-              type='submit' disabled={loading}>
-              Deauthorize
-            </button>
+            <LoadingButton className='!bg-red-500 !hover:bg-red-700' text='Deauthorize' loading={loading} />
           </div>
         </div>
       </form>

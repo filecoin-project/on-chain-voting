@@ -62,7 +62,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
         chains={chains}
         modalSize="compact"
       >
-      <App />
+        <App />
       </RainbowKitProvider>
     </WagmiConfig>
   </BrowserRouter>

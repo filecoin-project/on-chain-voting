@@ -82,7 +82,24 @@ export const useStaticContract = async (chainId: number) => {
         data
       })
     } catch (e) {
-      console.log(e);
+      return handleReturn({
+        type: ERROR_INFO,
+        data: e
+      })
+    }
+  }
+
+  /**
+   * check FIP editor
+   */
+  const isFipEditor = async (address: string) => {
+    try {
+      const data = await powerVotingContract.fipMap(address);
+      return handleReturn({
+        type: SUCCESS_INFO,
+        data
+      })
+    } catch (e) {
       return handleReturn({
         type: ERROR_INFO,
         data: e
@@ -93,6 +110,7 @@ export const useStaticContract = async (chainId: number) => {
   /**
    * get proposal detail
    * @param id
+   *
    */
   const getProposal = async (id: number) => {
     try {
@@ -152,9 +170,10 @@ export const useStaticContract = async (chainId: number) => {
 
   return {
     getLatestId,
+    isFipEditor,
     getProposal,
     getOracleAuthorize,
-    getMinerIds
+    getMinerIds,
   }
 }
 
@@ -191,6 +210,7 @@ export const useDynamicContract = (chainId: number) => {
    * proposal vote
    * @param proposalId
    * @param optionId
+   * @param minerId
    */
   const voteApi = async (proposalId: number, optionId: string, minerId: number[]) => {
     try {

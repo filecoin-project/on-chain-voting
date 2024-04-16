@@ -62,7 +62,7 @@ const Home = () => {
 
   useEffect(() => {
     getProposalList(page);
-  }, [chain, page]);
+  }, [chain, page, isConnected]);
 
   /**
    * get proposal list
@@ -70,49 +70,48 @@ const Home = () => {
    */
   const getProposalList = async (page: number) => {
     setLoading(true);
-    if (!isConnected) {
-      openConnectModal && openConnectModal();
-      setLoading(false);
-      return false;
-    }
     const chainId = chain?.id || 0;
+
     const { getLatestId, getProposal } = await useStaticContract(chainId);
     const res = await getLatestId();
-    const total = res.data.toNumber();
-    setTotal(total);
-    const offset = (page - 1) * pageSize;
+    let originList: ProposalList[] = [];
+    if (res?.data?._isBigNumber) {
+      const total = res.data.toNumber();
+      setTotal(total);
+      const offset = (page - 1) * pageSize;
 
-    const proposalRequests = [];
+      const proposalRequests = [];
 
-    for (let i = total - offset; i > Math.max(total - offset - pageSize, 0); i--) {
-      proposalRequests.push(getProposal(i));
+      for (let i = total - offset; i > Math.max(total - offset - pageSize, 0); i--) {
+        proposalRequests.push(getProposal(i));
+      }
+
+      const proposals = await Promise.all(proposalRequests);
+
+      const list = proposals.map(async ({ data }, index) => {
+        const params = {
+          proposalId: total - offset - index,
+          network: chainId
+        };
+
+        const { data: { data: resultData } } = await axios.get('/api/proposal/result', { params });
+        const proposalResults = resultData.map((item: ProposalResult) => ({
+          optionId: item.optionId,
+          votes: item.votes
+        }));
+        return {
+          id: total - offset - index,
+          cid: data.cid,
+          creator: data.creator,
+          expTime: data.expTime.toNumber(),
+          proposalType: data.proposalType.toNumber(),
+          proposalResults
+        };
+      });
+
+      const proposalsList: ProposalData[] = await Promise.all(list);
+      originList = await getList(proposalsList) || [];
     }
-
-    const proposals = await Promise.all(proposalRequests);
-
-    const list = proposals.map(async ({ data }, index) => {
-      const params = {
-        proposalId: total - offset - index,
-        network: chainId
-      };
-
-      const { data: { data: resultData } } = await axios.get('/api/proposal/result', { params });
-      const proposalResults = resultData.map((item: ProposalResult) => ({
-        optionId: item.optionId,
-        votes: item.votes
-      }));
-      return {
-        id: total - offset - index,
-        cid: data.cid,
-        creator: data.creator,
-        expTime: data.expTime.toNumber(),
-        proposalType: data.proposalType.toNumber(),
-        proposalResults
-      };
-    });
-
-    const proposalsList: ProposalData[] = await Promise.all(list);
-    const originList: ProposalList[] = await getList(proposalsList) || [];
 
     setLoading(false);
     setFilterList(VOTE_FILTER_LIST);
@@ -173,6 +172,10 @@ const Home = () => {
     setProposalStatus(status);
   }
 
+  /**
+   * page jump
+   * @param item
+   */
   const handleJump = (item: ProposalList) => {
     const router = `/${item.proposalStatus === IN_PROGRESS_STATUS ? "vote" : "votingResults"}/${item.id}/${item.cid}`;
     navigate(router, {state: item});
@@ -211,6 +214,9 @@ const Home = () => {
     }
     return list.map((item: ProposalList, index: number) => {
       const proposal = VOTE_LIST?.find((proposal: ProposalFilter) => proposal.value === item.proposalStatus);
+      const maxOption = item.option.reduce((prev, current) => {
+        return (prev.count > current.count) ? prev : current;
+      });
       return (
         <div
           key={item.cid + index}
@@ -255,10 +261,10 @@ const Home = () => {
                       <div className="relative mt-1 w-full" key={option.name + index}>
                         <div className="absolute ml-3 flex items-center leading-[43px] text-white">
                           {
-                            option.count > 0 &&
+                            option.count > 0 && option.count ===  maxOption.count &&
                               <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-sm">
                                   <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
-                                        strokeWidth="2" d="m5 13l4 4L19 7"></path>
+                                        strokeWidth="2" d="m5 13l4 4L19 7" />
                               </svg>
                           }
                           {option.name}</div>
@@ -305,15 +311,14 @@ const Home = () => {
             renderList(proposalList)
           }
           <Row justify='end'>
-            <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
-              <Pagination
-                simple
-                current={page}
-                pageSize={pageSize}
-                total={total}
-                onChange={handlePageChange}
-              />
-            </ConfigProvider>
+            <Pagination
+              simple
+              showSizeChanger={false}
+              current={page}
+              pageSize={pageSize}
+              total={total}
+              onChange={handlePageChange}
+            />
           </Row>
         </div>
       </Spin>

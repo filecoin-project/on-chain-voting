@@ -1,8 +1,0 @@
-/node_modules
-.parcel-cache/
-/coverage
-/build
-/dist
-/.vscode
-/.idea*
-./src/version.ts

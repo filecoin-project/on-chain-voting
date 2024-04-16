@@ -38,7 +38,7 @@ const VotingResults = () => {
   const [votingData, setVotingData] = useState(state);
 
   useEffect(() => {
-    initState()
+    initState();
   }, [chain])
 
   const initState = async () => {
@@ -72,11 +72,16 @@ const VotingResults = () => {
       })
       const { data: { data: historyData } } = await axios.get('/api/proposal/history', {
         params,
-      })
-      voteList = historyData.map((item: ProposalHistory) => ({
+      });
+      voteList = historyData?.votePowers?.map((item: ProposalHistory) => ({
+        ...item,
         optionName: proposalData.option[item.optionId],
-        votes: item.votes,
         address: item.address?.substring(0, 42),
+        totalClientPower: historyData.totalClientPower,
+        totalDeveloperPower: historyData.totalDeveloperPower,
+        totalSpPower: historyData.totalSpPower,
+        totalTokenHolderPower: historyData.totalTokenHolderPower,
+        votePowers: historyData.votePowers
       }));
     }
     setVotingData({
@@ -85,7 +90,7 @@ const VotingResults = () => {
       cid,
       option,
       voteStatus,
-      voteList: voteList.sort((a: any, b: any) => b.votes - a.votes)
+      voteList: voteList?.sort((a: any, b: any) => b.votes - a.votes)
     })
   }
 
@@ -113,7 +118,7 @@ const VotingResults = () => {
         };
     }
   }
-5
+
   return (
     <div className='flex voting-result'>
       <div className='relative w-full pr-4 lg:w-8/12'>
@@ -136,8 +141,8 @@ const VotingResults = () => {
             <div className="flex justify-between mb-6">
               <div className="flex items-center justify-between w-full mb-1 sm:mb-0">
                 <button
-                  className={`${handleVoteStatusTag(votingData.voteStatus).color} bg-[#6D28D9] h-[26px] px-[12px] text-white rounded-xl mr-4`}>
-                  {handleVoteStatusTag(votingData.voteStatus).name}
+                  className={`${handleVoteStatusTag(votingData?.voteStatus).color} bg-[#6D28D9] h-[26px] px-[12px] text-white rounded-xl mr-4`}>
+                  {handleVoteStatusTag(votingData?.voteStatus).name}
                 </button>
                 <div className="flex items-center justify-center">
                   <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${votingData?.address}`} alt="" />
@@ -165,7 +170,7 @@ const VotingResults = () => {
             />
           </div>
           {
-            votingData.voteStatus === COMPLETED_STATUS && <VoteList voteList={votingData?.voteList} chain={chain} />
+            votingData?.voteStatus === COMPLETED_STATUS && <VoteList voteList={votingData?.voteList} chain={chain} />
           }
         </div>
       </div>
@@ -183,10 +188,6 @@ const VotingResults = () => {
             <div className='p-4 leading-6 sm:leading-8'>
               <div className='space-y-1'>
                 <div>
-                  <b>Vote Type</b>
-                  <span className='float-right text-white'>{ ['Single', 'Multiple'][votingData?.voteType - 1] } Choice Voting</span>
-                </div>
-                <div>
                   <b>Exp. Time</b>
                   <span className='float-right text-white'>{dayjs(votingData?.showTime).format('MMM.D, YYYY, h:mm A')}</span>
                 </div>
@@ -194,15 +195,11 @@ const VotingResults = () => {
                   <b>Exp. Timezone</b>
                   <span className='float-right text-white'>{votingData?.GMTOffset}</span>
                 </div>
-                <div>
-                  <b>Snapshot</b>
-                  <span className="float-right text-white">Takes At Exp. Time</span>
-                </div>
               </div>
             </div>
           </div>
           {
-            votingData.voteStatus === COMPLETED_STATUS &&
+            votingData?.voteStatus === COMPLETED_STATUS &&
               <div className='text-base border-solid border-y border-skin-border bg-skin-block-bg md:rounded-xl md:border'>
                   <div className='group flex h-[57px] justify-between rounded-t-none border-b border-skin-border border-solid px-4 pb-[12px] pt-3 md:rounded-t-lg'>
                       <h4 className='flex items-center text-xl'>
@@ -214,8 +211,6 @@ const VotingResults = () => {
                       <div className='space-y-3'>
                         {
                           votingData?.option?.map((item: any, index: number) => {
-                            const total = votingData?.option.reduce(((acc: number, current: any) => acc + current.count), 0);
-                            const percent = item.count ? ((item.count / total) * 100).toFixed(2) : 0;
                             return (
                               <div key={item.name + index}>
                                 <div className='flex justify-between mb-1 text-skin-link'>
@@ -234,7 +229,7 @@ const VotingResults = () => {
                                       <div
                                         className='absolute top-0 left-0 h-full rounded bg-[#384AFF]'
                                         style={{
-                                          width: `${percent}%`
+                                          width: `${item.count}%`
                                         }}
                                       /> :
                                       <div

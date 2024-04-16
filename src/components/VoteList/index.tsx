@@ -13,12 +13,14 @@
 // limitations under the License.
 
 import React from 'react';
-import { Empty } from 'antd';
+import { Empty, Table, ConfigProvider, theme, Popover } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
 import EllipsisMiddle from "../EllipsisMiddle";
 import {web3AvatarUrl} from "../../common/consts";
 import {Chain} from "wagmi";
 import {ProposalHistory} from "../../common/types";
 import './index.less';
+import {bigNumberToFloat, convertBytes} from "../../utils";
 
 interface Props {
   voteList: ProposalHistory[];
@@ -27,13 +29,77 @@ interface Props {
 
 const VoteList: React.FC<Props> = ({ voteList, chain }) => {
 
-  const totalVotes = voteList?.reduce(((acc: number, current: ProposalHistory) => acc + current.votes), 0) || 0;
+  const columns = [
+    {
+      title: 'Role',
+      dataIndex: 'role',
+      key: 'role',
+    },
+    {
+      title: 'Power',
+      dataIndex: 'power',
+      key: 'power',
+    },
+    {
+      title: 'Total Power',
+      dataIndex: 'total',
+      key: 'total',
+    },
+    {
+      title: 'Percent',
+      dataIndex: 'percent',
+      key: 'percent',
+    },
+    {
+      title: 'Block Height',
+      dataIndex: 'powerBlockHeight',
+      key: 'powerBlockHeight',
+    },
+  ];
+
+  const getPowerData = (votePower: any) => {
+    return [
+      {
+        key: 'sp',
+        role: 'SP',
+        powerBlockHeight: votePower.powerBlockHeight,
+        power: convertBytes(votePower.spPower),
+        total: convertBytes(votePower.totalSpPower),
+        percent: `${votePower.spPowerPercent}%`,
+      },
+      {
+        key: 'client',
+        role: 'Client',
+        powerBlockHeight: votePower.powerBlockHeight,
+        power: convertBytes(Number(votePower.clientPower) / (10 ** 18)),
+        total: convertBytes(Number(votePower.totalClientPower) / (10 ** 18)),
+        percent: `${votePower.clientPowerPercent}%`,
+      },
+      {
+        key: 'developer',
+        role: 'Developer',
+        powerBlockHeight: votePower.powerBlockHeight,
+        power: votePower.developerPower,
+        total: votePower.totalDeveloperPower,
+        percent: `${votePower.developerPowerPercent}%`,
+      },
+      {
+        key: 'tokenHolder',
+        role: 'TokenHolder',
+        powerBlockHeight: votePower.powerBlockHeight,
+        power: bigNumberToFloat(votePower.tokenHolderPower),
+        total: bigNumberToFloat(votePower.totalTokenHolderPower),
+        percent: `${votePower.tokenHolderPowerPercent}%`
+      },
+    ];
+  }
+
   return (
     <div className="border-y border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border my-12">
       <div className="group flex h-[57px] justify-between rounded-t-none border-b border-skin-border px-6 pb-[12px] pt-3 md:rounded-t-lg">
         <h4 className="flex items-center">
           <div className="font-semibold">Votes</div>
-          <div className="h-[20px] min-w-[20px] rounded-full bg-[#8b949e] px-1 text-center text-xs leading-5 text-white ml-2 inline-block">{totalVotes}</div>
+          {/*<div className="h-[20px] min-w-[20px] rounded-full bg-[#8b949e] px-1 text-center text-xs leading-5 text-white ml-2 inline-block">{totalVotes}</div>*/}
         </h4>
         <div className="flex items-center" />
       </div>
@@ -58,8 +124,23 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
                     <div className="w-[180px] flex-auto truncate px-2 text-center text-skin-link">
                       <div className="truncate text-center text-skin-link">{item.optionName}</div>
                     </div>
-                    <div className="flex min-w-[110px] items-center justify-end whitespace-nowrap text-center text-skin-link xs:w-[130px] xs:min-w-[130px]">
-                      <span>{item.votes}%</span>
+                    <div className="flex min-w-[110px] items-center justify-end whitespace-nowrap text-center text-skin-link xs:w-[130px] xs:min-w-[130px] cursor-pointer">
+                      <Popover content={
+                        <Table
+                          dataSource={getPowerData(item)}
+                          columns={columns}
+                          pagination={false}
+                          footer={(currentData: any) => {
+                            return (
+                              <div>
+                                Total Percent = {`${currentData[0].percent} / 4`} + {`${currentData[1].percent} / 4`} + {`${currentData[2].percent} / 4`} + {`${currentData[3].percent} / 4`} = {item.votes}%
+                              </div>
+                            )
+                          }}
+                        />
+                      }>
+                        <span>{item.votes}% <InfoCircleOutlined style={{ fontSize: 14 }} /></span>
+                      </Popover>
                     </div>
                   </div>
                 )

@@ -8,22 +8,17 @@
       "dom.iterable",
       "scripthost"
     ],
-    "sourceMap": true,
+    "sourceMap": false,
     "jsx": "react",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "strict": true,
+    "strict": false,
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "baseUrl": ".",
-    "paths": {
-      "@Contracts/*": ["artifacts/contracts/*"],
-    },
   },
   "exclude": [
     "node_modules",
-    "tlock-js",
-    "the-graph",
   ],
 }
 

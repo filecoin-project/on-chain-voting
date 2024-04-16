@@ -17,3 +17,20 @@ export const stringToBase64Url = (str: string) => {
 
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
+
+export const bigNumberToFloat = (value: number | string, decimals: number = 18) => {
+  return Number(value) ? (Number(value) / (10 ** decimals)).toFixed(2) : '0';
+}
+
+export const convertBytes = (bytes: number | string) => {
+  const units = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+  let unitIndex = 0;
+  let remainder = Number(bytes);
+
+  while (remainder >= 1024 && unitIndex < units.length - 1) {
+    remainder /= 1024;
+    unitIndex++;
+  }
+
+  return remainder ? `${remainder.toFixed(2)} ${units[unitIndex]}` : '0';
+}
