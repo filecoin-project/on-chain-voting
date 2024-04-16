@@ -35,8 +35,6 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
 
     // task id
     Counters.Counter private _taskId;
-    // task id
-    Counters.Counter private _f4TaskId;
     // history power id
     Counters.Counter private _historyPowerId;
     // PowerVoting contract address
@@ -58,14 +56,14 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     EnumerableSet.AddressSet voterList;
     // voter info map
     mapping(address => VoterInfo) public voterToInfo;
-    // fip map
-    mapping(address => bool) public fipMap;
     // voter to miner id list
     mapping(address => uint64[]) public voterToMinerIds;
     // voter to history power
     mapping(address => mapping(uint256 => Power)) public voterTohistoryPower;
     // voter to id
     mapping(address => PowerStatus) public voterToPowerStatus;
+    // actor id list
+    mapping(uint64 => bool) public actorIdList;
 
     modifier onlyInAllowList(){
         if (!nodeAllowList[msg.sender]) {
@@ -107,6 +105,7 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
             revert PermissionError("Permission error.");
         }
         voterToMinerIds[voter] = minerIds;
+        _updateMinerId(voter);
     }
 
     /**
@@ -139,10 +138,10 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
         if(msg.sender != powerVotingContract) {
             revert PermissionError("Permission error.");
         }
-        _f4TaskId.increment();
-        uint256 taskId = _taskId.current();
-        f4TaskIdList.add(taskId);
-        f4TaskIdToAddress[taskId] = voter;
+        _taskId.increment();
+        uint256 f4TaskId = _taskId.current();
+        f4TaskIdList.add(f4TaskId);
+        f4TaskIdToAddress[f4TaskId] = voter;
     }
 
     /**
@@ -165,27 +164,25 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
             revert StatusError("Has already been updated by other nodes.");
         }
 
+        uint64[] memory actorIds = voterInfoParam.actorIds;
+        uint256 actorIdsLength = actorIds.length;
+        if (bytes(voterInfoParam.ucanCid).length != 0) {
+            for (uint256 l = 0; l < actorIdsLength; l++) {
+                bool exist = actorIdList[actorIds[l]];
+                if (exist) {
+                    delete taskIdToUcanCid[taskId];
+                    taskIdList.remove(taskId);
+                    return;
+                }
+                actorIdList[actorIds[l]] = true;
+            }
+        }
+
         // update voter info
         voterToInfo[voterAddress] = voterInfoParam;
 
         // update miner id
-        VoterInfo storage voterInfo = voterToInfo[voterAddress];
-        uint64[] memory minerIds = voterToMinerIds[voterAddress];
-
-        uint256 minerIdsLength = minerIds.length;
-        uint64[] memory actorIds = voterInfo.actorIds;
-        uint256 actorIdsLength = actorIds.length;
-        uint64[] memory minerIdsRes = new uint64[](minerIdsLength);
-        uint256 index;
-        for (uint256 i = 0; i < minerIdsLength; i++) {
-            uint64 actorId = minerIds[i].getOwner();
-            for (uint256 j = 0; j < actorIdsLength; j++) {
-                if (actorId == actorIds[j]) {
-                    minerIdsRes[index++] = minerIds[i];
-                }
-            }
-        }
-        voterInfo.minerIds = minerIdsRes;
+        _updateMinerId(voterAddress);
 
         Power memory power = _calcPower(voterAddress, powerParam);
         uint256 id = _getHourId(voterAddress);
@@ -200,9 +197,6 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
         delete f4TaskIdToAddress[taskId];
         taskIdList.remove(taskId);
         f4TaskIdList.remove(taskId);
-
-        // delete voter to miner
-        delete voterToMinerIds[voterAddress];
     }
 
     /**
@@ -210,8 +204,14 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
      * @param voterAddress: voter address
      */
     function removeVoter(address voterAddress, uint256 taskId) external override onlyInAllowList nonZeroAddress(voterAddress) {
-        VoterInfo memory voterInfo = VoterInfo(new uint64[](0),new uint64[](0),"",address(0),"");
-        voterToInfo[voterAddress] = voterInfo;
+        VoterInfo storage voterInfo = voterToInfo[voterAddress];
+        uint64[] memory actorIds = voterInfo.actorIds;
+        uint256 actorIdsLength = actorIds.length;
+        for (uint256 i = 0; i < actorIdsLength; i++) {
+            actorIdList[actorIds[i]] = false;
+        }
+        VoterInfo memory newVoterInfo = VoterInfo(new uint64[](0),new uint64[](0),"",address(0),"");
+        voterToInfo[voterAddress] = newVoterInfo;
         PowerStatus storage powerStatus = voterToPowerStatus[voterAddress];
         powerStatus.hourId = 0;
         powerStatus.hasFullRound = 0;
@@ -228,30 +228,9 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     function getPower(address voterAddress, uint256 id) external view override returns(Power memory){
         PowerStatus storage powerStatus = voterToPowerStatus[voterAddress];
         if (powerStatus.hasFullRound == 0 && id > powerStatus.hourId) {
-            return Power(0,0,new bytes[](0),new bytes[](0),0);
+            return Power(0,new bytes[](0),new bytes[](0),0,0);
         }
         return voterTohistoryPower[voterAddress][id];
-    }
-
-    /**
-     * addFIP: add FIP
-     * @param fipAddress: address
-     */
-    function addFIP(address fipAddress) external override onlyOwner nonZeroAddress(fipAddress) {
-        bool exist = fipMap[fipAddress];
-        // FIP Editor is not allowed to have other roles currently.
-        if(exist) {
-            revert AddFIPError("Add FIP editor error.");
-        }
-        fipMap[fipAddress] = true;
-    }
-
-    /**
-     * removeFIP: remove FIP
-     * @param fipAddress: address
-     */
-    function removeFIP(address fipAddress) external override onlyOwner nonZeroAddress(fipAddress) {
-        fipMap[fipAddress] = false;
     }
 
     /**
@@ -334,8 +313,41 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
         }
         power.clientPower = clientPowerList;
         power.spPower = spPowerList;
+        power.blockHeight = block.number;
         return power;
     }
+
+    /**
+     * updateMinerId: update miner id
+     * @param voterAddress: voter address
+     */
+    function _updateMinerId(address voterAddress) internal {
+    // get voter info
+    VoterInfo storage voterInfo = voterToInfo[voterAddress];
+    uint64[] storage actorIds = voterInfo.actorIds;
+    uint64[] storage minerIds = voterToMinerIds[voterAddress];
+
+    if (actorIds.length == 0 || minerIds.length == 0) {
+        return;
+    }
+
+    uint64[] memory minerIdsRes = new uint64[](minerIds.length);
+    uint256 index = 0;
+
+    for (uint256 i = 0; i < minerIds.length; i++) {
+        uint64 actorId = minerIds[i].getOwner();
+        for (uint256 j = 0; j < actorIds.length; j++) {
+            if (actorId == actorIds[j]) {
+                minerIdsRes[index++] = minerIds[i];
+                break;
+            }
+        }
+    }
+
+    voterInfo.minerIds = minerIdsRes;
+    delete voterToMinerIds[voterAddress];
+}
+
 
     /**
      * resolveEthAddress: resolve eth address

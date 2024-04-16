@@ -25,6 +25,6 @@ interface IOracleError {
     // zero address error
     error ZeroAddressError(string);
 
-    // add FIP editor role error
-    error AddFIPError(string);
+    // task call back error
+    error TaskCallback(string);
 }

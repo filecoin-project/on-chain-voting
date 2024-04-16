@@ -20,11 +20,11 @@ interface IOracle is IOracleError {
 
     // power struct
     struct Power {
-        uint256 fipEditorPower;
         uint256 developerPower;
         bytes[] spPower;
         bytes[] clientPower;
         uint256 tokenHolderPower;
+        uint256 blockHeight;
     }
 
     // voter info
@@ -72,6 +72,7 @@ interface IOracle is IOracleError {
      * @param voter: voter
      */
     function addF4Task(address voter) external;
+
     /**
      * getF4Tasks: get f4 task id list
      * @return uint256[]: task id list
@@ -85,24 +86,13 @@ interface IOracle is IOracleError {
      * @param power: power
      */
     function taskCallback(VoterInfo calldata voterInfoParam, uint256 taskId, Power calldata power) external;
+
     /**
      * getPower: get voting power
      * @param voterAddress: voter address
      * @param id: id
      */
     function getPower(address voterAddress, uint256 id) external returns(Power memory);
-
-    /**
-     * addFIP: add FIP
-     * @param fipAddress: address
-     */
-    function addFIP(address fipAddress) external;
-
-    /**
-     * removeFIP: remove FIP
-     * @param fipAddress: address
-     */
-    function removeFIP(address fipAddress) external;
 
     /**
      * updateNodeAllowList: update node allowlist

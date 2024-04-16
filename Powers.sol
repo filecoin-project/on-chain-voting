@@ -40,13 +40,8 @@ library Powers {
     function getOwner(uint64 minerID) external returns(uint64) {
         CommonTypes.FilActorId miner = CommonTypes.FilActorId.wrap(minerID);
         MinerTypes.GetOwnerReturn memory result = MinerAPI.getOwner(miner);
-        bytes memory data = result.owner.data;
-        uint256 res;
-        assembly {
-            res := mload(add(data, 0x20))
-        }
-        res = res >> (8 * (32 - data.length));
-        return uint64(res);
+        uint64 res = PrecompilesAPI.resolveAddress(result.owner);
+        return res;
     }
 
     function resolveEthAddress(address addr) public view returns (uint64) {
