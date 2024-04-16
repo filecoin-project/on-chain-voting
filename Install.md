@@ -17,26 +17,17 @@
 ## 4.Obtain the PowerVoting backend code, with the repository branch set to: dev-filecoin
 
 ```bash
-git clone https://gitlab.com/storswiftlabs/wh/dapp/power-voting/backend.git
+git clone https://github.com/black-domain/powervoting-backend.git
 ```
 
 
-
-## 5.Switch branch
-
-```bash
-git checkout dev-filecoin
-```
-
-
-
-## 6.Modify the configuration.yaml configuration file
+## 5.Modify the configuration.yaml configuration file
 
 ![Untitled](img/1.png)
 
 
 
-## 7.Install dependencies
+## 6.Install dependencies
 
 ```bash
 go mod tidy
@@ -44,7 +35,7 @@ go mod tidy
 
 
 
-## 8.Build Docker image
+## 7.Build Docker image
 
 ```bash
 docker build -t powervoting  .
@@ -54,7 +45,7 @@ docker build -t powervoting  .
 
 
 
-## 9.Run Docker image
+## 8.Run Docker image
 
 ```bash
 docker run -p 9999:9999  -d powervoting
@@ -64,6 +55,6 @@ docker run -p 9999:9999  -d powervoting
 
 
 
-## 10.View logs
+## 9.View logs
 
 ![Untitled](img/4.png)

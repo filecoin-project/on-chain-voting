@@ -43,6 +43,17 @@ type VoteHistory struct {
 	Network    int64   `json:"network" gorm:"not null"`
 }
 
+type VoteCompleteHistory struct {
+	Id                    int64       `json:"id"`
+	ProposalId            int64       `gorm:"constraint:off; not null"`
+	Network               int64       `json:"network" gorm:"not null"`
+	TotalSpPower          string      `json:"totalSpPower" gorm:"not null"`
+	TotalClientPower      string      `json:"totalClientPower" gorm:"not null"`
+	TotalTokenHolderPower string      `json:"totalTokenHolderPower" gorm:"not null"`
+	TotalDeveloperPower   string      `json:"totalDeveloperPower" gorm:"not null"`
+	VotePowers            []VotePower `json:"votePowers" gorm:"foreignKey:HistoryId"`
+}
+
 type ContractVote struct {
 	Voter    common.Address `json:"voter"`
 	VoteInfo string         `json:"voteInfo"`
@@ -52,4 +63,21 @@ type Vote4Counting struct {
 	OptionId int64
 	Votes    int64
 	Address  string
+}
+
+type VotePower struct {
+	Id                      int64   `json:"id"`
+	HistoryId               int64   `json:"historyId" gorm:"constraint:off; not null"`
+	Address                 string  `json:"address" gorm:"not null"`
+	OptionId                int64   `json:"optionId" gorm:"not null"`
+	Votes                   float64 `json:"votes" gorm:"not null"`
+	SpPower                 string  `json:"spPower" gorm:"not null"`
+	ClientPower             string  `json:"clientPower" gorm:"not null"`
+	TokenHolderPower        string  `json:"tokenHolderPower" gorm:"not null"`
+	DeveloperPower          string  `json:"developerPower" gorm:"not null"`
+	SpPowerPercent          float64 `json:"spPowerPercent" gorm:"not null"`
+	ClientPowerPercent      float64 `json:"clientPowerPercent" gorm:"not null"`
+	TokenHolderPowerPercent float64 `json:"tokenHolderPowerPercent" gorm:"not null"`
+	DeveloperPowerPercent   float64 `json:"developerPowerPercent" gorm:"not null"`
+	PowerBlockHeight        int64   `json:"powerBlockHeight" gorm:"not null"`
 }

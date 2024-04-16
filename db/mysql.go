@@ -16,13 +16,14 @@ package db
 
 import (
 	"fmt"
+	"powervoting-server/config"
+	"powervoting-server/constant"
+	"powervoting-server/model"
+
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
-	"powervoting-server/config"
-	"powervoting-server/constant"
-	"powervoting-server/model"
 )
 
 var Engine *gorm.DB
@@ -52,6 +53,7 @@ func InitMysql() {
 	Engine.AutoMigrate(&model.VoteResult{})
 	Engine.AutoMigrate(&model.VoteHistory{})
 	Engine.AutoMigrate(&model.Dict{})
+	Engine.AutoMigrate(&model.VotePower{})
 
 	var count int64
 	Engine.Model(model.Dict{}).Where("name", constant.ProposalStartKey).Count(&count)
@@ -75,9 +77,9 @@ func GetVoteList(network, proposalId int64) ([]model.Vote, error) {
 	return proposalList, tx.Error
 }
 
-func VoteResult(proposalId int64, history []model.VoteHistory, result []model.VoteResult) {
+func VoteResult(proposalId int64, history model.VoteCompleteHistory, result []model.VoteResult) {
 	Engine.Transaction(func(tx *gorm.DB) error {
-		create := tx.Model(model.VoteHistory{}).CreateInBatches(history, len(history))
+		create := tx.Model(model.VoteCompleteHistory{}).Create(&history)
 		if create.Error != nil {
 			zap.L().Error("batch create error: ", zap.Error(create.Error))
 			return create.Error

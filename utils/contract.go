@@ -18,12 +18,14 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
-	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/common"
-	"go.uber.org/zap"
+	"fmt"
 	"math/big"
 	"powervoting-server/model"
 	"strconv"
+
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/common"
+	"go.uber.org/zap"
 )
 
 // GetPower get power
@@ -33,11 +35,13 @@ func GetPower(address string, client model.GoEthClient) (model.Power, error) {
 		zap.L().Error("Generate random number error: ", zap.Error(err))
 		return model.Power{}, err
 	}
-	data, err := client.OracleAbi.Pack("getPower", common.HexToAddress(address), num)
+	data, err := client.OracleAbi.Pack("getPower", common.HexToAddress(address), big.NewInt(1))
 	if err != nil {
 		zap.L().Error("Pack method and param error: ", zap.Error(err))
 		return model.Power{}, err
 	}
+	zap.L().Info(fmt.Sprintf("Get power random number: %d\n", num))
+
 	msg := ethereum.CallMsg{
 		To:   &client.OracleContract,
 		Data: data,
@@ -65,9 +69,9 @@ func GetPower(address string, client model.GoEthClient) (model.Power, error) {
 		return model.Power{}, err
 	}
 	var power model.Power
-	power.FipEditorPower = contractPower.FipEditorPower
 	power.TokenHolderPower = contractPower.TokenHolderPower
 	power.DeveloperPower = contractPower.DeveloperPower
+	power.BlockHeight = contractPower.BlockHeight
 	totalClientPower := new(big.Int)
 	for _, clientPower := range contractPower.ClientPower {
 		power := new(big.Int)

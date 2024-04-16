@@ -17,17 +17,17 @@ package model
 import "math/big"
 
 type Power struct {
-	FipEditorPower   *big.Int `json:"fipEditorPower"`
 	DeveloperPower   *big.Int `json:"developerPower"`
 	SpPower          *big.Int `json:"spPower"`
 	ClientPower      *big.Int `json:"clientPower"`
 	TokenHolderPower *big.Int `json:"tokenHolderPower"`
+	BlockHeight      *big.Int `json:"blockHeight"`
 }
 
 type ContractPower struct {
-	FipEditorPower   *big.Int `json:"fipEditorPower"`
 	DeveloperPower   *big.Int `json:"developerPower"`
 	SpPower          [][]byte `json:"spPower"`
 	ClientPower      [][]byte `json:"clientPower"`
 	TokenHolderPower *big.Int `json:"tokenHolderPower"`
+	BlockHeight      *big.Int `json:"blockHeight"`
 }

@@ -18,15 +18,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/storswiftlabs/tlock"
-	drandhttp "github.com/storswiftlabs/tlock/networks/http"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"powervoting-server/config"
 	"powervoting-server/model"
 	"strconv"
 	"strings"
+
+	"github.com/drand/tlock"
+	drandhttp "github.com/drand/tlock/networks/http"
+	"go.uber.org/zap"
 )
 
 func DecodeVoteList(voteInfo model.Vote) ([]model.Vote4Counting, error) {
@@ -36,10 +37,19 @@ func DecodeVoteList(voteInfo model.Vote) ([]model.Vote4Counting, error) {
 		zap.L().Error("get vote info from IPFS error: ", zap.Error(err))
 		return voteList, err
 	}
-	decrypt, err := Decrypt(ipfs)
-	if err != nil {
-		zap.L().Error("decrypt error:", zap.Error(err))
-		return voteList, err
+	retry_times := 5
+	var decrypt []byte
+	for i := 0; i < retry_times; i++ {
+		decrypt, err = Decrypt(ipfs)
+		if i == retry_times-1 && err != nil {
+			zap.L().Error("decrypt error:", zap.Error(err))
+			return voteList, err
+		}
+		if err != nil {
+			zap.L().Warn(fmt.Sprintf("Decrypt failed: %v, retry times: %d\n", err, i))
+			continue
+		}
+		break
 	}
 	var mapData [][]string
 	err = json.Unmarshal(decrypt, &mapData)

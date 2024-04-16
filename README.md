@@ -13,7 +13,7 @@ In the community voting process governed by DAO, since the voting data of other 
 In the centralized voting process, since the vote counting power is in the hands of the centralized organization, it will cause problems such as vote fraud and black box operation of vote counting, resulting in the voting results being manipulated by others, which cannot truly reflect the wishes of the community.
 
 ## 3. Solution
- 
+
 Power Voting dApp stores voting information on the blockchain, and all voting operations are executed on the chain, which is open and transparent. 
 
 When community members vote, they use the timelock technology to lock the voting content, and voting content cannot be viewed until the voting expiration time reaches, so that no one can know the voting information of other members before voting expiration time reaches. 

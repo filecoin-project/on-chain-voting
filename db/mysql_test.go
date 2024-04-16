@@ -16,25 +16,83 @@ package db
 
 import (
 	"fmt"
-	"go.uber.org/zap"
 	"powervoting-server/config"
 	"powervoting-server/model"
 	"testing"
+
+	"go.uber.org/zap"
 )
 
 func TestVoteResult(t *testing.T) {
 	config.InitConfig("../")
 	InitMysql()
-	var voteHistoryList []model.VoteHistory
+	var voteHistory model.VoteCompleteHistory
 	var voteResultList []model.VoteResult
-	voteHistoryList = append(voteHistoryList, model.VoteHistory{ProposalId: 1, OptionId: 0, Votes: 100, Address: "0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307"})
-	voteHistoryList = append(voteHistoryList, model.VoteHistory{ProposalId: 1, OptionId: 1, Votes: 200, Address: "0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307"})
-	voteHistoryList = append(voteHistoryList, model.VoteHistory{ProposalId: 1, OptionId: 2, Votes: 300, Address: "0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307"})
-	voteResultList = append(voteResultList, model.VoteResult{ProposalId: 1, OptionId: 0, Votes: 1000})
-	voteResultList = append(voteResultList, model.VoteResult{ProposalId: 1, OptionId: 1, Votes: 2000})
-	voteResultList = append(voteResultList, model.VoteResult{ProposalId: 1, OptionId: 2, Votes: 3000})
+	var votePower []model.VotePower
+	votePower = append(votePower, model.VotePower{
+		HistoryId:               66, //VoteCompleteHistory Indicates the id
+		OptionId:                0,
+		Votes:                   2.5,
+		Address:                 "0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307",
+		SpPower:                 "",
+		ClientPower:             "",
+		TokenHolderPower:        "",
+		DeveloperPower:          "",
+		SpPowerPercent:          0,
+		ClientPowerPercent:      0,
+		TokenHolderPowerPercent: 0.25,
+		DeveloperPowerPercent:   0,
+		PowerBlockHeight:        3212312,
+	})
+	votePower = append(votePower, model.VotePower{
+		HistoryId:               66, //VoteCompleteHistory Indicates the id
+		OptionId:                1,
+		Votes:                   2.5,
+		Address:                 "0xf58cC34cf80BDF9D3aD82E7AC57aCd02cA592193",
+		SpPower:                 "",
+		ClientPower:             "",
+		TokenHolderPower:        "18446744073709551616",
+		DeveloperPower:          "",
+		SpPowerPercent:          0,
+		ClientPowerPercent:      0,
+		TokenHolderPowerPercent: 0.25,
+		DeveloperPowerPercent:   0,
+		PowerBlockHeight:        3212312,
+	})
+	voteHistory = model.VoteCompleteHistory{
+		ProposalId:            65,
+		Network:               314159,
+		TotalSpPower:          "0",
+		TotalClientPower:      "0",
+		TotalTokenHolderPower: "18446744073709551616",
+		TotalDeveloperPower:   "0",
+		VotePowers:            votePower,
+	}
+	voteResultList = append(voteResultList, model.VoteResult{ProposalId: 78, OptionId: 0, Votes: 1000, Network: 314159})
+	voteResultList = append(voteResultList, model.VoteResult{ProposalId: 78, OptionId: 1, Votes: 2000, Network: 314159})
+	voteResultList = append(voteResultList, model.VoteResult{ProposalId: 78, OptionId: 2, Votes: 3000, Network: 314159})
+	VoteResult(1, voteHistory, voteResultList)
+}
 
-	VoteResult(3, voteHistoryList, voteResultList)
+func TestVoteResultCreate(t *testing.T) {
+	config.InitConfig("../")
+	InitMysql()
+	var voteHistory model.VoteCompleteHistory
+	var votePower []model.VotePower
+	Engine.AutoMigrate(&voteHistory, &votePower)
+}
+
+func TestVoteResultQuery(t *testing.T) {
+	config.InitConfig("../")
+	InitMysql()
+	proposalId := 65
+	network := 314159
+	var history model.VoteCompleteHistory
+	tx := Engine.Preload("VotePowers").Where("proposal_id", proposalId).Where("network", network).Find(&history)
+	if tx.Error != nil {
+		t.Error("Get vote result error: ", tx.Error)
+	}
+	fmt.Printf("%+v\n", history)
 }
 
 func TestGetProposalList(t *testing.T) {

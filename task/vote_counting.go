@@ -15,7 +15,6 @@
 package task
 
 import (
-	"go.uber.org/zap"
 	"math"
 	"math/big"
 	"powervoting-server/config"
@@ -24,6 +23,8 @@ import (
 	"powervoting-server/model"
 	"powervoting-server/utils"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 // VotingCountHandler vote count
@@ -37,6 +38,18 @@ func VotingCountHandler() {
 		}
 		go VotingCount(ethClient)
 	}
+}
+
+// bigIntDiv bigInt division, which returns four decimal digits reserved
+func bigIntDiv(x *big.Int, y *big.Int) (z float64) {
+	var x_x = big.NewInt(0)
+	if y.Uint64() == 0 {
+		return 0
+	}
+	x_x.Mul(x, big.NewInt(10000))
+	x_x.Div(x_x, y)
+	z = float64(x_x.Uint64()) / 10000
+	return
 }
 
 func VotingCount(ethClient model.GoEthClient) {
@@ -69,7 +82,7 @@ func VotingCount(ethClient model.GoEthClient) {
 			voteList = append(voteList, list...)
 		}
 		zap.L().Info("voteList: %+v\n", zap.Reflect("voteList", voteList))
-		var voteHistoryList []model.VoteHistory
+		var votePowerList []model.VotePower
 		// calc total power
 		totalSpPower := new(big.Int)
 		totalClientPower := new(big.Int)
@@ -103,34 +116,49 @@ func VotingCount(ethClient model.GoEthClient) {
 				var clientPercent float64
 				var tokenPercent float64
 				var developerPercent float64
-				if totalSpPower.Int64() != 0 {
-					spPercent = float64(power.SpPower.Int64()) / float64(totalSpPower.Int64())
+				if totalSpPower.Uint64() != 0 {
+					spPercent = bigIntDiv(power.SpPower, totalSpPower)
 				}
-				if totalClientPower.Int64() != 0 {
-					clientPercent = float64(power.ClientPower.Int64()) / float64(totalClientPower.Int64())
+				if totalClientPower.Uint64() != 0 {
+					clientPercent = bigIntDiv(power.ClientPower, totalClientPower)
 				}
-				if totalTokenPower.Int64() != 0 {
-					tokenPercent = float64(power.TokenHolderPower.Int64()) / float64(totalTokenPower.Int64())
+				if totalTokenPower.Uint64() != 0 {
+					tokenPercent = bigIntDiv(power.TokenHolderPower, totalTokenPower)
 				}
-				if totalDeveloperPower.Int64() != 0 {
-					developerPercent = float64(power.DeveloperPower.Int64()) / float64(totalDeveloperPower.Int64())
+				if totalDeveloperPower.Uint64() != 0 {
+					developerPercent = bigIntDiv(power.DeveloperPower, totalDeveloperPower)
 				}
 				var votePercent = float64(vote.Votes) / 100
 				votes = ((spPercent * 25) + (clientPercent * 25) + (tokenPercent * 25) + (developerPercent * 25)) * votePercent
+
+				votePower := model.VotePower{
+					HistoryId:               proposal.ProposalId,
+					Address:                 vote.Address,
+					OptionId:                vote.OptionId,
+					Votes:                   math.Round(votes*100) / 100,
+					SpPower:                 power.SpPower.String(),
+					ClientPower:             power.ClientPower.String(),
+					TokenHolderPower:        power.TokenHolderPower.String(),
+					DeveloperPower:          power.DeveloperPower.String(),
+					SpPowerPercent:          math.Round(spPercent*10000) / 100,
+					ClientPowerPercent:      math.Round(clientPercent*10000) / 100,
+					TokenHolderPowerPercent: math.Round(tokenPercent*10000) / 100,
+					DeveloperPowerPercent:   math.Round(developerPercent*10000) / 100,
+					PowerBlockHeight:        int64(power.BlockHeight.Uint64()),
+				}
+				votePowerList = append(votePowerList, votePower)
 			}
-			voteHistory := model.VoteHistory{
-				ProposalId: proposal.ProposalId,
-				OptionId:   vote.OptionId,
-				Votes:      math.Round(votes*100) / 100,
-				Address:    vote.Address,
-				Network:    ethClient.Id,
-			}
-			voteHistoryList = append(voteHistoryList, voteHistory)
-			if _, ok := result[vote.OptionId]; ok {
-				result[vote.OptionId] += votes
-			} else {
-				result[vote.OptionId] = votes
-			}
+			result[vote.OptionId] += votes
+		}
+
+		voteHistory := model.VoteCompleteHistory{
+			ProposalId:            proposal.ProposalId,
+			Network:               proposal.Network,
+			TotalSpPower:          totalSpPower.String(),
+			TotalClientPower:      totalClientPower.String(),
+			TotalTokenHolderPower: totalTokenPower.String(),
+			TotalDeveloperPower:   totalDeveloperPower.String(),
+			VotePowers:            votePowerList,
 		}
 		var voteResultList []model.VoteResult
 		options, err := utils.GetOptions(proposal.Cid)
@@ -148,6 +176,6 @@ func VotingCount(ethClient model.GoEthClient) {
 			voteResultList = append(voteResultList, voteResult)
 		}
 		// Save vote history and vote result to database and update status
-		db.VoteResult(proposal.Id, voteHistoryList, voteResultList)
+		db.VoteResult(proposal.Id, voteHistory, voteResultList)
 	}
 }

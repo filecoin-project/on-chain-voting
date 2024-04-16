@@ -15,11 +15,12 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 	"powervoting-server/db"
 	"powervoting-server/model"
 	"powervoting-server/response"
+
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 // VoteResult get vote result
@@ -49,8 +50,8 @@ func VoteHistory(c *gin.Context) {
 		response.ParamError(c)
 		return
 	}
-	var history []model.VoteHistory
-	tx := db.Engine.Model(model.VoteHistory{}).Where("proposal_id", proposalId).Where("network", network).Find(&history)
+	var history model.VoteCompleteHistory
+	tx := db.Engine.Preload("VotePowers").Where("proposal_id", proposalId).Where("network", network).Find(&history)
 	if tx.Error != nil {
 		zap.L().Error("Get vote result error: ", zap.Error(tx.Error))
 		response.SystemError(c)
