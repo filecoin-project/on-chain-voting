@@ -17,9 +17,9 @@ package models
 import "math/big"
 
 type Power struct {
-	FipEditorPower   *big.Int `json:"fipEditorPower"`
 	DeveloperPower   *big.Int `json:"developerPower"`
 	SpPower          [][]byte `json:"spPower"`
 	ClientPower      [][]byte `json:"clientPower"`
 	TokenHolderPower *big.Int `json:"tokenHolderPower"`
+	BlockHeight      *big.Int `json:"blockHeight"`
 }

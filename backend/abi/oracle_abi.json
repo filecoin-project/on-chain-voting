@@ -2,17 +2,6 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      }
-    ],
-    "name": "AddFIPError",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "address",
         "name": "target",
         "type": "address"
@@ -94,6 +83,17 @@
       }
     ],
     "name": "StatusError",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "name": "TaskCallback",
     "type": "error"
   },
   {
@@ -189,6 +189,19 @@
   },
   {
     "inputs": [],
+    "name": "MAX_HISTORY",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "UPGRADE_INTERFACE_VERSION",
     "outputs": [
       {
@@ -210,25 +223,31 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "voter",
-        "type": "address"
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
       }
     ],
-    "name": "addF4Task",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "actorIdList",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
       {
         "internalType": "address",
-        "name": "fipAddress",
+        "name": "voter",
         "type": "address"
       }
     ],
-    "name": "addFIP",
+    "name": "addF4Task",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -284,25 +303,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "fipMap",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "getF4Tasks",
     "outputs": [
@@ -332,11 +332,6 @@
     "outputs": [
       {
         "components": [
-          {
-            "internalType": "uint256",
-            "name": "fipEditorPower",
-            "type": "uint256"
-          },
           {
             "internalType": "uint256",
             "name": "developerPower",
@@ -520,19 +515,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "fipAddress",
-        "type": "address"
-      }
-    ],
-    "name": "removeFIP",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "voterAddress",
         "type": "address"
       },
@@ -582,11 +564,6 @@
       },
       {
         "components": [
-          {
-            "internalType": "uint256",
-            "name": "fipEditorPower",
-            "type": "uint256"
-          },
           {
             "internalType": "uint256",
             "name": "developerPower",
@@ -659,11 +636,6 @@
       },
       {
         "components": [
-          {
-            "internalType": "uint256",
-            "name": "fipEditorPower",
-            "type": "uint256"
-          },
           {
             "internalType": "uint256",
             "name": "developerPower",
@@ -854,6 +826,30 @@
         "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "name": "voterToPowerStatus",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "hourId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "hasFullRound",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       },
       {
         "internalType": "uint256",
@@ -863,11 +859,6 @@
     ],
     "name": "voterTohistoryPower",
     "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "fipEditorPower",
-        "type": "uint256"
-      },
       {
         "internalType": "uint256",
         "name": "developerPower",

@@ -18,11 +18,12 @@ import (
 	"backend/contract"
 	"backend/models"
 	"backend/utils"
+	"math/big"
+	"strconv"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ybbus/jsonrpc/v3"
 	"go.uber.org/zap"
-	"math/big"
-	"strconv"
 )
 
 // UpdatePower updates the power of voters based on their GitHub accounts and Filecoin balances.
@@ -72,9 +73,9 @@ func ProcessingUpdatePowerTaskId(ethAddress common.Address, totalWeights map[str
 		developerWeight := big.NewInt(int64(weight))
 
 		power := models.Power{
-			FipEditorPower:   big.NewInt(0),
 			DeveloperPower:   developerWeight,
 			TokenHolderPower: tokenHolderPower,
+			BlockHeight:      big.NewInt(0),
 		}
 
 		if err := contract.SavePower(ethAddress, power, ethClient); err != nil {
@@ -86,9 +87,9 @@ func ProcessingUpdatePowerTaskId(ethAddress common.Address, totalWeights map[str
 	}
 
 	power := models.Power{
-		FipEditorPower:   big.NewInt(0),
 		DeveloperPower:   big.NewInt(0),
 		TokenHolderPower: tokenHolderPower,
+		BlockHeight:      big.NewInt(0),
 	}
 
 	if err := contract.SavePower(ethAddress, power, ethClient); err != nil {

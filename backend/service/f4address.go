@@ -18,11 +18,12 @@ import (
 	"backend/contract"
 	"backend/models"
 	"backend/utils"
+	"math/big"
+	"strconv"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ybbus/jsonrpc/v3"
 	"go.uber.org/zap"
-	"math/big"
-	"strconv"
 )
 
 // F4Address retrieves F4 tasks from the smart contract and processes each task asynchronously.
@@ -69,6 +70,16 @@ func ProcessingF4AddressTaskId(taskId *big.Int, ethClient models.GoEthClient, lo
 	}
 	zap.L().Info("get the eth address", zap.String("eth address", ethAddress.String()))
 
+	ethToVoterInfo, err := utils.GetVoterInfo(ethAddress.String(), ethClient)
+	if len(ethToVoterInfo.ActorIds) != 0 {
+		zap.L().Info("eth address already exists", zap.String("eth address", ethAddress.String()))
+		if err := DeleteTask(taskId, ethClient); err != nil {
+			zap.L().Error("delete task failed", zap.Error(err))
+			return
+		}
+		return
+	}
+
 	ethToId, err := utils.GetActorIdFromEthAddress(ethAddress.String(), ethClient)
 	if err != nil {
 		zap.L().Error("get actor id from eth address failed", zap.Error(err))
@@ -87,9 +98,9 @@ func ProcessingF4AddressTaskId(taskId *big.Int, ethClient models.GoEthClient, lo
 		return
 	}
 	power := models.Power{
-		FipEditorPower:   big.NewInt(0),
 		DeveloperPower:   big.NewInt(0),
 		TokenHolderPower: ethAddressWalletBalance,
+		BlockHeight:      big.NewInt(0),
 	}
 
 	voterInfo := models.VoterInfo{

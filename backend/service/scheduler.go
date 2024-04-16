@@ -20,9 +20,10 @@ import (
 	"backend/models"
 	"backend/utils"
 	"fmt"
+	"math/big"
+
 	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
-	"math/big"
 )
 
 // TaskScheduler schedules and runs various tasks using cron jobs.
@@ -105,9 +106,9 @@ func HandleF4Address() {
 // DeleteTask deletes a task by calling the TaskCallbackContract with zeroed power values.
 func DeleteTask(taskId *big.Int, ethClient models.GoEthClient) error {
 	power := models.Power{
-		FipEditorPower:   big.NewInt(0),
 		DeveloperPower:   big.NewInt(0),
 		TokenHolderPower: big.NewInt(0),
+		BlockHeight:      big.NewInt(0),
 	}
 	if err := contract.TaskCallbackContract(models.VoterInfo{}, *taskId, power, ethClient); err != nil {
 		return fmt.Errorf("failed to execute TaskCallbackContract: %w", err)

@@ -97,6 +97,16 @@ func ProcessingContractCallBackTaskId(taskId *big.Int, ethClient models.GoEthCli
 	zap.L().Info("ucan verification successful,permission is", zap.String("ucan string", ucan))
 	zap.L().Info("get ucan string", zap.String("action", act))
 
+	ethToVoterInfo, err := utils.GetVoterInfo(iss, ethClient)
+	if ethToVoterInfo.UcanCid == ucanCidStr {
+		zap.L().Info("ucan cid already exists", zap.String("eth address", iss))
+		if err := DeleteTask(taskId, ethClient); err != nil {
+			zap.L().Error("delete task failed", zap.Error(err))
+			return
+		}
+		return
+	}
+
 	switch act {
 
 	case "add":
@@ -176,9 +186,9 @@ func GitHubAccount(iss, aud, ucanCid string, taskId *big.Int, ethClient models.G
 	}
 
 	power := models.Power{
-		FipEditorPower:   big.NewInt(0),
 		DeveloperPower:   big.NewInt(int64(weight)),
 		TokenHolderPower: ethAddressWalletBalance,
+		BlockHeight:      big.NewInt(0),
 	}
 
 	if err := contract.TaskCallbackContract(voterInfo, *taskId, power, ethClient); err != nil {
@@ -223,9 +233,9 @@ func FileCoinAccount(iss, aud, ucanCid string, taskId *big.Int, ethClient models
 	}
 
 	power := models.Power{
-		FipEditorPower:   big.NewInt(0),
 		DeveloperPower:   big.NewInt(0),
 		TokenHolderPower: big.NewInt(0),
+		BlockHeight:      big.NewInt(0),
 	}
 
 	filecoinAddressWalletBalance, err := GetWalletBalance(filecoinId, lotusRpcClient)
