@@ -48,7 +48,7 @@ const UcanDelegate = () => {
   const [loading, setLoading] = useState(false);
   const [githubSignature, setGithubSignature] = useState('');
   const [githubStep, setGithubStep] = useState(UCAN_GITHUB_STEP_1);
-  const [formValue, setFormValue] = useState({
+  const [formValue] = useState({
     aud: '',
     prf: '',
     owner: '',
@@ -104,13 +104,13 @@ const UcanDelegate = () => {
   const setUcan = async (ucan: string) => {
     const chainId = chain?.id || 0;
     const { ucanDelegate } = useDynamicContract(chainId);
-    const cid = await getIpfsId(ucan);
+    const cid = await getIpfsId(ucan) as any;
     const res = await ucanDelegate(cid);
     if (res.code === 200 && res.data?.hash) {
       message.success(STORING_DATA_MSG);
       navigate("/");
     } else {
-      message.error(OPERATION_CANCELED_MSG);
+      message.error(res.msg, 3);
     }
     setLoading(false);
   }

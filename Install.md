@@ -6,7 +6,7 @@
 
 2.npm 7 or later installed
 
-3.Yarn  v1 or v2 installed
+3.Yarn v1 or v2 installed
 
 4.Git
 

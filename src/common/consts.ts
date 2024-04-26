@@ -35,10 +35,14 @@ export const filecoinCalibrationChain: Chain = {
 
 export const powerVotingMainNetContractAddress = process.env.POWER_VOTING_MAINNET_CONTRACT_ADDRESS || '';
 export const oracleMainNetContractAddress = process.env.ORACLE_MAINNET_CONTRACT_ADDRESS || '';
+
+export const oraclePowerMainNetContractAddress = process.env.ORACLE_POWER_MAINNET_CONTRACT_ADDRESS || '';
 export const powerVotingCalibrationContractAddress = process.env.POWER_VOTING_CALIBRATION_CONTRACT_ADDRESS || '';
 export const oracleCalibrationContractAddress = process.env.ORACLE_CALIBRATION_CONTRACT_ADDRESS || '';
+export const oraclePowerCalibrationContractAddress = process.env.ORACLE_POWER_CALIBRATION_CONTRACT_ADDRESS || '';
 export const NFT_STORAGE_KEY = process.env.NFT_STORAGE_KEY || '';
 export const walletConnectProjectId = process.env.WALLET_CONNECT_ID || '';
+export const web3StorageEmail: any = process.env.WEB3_STORAGE_EMAIL || '';
 export const walletChainList = [
   {
     ...filecoin,
@@ -59,11 +63,17 @@ export const contractAddressList = [
 ];
 export const IN_PROGRESS_STATUS = 0;
 export const COMPLETED_STATUS = 1;
+export const PENDING_STATUS = 2;
 export const VOTE_COUNTING_STATUS = 3;
 export const VOTE_ALL_STATUS = 4;
 export const WRONG_NET_STATUS = 5;
 export const VOTE_OPTIONS = ['Approve', 'Reject'];
 export const VOTE_LIST = [
+  {
+    value: PENDING_STATUS,
+    color: 'bg-cyan-700',
+    label: 'Pending'
+  },
   {
     value: IN_PROGRESS_STATUS,
     color: 'bg-green-700',
@@ -84,6 +94,10 @@ export const VOTE_FILTER_LIST = [
   {
     label: "All",
     value: VOTE_ALL_STATUS
+  },
+  {
+    label: "Pending",
+    value: PENDING_STATUS
   },
   {
     label: "In Progress",
@@ -444,7 +458,6 @@ export const GITHUB_DEAUTHORIZE_DOC = `
 </p>
 `;
 export const DEFAULT_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
 export const web3AvatarUrl = 'https://cdn.stamp.fyi/avatar/eth';
 
 export const UCAN_JWT_HEADER = {
@@ -452,7 +465,6 @@ export const UCAN_JWT_HEADER = {
   type: 'JWT',
   version: '0.0.1'
 };
-
 export const SUCCESS_INFO= 'success';
 export const ERROR_INFO= 'error';
 export const OPERATION_CANCELED_MSG= 'Operation Canceled';
@@ -460,6 +472,8 @@ export const OPERATION_FAILED_MSG= 'Operation Failed';
 export const STORING_DATA_MSG= 'Storing data on chain!';
 export const VOTE_SUCCESS_MSG= 'Vote successful!';
 export const CHOOSE_VOTE_MSG= 'Please choose a option to vote!';
+export const WRONG_START_TIME_MSG= 'Start time can\'t be less than current time!';
 export const WRONG_EXPIRATION_TIME_MSG= 'Expiration time can\'t be less than current time!';
 export const WRONG_MINER_ID_MSG= 'Please check your miner ID!';
+export const DUPLICATED_MINER_ID_MSG= 'Your miner ID is duplicated!';
 export const NOT_FIP_EDITOR_MSG= 'Please select a FIP Editor to create proposals!';

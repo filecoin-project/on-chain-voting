@@ -19,23 +19,26 @@ import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import {useNavigate, Link} from "react-router-dom";
 import Table from '../../components/Table';
-import {useForm, Controller, useFieldArray} from 'react-hook-form';
+import {useForm, Controller} from 'react-hook-form';
 import classNames from 'classnames';
 import {useAccount, useNetwork} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import Editor from '../../components/MDEditor';
 import {
   DEFAULT_TIMEZONE,
-  STORING_DATA_MSG,
-  WRONG_EXPIRATION_TIME_MSG, OPERATION_CANCELED_MSG, NOT_FIP_EDITOR_MSG, VOTE_OPTIONS,
+  WRONG_EXPIRATION_TIME_MSG,
+  NOT_FIP_EDITOR_MSG, VOTE_OPTIONS, WRONG_START_TIME_MSG,
 } from '../../common/consts';
 import {useStaticContract, useDynamicContract, getIpfsId} from "../../hooks";
+// import {getWeb3IpfsId} from "../../hooks";
 import { useTimezoneSelect, allTimezones } from 'react-timezone-select';
 import './index.less';
 import LoadingButton from "../../components/LoadingButton";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
+
+const { RangePicker } = DatePicker;
 
 const CreateVote = () => {
   const {chain} = useNetwork();
@@ -51,7 +54,7 @@ const CreateVote = () => {
   } = useForm({
     defaultValues: {
       timezone: DEFAULT_TIMEZONE,
-      expTime: '',
+      time: '',
       name: '',
       descriptions: '',
       option: [
@@ -64,15 +67,6 @@ const CreateVote = () => {
   const labelStyle = 'original';
 
   const { options } = useTimezoneSelect({ labelStyle, timezones: allTimezones });
-
-  // ts-ignore
-  const {fields, append, remove} = useFieldArray({
-    name: 'option',
-    control,
-    rules: {
-      required: true
-    }
-  });
 
   const navigate = useNavigate();
 
@@ -103,14 +97,22 @@ const CreateVote = () => {
   const onSubmit = async (values: any) => {
     setLoading(true)
     const offset =  dayjs().tz(values.timezone).utcOffset() - dayjs().utcOffset();
-    const expTimestamp = dayjs(values.expTime).add(offset, 'minute').unix();
+    const startTimestamp = dayjs(values.time[0]).add(offset, 'minute').unix();
+    const expTimestamp = dayjs(values.time[1]).add(offset, 'minute').unix();
     const currentTime = dayjs().unix();
+
+    if (currentTime > startTimestamp) {
+      message.warning(WRONG_START_TIME_MSG);
+      setLoading(false);
+      return false;
+    }
 
     if (currentTime > expTimestamp) {
       message.warning(WRONG_EXPIRATION_TIME_MSG);
       setLoading(false);
       return false;
     }
+
     const chainId = chain?.id || 0;
     const label = options?.find(item => item.value === values.timezone)?.label || '';
     const regex = /(?<=\().*?(?=\))/g;
@@ -119,26 +121,31 @@ const CreateVote = () => {
     const _values = {
       ...values,
       GMTOffset,
+      startTime: startTimestamp,
       expTime: expTimestamp,
-      showTime: values.expTime,
+      showTime: values.time,
       option: VOTE_OPTIONS,
       address: address,
       chainId: chainId,
       currentTime,
     };
-    const cid = await getIpfsId(_values);
+
+    const cid = await getIpfsId(_values) as any;
+    // const cid = await getWeb3IpfsId(_values) as any;
+    // console.log(cid);
+    // return false;
 
     if (isConnected) {
       const { isFipEditor } = await useStaticContract(chainId);
       const res = await isFipEditor(address || '');
       if (res.code === 200 && res.data) {
         const { createVotingApi } = useDynamicContract(chainId);
-        const res = await createVotingApi(cid, expTimestamp, 1);
-        if (res.code === 200 && res.data?.hash) {
-          message.success(STORING_DATA_MSG);
+        const res1 = await createVotingApi(cid, startTimestamp, expTimestamp, 1);
+        if (res1.code === 200 && res1.data?.hash) {
+          message.success(res1.msg);
           navigate("/");
         } else {
-          message.warning(OPERATION_CANCELED_MSG);
+          message.error(res1.msg);
         }
       } else {
         message.warning(NOT_FIP_EDITOR_MSG);
@@ -158,7 +165,7 @@ const CreateVote = () => {
           <Controller
             name="name"
             control={control}
-            render={({ field }) => <input
+            render={() => <input
               className={classNames(
                 'form-input w-full rounded bg-[#212B3C] border border-[#313D4F]',
                 errors['name'] && 'border-red-500 focus:border-red-500'
@@ -196,35 +203,31 @@ const CreateVote = () => {
         />
     },
     {
-      name: 'Proposal Expiration Time',
+      name: 'Voting Time',
       comp: (
         <div className='flex items-center'>
           <div className='mr-2.5'>
             <Controller
-              name='expTime'
+              name='time'
               control={control}
               rules={{ required: true }}
-              render={({field: {onChange, value}}) => {
-                const dateValue = value ? dayjs(value) : null;
+              render={({field: {onChange}}) => {
                 return (
                   <>
-                    <DatePicker
+                    <RangePicker
                       showTime
                       format="YYYY-MM-DD HH:mm"
+                      placeholder={['Start Time', 'End Time']}
                       allowClear={false}
-                      value={dateValue}
                       onChange={onChange}
-                      // disabledDate={disabledDate}
-                      // disabledTime={disabledTime}
                       className={classNames(
                         'form-input rounded !bg-[#212B3C] border border-[#313D4F]',
-                        errors['expTime'] && 'border-red-500 focus:border-red-500'
+                        errors['time'] && 'border-red-500 focus:border-red-500'
                       )}
                       style={{color: 'red'}}
-                      placeholder='Pick Date'
                     />
-                    {errors['expTime'] && (
-                      <p className='text-red-500 mt-2'>Proposal Expiration Time is required</p>
+                    {errors['time'] && (
+                      <p className='text-red-500 mt-2'>Proposal Time is required</p>
                     )}
                   </>
                 )
@@ -235,7 +238,7 @@ const CreateVote = () => {
       )
     },
     {
-      name: 'Proposal Expiration Timezone',
+      name: 'Timezone',
       comp: (
         <div className='flex items-center'>
           <div className='mr-2.5'>

@@ -14,11 +14,10 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link, useParams } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { Input, message } from "antd";
+import { message } from "antd";
 import axios from 'axios';
 import dayjs from 'dayjs';
-import {getIpfsId, useDynamicContract, useStaticContract} from "../../hooks";
+import {getIpfsId, useDynamicContract} from "../../hooks";
 import { useAccount, useNetwork } from "wagmi";
 import { useConnectModal, useChainModal } from "@rainbow-me/rainbowkit";
 import MDEditor from "../../components/MDEditor";
@@ -27,7 +26,9 @@ import LoadingButton from "../../components/LoadingButton";
 import {
   IN_PROGRESS_STATUS,
   WRONG_NET_STATUS,
-  web3AvatarUrl, VOTE_SUCCESS_MSG, CHOOSE_VOTE_MSG, WRONG_MINER_ID_MSG, OPERATION_CANCELED_MSG,
+  web3AvatarUrl,
+  VOTE_SUCCESS_MSG,
+  CHOOSE_VOTE_MSG, PENDING_STATUS,
 } from "../../common/consts";
 import { timelockEncrypt, roundAt, mainnetClient, Buffer } from "tlock-js";
 import {ProposalList, ProposalOption} from "../../common/types";
@@ -36,7 +37,7 @@ import "./index.less";
 const Vote = () => {
   const { chain } = useNetwork();
   const chainId = chain?.id || 0;
-  const { isConnected, address } = useAccount();
+  const { isConnected } = useAccount();
 
   const { id, cid } = useParams();
   const [votingData, setVotingData] = useState({} as ProposalList);
@@ -45,47 +46,15 @@ const Vote = () => {
 
   const navigate = useNavigate();
   const [options, setOptions] = useState([] as ProposalOption[]);
-  const [minerIds, setMinerIds] = useState(['']);
-  const [minerError, setMinerError] = useState(false);
   const [selectedOptionIndex, setSelectedOptionIndex] = useState(-1);
 
   const [loading, setLoading] = useState(false);
-
-  const {
-    formState: { errors }
-  } = useForm({
-    defaultValues: {
-      option: null
-    }
-  })
 
   useEffect(() => {
     initState();
   }, [chain]);
 
-  const addMinerIdPrefix = (minerIds: number[]) => {
-    return minerIds?.map(minerId => `f0${minerId}`);
-  }
-
-  const removeMinerIdPrefix = (minerIds: string[]) => {
-    return minerIds.map(minerId => {
-      const str = minerId.replace(/f0/g, '');
-      if (isNaN(Number(str))) {
-        setMinerError(true);
-        return 0;
-      } else {
-        setMinerError(false);
-        return Number(str);
-      }
-    });
-  }
-
   const initState = async () => {
-    const { getMinerIds } = await useStaticContract(chainId);
-    const { code, data: { minerIds } } = await getMinerIds(address);
-    if (code === 200) {
-      setMinerIds(addMinerIdPrefix(minerIds?.map((id: any) => id.toNumber())));
-    }
     const res = await axios.get(`https://${cid}.ipfs.nftstorage.link/`);
     const data = res.data;
     let voteStatus = null;
@@ -97,7 +66,7 @@ const Vote = () => {
         openConnectModal && openConnectModal();
       }
     } else {
-      voteStatus = IN_PROGRESS_STATUS;
+      voteStatus = dayjs().unix() < data?.startTime ? PENDING_STATUS : IN_PROGRESS_STATUS;
     }
     const option = data.option?.map((item: string) => {
       return {
@@ -145,35 +114,24 @@ const Vote = () => {
 
       // vote params
       const encryptValue = await handleEncrypt([[`${selectedOptionIndex}`, `100`]]);
-      const optionId = await getIpfsId(encryptValue);
-      const ids = removeMinerIdPrefix(minerIds);
-      if (minerError) {
-        message.warning(WRONG_MINER_ID_MSG);
-        return;
-      }
+      const optionId = await getIpfsId(encryptValue) as any;
       if (isConnected) {
         const { voteApi } = useDynamicContract(chainId);
-        const res = await voteApi(Number(id), optionId, ids);
-        console.log(Number(id), optionId, ids);
+        const res = await voteApi(Number(id), optionId);
         if (res.code === 200 && res.data?.hash) {
           message.success(VOTE_SUCCESS_MSG, 3);
           setTimeout(() => {
-            navigate("/")
-          }, 3000)
+            navigate("/");
+          }, 3000);
         } else {
-          message.error(OPERATION_CANCELED_MSG)
+          message.error(res.msg, 3);
         }
-        setLoading(false)
+        setLoading(false);
       } else {
         // @ts-ignore
-        openConnectModal && openConnectModal()
+        openConnectModal && openConnectModal();
       }
     }
-  }
-
-  const handleMinerChange = (value: string) => {
-    const arr = value.split(',');
-    setMinerIds(arr);
   }
 
   const handleOptionClick = (index: number) => {
@@ -186,6 +144,11 @@ const Vote = () => {
         return {
           name: 'Wrong network',
           color: 'bg-red-700',
+        };
+      case PENDING_STATUS:
+        return {
+          name: 'Pending',
+          color: 'bg-cyan-700',
         };
       case IN_PROGRESS_STATUS:
         return {
@@ -257,12 +220,6 @@ const Vote = () => {
           {
             votingData?.voteStatus === IN_PROGRESS_STATUS &&
               <div className='mt-5'>
-                  <Input
-                      defaultValue={minerIds?.toString()}
-                      onChange={(e) => { handleMinerChange(e.target.value) }}
-                      className='form-input w-full rounded !bg-[#212B3C] border border-[#313D4F] text-white'
-                      placeholder='Input minerId'
-                  />
                   <div className="border-[#313D4F] mt-6 border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border border-solid">
                       <div className="group flex h-[57px] !border-[#313D4F] justify-between items-center border-b px-4 pb-[12px] pt-3 border-solid">
                           <h4 className="text-xl">
@@ -309,13 +266,19 @@ const Vote = () => {
             <div className="p-4 leading-6 sm:leading-8">
               <div className="space-y-1">
                 <div>
-                  <b>Exp. Time</b>
+                  <b>Start Time</b>
                   <span className="float-right text-white">
-                    {dayjs(votingData?.showTime).format('MMM.D, YYYY, h:mm A')}
+                    {votingData?.showTime?.length && dayjs(votingData.showTime[0]).format('MMM.D, YYYY, h:mm A')}
                   </span>
                 </div>
                 <div>
-                  <b>Exp. Timezone</b>
+                  <b>End Time</b>
+                  <span className="float-right text-white">
+                    {votingData?.showTime?.length && dayjs(votingData.showTime[1]).format('MMM.D, YYYY, h:mm A')}
+                  </span>
+                </div>
+                <div>
+                  <b>Timezone</b>
                   <span className="float-right text-white">
                     {votingData?.GMTOffset}
                   </span>

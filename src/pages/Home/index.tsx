@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import React, {useEffect, useState} from "react";
-import { ConfigProvider, theme, Row, Empty, Pagination, Spin } from "antd";
+import { Row, Empty, Pagination, Spin } from "antd";
 import {useNetwork, useAccount} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import {useNavigate} from "react-router-dom";
@@ -28,13 +28,14 @@ import {
   IN_PROGRESS_STATUS,
   VOTE_COUNTING_STATUS,
   COMPLETED_STATUS,
-  web3AvatarUrl,
+  web3AvatarUrl, PENDING_STATUS,
 } from '../../common/consts';
 import ListFilter from "../../components/ListFilter";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
 import {useStaticContract} from "../../hooks";
 import {ProposalData, ProposalFilter, ProposalList, ProposalOption, ProposalResult} from '../../common/types';
 import Loading from "../../components/Loading";
+import {markdownToText} from "../../utils";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -57,7 +58,7 @@ const Home = () => {
   const [proposalStatus, setProposalStatus] = useState(VOTE_ALL_STATUS);
   const [proposalList, setProposalList] = useState<ProposalList[]>([]);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
+  const [pageSize] = useState(5);
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
@@ -71,7 +72,6 @@ const Home = () => {
   const getProposalList = async (page: number) => {
     setLoading(true);
     const chainId = chain?.id || 0;
-
     const { getLatestId, getProposal } = await useStaticContract(chainId);
     const res = await getLatestId();
     let originList: ProposalList[] = [];
@@ -103,7 +103,8 @@ const Home = () => {
           id: total - offset - index,
           cid: data.cid,
           creator: data.creator,
-          expTime: data.expTime.toNumber(),
+          startTime: data.startTime?.toNumber(),
+          expTime: data.expTime?.toNumber(),
           proposalType: data.proposalType.toNumber(),
           proposalResults
         };
@@ -132,14 +133,18 @@ const Home = () => {
         const  proposal = proposals[i];
         const now = dayjs().unix();
         let proposalStatus = 0;
-        if (now >= proposal.expTime) {
-          if (proposal.proposalResults.length === 0) {
-            proposalStatus = VOTE_COUNTING_STATUS
-          } else {
-            proposalStatus = COMPLETED_STATUS
-          }
+        if (now < proposal.startTime) {
+          proposalStatus = PENDING_STATUS;
         } else {
-          proposalStatus = IN_PROGRESS_STATUS
+          if (now >= proposal.expTime) {
+            if (proposal.proposalResults.length === 0) {
+              proposalStatus = VOTE_COUNTING_STATUS
+            } else {
+              proposalStatus = COMPLETED_STATUS
+            }
+          } else {
+            proposalStatus = IN_PROGRESS_STATUS
+          }
         }
         const option = res.data.option?.map((item: string, index: number) => {
           const proposalItem = proposal?.proposalResults?.find(
@@ -177,7 +182,7 @@ const Home = () => {
    * @param item
    */
   const handleJump = (item: ProposalList) => {
-    const router = `/${item.proposalStatus === IN_PROGRESS_STATUS ? "vote" : "votingResults"}/${item.id}/${item.cid}`;
+    const router = `/${[PENDING_STATUS, IN_PROGRESS_STATUS].includes(item.proposalStatus) ? "vote" : "votingResults"}/${item.id}/${item.cid}`;
     navigate(router, {state: item});
   }
 
@@ -241,7 +246,7 @@ const Home = () => {
           </div>
           <div className="relative mb-4 line-clamp-2 break-words break-all text-lg pr-[80px] leading-7 cursor-pointer"
                onClick={() => {
-                 handleJump(item)
+                 handleJump(item);
                }}>
             <h3 className="inline pr-2 text-2xl font-semibold text-white">
               {item.name}
@@ -250,10 +255,10 @@ const Home = () => {
           <div className="mb-2 line-clamp-2 break-words text-lg cursor-pointer" onClick={() => {
             handleJump(item)
           }}>
-            {item.descriptions}
+            {markdownToText(item.descriptions)}
           </div>
           {
-            item.proposalStatus === COMPLETED_STATUS &&
+            maxOption.count > 0 &&
               <div>
                 {
                   item.option?.map((option: ProposalOption, index: number) => {
@@ -277,9 +282,8 @@ const Home = () => {
               </div>
           }
           <div className="text-[#8B949E] text-sm mt-4">
-
-            <span className="mr-2">Expiration Time:</span>
-            {dayjs(item.showTime).format('MMM.D, YYYY, h:mm A')} ({item.GMTOffset})
+            <span className="mr-2">End Time:</span>
+            {dayjs(item.showTime[1]).format('MMM.D, YYYY, h:mm A')} ({item.GMTOffset})
           </div>
         </div>
       )

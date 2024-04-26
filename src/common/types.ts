@@ -38,6 +38,7 @@ export interface ProposalData {
   id: number
   cid: number
   creator: string
+  startTime: number
   expTime: number
   proposalType: number
   proposalResults: ProposalResult[]

@@ -1,25 +1,27 @@
 {
   "compilerOptions": {
-    "target": "ES5",
+    "target": "es5",
     "module": "commonjs",
     "lib": [
-      "es6",
+      "es5",
       "dom",
       "dom.iterable",
       "scripthost"
     ],
-    "sourceMap": false,
+    "paths": {
+      "@web3-storage/w3up-client": ["node_modules/@web3-storage/w3up-client"]
+    },
+    "sourceMap": true,
     "jsx": "react",
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "strict": false,
+    "strict": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "baseUrl": ".",
   },
   "exclude": [
     "node_modules",
-  ],
+  ]
 }
-
-

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import React from 'react';
-import { Empty, Table, ConfigProvider, theme, Popover } from 'antd';
+import { Empty, Table, Popover } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import EllipsisMiddle from "../EllipsisMiddle";
 import {web3AvatarUrl} from "../../common/consts";
@@ -49,6 +49,9 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
       title: 'Percent',
       dataIndex: 'percent',
       key: 'percent',
+      render: (text: string) => {
+        return text === '0%' ? 'NO VOTES' : text;
+      }
     },
     {
       title: 'Block Height',
@@ -94,6 +97,32 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
     ];
   }
 
+  const renderFooter = (data: any[], votes: number) => {
+    let totalPercent = "Total Percent = ";
+    let count = 0;
+    const arr: string[] = [];
+    data.forEach(item => {
+      const { total, percent } = item;
+      if (total !== '0') {
+        arr.push(percent);
+        count++;
+      }
+    });
+
+    arr.forEach((item, index) => {
+      if (index < arr.length - 1) {
+        totalPercent += `${item} / 4 + `;
+      } else {
+        totalPercent += `${item} / 4`;
+      }
+    });
+
+
+    totalPercent += `= ${votes}%`;
+
+    return <div>{totalPercent}</div>;
+  }
+
   return (
     <div className="border-y border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border my-12">
       <div className="group flex h-[57px] justify-between rounded-t-none border-b border-skin-border px-6 pb-[12px] pt-3 md:rounded-t-lg">
@@ -130,13 +159,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
                           dataSource={getPowerData(item)}
                           columns={columns}
                           pagination={false}
-                          footer={(currentData: any) => {
-                            return (
-                              <div>
-                                Total Percent = {`${currentData[0].percent} / 4`} + {`${currentData[1].percent} / 4`} + {`${currentData[2].percent} / 4`} + {`${currentData[3].percent} / 4`} = {item.votes}%
-                              </div>
-                            )
-                          }}
+                          footer={(currentData: any) => renderFooter(currentData, item.votes)}
                         />
                       }>
                         <span>{item.votes}% <InfoCircleOutlined style={{ fontSize: 14 }} /></span>

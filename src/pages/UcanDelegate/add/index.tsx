@@ -29,7 +29,7 @@ import {
   UCAN_TYPE_GITHUB_OPTIONS,
   UCAN_GITHUB_STEP_1,
   UCAN_GITHUB_STEP_2,
-  STORING_DATA_MSG, OPERATION_CANCELED_MSG,
+  OPERATION_CANCELED_MSG,
 } from '../../../common/consts';
 import { stringToBase64Url } from '../../../utils';
 import {getIpfsId, useDynamicContract} from "../../../hooks";
@@ -47,7 +47,7 @@ const UcanDelegate = () => {
   const [loading, setLoading] = useState(false);
   const [githubSignature, setGithubSignature] = useState('');
   const [githubStep, setGithubStep] = useState(UCAN_GITHUB_STEP_1);
-  const [formValue, setFormValue] = useState({
+  const [formValue] = useState({
     aud: '',
     prf: '',
     owner: '',
@@ -122,10 +122,10 @@ const UcanDelegate = () => {
   const setUcan = async (ucan: string) => {
     const chainId = chain?.id || 0;
     const { ucanDelegate } = useDynamicContract(chainId);
-    const cid = await getIpfsId(ucan);
+    const cid = await getIpfsId(ucan) as any;
     const res = await ucanDelegate(cid);
     if (res.code === 200 && res.data?.hash) {
-      message.success(STORING_DATA_MSG);
+      message.success(res.msg);
       navigate("/");
       // save data to localStorage and set validity period to three minutes
       const ucanStorageData = JSON.parse(localStorage.getItem('ucanStorage') || '[]');
@@ -133,7 +133,7 @@ const UcanDelegate = () => {
       ucanStorageData.push({ timestamp: expirationTime, address })
       localStorage.setItem('ucanStorage', JSON.stringify(ucanStorageData));
     } else {
-      message.error(OPERATION_CANCELED_MSG);
+      message.error(res.msg, 3);
     }
     setLoading(false);
   }
@@ -280,7 +280,7 @@ const UcanDelegate = () => {
           <Controller
             name="aud"
             control={control}
-            render={({ field }) => <input
+            render={() => <input
               className={classNames(
                 'form-input w-[520px] rounded bg-[#212B3C] border border-[#313D4F]',
                 errors['aud'] && 'border-red-500 focus:border-red-500'
@@ -302,7 +302,7 @@ const UcanDelegate = () => {
           <Controller
             name="prf"
             control={control}
-            render={({ field }) => <textarea
+            render={() => <textarea
               placeholder='The full UCAN content (include header, payload and signature) signed by your Filecoin private key.'
               className={classNames(
                 'form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]',
@@ -384,7 +384,7 @@ const UcanDelegate = () => {
           <Controller
             name="aud"
             control={control}
-            render={({ field }) => <input
+            render={() => <input
               placeholder='Your github account.'
               className={classNames(
                 'form-input w-[520px] rounded bg-[#212B3C] border border-[#313D4F]',
@@ -421,7 +421,7 @@ const UcanDelegate = () => {
           <Controller
             name="url"
             control={control}
-            render={({ field }) => <input
+            render={() => <input
               className={classNames(
                 'form-input w-full rounded bg-[#212B3C] border border-[#313D4F]',
                 errors['url'] && 'border-red-500 focus:border-red-500'

@@ -20,6 +20,7 @@ import UcanDelegateDelete from "../pages/UcanDelegate/delete/index";
 import UcanDelegateHelp from "../pages/UcanDelegate/help/index";
 import Vote from "../pages/Vote";
 import VotingResults from "../pages/VotingResults";
+import MinerId from "../pages/MinerId";
 
 const routes = [
   {
@@ -29,6 +30,10 @@ const routes = [
   {
     path: "/createVote",
     element: <CreateVote />,
+  },
+  {
+    path: "/minerid",
+    element: <MinerId />,
   },
   {
     path: "/ucanDelegate/add",

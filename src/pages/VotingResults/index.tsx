@@ -26,7 +26,7 @@ import {
   WRONG_NET_STATUS, VOTE_COUNTING_STATUS,
 } from "../../common/consts";
 import VoteList from "../../components/VoteList";
-import {ProposalOption, ProposalData, ProposalResult, ProposalHistory} from "../../common/types";
+import {ProposalOption, ProposalResult, ProposalHistory} from "../../common/types";
 
 const VotingResults = () => {
   const { chain } = useNetwork();
@@ -63,7 +63,7 @@ const VotingResults = () => {
         params,
       })
       voteStatus = resultData.length > 0 ? COMPLETED_STATUS : VOTE_COUNTING_STATUS;
-      resultData.map((item: ProposalData, index: number) => {
+      resultData.map((_: any, index: number) => {
         const voteItem = resultData.find((vote: ProposalResult) => vote.optionId === index);
         option.push({
           name: proposalData.option[voteItem.optionId],
@@ -188,11 +188,15 @@ const VotingResults = () => {
             <div className='p-4 leading-6 sm:leading-8'>
               <div className='space-y-1'>
                 <div>
-                  <b>Exp. Time</b>
-                  <span className='float-right text-white'>{dayjs(votingData?.showTime).format('MMM.D, YYYY, h:mm A')}</span>
+                  <b>Start Time</b>
+                  <span className='float-right text-white'>{votingData?.showTime?.length && dayjs(votingData?.showTime[0]).format('MMM.D, YYYY, h:mm A')}</span>
                 </div>
                 <div>
-                  <b>Exp. Timezone</b>
+                  <b>End Time</b>
+                  <span className='float-right text-white'>{votingData?.showTime?.length && dayjs(votingData?.showTime[1]).format('MMM.D, YYYY, h:mm A')}</span>
+                </div>
+                <div>
+                  <b>Timezone</b>
                   <span className='float-right text-white'>{votingData?.GMTOffset}</span>
                 </div>
               </div>

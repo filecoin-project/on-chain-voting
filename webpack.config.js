@@ -1,6 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const { DefinePlugin, ProvidePlugin  } = require('webpack');
+const { DefinePlugin, ProvidePlugin, ProgressPlugin } = require('webpack');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const dotenv = require('dotenv');
@@ -102,6 +102,10 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: './public/index.html',
     }),
+    new ProgressPlugin(),
   ],
   devtool: 'source-map',
+  // optimization: {
+  //   minimize: true,
+  // },
 };

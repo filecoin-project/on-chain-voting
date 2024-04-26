@@ -33,6 +33,19 @@
   {
     "inputs": [
       {
+        "internalType": "uint64[]",
+        "name": "minerIds",
+        "type": "uint64[]"
+      }
+    ],
+    "name": "addMinerId",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "target",
         "type": "address"
@@ -58,6 +71,11 @@
         "internalType": "string",
         "name": "proposalCid",
         "type": "string"
+      },
+      {
+        "internalType": "uint248",
+        "name": "startTime",
+        "type": "uint248"
       },
       {
         "internalType": "uint248",
@@ -144,6 +162,26 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "fipAddress",
+        "type": "address"
+      }
+    ],
+    "name": "removeFIP",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "string",
         "name": "",
         "type": "string"
@@ -162,6 +200,63 @@
     ],
     "name": "TimeError",
     "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "ucanCid",
+        "type": "string"
+      }
+    ],
+    "name": "ucanDelegate",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "oracleAddress",
+        "type": "address"
+      }
+    ],
+    "name": "updateOracleContract",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newImplementation",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
+    ],
+    "name": "upgradeToAndCall",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
   },
   {
     "inputs": [],
@@ -269,6 +364,11 @@
           },
           {
             "internalType": "uint248",
+            "name": "startTime",
+            "type": "uint248"
+          },
+          {
+            "internalType": "uint248",
             "name": "expTime",
             "type": "uint248"
           },
@@ -288,65 +388,6 @@
     "type": "event"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "fipAddress",
-        "type": "address"
-      }
-    ],
-    "name": "removeFIP",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "renounceOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
-    "name": "transferOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "ucanCid",
-        "type": "string"
-      }
-    ],
-    "name": "ucanDelegate",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "oracleAddress",
-        "type": "address"
-      }
-    ],
-    "name": "updateOracleContract",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
@@ -362,24 +403,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "newImplementation",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "data",
-        "type": "bytes"
-      }
-    ],
-    "name": "upgradeToAndCall",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "id",
         "type": "uint256"
@@ -388,11 +411,6 @@
         "internalType": "string",
         "name": "info",
         "type": "string"
-      },
-      {
-        "internalType": "uint64[]",
-        "name": "minerIds",
-        "type": "uint64[]"
       }
     ],
     "name": "vote",
@@ -520,6 +538,11 @@
         "internalType": "address",
         "name": "creator",
         "type": "address"
+      },
+      {
+        "internalType": "uint248",
+        "name": "startTime",
+        "type": "uint248"
       },
       {
         "internalType": "uint248",

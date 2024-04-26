@@ -17,7 +17,7 @@ import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { FILECOIN_AUTHORIZE_DOC, FILECOIN_DEAUTHORIZE_DOC, GITHUB_AUTHORIZE_DOC, GITHUB_DEAUTHORIZE_DOC } from "../common/consts";
 
-export default function Table ({ title = '', link= {} as { type: string, action: string, href: string }, list = [] as { name: string, comp: ReactNode }[], subTitle = '' }) {
+export default function Table ({ title = '', link= {} as { type: string, action: string, href: string }, list = [] as { name: string, comp: ReactNode, width?: number }[], subTitle = '' }) {
   const navigate = useNavigate();
   const { type, action, href } = link;
 

@@ -18,7 +18,7 @@ import MarkdownIt from 'markdown-it';
 import emoji from 'markdown-it-emoji';
 import footnote from 'markdown-it-footnote';
 // @ts-ignore
-import mdKatex from 'markdown-it-katex';
+import mdKatex from '@iktakahiro/markdown-it-katex';
 // @ts-ignore
 import subscript from 'markdown-it-sub';
 // @ts-ignore
@@ -42,8 +42,8 @@ const mdParser = new MarkdownIt({
   linkify: true,
   typographer: true,
 })
-  .use(emoji)
   .use(mdKatex)
+  .use(emoji)
   .use(footnote)
   .use(subscript)
   .use(superscript)
