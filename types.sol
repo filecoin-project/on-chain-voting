@@ -23,6 +23,8 @@ struct Proposal {
     uint256 proposalType;
     // proposal creator
     address creator;
+    // proposal start timestamp
+    uint248 startTime;
     // proposal expiration timestamp, second
     uint248 expTime;
     // votes count

@@ -23,8 +23,9 @@ import {IPowerVotingError} from "./IPowerVotingError.sol";
 interface IPowerVoting is IPowerVotingEvent, IPowerVotingError {
     function addFIP(address fipAddress) external;
     function removeFIP(address fipAddress) external;
-    function createProposal(string calldata proposalCid, uint248 expTime, uint256 proposalType) external;
-    function vote(uint256 id, string calldata info, uint64[] memory minerIds) external;
+    function createProposal(string calldata proposalCid, uint248 startTime, uint248 expTime, uint256 proposalType) external;
+    function vote(uint256 id, string calldata info) external;
     function ucanDelegate(string calldata ucanCid) external;
     function updateOracleContract(address oracleAddress) external;
+    function addMinerId(uint64[] memory minerIds) external;
 }

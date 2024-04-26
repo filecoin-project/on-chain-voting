@@ -107,10 +107,11 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
      * create a proposal and store it into mapping
      *
      * @param proposalCid: proposal content is stored in ipfs, proposal cid is ipfs cid for proposal content
-     * @param expTime: proposal expiration timestamp, second
+     * @param startTime: proposal start timestamp
+     * @param expTime: proposal expiration timestamp
      * @param proposalType: proposal type
      */
-    function createProposal(string calldata proposalCid, uint248 expTime, uint256 proposalType) override external {
+    function createProposal(string calldata proposalCid, uint248 startTime, uint248 expTime, uint256 proposalType) override external {
         bool fip = fipMap[msg.sender];
         if(!fip){
             revert CallError("Not FIP.");
@@ -123,6 +124,7 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
         Proposal storage proposal = idToProposal[id];
         proposal.cid = proposalCid;
         proposal.creator = msg.sender;
+        proposal.startTime = startTime;
         proposal.expTime = expTime;
         proposal.proposalType = proposalType;
         emit ProposalCreate(id, proposal);
@@ -135,30 +137,17 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
      * @param id: proposal id
      * @param info: vote info, IPFS cid
      */
-    function vote(uint256 id, string calldata info, uint64[] memory minerIds) override external{
+    function vote(uint256 id, string calldata info) override external{
         Proposal storage proposal = idToProposal[id];
+        // if proposal is not start, won't be allowed to vote
+        if(proposal.startTime > block.timestamp){
+            revert TimeError("Proposal not start yet.");
+        }
         // if proposal is expired, won't be allowed to vote
         if(proposal.expTime <= block.timestamp){
             revert TimeError("Proposal expiration time reached.");
         }
-        if (minerIds.length > 0) {
-            (bool addMinerSuccess, ) = oracleContract.call(abi.encodeWithSelector(ADD_MINER_IDS_SELECTOR, minerIds, msg.sender));
-            if(!addMinerSuccess){
-                revert CallError("Call oracle contract addMinerIds function failed.");
-            }
-        }
-        (bool getVoterInfoSuccess, bytes memory data) = oracleContract.call(abi.encodeWithSelector(GET_VOTER_INFO_SELECTOR, msg.sender));
-        if(!getVoterInfoSuccess){
-            revert CallError("Call oracle contract getVoterInfo function failed.");
-        }
-        VoterInfo memory voterInfo = abi.decode(data, (VoterInfo));
-        if (bytes(voterInfo.ucanCid).length == 0) {
-            (bool addF4TaskSuccess, ) = oracleContract.call(abi.encodeWithSelector(ADD_F4_TASK_SELECTOR, msg.sender));
-            if(!addF4TaskSuccess){
-                revert CallError("Call oracle contract addF4Task function failed.");
-            }
-        }
-
+        _addF4Task();
         // increment votesCount
         uint256 vid = ++proposal.votesCount;
         // use votesCount as vote id
@@ -166,6 +155,36 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
         voteInfo.voteInfo = info;
         voteInfo.voter = msg.sender;
         emit Vote(id, msg.sender, info);
+    }
+
+    /**
+    * addMinerId
+    *
+    * @param minerIds: miner id list
+    */
+    function addMinerId(uint64[] memory minerIds)override external{
+        _addF4Task();
+        (bool addMinerSuccess, ) = oracleContract.call(abi.encodeWithSelector(ADD_MINER_IDS_SELECTOR, minerIds, msg.sender));
+        if(!addMinerSuccess){
+            revert CallError("Call oracle contract to add miner id failed.");
+        }
+    }
+
+    /**
+     * _addF4Task
+     */
+    function _addF4Task() private {
+        (bool getVoterInfoSuccess, bytes memory data) = oracleContract.call(abi.encodeWithSelector(GET_VOTER_INFO_SELECTOR, msg.sender));
+        if (!getVoterInfoSuccess) {
+            revert CallError("Call oracle contract to get voter info failed.");
+        }
+        VoterInfo memory voterInfo = abi.decode(data, (VoterInfo));
+        if (voterInfo.actorIds.length == 0) {
+            (bool addF4TaskSuccess, ) = oracleContract.call(abi.encodeWithSelector(ADD_F4_TASK_SELECTOR, msg.sender));
+            if (!addF4TaskSuccess) {
+                revert CallError("Call oracle contract to add F4 task failed.");
+            }
+        }
     }
 
     /**
@@ -177,7 +196,7 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
         // call kyc oracle to add task
         (bool success, ) = oracleContract.call(abi.encodeWithSelector(ADD_TASK_SELECTOR, ucanCid));
         if(!success){
-            revert CallError("Call oracle contract addTask function failed.");
+            revert CallError("Call oracle contract to add task failed.");
         }
     }
 
