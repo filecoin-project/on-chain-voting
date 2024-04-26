@@ -37,7 +37,7 @@ func TaskScheduler() {
 
 	HandleF4AddressTask := HandleF4Address
 
-	HandleUpdatePowerSpec := "0 0 * * * ? "
+	HandleUpdatePowerSpec := "0 0 0 * * ?"
 
 	HandleContractCallBackSpec := "0/30 * * * * ? "
 
