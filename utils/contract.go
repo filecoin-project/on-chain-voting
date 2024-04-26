@@ -16,7 +16,6 @@ package utils
 
 import (
 	"context"
-	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -29,13 +28,8 @@ import (
 )
 
 // GetPower get power
-func GetPower(address string, client model.GoEthClient) (model.Power, error) {
-	num, err := rand.Int(rand.Reader, big.NewInt(1440))
-	if err != nil {
-		zap.L().Error("Generate random number error: ", zap.Error(err))
-		return model.Power{}, err
-	}
-	data, err := client.OracleAbi.Pack("getPower", common.HexToAddress(address), big.NewInt(1))
+func GetPower(address string, num *big.Int, client model.GoEthClient) (model.Power, error) {
+	data, err := client.OracleAbi.Pack("getPower", common.HexToAddress(address), num)
 	if err != nil {
 		zap.L().Error("Pack method and param error: ", zap.Error(err))
 		return model.Power{}, err
@@ -185,4 +179,29 @@ func GetProposalLatestId(client model.GoEthClient) (int, error) {
 		return 0, err
 	}
 	return id, nil
+}
+
+func GetVoterToPowerStatus(address string, client model.GoEthClient) (model.VoterToPowerStatus, error) {
+	data, err := client.OracleAbi.Pack("voterToPowerStatus", common.HexToAddress(address))
+	if err != nil {
+		zap.L().Error("Pack method and param error: ", zap.Error(err))
+		return model.VoterToPowerStatus{}, err
+	}
+
+	msg := ethereum.CallMsg{
+		To:   &client.OracleContract,
+		Data: data,
+	}
+	result, err := client.Client.CallContract(context.Background(), msg, nil)
+	if err != nil {
+		zap.L().Error("Call contract error: ", zap.Error(err))
+		return model.VoterToPowerStatus{}, err
+	}
+	var voterToPowerStatus model.VoterToPowerStatus
+	err = client.OracleAbi.UnpackIntoInterface(&voterToPowerStatus, "voterToPowerStatus", result)
+	if err != nil {
+		zap.L().Error("Unpack return data to interface error: ", zap.Error(err))
+		return model.VoterToPowerStatus{}, err
+	}
+	return voterToPowerStatus, nil
 }

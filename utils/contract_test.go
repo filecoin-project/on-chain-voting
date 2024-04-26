@@ -17,6 +17,7 @@ package utils
 import (
 	"fmt"
 	"go.uber.org/zap"
+	"math/big"
 	"powervoting-server/config"
 	"powervoting-server/contract"
 	"testing"
@@ -56,7 +57,7 @@ func TestGetPower(t *testing.T) {
 		zap.L().Error("Get client error: ", zap.Error(err))
 		return
 	}
-	power, err := GetPower("0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307", client)
+	power, err := GetPower("0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307", big.NewInt(1), client)
 	if err != nil {
 		zap.L().Error("Get power error: ", zap.Error(err))
 		return
@@ -76,4 +77,22 @@ func TestGetProposalLatestId(t *testing.T) {
 		zap.L().Error("get proposal latest id error: ", zap.Error(err))
 	}
 	fmt.Println("latest id: ", id)
+}
+
+func TestGetVoterToPowerStatus(t *testing.T) {
+	config.InitConfig("../")
+	client, err := contract.GetClient(314159)
+
+	if err != nil {
+		zap.L().Error("Get client error: ", zap.Error(err))
+		return
+	}
+	voterToPowerStatus, err := GetVoterToPowerStatus("0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307", client)
+
+	if err != nil {
+		zap.L().Error("Get VoterToPowerStatus error: ", zap.Error(err))
+		return
+	}
+	fmt.Printf("power: %+v\n", voterToPowerStatus)
+
 }

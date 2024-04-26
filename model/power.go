@@ -31,3 +31,8 @@ type ContractPower struct {
 	TokenHolderPower *big.Int `json:"tokenHolderPower"`
 	BlockHeight      *big.Int `json:"blockHeight"`
 }
+
+type VoterToPowerStatus struct {
+	DayId        *big.Int `json:"dayId"`
+	HasFullRound *big.Int `json:"hasFullRound"`
+}

@@ -51,7 +51,7 @@ func InitMysql() {
 	Engine.AutoMigrate(&model.Proposal{})
 	Engine.AutoMigrate(&model.Vote{})
 	Engine.AutoMigrate(&model.VoteResult{})
-	Engine.AutoMigrate(&model.VoteHistory{})
+	Engine.AutoMigrate(&model.VoteCompleteHistory{})
 	Engine.AutoMigrate(&model.Dict{})
 	Engine.AutoMigrate(&model.VotePower{})
 

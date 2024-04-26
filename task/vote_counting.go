@@ -15,6 +15,7 @@
 package task
 
 import (
+	"crypto/rand"
 	"math"
 	"math/big"
 	"powervoting-server/config"
@@ -91,11 +92,38 @@ func VotingCount(ethClient model.GoEthClient) {
 		powerMap := make(map[string]model.Power)
 		addressIsCount := make(map[string]bool)
 		for _, vote := range voteList {
-			power, err := utils.GetPower(vote.Address, ethClient)
+			num, err := rand.Int(rand.Reader, big.NewInt(60))
+			if err != nil {
+				zap.L().Error("Generate random number error: ", zap.Error(err))
+				return
+			}
+			num.Add(num, big.NewInt(1))
+			power, err := utils.GetPower(vote.Address, num, ethClient)
 			if err != nil {
 				zap.L().Error("get power error: ", zap.Error(err))
 				return
 			}
+			if power.BlockHeight.Uint64() == 0 {
+				voterToPowerStatus, err := utils.GetVoterToPowerStatus(vote.Address, ethClient)
+				if err != nil {
+					zap.L().Error("get voter to power status error: ", zap.Error(err))
+					return
+				}
+				if voterToPowerStatus.DayId.Int64() != 0 {
+					num, err := rand.Int(rand.Reader, voterToPowerStatus.DayId)
+					if err != nil {
+						zap.L().Error("Generate random number error: ", zap.Error(err))
+						return
+					}
+					num.Add(num, big.NewInt(1))
+					power, err = utils.GetPower(vote.Address, num, ethClient)
+					if err != nil {
+						zap.L().Error("get power error: ", zap.Error(err))
+						return
+					}
+				}
+			}
+
 			zap.L().Info("address: %s, power: %+v\n", zap.Reflect("address", vote.Address), zap.Reflect("power", power))
 			if !addressIsCount[vote.Address] {
 				powerMap[vote.Address] = power
