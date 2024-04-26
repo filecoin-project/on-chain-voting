@@ -15,38 +15,40 @@
 
 pragma solidity ^0.8.19;
 
-import { PowerAPI } from "@zondax/filecoin-solidity/contracts/v0.8/PowerAPI.sol";
-import { PowerTypes } from "@zondax/filecoin-solidity/contracts/v0.8/types/PowerTypes.sol";
-import { CommonTypes } from "@zondax/filecoin-solidity/contracts/v0.8/types/CommonTypes.sol";
-import { FilAddresses } from "@zondax/filecoin-solidity/contracts/v0.8/utils/FilAddresses.sol";
-import { DataCapAPI } from "@zondax/filecoin-solidity/contracts/v0.8/DataCapAPI.sol";
-import { MinerAPI } from "@zondax/filecoin-solidity/contracts/v0.8/MinerAPI.sol";
-import { MinerTypes } from "@zondax/filecoin-solidity/contracts/v0.8/types/MinerTypes.sol";
-import {PrecompilesAPI} from "@zondax/filecoin-solidity/contracts/v0.8/PrecompilesAPI.sol";
+import { PowerAPI } from "filecoin-solidity-api/contracts/v0.8/PowerAPI.sol";
+import { PowerTypes } from "filecoin-solidity-api/contracts/v0.8/types/PowerTypes.sol";
+import { CommonTypes } from "filecoin-solidity-api/contracts/v0.8/types/CommonTypes.sol";
+import { FilAddresses } from "filecoin-solidity-api/contracts/v0.8/utils/FilAddresses.sol";
+import { DataCapAPI } from "filecoin-solidity-api/contracts/v0.8/DataCapAPI.sol";
+import { MinerAPI } from "filecoin-solidity-api/contracts/v0.8/MinerAPI.sol";
+import { MinerTypes } from "filecoin-solidity-api/contracts/v0.8/types/MinerTypes.sol";
+import {PrecompilesAPI} from "filecoin-solidity-api/contracts/v0.8/PrecompilesAPI.sol";
+
 
 library Powers {
 
-    function getSp(uint64 minerID) external returns(bytes memory) {
-        PowerTypes.MinerRawPowerReturn memory sp = PowerAPI.minerRawPower(minerID);
+    function getSp(uint64 minerID) external view returns(bytes memory) {
+        (,PowerTypes.MinerRawPowerReturn memory sp )= PowerAPI.minerRawPower(minerID);
         return sp.raw_byte_power.val;
     }
 
-    function getClient(uint64 actorID) external returns(bytes memory) {
+    function getClient(uint64 actorID) external view returns(bytes memory) {
         CommonTypes.FilAddress memory result = FilAddresses.fromActorID(actorID);
-        CommonTypes.BigInt memory clientBalance = DataCapAPI.balance(result);
+        (,CommonTypes.BigInt memory clientBalance) = DataCapAPI.balance(result);
         return clientBalance.val;
     }
 
-    function getOwner(uint64 minerID) external returns(uint64) {
+
+    function getOwner(uint64 minerID) external view returns(uint64) {
         CommonTypes.FilActorId miner = CommonTypes.FilActorId.wrap(minerID);
-        MinerTypes.GetOwnerReturn memory result = MinerAPI.getOwner(miner);
-        uint64 res = PrecompilesAPI.resolveAddress(result.owner);
-        return res;
+        (, MinerTypes.GetOwnerReturn memory result )  = MinerAPI.getOwner(miner);
+        uint64 ownerId = PrecompilesAPI.resolveAddress(result.owner);
+        return ownerId;
     }
+
 
     function resolveEthAddress(address addr) public view returns (uint64) {
         return PrecompilesAPI.resolveEthAddress(addr);
     }
-
 
 }

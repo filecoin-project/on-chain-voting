@@ -38,7 +38,7 @@ interface IOracle is IOracleError {
 
     // power status
     struct PowerStatus{
-        uint256 hourId;
+        uint256 dayId;
         uint256 hasFullRound;
     }
 

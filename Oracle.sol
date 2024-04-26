@@ -30,8 +30,8 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     using Powers for uint64;
     using Powers for address;
 
-    // max history, 1440: 60 * 24, Save once every hour, with a maximum storage period of 60 days.
-    uint64 constant public MAX_HISTORY = 1440;
+    // max day, 60, Save once every day, with a maximum storage period of 60 days.
+    uint64 constant public MAX_HISTORY = 60;
 
     // task id
     Counters.Counter private _taskId;
@@ -64,6 +64,8 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     mapping(address => PowerStatus) public voterToPowerStatus;
     // actor id list
     mapping(uint64 => bool) public actorIdList;
+    // github account list
+    mapping(string => bool) public githubAccountList;
 
     modifier onlyInAllowList(){
         if (!nodeAllowList[msg.sender]) {
@@ -159,22 +161,40 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
      * @param powerParam: power
      */
     function taskCallback(VoterInfo calldata voterInfoParam, uint256 taskId, Power calldata powerParam) external onlyInAllowList override {
+
         address voterAddress = voterInfoParam.ethAddress;
         if (voterAddressToBlockHeight[voterAddress] == block.number) {
             revert StatusError("Has already been updated by other nodes.");
         }
 
-        uint64[] memory actorIds = voterInfoParam.actorIds;
-        uint256 actorIdsLength = actorIds.length;
+        //Check if it is a task of f4
         if (bytes(voterInfoParam.ucanCid).length != 0) {
-            for (uint256 l = 0; l < actorIdsLength; l++) {
-                bool exist = actorIdList[actorIds[l]];
-                if (exist) {
-                    delete taskIdToUcanCid[taskId];
-                    taskIdList.remove(taskId);
-                    return;
+            // check if account exist
+            bool exist = false;
+            uint256  actorIdsLength = voterInfoParam.actorIds.length;
+            for (uint256 i = 0; i < actorIdsLength; i++) {
+                if (actorIdList[voterInfoParam.actorIds[i]]) {
+                    exist = true;
+                    break;
                 }
-                actorIdList[actorIds[l]] = true;
+            }
+            if (!exist && githubAccountList[voterInfoParam.githubAccount]) {
+                exist = true;
+            }
+            if (exist) {
+                delete taskIdToUcanCid[taskId];
+                delete f4TaskIdToAddress[taskId];
+                taskIdList.remove(taskId);
+                f4TaskIdList.remove(taskId);
+                return;
+            }
+
+            // save account to list
+            for (uint256 i = 0; i <actorIdsLength; i++) {
+                actorIdList[voterInfoParam.actorIds[i]] = true;
+            }
+            if (bytes(voterInfoParam.githubAccount).length != 0) {
+                githubAccountList[voterInfoParam.githubAccount] = true;
             }
         }
 
@@ -185,7 +205,7 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
         _updateMinerId(voterAddress);
 
         Power memory power = _calcPower(voterAddress, powerParam);
-        uint256 id = _getHourId(voterAddress);
+        uint256 id = _getDayId(voterAddress);
         voterTohistoryPower[voterAddress][id] = power;
 
         // add to voter list for schedule task
@@ -210,10 +230,11 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
         for (uint256 i = 0; i < actorIdsLength; i++) {
             actorIdList[actorIds[i]] = false;
         }
+        githubAccountList[voterInfo.githubAccount]=false;
         VoterInfo memory newVoterInfo = VoterInfo(new uint64[](0),new uint64[](0),"",address(0),"");
         voterToInfo[voterAddress] = newVoterInfo;
         PowerStatus storage powerStatus = voterToPowerStatus[voterAddress];
-        powerStatus.hourId = 0;
+        powerStatus.dayId = 0;
         powerStatus.hasFullRound = 0;
         voterList.remove(voterAddress);
         delete taskIdToUcanCid[taskId];
@@ -227,7 +248,7 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
      */
     function getPower(address voterAddress, uint256 id) external view override returns(Power memory){
         PowerStatus storage powerStatus = voterToPowerStatus[voterAddress];
-        if (powerStatus.hasFullRound == 0 && id > powerStatus.hourId) {
+        if (powerStatus.hasFullRound == 0 && id > powerStatus.dayId) {
             return Power(0,new bytes[](0),new bytes[](0),0,0);
         }
         return voterTohistoryPower[voterAddress][id];
@@ -268,23 +289,22 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
             revert StatusError("Has already been updated by other nodes.");
         }
         Power memory power = _calcPower(voterAddress, powerParam);
-        uint256 id = _getHourId(voterAddress);
+        uint256 id = _getDayId(voterAddress);
         voterTohistoryPower[voterAddress][id] = power;
-
         voterAddressToBlockHeight[voterAddress] = block.number;
     }
 
     /**
-     * _getHourId: get hour id
+     * _getDayId: get day id
      * @param voter: voter address
      */
-    function _getHourId(address voter) internal returns(uint256){
+    function _getDayId(address voter) private returns(uint256){
         PowerStatus storage powerStatus = voterToPowerStatus[voter];
-        powerStatus.hourId++;
-        uint256 id = powerStatus.hourId % MAX_HISTORY;
+        powerStatus.dayId++;
+        uint256 id = powerStatus.dayId % MAX_HISTORY;
         if (id == 0) {
             id = MAX_HISTORY;
-            powerStatus.hourId = 0;
+            powerStatus.dayId = 0;
             powerStatus.hasFullRound = 0;
         }
         return id;
@@ -295,10 +315,11 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
      * @param voterAddress: voter address
      * @param power: power
      */
-    function _calcPower(address voterAddress, Power memory power) internal returns(Power memory){
-        VoterInfo memory voterInfo = voterToInfo[voterAddress];
+    function _calcPower(address voterAddress, Power memory power) private returns(Power memory){
+        VoterInfo storage voterInfo = voterToInfo[voterAddress];
         uint64[] memory actorList = voterInfo.actorIds;
         uint256 actorIdsLength = actorList.length;
+        _filterAndSetMinerIds(voterAddress, voterInfo, voterInfo.minerIds, voterInfo.minerIds.length, actorIdsLength);
         bytes[] memory clientPowerList = new bytes[](actorIdsLength);
         for (uint256 i = 0; i < actorIdsLength; i++) {
             bytes memory clientPower = actorList[i].getClient();
@@ -321,32 +342,58 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
      * updateMinerId: update miner id
      * @param voterAddress: voter address
      */
-    function _updateMinerId(address voterAddress) internal {
-    // get voter info
-    VoterInfo storage voterInfo = voterToInfo[voterAddress];
-    uint64[] storage actorIds = voterInfo.actorIds;
-    uint64[] storage minerIds = voterToMinerIds[voterAddress];
+    function _updateMinerId(address voterAddress) private {
+        VoterInfo storage voterInfo = voterToInfo[voterAddress];
+        uint64[] storage actorIds = voterInfo.actorIds;
+        uint64[] storage minerIds = voterToMinerIds[voterAddress];
+        uint256 minerIdsLength = minerIds.length;
+        uint256 actorIdsLength = actorIds.length;
 
-    if (actorIds.length == 0 || minerIds.length == 0) {
-        return;
+        if (actorIdsLength == 0){
+            return;
+        }
+
+        if (minerIdsLength == 0)  {
+            delete voterInfo.minerIds;
+            return;
+        }
+
+        _filterAndSetMinerIds(voterAddress, voterInfo, minerIds, minerIdsLength, actorIdsLength);
     }
 
-    uint64[] memory minerIdsRes = new uint64[](minerIds.length);
-    uint256 index = 0;
 
-    for (uint256 i = 0; i < minerIds.length; i++) {
-        uint64 actorId = minerIds[i].getOwner();
-        for (uint256 j = 0; j < actorIds.length; j++) {
-            if (actorId == actorIds[j]) {
-                minerIdsRes[index++] = minerIds[i];
-                break;
+    /**
+     * Filter and set miner ids based on actor ids
+     * @param voterAddress: voter address
+     * @param voterInfo: voter information
+     * @param minerIds: miner ids
+     * @param minerIdsLength: length of miner ids
+     * @param actorIdsLength: length of actor ids
+     */
+    function _filterAndSetMinerIds(address voterAddress, VoterInfo storage voterInfo, uint64[] storage minerIds, uint256 minerIdsLength, uint256 actorIdsLength) private {
+        uint64[] memory minerIdsRes = new uint64[](minerIdsLength);
+        uint256 index = 0;
+        for (uint256 i = 0; i < minerIdsLength; i++) {
+            uint64 actorId = minerIds[i].getOwner();
+            for (uint256 j = 0; j < actorIdsLength; j++) {
+                if (actorId == voterInfo.actorIds[j]) {
+                    minerIdsRes[index++] = minerIds[i];
+                    break;
+                }
             }
         }
+
+        uint64[] memory matchedMinerIds = new uint64[](index);
+        for (uint256 i = 0; i < index; i++) {
+            matchedMinerIds[i] = minerIdsRes[i];
+        }
+
+        voterInfo.minerIds = matchedMinerIds;
+        delete voterToMinerIds[voterAddress];
     }
 
-    voterInfo.minerIds = minerIdsRes;
-    delete voterToMinerIds[voterAddress];
-}
+
+
 
 
     /**
