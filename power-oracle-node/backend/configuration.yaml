@@ -1,0 +1,21 @@
+network:
+  - id: 314159
+    name: Calibration
+    # RPC url
+    rpc: https://rpc.ankr.com/filecoin_testnet
+    #  absolute path
+    abiPath: oracle_abi.json
+    # contract address
+    contractAddress:
+    # wallet private key
+    privateKey:
+    # wallet address
+    walletAddress:
+    # gas limit
+    gasLimit:
+
+github:
+  # github token
+  githubToken:
+  # graphql api
+  graphql: https://api.github.com/graphql
