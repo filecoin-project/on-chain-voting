@@ -139,17 +139,17 @@ const App: React.FC = () => {
         });
       }
     } else {
-      navigate('/ucanDelegate/add');
+      navigate('/ucanDelegate/propose');
     }
   }
 
-  const handleMinerId = () => {
+  const handleJump = (route: string) => {
     if (!isConnected) {
       openConnectModal && openConnectModal();
       setSpinning(false);
       return;
     }
-    navigate('/minerid');
+    navigate(route);
   }
 
   const items = [
@@ -167,86 +167,122 @@ const App: React.FC = () => {
       key: '2',
       label: (
         <a
-          onClick={handleMinerId}
+          onClick={() => { handleJump('/minerid') }}
         >
           Miner IDs Management
         </a>
       ),
+    },
+    {
+      key: '3',
+      label: 'FIP Editor Management',
+      children: [
+        {
+          key: '3-1',
+          label: (
+            <a
+              onClick={() => { handleJump('/fip/propose') }}
+            >
+              Propose
+            </a>
+          ),
+        },
+        {
+          key: '3-2',
+          label: (
+            <a
+              onClick={() => { handleJump('/fip/approve') }}
+            >
+              Approve
+            </a>
+          ),
+        },
+        {
+          key: '3-3',
+          label: (
+            <a
+              onClick={() => { handleJump('/fip/revoke') }}
+            >
+              Revoke
+            </a>
+          ),
+        },
+      ],
     },
   ];
 
   return (
     <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
       <div className="layout font-body" id='scrollBox' ref={scrollRef}>
-      <header className='h-[96px] bg-[#273141]'>
-        <div className='w-[1000px] h-[96px] mx-auto flex items-center justify-between'>
-          <div className='flex items-center'>
-            <div className='flex-shrink-0'>
-              <Link to='/'>
-                <img className="logo" src="/images/logo.png" alt=""/>
-              </Link>
+        <header className='h-[96px] bg-[#273141]'>
+          <div className='w-[1000px] h-[96px] mx-auto flex items-center justify-between'>
+            <div className='flex items-center'>
+              <div className='flex-shrink-0'>
+                <Link to='/'>
+                  <img className="logo" src="/images/logo.png" alt=""/>
+                </Link>
+              </div>
+              <div className='ml-6 flex items-baseline space-x-20'>
+                <Link
+                  to='/'
+                  className='text-white text-2xl font-semibold hover:opacity-80'
+                >
+                  Power Voting
+                </Link>
+              </div>
             </div>
-            <div className='ml-6 flex items-baseline space-x-20'>
-              <Link
-                to='/'
-                className='text-white text-2xl font-semibold hover:opacity-80'
-              >
-                Power Voting
-              </Link>
-            </div>
-          </div>
-          <div className='flex items-center'>
-            <Dropdown
-              menu={{
-                items,
-              }}
-              placement="bottomLeft"
-              arrow
-            >
-              <button
-                className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-xl mr-4"
-              >
-                Tools
-              </button>
-            </Dropdown>
-
-            <div className="connect flex items-center">
-              <ConnectButton />
-            </div>
-          </div>
-          <Modal
-            width={520}
-            open={modalOpen}
-            title={false}
-            destroyOnClose={true}
-            closeIcon={false}
-            onCancel={() => { setModalOpen(false) }}
-            footer={false}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          >
-            <p>{STORING_DATA_MSG} Please wait:&nbsp;
-              <Countdown
-                date={expirationTime}
-                renderer={({ minutes, seconds, completed }) => {
-                  if (completed) {
-                    // Render a completed state
-                    setModalOpen(false);
-                  } else {
-                    // Render a countdown
-                    return <span>{minutes}:{seconds}</span>;
-                  }
+            <div className='flex items-center'>
+              <Dropdown
+                menu={{
+                  items,
                 }}
-              />
-            </p>
-          </Modal>
+                placement="bottomLeft"
+                arrow
+              >
+                <button
+                  className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-xl mr-4"
+                >
+                  Tools
+                </button>
+              </Dropdown>
+
+              <div className="connect flex items-center">
+                <ConnectButton />
+              </div>
+            </div>
+            <Modal
+              width={520}
+              open={modalOpen}
+              title={false}
+              destroyOnClose={true}
+              closeIcon={false}
+              onCancel={() => { setModalOpen(false) }}
+              footer={false}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <p>{STORING_DATA_MSG} Please wait:&nbsp;
+                <Countdown
+                  date={expirationTime}
+                  renderer={({ minutes, seconds, completed }) => {
+                    if (completed) {
+                      // Render a completed state
+                      setModalOpen(false);
+                    } else {
+                      // Render a countdown
+                      return <span>{minutes}:{seconds}</span>;
+                    }
+                  }}
+                />
+              </p>
+            </Modal>
+          </div>
+        </header>
+        <div className='content w-[1000px] mx-auto pt-10 pb-10'>
+          {
+            spinning ? <Loading /> : element
+          }
         </div>
-      </header>
-      <div className='content w-[1000px] mx-auto pt-10 pb-10'>
-        {
-          spinning ? <Loading /> : element
-        }
-      </div>
-      <Footer/>
+        <Footer/>
         <button onClick={scrollToTop} className={`${showButton ? '' : 'hidden'} fixed bottom-[6rem] right-[6rem] z-40  p-2 bg-gray-600 text-white rounded-full hover:bg-gray-700 focus:outline-none`}>
           <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <path d="M12 3l-8 8h5v10h6V11h5z" fill="currentColor" />
