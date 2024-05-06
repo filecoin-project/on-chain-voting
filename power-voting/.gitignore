@@ -10,10 +10,13 @@ yarn-error.log*
 dist
 dist.zip
 
-#IDE
+# IDE
 .vscode/
 .idea
 .DS_Store
 
-#env
+# env
 .env
+
+# lock
+yarn.lock

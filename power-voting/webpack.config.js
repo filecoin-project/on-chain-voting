@@ -19,11 +19,6 @@ module.exports = {
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
-    fallback:{
-      "path":require.resolve("path-browserify"),
-      "os":require.resolve("os-browserify"),
-      "fs":require.resolve("browserify-fs")
-    },
     plugins: [
       new TsconfigPathsPlugin({
         configFile: './tsconfig.json',
