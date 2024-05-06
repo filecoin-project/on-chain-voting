@@ -125,7 +125,7 @@ const Home = () => {
    */
   const getList = async (proposals: ProposalData[]) => {
     const ipfsUrls = proposals.map(
-      (_item: ProposalData) => `https://${_item.cid}.ipfs.nftstorage.link/`
+      (_item: ProposalData) => `https://${_item.cid}.ipfs.w3s.link/`
     );
     try {
       const responses = await Promise.all(ipfsUrls.map((url: string) => axios.get(url)));

@@ -32,7 +32,7 @@ import {
   OPERATION_CANCELED_MSG,
 } from '../../../common/consts';
 import { stringToBase64Url } from '../../../utils';
-import {getIpfsId, useDynamicContract} from "../../../hooks";
+import {getWeb3IpfsId, useDynamicContract} from "../../../hooks";
 import './index.less';
 import LoadingButton from "../../../components/LoadingButton";
 
@@ -122,7 +122,7 @@ const UcanDelegate = () => {
   const setUcan = async (ucan: string) => {
     const chainId = chain?.id || 0;
     const { ucanDelegate } = useDynamicContract(chainId);
-    const cid = await getIpfsId(ucan) as any;
+    const cid = await getWeb3IpfsId(ucan);
     const res = await ucanDelegate(cid);
     if (res.code === 200 && res.data?.hash) {
       message.success(res.msg);

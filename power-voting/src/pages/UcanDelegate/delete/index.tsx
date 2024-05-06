@@ -32,7 +32,7 @@ import {
 } from '../../../common/consts';
 import './index.less';
 import {stringToBase64Url} from "../../../utils";
-import {getIpfsId, useDynamicContract} from "../../../hooks";
+import {getWeb3IpfsId, useDynamicContract} from "../../../hooks";
 import LoadingButton from "../../../components/LoadingButton";
 
 const UcanDelegate = () => {
@@ -104,7 +104,7 @@ const UcanDelegate = () => {
   const setUcan = async (ucan: string) => {
     const chainId = chain?.id || 0;
     const { ucanDelegate } = useDynamicContract(chainId);
-    const cid = await getIpfsId(ucan) as any;
+    const cid = await getWeb3IpfsId(ucan);
     const res = await ucanDelegate(cid);
     if (res.code === 200 && res.data?.hash) {
       message.success(STORING_DATA_MSG);

@@ -13,8 +13,6 @@
 // limitations under the License.
 
 import { ethers } from "ethers";
-import { NFTStorage, Blob } from 'nft.storage';
-// import { filesFromPaths } from 'files-from-path';
 import { create } from '@web3-storage/w3up-client';
 import fileCoinAbi from "../common/abi/power-voting.json";
 import oracleAbi from "../common/abi/oracle.json";
@@ -306,31 +304,6 @@ export const useDynamicContract = (chainId: number) => {
   }
 }
 
-/**
- * Reads an image file from `imagePath` and stores an NFT with the given name and description.
- * @param {object} params for the NFT
- */
-const storeIpfs = (params: object) => {
-  const json = JSON.stringify(params);
-  const data = new Blob([json]);
-
-  const nftStorage = new NFTStorage({ token: NFT_STORAGE_KEY });
-
-  return nftStorage.storeBlob(data);
-}
-
-/**
- * The main entry point for the script that checks the command line arguments and
- * calls storeNFT.
- *
- * To simplify the example, we don't do any fancy command line parsing. Just three
- * positional arguments for imagePath, name, and description
- */
-export const getIpfsId = async (props: any) => {
-  const result = await storeIpfs(props);
-  return result;
-}
-
 
 /**
  * Store data into web3.storage
@@ -338,22 +311,20 @@ export const getIpfsId = async (props: any) => {
  */
 export const getWeb3IpfsId = async (params: object | string) => {
   const client = await create();
-  console.log(client.uploadFile);
   // first time setup!
   if (!Object.keys(client.accounts()).length) {
     // waits for you to click the link in your email to verify your identity
-    const account = await client.login(web3StorageEmail)
+    const account = await client.login(web3StorageEmail);
     // create a space for your uploads
-    const space = await client.createSpace('power-voting')
+    const space = await client.createSpace('power-voting');
     // save the space to the store, and set as "current"
-    await space.save()
+    await space.save();
     // associate this space with your account
-    await account.provision(space.did())
+    await account.provision(space.did());
   }
 
   const json = JSON.stringify(params);
   const data = new Blob([json]);
   const cid = await client.uploadFile(data);
-  console.log(cid);
-  return cid;
+  return cid.toString();
 }

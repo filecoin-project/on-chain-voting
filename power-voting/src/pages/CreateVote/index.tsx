@@ -29,8 +29,7 @@ import {
   WRONG_EXPIRATION_TIME_MSG,
   NOT_FIP_EDITOR_MSG, VOTE_OPTIONS, WRONG_START_TIME_MSG,
 } from '../../common/consts';
-import {useStaticContract, useDynamicContract, getIpfsId} from "../../hooks";
-// import {getWeb3IpfsId} from "../../hooks";
+import {useStaticContract, useDynamicContract, getWeb3IpfsId} from "../../hooks";
 import { useTimezoneSelect, allTimezones } from 'react-timezone-select';
 import './index.less';
 import LoadingButton from "../../components/LoadingButton";
@@ -130,10 +129,7 @@ const CreateVote = () => {
       currentTime,
     };
 
-    const cid = await getIpfsId(_values) as any;
-    // const cid = await getWeb3IpfsId(_values) as any;
-    // console.log(cid);
-    // return false;
+    const cid = await getWeb3IpfsId(_values);
 
     if (isConnected) {
       const { isFipEditor } = await useStaticContract(chainId);
