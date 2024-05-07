@@ -80,7 +80,7 @@ func DecodeVoteList(voteInfo model.Vote) ([]model.Vote4Counting, error) {
 }
 
 func GetIpfs(votInfo string) (string, error) {
-	url := fmt.Sprintf("https://%s.ipfs.nftstorage.link/", votInfo)
+	url := fmt.Sprintf("https://%s.ipfs.w3s.link/", votInfo)
 
 	resp, err := http.Get(url)
 	if err != nil {

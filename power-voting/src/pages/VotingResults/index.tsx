@@ -50,7 +50,7 @@ const VotingResults = () => {
       network: chain?.id
     }
 
-    const { data: proposalData } = await axios.get(`https://${cid}.ipfs.nftstorage.link/`);
+    const { data: proposalData } = await axios.get(`https://${cid}.ipfs.w3s.link/`);
     if (proposalData.chainId !== chain?.id) {
       voteStatus = WRONG_NET_STATUS;
       if (isConnected) {

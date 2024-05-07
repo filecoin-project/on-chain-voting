@@ -40,7 +40,6 @@ export const oraclePowerMainNetContractAddress = process.env.ORACLE_POWER_MAINNE
 export const powerVotingCalibrationContractAddress = process.env.POWER_VOTING_CALIBRATION_CONTRACT_ADDRESS || '';
 export const oracleCalibrationContractAddress = process.env.ORACLE_CALIBRATION_CONTRACT_ADDRESS || '';
 export const oraclePowerCalibrationContractAddress = process.env.ORACLE_POWER_CALIBRATION_CONTRACT_ADDRESS || '';
-export const NFT_STORAGE_KEY = process.env.NFT_STORAGE_KEY || '';
 export const walletConnectProjectId = process.env.WALLET_CONNECT_ID || '';
 export const web3StorageEmail: any = process.env.WEB3_STORAGE_EMAIL || '';
 export const walletChainList = [
