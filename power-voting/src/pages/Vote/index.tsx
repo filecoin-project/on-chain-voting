@@ -17,7 +17,7 @@ import { useNavigate, Link, useParams } from "react-router-dom";
 import { message } from "antd";
 import axios from 'axios';
 import dayjs from 'dayjs';
-import {getIpfsId, useDynamicContract} from "../../hooks";
+import {getWeb3IpfsId, useDynamicContract} from "../../hooks";
 import { useAccount, useNetwork } from "wagmi";
 import { useConnectModal, useChainModal } from "@rainbow-me/rainbowkit";
 import MDEditor from "../../components/MDEditor";
@@ -55,7 +55,7 @@ const Vote = () => {
   }, [chain]);
 
   const initState = async () => {
-    const res = await axios.get(`https://${cid}.ipfs.nftstorage.link/`);
+    const res = await axios.get(`https://${cid}.ipfs.w3s.link/`);
     const data = res.data;
     let voteStatus = null;
     if (data.chainId !== chainId) {
@@ -114,7 +114,7 @@ const Vote = () => {
 
       // vote params
       const encryptValue = await handleEncrypt([[`${selectedOptionIndex}`, `100`]]);
-      const optionId = await getIpfsId(encryptValue) as any;
+      const optionId = await getWeb3IpfsId(encryptValue);
       if (isConnected) {
         const { voteApi } = useDynamicContract(chainId);
         const res = await voteApi(Number(id), optionId);
