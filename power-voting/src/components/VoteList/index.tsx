@@ -111,9 +111,9 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
 
     arr.forEach((item, index) => {
       if (index < arr.length - 1) {
-        totalPercent += `${item} / 4 + `;
+        totalPercent += `${item} / ${count} + `;
       } else {
-        totalPercent += `${item} / 4`;
+        totalPercent += `${item} / ${count}`;
       }
     });
 
@@ -128,7 +128,6 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
       <div className="group flex h-[57px] justify-between rounded-t-none border-b border-skin-border px-6 pb-[12px] pt-3 md:rounded-t-lg">
         <h4 className="flex items-center">
           <div className="font-semibold">Votes</div>
-          {/*<div className="h-[20px] min-w-[20px] rounded-full bg-[#8b949e] px-1 text-center text-xs leading-5 text-white ml-2 inline-block">{totalVotes}</div>*/}
         </h4>
         <div className="flex items-center" />
       </div>
