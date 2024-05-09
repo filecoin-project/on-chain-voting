@@ -47,8 +47,7 @@ func GetWalletBalance(addressId string, lotusRpcClient jsonrpc.RPCClient) (*big.
 
 // GetUcanFromIpfs retrieves a UCAN (User-Centric Access Network) from IPFS (InterPlanetary File System).
 func GetUcanFromIpfs(ucanCid string) (string, error) {
-	url := fmt.Sprintf("https://%s.ipfs.nftstorage.link/", ucanCid)
-
+	url := fmt.Sprintf("https://%s.ipfs.w3s.link/", ucanCid)
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", err
