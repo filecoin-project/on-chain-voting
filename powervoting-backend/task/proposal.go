@@ -79,6 +79,7 @@ func SyncProposal(ethClient model.GoEthClient) {
 			ProposalId:   int64(start),
 			ProposalType: contractProposal.ProposalType.Int64(),
 			Creator:      contractProposal.Creator.String(),
+			StartTime:    contractProposal.StartTime.Int64(),
 			ExpTime:      contractProposal.ExpTime.Int64(),
 			VoteCount:    contractProposal.VotesCount.Int64(),
 			Network:      ethClient.Id,
