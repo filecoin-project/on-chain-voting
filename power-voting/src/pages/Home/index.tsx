@@ -14,7 +14,7 @@
 
 import React, {useEffect, useState} from "react";
 import { Row, Empty, Pagination, Spin } from "antd";
-import {useNetwork, useAccount} from "wagmi";
+import {useAccount, useReadContract} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import {useNavigate} from "react-router-dom";
 import axios from "axios";
@@ -36,15 +36,15 @@ import {useStaticContract} from "../../hooks";
 import {ProposalData, ProposalFilter, ProposalList, ProposalOption, ProposalResult} from '../../common/types';
 import Loading from "../../components/Loading";
 import {markdownToText} from "../../utils";
+import { fileCoinAbi } from "../../common/abi/power-voting";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const Home = () => {
   const navigate = useNavigate();
-  const {chain} = useNetwork();
 
-  const {isConnected} = useAccount();
+  const {chain, isConnected} = useAccount();
   const {openConnectModal} = useConnectModal();
 
   const [filterList, setFilterList] = useState([
@@ -70,6 +70,12 @@ const Home = () => {
    * @param page
    */
   const getProposalList = async (page: number) => {
+    const result = useReadContract({
+      // @ts-ignore
+      address: '0xf09681dFAaB2C74D81D2fC7EA66A7F31bDA2bEE7',
+      abi: fileCoinAbi,
+      functionName: 'proposalId',
+    });
     setLoading(true);
     const chainId = chain?.id || 0;
     const { getLatestId, getProposal } = await useStaticContract(chainId);

@@ -20,7 +20,7 @@ import { message } from 'antd';
 import {useForm, Controller} from 'react-hook-form';
 import classNames from 'classnames';
 import {RadioGroup} from '@headlessui/react';
-import {useNetwork, useAccount} from "wagmi";
+import { useAccount} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import {
   UCAN_JWT_HEADER,
@@ -37,8 +37,7 @@ import './index.less';
 import LoadingButton from "../../../components/LoadingButton";
 
 const UcanDelegate = () => {
-  const {chain} = useNetwork();
-  const {isConnected, address} = useAccount();
+  const {chain, isConnected, address} = useAccount();
   const {openConnectModal} = useConnectModal();
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);

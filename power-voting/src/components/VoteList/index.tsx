@@ -17,7 +17,7 @@ import { Empty, Table, Popover } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import EllipsisMiddle from "../EllipsisMiddle";
 import {web3AvatarUrl} from "../../common/consts";
-import {Chain} from "wagmi";
+import {Chain} from "viem";
 import {ProposalHistory} from "../../common/types";
 import './index.less';
 import {bigNumberToFloat, convertBytes} from "../../utils";
@@ -111,9 +111,9 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
 
     arr.forEach((item, index) => {
       if (index < arr.length - 1) {
-        totalPercent += `${item} / 4 + `;
+        totalPercent += `${item} / ${count} + `;
       } else {
-        totalPercent += `${item} / 4`;
+        totalPercent += `${item} / ${count}`;
       }
     });
 

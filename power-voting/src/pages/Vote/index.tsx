@@ -18,7 +18,7 @@ import { message } from "antd";
 import axios from 'axios';
 import dayjs from 'dayjs';
 import {getWeb3IpfsId, useDynamicContract} from "../../hooks";
-import { useAccount, useNetwork } from "wagmi";
+import { useAccount } from "wagmi";
 import { useConnectModal, useChainModal } from "@rainbow-me/rainbowkit";
 import MDEditor from "../../components/MDEditor";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
@@ -35,10 +35,8 @@ import {ProposalList, ProposalOption} from "../../common/types";
 import "./index.less";
 
 const Vote = () => {
-  const { chain } = useNetwork();
+  const { chain, isConnected } = useAccount();
   const chainId = chain?.id || 0;
-  const { isConnected } = useAccount();
-
   const { id, cid } = useParams();
   const [votingData, setVotingData] = useState({} as ProposalList);
   const { openConnectModal } = useConnectModal();

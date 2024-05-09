@@ -21,7 +21,7 @@ import {useNavigate, Link} from "react-router-dom";
 import Table from '../../components/Table';
 import {useForm, Controller} from 'react-hook-form';
 import classNames from 'classnames';
-import {useAccount, useNetwork} from "wagmi";
+import {useAccount} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import Editor from '../../components/MDEditor';
 import {
@@ -40,8 +40,7 @@ dayjs.extend(timezone);
 const { RangePicker } = DatePicker;
 
 const CreateVote = () => {
-  const {chain} = useNetwork();
-  const {isConnected, address} = useAccount();
+  const {isConnected, address, chain} = useAccount();
   const {openConnectModal} = useConnectModal();
   const prevAddressRef = useRef(address);
 

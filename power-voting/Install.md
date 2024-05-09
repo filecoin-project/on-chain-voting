@@ -37,25 +37,25 @@ After yarn, you will get a 'node_modules' folder in the root directory.
 
 Deploying PowerVoting and Oracle contract on Filecoin main network and replace the following address in ‘/.env.example’
 
-<img src="img/mainnet.png" style="zoom:50%;" />
+<img src="img/mainnet.png" />
 
 If you deploy the contract on Filecoin test network Calibration, you should replace the following address in ‘/.env.example’
 
-<img src="img/testnet.png" style="zoom:50%;" />
+<img src="img/testnet.png" />
 
 If you modify the contract code, you need to update the following abi in ‘/src/common/abi’
 
 <img src="img/abi.png" style="zoom:50%;" />
 
-### 5. Update IPFS Storage Key And Wallet Connect Project Id
+### 5. Update IPFS Storage Email And Wallet Connect Project Id
 
-Create NFT storage key by https://nft.storage/manage/
+Create Web3 storage Account by https://web3.storage
 
 Create wallet connect project id by https://www.rainbowkit.com/docs/migration-guide#012x-breaking-changes
 
 Replace the following keys in ‘/.env.example’
 
-<img src="img/key.png" style="zoom:50%;" />
+<img src="img/key.png" />
 
 
 ### 6.Build And Package

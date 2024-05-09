@@ -14,8 +14,11 @@
 
 import React, { useState, useEffect } from 'react';
 import MdEditor from 'react-markdown-editor-lite';
-import MarkdownIt from 'markdown-it';
-import emoji from 'markdown-it-emoji';
+// @ts-ignore
+import markdownIt from 'markdown-it';
+// @ts-ignore
+import { full as emoji } from 'markdown-it-emoji';
+// @ts-ignore
 import footnote from 'markdown-it-footnote';
 // @ts-ignore
 import mdKatex from '@iktakahiro/markdown-it-katex';
@@ -37,7 +40,7 @@ import 'katex/dist/katex.css';
 import 'react-markdown-editor-lite/lib/index.css';
 import './index.less';
 
-const mdParser = new MarkdownIt({
+const mdParser = markdownIt({
   html: true,
   linkify: true,
   typographer: true,

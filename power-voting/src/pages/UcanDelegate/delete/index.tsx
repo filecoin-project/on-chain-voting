@@ -20,7 +20,7 @@ import Table from '../../../components/Table';
 import {useForm, Controller} from 'react-hook-form';
 import classNames from 'classnames';
 import {RadioGroup} from '@headlessui/react';
-import {useNetwork, useAccount} from "wagmi";
+import {useAccount} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import {
   UCAN_GITHUB_STEP_1,
@@ -36,8 +36,7 @@ import {getWeb3IpfsId, useDynamicContract} from "../../../hooks";
 import LoadingButton from "../../../components/LoadingButton";
 
 const UcanDelegate = () => {
-  const {chain} = useNetwork();
-  const {isConnected, address} = useAccount();
+  const {chain, isConnected, address} = useAccount();
   const {openConnectModal} = useConnectModal();
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);

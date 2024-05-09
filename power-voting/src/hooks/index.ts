@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { ethers } from "ethers";
+import { useReadContracts } from 'wagmi';
 import { create } from '@web3-storage/w3up-client';
 import fileCoinAbi from "../common/abi/power-voting.json";
 import oracleAbi from "../common/abi/oracle.json";
@@ -24,8 +25,8 @@ import {
   oracleMainNetContractAddress,
   SUCCESS_INFO,
   ERROR_INFO,
-  NFT_STORAGE_KEY,
-  OPERATION_FAILED_MSG, STORING_DATA_MSG,
+  OPERATION_FAILED_MSG,
+  STORING_DATA_MSG,
   oraclePowerCalibrationContractAddress,
   oraclePowerMainNetContractAddress,
   web3StorageEmail,
@@ -301,6 +302,34 @@ export const useDynamicContract = (chainId: number) => {
     ucanDelegate,
     createVotingApi,
     voteApi,
+  }
+}
+
+export const useContract = (chainId: number) => {
+  const powerVotingContractAddress = contractAddressList.find(item => item.id === chainId)?.address || powerVotingMainNetContractAddress;
+  const oracleContractAddress = chainId === filecoin.id ? oracleMainNetContractAddress : oracleCalibrationContractAddress;
+  const oraclePowerContractAddress = chainId === filecoin.id ? oraclePowerMainNetContractAddress : oraclePowerCalibrationContractAddress;
+
+
+  /**
+   * get latest proposal id
+   */
+  const getLatestId = () => {
+    const result = useReadContracts({
+      contracts: [
+        {
+          // @ts-ignore
+          address: powerVotingContractAddress,
+          abi: fileCoinAbi,
+          functionName: 'proposalId',
+        },
+      ],
+    });
+    return result;
+  }
+
+  return {
+    getLatestId
   }
 }
 

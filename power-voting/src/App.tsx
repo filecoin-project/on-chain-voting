@@ -20,7 +20,7 @@ import {
   useConnectModal
 } from "@rainbow-me/rainbowkit";
 import { ConfigProvider, theme, Modal, Dropdown } from 'antd';
-import { useNetwork, useAccount } from "wagmi";
+import { useAccount } from "wagmi";
 import Countdown from 'react-countdown';
 import routes from "./router";
 import Footer from './components/Footer';
@@ -32,8 +32,7 @@ import {STORING_DATA_MSG} from "./common/consts";
 
 
 const App: React.FC = () => {
-  const { chain } = useNetwork();
-  const { address, isConnected} = useAccount();
+  const { chain, address, isConnected} = useAccount();
   const {openConnectModal} = useConnectModal();
   const navigate = useNavigate();
   const element = useRoutes(routes);
@@ -42,7 +41,6 @@ const App: React.FC = () => {
   const [expirationTime, setExpirationTime] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const prevAddressRef = useRef(address);
   const scrollRef = useRef(null);
 
   const scrollToTop = () => {
@@ -74,14 +72,6 @@ const App: React.FC = () => {
   useEffect(() => {
     scrollToTop();
   }, [location]);
-
-  useEffect(() => {
-    const prevAddress = prevAddressRef.current;
-    if (prevAddress !== address) {
-      window.location.reload();
-    }
-  }, [address]);
-
 
   const handleDelegate = async () => {
     const ucanStorageData = JSON.parse(localStorage.getItem('ucanStorage') || '[]');

@@ -17,10 +17,10 @@ import {Link, useNavigate} from "react-router-dom";
 import { message } from 'antd';
 import Table from '../../components/Table';
 import LoadingButton from '../../components/LoadingButton';
-import {useNetwork, useAccount} from "wagmi";
+import {useAccount} from "wagmi";
+import {filecoinCalibration} from "wagmi/chains";
 import {
   DUPLICATED_MINER_ID_MSG,
-  filecoinCalibrationChain,
   STORING_DATA_MSG,
   WRONG_MINER_ID_MSG
 } from "../../common/consts";
@@ -29,9 +29,8 @@ import Loading from "../../components/Loading";
 import {hasDuplicates} from "../../utils";
 
 const MinerId = () => {
-  const {chain} = useNetwork();
+  const {chain, isConnected, address} = useAccount();
   const chainId = chain?.id || 0;
-  const {isConnected, address} = useAccount();
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
   const [minerIds, setMinerIds] = useState(['']);
@@ -72,7 +71,7 @@ const MinerId = () => {
   }
 
   const getMinerIdPrefix = (chainId: number) => {
-    return chainId === filecoinCalibrationChain.id ? 't0' : 'f0';
+    return chainId === filecoinCalibration.id ? 't0' : 'f0';
   }
 
   const addMinerIdPrefix = (minerIds: number[]) => {

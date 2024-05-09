@@ -14,7 +14,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { useNetwork, useAccount } from "wagmi";
+import { useAccount } from "wagmi";
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -29,8 +29,7 @@ import VoteList from "../../components/VoteList";
 import {ProposalOption, ProposalResult, ProposalHistory} from "../../common/types";
 
 const VotingResults = () => {
-  const { chain } = useNetwork();
-  const { isConnected } = useAccount();
+  const { chain, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
   const { openChainModal } = useChainModal();
   const { id, cid } = useParams();
