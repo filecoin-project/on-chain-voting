@@ -112,7 +112,7 @@ const App: React.FC = () => {
     setSpinning(false);
     const isGithubType = !!githubAccount;
     if (ucanCid) {
-      const { data } = await axios.get(`https://${ucanCid}.ipfs.nftstorage.link/`);
+      const { data } = await axios.get(`https://${ucanCid}.ipfs.w3s.link/`);
       if (isGithubType) {
         const regex = /\/([^\/]+)\/([^\/]+)\/git\/blobs\/(\w+)/;
         const result = data.match(regex);

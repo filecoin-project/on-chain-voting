@@ -118,9 +118,7 @@ const UcanDelegate = () => {
   const setUcan = async (ucan: string) => {
     const chainId = chain?.id || 0;
     const { ucanDelegate } = useDynamicContract(chainId);
-    // Get the IPFS ID for the provided UCAN
     const cid = await getWeb3IpfsId(ucan);
-    // Call the ucanDelegate function with the IPFS ID
     const res = await ucanDelegate(cid);
     if (res.code === 200 && res.data?.hash) {
       message.success(res.msg);
