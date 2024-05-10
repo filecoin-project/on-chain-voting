@@ -25,6 +25,7 @@ type Proposal struct {
 	Cid          string `json:"cid" gorm:"not null"`
 	ProposalType int64  `json:"proposalType" gorm:"not null"`
 	Creator      string `json:"creator" gorm:"not null"`
+	StartTime    int64  `json:"startTime" gorm:"not null"`
 	ExpTime      int64  `json:"expTime" gorm:"not null"`
 	VoteCount    int64  `json:"voteCount" gorm:"not null"`
 	Status       int    `json:"status" gorm:"not null"`
@@ -35,6 +36,7 @@ type ContractProposal struct {
 	Cid          string         `json:"cid"`
 	ProposalType *big.Int       `json:"proposalType"`
 	Creator      common.Address `json:"creator"`
+	StartTime    *big.Int       `json:"startTime"`
 	ExpTime      *big.Int       `json:"expTime"`
 	VotesCount   *big.Int       `json:"votesCount"`
 }
@@ -43,12 +45,12 @@ type ProposalDetail struct {
 	ProposalType int64    `json:"ProposalType"`
 	VoteType     int64    `json:"VoteType"`
 	Timezone     string   `json:"Timezone"`
-	Time         int64    `json:"Time"`
+	Time         []string `json:"Time"`
 	Name         string   `json:"Name"`
 	Descriptions string   `json:"Descriptions"`
 	Option       []string `json:"option"`
 	GMTOffset    []string `json:"GMTOffset"`
-	ShowTime     string   `json:"showTime"`
+	ShowTime     []string `json:"showTime"`
 	Address      string   `json:"Address"`
 	ChainId      int64    `json:"chainId"`
 	CurrentTime  int64    `json:"currentTime"`
