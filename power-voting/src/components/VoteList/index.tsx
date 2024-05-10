@@ -49,8 +49,8 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
       title: 'Percent',
       dataIndex: 'percent',
       key: 'percent',
-      render: (text: string) => {
-        return text === '0%' ? 'NO VOTES' : text;
+      render: (text: string, record: any) => {
+        return text === '0%' && record.power === '0' ? 'NO VOTES' : text;
       }
     },
     {
@@ -97,12 +97,23 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
     ];
   }
 
+  /**
+   * Show the weight calculation process
+   * @param data
+   * @param votes
+   */
   const renderFooter = (data: any[], votes: number) => {
+    // Initialize the string for total percent calculation
     let totalPercent = "Total Percent = ";
+    // Initialize count for non-zero total values
     let count = 0;
+    // Initialize an array to store non-zero percent values
     const arr: string[] = [];
+
+
     data.forEach(item => {
       const { total, percent } = item;
+      // Check if total is not '0'
       if (total !== '0') {
         arr.push(percent);
         count++;
@@ -110,14 +121,16 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
     });
 
     arr.forEach((item, index) => {
+      // Check if it's not the last item in the array
       if (index < arr.length - 1) {
+        // Append percent value and count with a plus sign
         totalPercent += `${item} / ${count} + `;
       } else {
+        // Append percent value and count without a plus sign
         totalPercent += `${item} / ${count}`;
       }
     });
-
-
+    // Append the final vote percentage
     totalPercent += `= ${votes}%`;
 
     return <div>{totalPercent}</div>;

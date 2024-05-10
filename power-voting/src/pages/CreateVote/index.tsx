@@ -31,6 +31,7 @@ import {
 } from '../../common/consts';
 import {useStaticContract, useDynamicContract, getWeb3IpfsId} from "../../hooks";
 import { useTimezoneSelect, allTimezones } from 'react-timezone-select';
+import { validateValue } from '../../utils';
 import './index.less';
 import LoadingButton from "../../components/LoadingButton";
 
@@ -85,38 +86,41 @@ const CreateVote = () => {
     }
   }, [address]);
 
-  const validateValue = (value: string) => {
-    return value?.trim() !== '';
-  };
-
   /**
    * create proposal
    * @param values
    */
   const onSubmit = async (values: any) => {
-    setLoading(true)
+    setLoading(true);
+    // Calculate offset based on selected timezone
     const offset =  dayjs().tz(values.timezone).utcOffset() - dayjs().utcOffset();
     const startTimestamp = dayjs(values.time[0]).add(offset, 'minute').unix();
     const expTimestamp = dayjs(values.time[1]).add(offset, 'minute').unix();
     const currentTime = dayjs().unix();
 
+    // Check if current time is after start time
     if (currentTime > startTimestamp) {
       message.warning(WRONG_START_TIME_MSG);
       setLoading(false);
       return false;
     }
 
+    // Check if current time is after expiration time
     if (currentTime > expTimestamp) {
       message.warning(WRONG_EXPIRATION_TIME_MSG);
       setLoading(false);
       return false;
     }
 
+    // Get chain ID
     const chainId = chain?.id || 0;
+    // Get label for selected timezone
     const label = options?.find(item => item.value === values.timezone)?.label || '';
+    // Extract GMT offset from label using regex
     const regex = /(?<=\().*?(?=\))/g;
     const GMTOffset = label.match(regex);
 
+    // Prepare values object with additional information
     const _values = {
       ...values,
       GMTOffset,
@@ -132,9 +136,12 @@ const CreateVote = () => {
     const cid = await getWeb3IpfsId(_values);
 
     if (isConnected) {
+      // Check if user is a FIP editor
+
       const { isFipEditor } = await useStaticContract(chainId);
       const res = await isFipEditor(address || '');
       if (res.code === 200 && res.data) {
+        // Create voting using dynamic contract API
         const { createVotingApi } = useDynamicContract(chainId);
         const res1 = await createVotingApi(cid, startTimestamp, expTimestamp, 1);
         if (res1.code === 200 && res1.data?.hash) {

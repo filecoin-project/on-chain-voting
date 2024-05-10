@@ -31,7 +31,7 @@ import {
   STORING_DATA_MSG, OPERATION_CANCELED_MSG,
 } from '../../../common/consts';
 import './index.less';
-import {stringToBase64Url} from "../../../utils";
+import {stringToBase64Url, validateValue} from "../../../utils";
 import {getWeb3IpfsId, useDynamicContract} from "../../../hooks";
 import LoadingButton from "../../../components/LoadingButton";
 
@@ -82,10 +82,6 @@ const UcanDelegate = () => {
     }
   }, [address]);
 
-  const validateValue = (value: string) => {
-    return value?.trim() !== '';
-  };
-
   const onSubmit = (values: any, githubStep?: number) => {
     if (params?.isGithubType) {
       switch (githubStep) {
@@ -115,13 +111,20 @@ const UcanDelegate = () => {
     setLoading(false);
   }
 
+  /**
+   * deAuthorize FileCoin UCAN
+   * @param values
+   */
   const deAuthorizeFilecoinUcan = async (values:  any) => {
     setLoading(true);
     const { aud } = params;
     const { prf } = values;
+    // Check if 'aud' or 'prf' is missing
     if (!aud || !prf) {
       return;
     }
+
+    // Define UCAN parameters
     const ucanParams = {
       iss: address,
       aud,
@@ -129,19 +132,26 @@ const UcanDelegate = () => {
       act: 'del',
     }
     // @ts-ignore
+    // Initialize Web3 provider using window.ethereum
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     const signer = await provider.getSigner();
+
+    // Convert UCAN JWT header to base64
     const base64Header = stringToBase64Url(JSON.stringify(UCAN_JWT_HEADER));
+    // Convert UCAN parameters to base64
     const base64Params = stringToBase64Url(JSON.stringify(ucanParams));
     let signature = '';
     try {
+      // Sign the message using the signer
       signature = await signer.signMessage(`${base64Header}.${base64Params}`);
     } catch (e) {
       message.error(OPERATION_CANCELED_MSG);
       setLoading(false);
       return;
     }
+    // Convert signature to base64
     const base64Signature = stringToBase64Url(signature);
+    // Concatenate base64-encoded header, parameters, and signature to form the UCAN
     const ucan = `${base64Header}.${base64Params}.${base64Signature}`;
     setUcan(ucan);
   }
@@ -154,27 +164,37 @@ const UcanDelegate = () => {
         if (!aud) {
           return;
         }
+        // Define signature parameters
         const signatureParams = {
           iss: address,
           aud,
           prf:'',
           act: 'del',
         }
+        // Create a new Web3Provider using the current Ethereum provider
         // @ts-ignore
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         const signer = await provider.getSigner();
+
+        // Convert header and params to base64 URL
         const base64Header = stringToBase64Url(JSON.stringify(UCAN_JWT_HEADER));
         const base64Params = stringToBase64Url(JSON.stringify(signatureParams));
         let signature = '';
         try {
+          // Sign the concatenated header and params
           signature = await signer.signMessage(`${base64Header}.${base64Params}`);
         } catch (e) {
           message.error(OPERATION_CANCELED_MSG);
           setLoading(false);
           return;
         }
+        // Convert signature to base64 URL
         const base64Signature = stringToBase64Url(signature);
+
+        // Concatenate header, params, and signature
         const githubSignatureParams = `${base64Header}.${base64Params}.${base64Signature}`;
+
+        // Set GitHub signature and step
         setGithubSignature(githubSignatureParams);
         setGithubStep(UCAN_GITHUB_STEP_2);
       } catch (e) {
