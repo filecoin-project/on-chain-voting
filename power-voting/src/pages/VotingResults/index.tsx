@@ -50,8 +50,11 @@ const VotingResults = () => {
       network: chain?.id
     }
 
-    const { data: proposalData } = await axios.get(`https://${cid}.ipfs.nftstorage.link/`);
+    // Fetch proposal data from IPFS
+    const { data: proposalData } = await axios.get(`https://${cid}.ipfs.w3s.link/`);
+    // Check if the proposal chain ID matches the current chain ID
     if (proposalData.chainId !== chain?.id) {
+      // If not, set vote status to wrong network status
       voteStatus = WRONG_NET_STATUS;
       if (isConnected) {
         openChainModal && openChainModal();
@@ -59,10 +62,13 @@ const VotingResults = () => {
         openConnectModal && openConnectModal();
       }
     } else {
+      // If proposal chain ID matches, proceed with fetching voting data
       const { data: { data: resultData } } = await axios.get('/api/proposal/result', {
         params,
       })
+      // Determine vote status based on whether votes have been counted
       voteStatus = resultData.length > 0 ? COMPLETED_STATUS : VOTE_COUNTING_STATUS;
+      // Map result data to populate option array
       resultData.map((_: any, index: number) => {
         const voteItem = resultData.find((vote: ProposalResult) => vote.optionId === index);
         option.push({
@@ -70,9 +76,11 @@ const VotingResults = () => {
           count: voteItem?.votes ? Number(voteItem.votes) : 0
         })
       })
+      // Fetch voting history data
       const { data: { data: historyData } } = await axios.get('/api/proposal/history', {
         params,
       });
+      // Map history data to populate voteList array
       voteList = historyData?.votePowers?.map((item: ProposalHistory) => ({
         ...item,
         optionName: proposalData.option[item.optionId],
@@ -84,12 +92,14 @@ const VotingResults = () => {
         votePowers: historyData.votePowers
       }));
     }
+    // Set voting data state
     setVotingData({
       ...proposalData,
       id,
       cid,
       option,
       voteStatus,
+      // Sort voteList array by number of votes in descending order
       voteList: voteList?.sort((a: any, b: any) => b.votes - a.votes)
     })
   }
