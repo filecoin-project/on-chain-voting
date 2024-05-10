@@ -22,19 +22,34 @@ export const bigNumberToFloat = (value: number | string, decimals: number = 18) 
   return Number(value) ? (Number(value) / (10 ** decimals)).toFixed(2) : '0';
 }
 
+/**
+ * Convert value to Byte String
+ * @param bytes
+ */
 export const convertBytes = (bytes: number | string) => {
+  // Define an array of unit strings representing different byte units
   const units = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+  // Initialize the unit index to 0
   let unitIndex = 0;
+  // Convert input bytes to a number
   let remainder = Number(bytes);
 
+  // Loop until the remainder is greater than or equal to 1024 and the unit index is within range
   while (remainder >= 1024 && unitIndex < units.length - 1) {
+    // Divide the remainder by 1024 to convert to the next unit
     remainder /= 1024;
     unitIndex++;
   }
 
+  // Return a string representing the converted bytes with appropriate unit
+  // If remainder is truthy (i.e., not zero), return the formatted string; otherwise, return '0'
   return remainder ? `${remainder.toFixed(2)} ${units[unitIndex]}` : '0';
 }
 
+/**
+ * Handle MetaMask error message
+ * @param errorMsg
+ */
 export const extractRevertReason = (errorMsg: string) => {
   const revertReasonIndex = errorMsg?.indexOf('revert reason: ');
   if (revertReasonIndex === -1) {
@@ -50,6 +65,10 @@ export const extractRevertReason = (errorMsg: string) => {
   return errorMsg?.slice(startIndex, endOfRevertReasonIndex)?.trim();
 }
 
+/**
+ * Check duplicate value
+ * @param array
+ */
 export const hasDuplicates = (array: string[]) => {
   return new Set(array).size !== array.length;
 }
@@ -99,3 +118,11 @@ export const markdownToText = (markdownString: string) => {
 
   return finalString;
 }
+
+/**
+ * Check whether value isn't empty
+ * @param value
+ */
+export const validateValue = (value: string) => {
+  return value?.trim() !== '';
+};

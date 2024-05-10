@@ -58,27 +58,48 @@ const MinerId = () => {
 
 
   const initState = async () => {
+    // Fetch the miner IDs from the static contract based on the chain ID
     const { getMinerIds } = await useStaticContract(chainId);
     const { code, data: { minerIds } } = await getMinerIds(address);
+
+    // If the response code is 200, set the miner IDs after adding the prefix
     if (code === 200) {
       setMinerIds(addMinerIdPrefix(minerIds?.map((id: any) => id.toNumber())));
     }
+
+    // Stop the spinner indicating loading
     setSpinning(false);
   }
 
+  /**
+   * Handle changes in the miner IDs input field
+   * @param value
+   */
   const handleMinerChange = (value: string) => {
     const arr = value ? value.split(',') : [];
     setMinerIds(arr);
   }
 
+  /**
+   * Get the prefix for a given chain ID
+   * @param chainId
+   */
   const getMinerIdPrefix = (chainId: number) => {
     return chainId === filecoinCalibrationChain.id ? 't0' : 'f0';
   }
 
+  /**
+   * Add prefix to each miner ID based on the chain ID
+   * @param minerIds
+   */
   const addMinerIdPrefix = (minerIds: number[]) => {
     return minerIds?.length ? minerIds.map(minerId => `${getMinerIdPrefix(chainId)}${minerId}`) : [];
   }
 
+  /**
+   * Remove prefix from each miner ID and validate the format
+   * @param minerIds
+   */
   const removeMinerIdPrefix = (minerIds: string[]) => {
     const prefix = getMinerIdPrefix(chainId);
     const prefixRegex = new RegExp('^' + prefix);
@@ -91,6 +112,7 @@ const MinerId = () => {
       }
       return Number(str);
     }) : [];
+
     return {
       value: arr,
       hasError
@@ -101,14 +123,21 @@ const MinerId = () => {
    * Set miner ID
    */
   const onSubmit = async () => {
+    // Set loading state to true to indicate loading
     setLoading(true);
+
+    // Fetch static and dynamic contract methods
     const { getMinerIdOwner } = await useStaticContract(chainId);
     const { addMinerId } = useDynamicContract(chainId);
+
+    // Check for duplicate miner IDs
     if (minerIds.length && hasDuplicates(minerIds)) {
       message.error(DUPLICATED_MINER_ID_MSG, 3);
       setLoading(false);
       return;
     }
+
+    // Remove prefix from miner IDs and check for errors
     const { value, hasError } = removeMinerIdPrefix(minerIds);
     if (minerIds.length > 0) {
       if (hasError) {
@@ -118,11 +147,14 @@ const MinerId = () => {
       }
 
       try {
+        // Fetch owner information for each miner ID
         const promises = value.map(async (item) => {
           const res = await getMinerIdOwner(item);
           return res;
         });
         const results = await Promise.all(promises);
+
+        // Check if all requests were successful
         const allSuccessful = results.every((res) => {
           return res.code === 200;
         });
@@ -137,9 +169,11 @@ const MinerId = () => {
       }
     }
 
+    // Add miner IDs to the dynamic contract
     const res = await addMinerId(value);
 
     if (res.code === 200 && res.data?.hash) {
+      // Show success message and navigate to home page after a delay
       message.success(STORING_DATA_MSG, 3);
       setTimeout(() => {
         navigate("/");
