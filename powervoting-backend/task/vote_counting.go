@@ -19,6 +19,7 @@ import (
 	"math"
 	"math/big"
 	"powervoting-server/config"
+	"powervoting-server/constant"
 	"powervoting-server/contract"
 	"powervoting-server/db"
 	"powervoting-server/model"
@@ -124,7 +125,7 @@ func VotingCount(ethClient model.GoEthClient) {
 				}
 			}
 
-			zap.L().Info("address: %s, power: %+v\n", zap.Reflect("address", vote.Address), zap.Reflect("power", power))
+			zap.L().Info("address and power", zap.Reflect("address", vote.Address), zap.Reflect("power", power))
 			if !addressIsCount[vote.Address] {
 				powerMap[vote.Address] = power
 				totalSpPower.Add(totalSpPower, power.SpPower)
@@ -134,6 +135,13 @@ func VotingCount(ethClient model.GoEthClient) {
 				addressIsCount[vote.Address] = true
 			}
 		}
+
+		zap.L().Info("total data",
+			zap.String("totalSpPower", totalSpPower.String()),
+			zap.String("totalClientPower", totalClientPower.String()),
+			zap.String("totalTokenPower", totalTokenPower.String()),
+			zap.String("totalDeveloperPower", totalDeveloperPower.String()))
+
 		// vote counting
 		var result = make(map[int64]float64, 5) // max 5 options
 		for _, vote := range voteList {
@@ -144,26 +152,39 @@ func VotingCount(ethClient model.GoEthClient) {
 				var clientPercent float64
 				var tokenPercent float64
 				var developerPercent float64
-				if totalSpPower.Uint64() != 0 {
-					spPercent = bigIntDiv(power.SpPower, totalSpPower)
-				}
-				if totalClientPower.Uint64() != 0 {
-					clientPercent = bigIntDiv(power.ClientPower, totalClientPower)
-				}
-				if totalTokenPower.Uint64() != 0 {
-					tokenPercent = bigIntDiv(power.TokenHolderPower, totalTokenPower)
-				}
-				if totalDeveloperPower.Uint64() != 0 {
-					developerPercent = bigIntDiv(power.DeveloperPower, totalDeveloperPower)
-				}
-				var votePercent = float64(vote.Votes) / 100
-				votes = ((spPercent * 25) + (clientPercent * 25) + (tokenPercent * 25) + (developerPercent * 25)) * votePercent
 
+				// The vote consists of 4 parts,
+				// If any value of part is zero, it will not be included in the votePercent calculation
+				validOption := float64(0)
+				if totalSpPower.Cmp(big.NewInt(0)) != 0 {
+					spPercent = bigIntDiv(power.SpPower, totalSpPower)
+					validOption += 1
+				}
+				if totalClientPower.Cmp(big.NewInt(0)) != 0 {
+					clientPercent = bigIntDiv(power.ClientPower, totalClientPower)
+					validOption += 1
+				}
+				if totalTokenPower.Cmp(big.NewInt(0)) != 0 {
+					tokenPercent = bigIntDiv(power.TokenHolderPower, totalTokenPower)
+					validOption += 1
+				}
+				if totalDeveloperPower.Cmp(big.NewInt(0)) != 0 {
+					developerPercent = bigIntDiv(power.DeveloperPower, totalDeveloperPower)
+					validOption += 1
+				}
+
+				zap.L().Info("percent data",
+					zap.Float64("spPercent", spPercent),
+					zap.Float64("clientPercent", clientPercent),
+					zap.Float64("tokenPercent", tokenPercent),
+					zap.Float64("developerPercent", developerPercent))
+
+				votes = (spPercent + clientPercent + tokenPercent + developerPercent) / validOption
 				votePower := model.VotePower{
 					HistoryId:               proposal.ProposalId,
 					Address:                 vote.Address,
 					OptionId:                vote.OptionId,
-					Votes:                   math.Round(votes*100) / 100,
+					Votes:                   math.Round(votes*10000) / 100,
 					SpPower:                 power.SpPower.String(),
 					ClientPower:             power.ClientPower.String(),
 					TokenHolderPower:        power.TokenHolderPower.String(),
@@ -177,6 +198,38 @@ func VotingCount(ethClient model.GoEthClient) {
 				votePowerList = append(votePowerList, votePower)
 			}
 			result[vote.OptionId] += votes
+		}
+
+		// Ensure totals add up to 100% , we need to add an offset (1 - approveVotes - rejectVotes)
+		// And ensure that this operation does not disrupt the final result.
+		// it would be: if approveVotes > rejectVotes then approveVotes + bv > rejectVotes
+		// so:
+		// approveVotes > rejectVotes -> approveVotes + bv
+		// approveVotes == rejectVotes -> approveVotes = rejectVotes = 0.5
+		// approveVotes < rejectVotes -> rejectVotes + bv
+		if len(voteList) != 0 {
+			approveVotes := result[constant.VoteApprove]
+			rejectVotes := result[constant.VoteReject]
+			bv := 1 - approveVotes - rejectVotes
+			if bv > 0 && math.Abs(bv) > math.SmallestNonzeroFloat64 {
+				if approveVotes > rejectVotes {
+					approveVotes += bv
+				}
+
+				if approveVotes < rejectVotes {
+					rejectVotes += bv
+				}
+
+				if math.Abs(approveVotes-rejectVotes) < math.SmallestNonzeroFloat64 {
+					approveVotes = 0.5
+					rejectVotes = 0.5
+				}
+				result[constant.VoteApprove] = approveVotes
+				result[constant.VoteReject] = rejectVotes
+				zap.L().Info("approve and reject",
+					zap.Float64("approve", approveVotes),
+					zap.Float64("reject", rejectVotes))
+			}
 		}
 
 		voteHistory := model.VoteCompleteHistory{
@@ -198,7 +251,7 @@ func VotingCount(ethClient model.GoEthClient) {
 			voteResult := model.VoteResult{
 				ProposalId: proposal.ProposalId,
 				OptionId:   int64(i),
-				Votes:      math.Round(result[int64(i)]*100) / 100,
+				Votes:      math.Round(result[int64(i)]*10000) / 100,
 				Network:    ethClient.Id,
 			}
 			voteResultList = append(voteResultList, voteResult)

@@ -130,15 +130,18 @@ const Home = () => {
    * @param proposals
    */
   const getList = async (proposals: ProposalData[]) => {
+    // IPFS URL list
     const ipfsUrls = proposals.map(
       (_item: ProposalData) => `https://${_item.cid}.ipfs.w3s.link/`
     );
     try {
+      // IPFS data List
       const responses = await Promise.all(ipfsUrls.map((url: string) => axios.get(url)));
       const results: ProposalList[] = responses.map((res, i: number) => {
         const  proposal = proposals[i];
         const now = dayjs().unix();
         let proposalStatus = 0;
+        // Set proposal status
         if (now < proposal.startTime) {
           proposalStatus = PENDING_STATUS;
         } else {
@@ -152,6 +155,7 @@ const Home = () => {
             proposalStatus = IN_PROGRESS_STATUS
           }
         }
+        // Prepare option
         const option = res.data.option?.map((item: string, index: number) => {
           const proposalItem = proposal?.proposalResults?.find(
             (proposal: ProposalResult) => proposal.optionId === index

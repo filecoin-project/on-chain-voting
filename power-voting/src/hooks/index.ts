@@ -34,6 +34,10 @@ import {
 import { filecoin, filecoinCalibration } from 'wagmi/chains';
 import {extractRevertReason} from "../utils";
 
+/**
+ * Handle error message
+ * @param data
+ */
 const decodeError = (data: string) => {
   const errorData = data.substring(0, 2) + data.substring(10);
   const abiCoder = new ethers.utils.AbiCoder();
@@ -68,7 +72,10 @@ const handleReturn = ({ type, data }) => {
     data
   }
 }
-
+/**
+ * Hook for calling a read-only function on a contract, and returning the response.
+ * @param chainId
+ */
 export const useStaticContract = async (chainId: number) => {
   const rpcUrl = chainId === filecoin.id ? filecoin.rpcUrls.default.http[0] : filecoinCalibration.rpcUrls.default.http[0];
   const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
@@ -209,6 +216,10 @@ export const useStaticContract = async (chainId: number) => {
   }
 }
 
+/**
+ * Action for executing a write function on a contract.
+ * @param chainId
+ */
 export const useDynamicContract = (chainId: number) => {
   const contractAddress = contractAddressList.find(item => item.id === chainId)?.address || powerVotingMainNetContractAddress;
   // @ts-ignore

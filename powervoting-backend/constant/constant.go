@@ -17,4 +17,6 @@ package constant
 const (
 	ProposalStartKey = "ProposalStartKey"
 	VoteStartKey     = "VoteStartKey"
+	VoteApprove      = 0
+	VoteReject       = 1
 )
