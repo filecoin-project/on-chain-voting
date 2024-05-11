@@ -31,7 +31,7 @@ import {
   UCAN_GITHUB_STEP_2,
   OPERATION_CANCELED_MSG,
 } from '../../../common/consts';
-import { stringToBase64Url } from '../../../utils';
+import { stringToBase64Url, validateValue } from '../../../utils';
 import {getWeb3IpfsId, useDynamicContract} from "../../../hooks";
 import './index.less';
 import LoadingButton from "../../../components/LoadingButton";
@@ -86,10 +86,6 @@ const UcanDelegate = () => {
     }
   }, [address]);
 
-  const validateValue = (value: string) => {
-    return value?.trim() !== '';
-  };
-
   const handleUcanTypeChange = (value: number) => {
     reset({ aud: '' });
     setUcanType(value);
@@ -127,10 +123,14 @@ const UcanDelegate = () => {
     if (res.code === 200 && res.data?.hash) {
       message.success(res.msg);
       navigate("/");
+
       // save data to localStorage and set validity period to three minutes
       const ucanStorageData = JSON.parse(localStorage.getItem('ucanStorage') || '[]');
+      // Calculate expiration time (three minutes from now)
       const expirationTime = Date.now() + 3 * 60 * 1000;
-      ucanStorageData.push({ timestamp: expirationTime, address })
+      // Push new data (timestamp and address) to the array
+      ucanStorageData.push({ timestamp: expirationTime, address });
+      // Save updated data to localStorage
       localStorage.setItem('ucanStorage', JSON.stringify(ucanStorageData));
     } else {
       message.error(res.msg, 3);
@@ -173,30 +173,41 @@ const UcanDelegate = () => {
     if (isConnected) {
       try {
         const { aud } = values;
+        // If 'aud' is not provided, return without proceeding
         if (!aud) {
           return;
         }
+        // Define signature parameters
         const signatureParams = {
           iss: address,
           aud,
           prf:'',
           act: 'add',
         }
+        // Create a new Web3Provider using the current Ethereum provider
         // @ts-ignore
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         const signer = await provider.getSigner();
+
+        // Convert header and params to base64 URL
         const base64Header = stringToBase64Url(JSON.stringify(UCAN_JWT_HEADER));
         const base64Params = stringToBase64Url(JSON.stringify(signatureParams));
         let signature = '';
         try {
+          // Sign the concatenated header and params
           signature = await signer.signMessage(`${base64Header}.${base64Params}`);
         } catch (e) {
           message.error(OPERATION_CANCELED_MSG);
           setLoading(false);
           return;
         }
+        // Convert signature to base64 URL
         const base64Signature = stringToBase64Url(signature);
+
+        // Concatenate header, params, and signature
         const githubSignatureParams = `${base64Header}.${base64Params}.${base64Signature}`;
+
+        // Set GitHub signature and step
         setGithubSignature(githubSignatureParams);
         setGithubStep(UCAN_GITHUB_STEP_2);
       } catch (e) {

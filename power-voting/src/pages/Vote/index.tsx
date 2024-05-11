@@ -55,25 +55,32 @@ const Vote = () => {
   }, [chain]);
 
   const initState = async () => {
+    // Fetch data from the IPFS link using the provided CID
     const res = await axios.get(`https://${cid}.ipfs.w3s.link/`);
     const data = res.data;
     let voteStatus = null;
+    // Check if the chain ID from the fetched data matches the current chain ID
     if (data.chainId !== chainId) {
+      // If not, set the vote status to indicate wrong network status
       voteStatus = WRONG_NET_STATUS;
+      // If user is connected, open the chain modal to prompt for network switch
       if (isConnected) {
         openChainModal && openChainModal();
       } else {
         openConnectModal && openConnectModal();
       }
     } else {
+      // If chain ID matches, determine the vote status based on current time and start time
       voteStatus = dayjs().unix() < data?.startTime ? PENDING_STATUS : IN_PROGRESS_STATUS;
     }
+    // Map each option from the fetched data to include count initialized to 0
     const option = data.option?.map((item: string) => {
       return {
         name: item,
         count: 0,
       };
     });
+    // Set the voting data state with the fetched data and additional properties
     setVotingData({
       ...data,
       id,
@@ -89,14 +96,19 @@ const Vote = () => {
    * @param value
    */
   const handleEncrypt = async (value: string[][]) => {
+    // Convert value to a JSON string and encode it as a Buffer
     const payload = Buffer.from(JSON.stringify(value));
 
+    // Get chain information from the mainnet client
     const chainInfo = await mainnetClient().chain().info();
 
+    // Calculate time for the voting expiration, or set to 0 if not available
     const time = votingData?.expTime ? new Date(votingData.expTime * 1000).valueOf() : 0;
 
+    // Determine the round number based on the time and chain information
     const roundNumber = roundAt(time, chainInfo);
 
+    // Encrypt the payload using timelock encryption
     const ciphertext = await timelockEncrypt(
       roundNumber,
       payload,
@@ -107,27 +119,40 @@ const Vote = () => {
   }
 
   const startVoting = async () => {
+    // Check if a valid option is selected
     if (selectedOptionIndex < 0) {
+      // If not, display a warning message
       message.warning(CHOOSE_VOTE_MSG);
     } else {
+      // If a valid option is selected, proceed with voting
       setLoading(true);
-
-      // vote params
+      // Encrypt the selected option index and weight using handleEncrypt function
       const encryptValue = await handleEncrypt([[`${selectedOptionIndex}`, `100`]]);
+      // Get the IPFS ID for the encrypted value
       const optionId = await getWeb3IpfsId(encryptValue);
+      // Check if user is connected to the network
       if (isConnected) {
+        // If connected, get the voting API from the dynamic contract using chainId
         const { voteApi } = useDynamicContract(chainId);
+        // Call the vote API with the voting details
         const res = await voteApi(Number(id), optionId);
+        // Check if the vote was successful
         if (res.code === 200 && res.data?.hash) {
+          // If successful, display a success message
           message.success(VOTE_SUCCESS_MSG, 3);
+
+          // Redirect user to the homepage after a delay
           setTimeout(() => {
             navigate("/");
           }, 3000);
         } else {
+          // If not successful, display an error message
           message.error(res.msg, 3);
         }
+        // Reset loading state
         setLoading(false);
       } else {
+        // If user is not connected, prompt to connect
         // @ts-ignore
         openConnectModal && openConnectModal();
       }
