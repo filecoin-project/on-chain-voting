@@ -59,7 +59,7 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     // voter to miner id list
     mapping(address => uint64[]) public voterToMinerIds;
     // voter to history power
-    mapping(address => mapping(uint256 => Power)) public voterTohistoryPower;
+    mapping(address => mapping(uint256 => Power)) public voterToHistoryPower;
     // voter to id
     mapping(address => PowerStatus) public voterToPowerStatus;
     // actor id list
@@ -206,7 +206,7 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
 
         Power memory power = _calcPower(voterAddress, powerParam);
         uint256 id = _getDayId(voterAddress);
-        voterTohistoryPower[voterAddress][id] = power;
+        voterToHistoryPower[voterAddress][id] = power;
 
         // add to voter list for schedule task
         voterList.add(voterAddress);
@@ -251,7 +251,7 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
         if (powerStatus.hasFullRound == 0 && id > powerStatus.dayId) {
             return Power(0,new bytes[](0),new bytes[](0),0,0);
         }
-        return voterTohistoryPower[voterAddress][id];
+        return voterToHistoryPower[voterAddress][id];
     }
 
     /**
@@ -290,7 +290,7 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
         }
         Power memory power = _calcPower(voterAddress, powerParam);
         uint256 id = _getDayId(voterAddress);
-        voterTohistoryPower[voterAddress][id] = power;
+        voterToHistoryPower[voterAddress][id] = power;
         voterAddressToBlockHeight[voterAddress] = block.number;
     }
 
