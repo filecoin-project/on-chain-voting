@@ -18,12 +18,14 @@ import (
 	"powervoting-server/config"
 	"powervoting-server/db"
 	"testing"
-	"time"
+
+	"go.uber.org/zap"
 )
 
 func TestSyncProposalHandler(t *testing.T) {
 	config.InitConfig("../")
+	logger, _ := zap.NewDevelopment()
+	zap.ReplaceGlobals(logger)
 	db.InitMysql()
 	SyncProposalHandler()
-	time.Sleep(time.Second * 5)
 }
