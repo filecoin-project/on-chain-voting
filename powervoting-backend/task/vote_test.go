@@ -15,15 +15,17 @@
 package task
 
 import (
+	"go.uber.org/zap"
 	"powervoting-server/config"
 	"powervoting-server/db"
 	"testing"
-	"time"
 )
 
 func TestSyncVoteHandler(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	zap.ReplaceGlobals(logger)
 	config.InitConfig("../")
 	db.InitMysql()
+
 	SyncVoteHandler()
-	time.Sleep(time.Second * 5)
 }

@@ -24,6 +24,7 @@ import (
 	"powervoting-server/db"
 	"powervoting-server/model"
 	"powervoting-server/utils"
+	"sync"
 	"time"
 
 	"go.uber.org/zap"
@@ -32,14 +33,35 @@ import (
 // VotingCountHandler vote count
 func VotingCountHandler() {
 	networkList := config.Client.Network
+	wg := sync.WaitGroup{}
+	errList := make([]error, 0, len(config.Client.Network))
+	mu := &sync.Mutex{}
+
 	for _, network := range networkList {
+		network := network
 		ethClient, err := contract.GetClient(network.Id)
 		if err != nil {
 			zap.L().Error("get go-eth client error:", zap.Error(err))
 			continue
 		}
-		go VotingCount(ethClient)
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			zap.L().Info("vote count start:", zap.Int64("networkId", network.Id))
+			if err := VotingCount(ethClient); err != nil {
+				mu.Lock()
+				errList = append(errList, err)
+				mu.Unlock()
+			}
+		}()
 	}
+
+	wg.Wait()
+	if len(errList) != 0 {
+		zap.L().Error("vote count with err:", zap.Errors("errors", errList))
+	}
+	zap.L().Info("vote count finished: ", zap.Int64("timestamp", time.Now().Unix()))
 }
 
 // bigIntDiv bigInt division, which returns four decimal digits reserved
@@ -54,36 +76,40 @@ func bigIntDiv(x *big.Int, y *big.Int) (z float64) {
 	return
 }
 
-func VotingCount(ethClient model.GoEthClient) {
+func VotingCount(ethClient model.GoEthClient) error {
 	now, err := utils.GetTimestamp(ethClient)
 	if err != nil {
 		zap.L().Error("get timestamp on chain error: ", zap.Error(err))
 		now = time.Now().Unix()
+		return err
 	}
 	proposals, err := db.GetProposalList(ethClient.Id, now)
-	zap.L().Info("proposal list: %+v\n", zap.Reflect("proposals", proposals))
+	zap.L().Info("proposal list: ", zap.Reflect("proposals", proposals))
 	if err != nil {
 		zap.L().Error("get proposal from db error:", zap.Error(err))
-		return
+		return err
 	}
 	for _, proposal := range proposals {
-		SyncVote(ethClient, proposal.ProposalId)
+		err := SyncVote(ethClient, proposal.ProposalId)
+		if err != nil {
+			zap.L().Error("sync vote error:", zap.Error(err))
+		}
 		voteInfos, err := db.GetVoteList(ethClient.Id, proposal.ProposalId)
 		if err != nil {
 			zap.L().Error("get vote info from db error:", zap.Error(err))
 			continue
 		}
 		var voteList []model.Vote4Counting
-		zap.L().Info("voteInfos: %+v\n", zap.Reflect("voteInfos", voteInfos))
+		zap.L().Info("voteInfos: ", zap.Reflect("voteInfos", voteInfos))
 		for _, voteInfo := range voteInfos {
 			list, err := utils.DecodeVoteList(voteInfo)
 			if err != nil {
 				zap.L().Error("get vote info from IPFS or decrypt error: ", zap.Error(err))
-				return
+				return err
 			}
 			voteList = append(voteList, list...)
 		}
-		zap.L().Info("voteList: %+v\n", zap.Reflect("voteList", voteList))
+		zap.L().Info("voteList: ", zap.Reflect("voteList", voteList))
 		var votePowerList []model.VotePower
 		// calc total power
 		totalSpPower := new(big.Int)
@@ -96,31 +122,31 @@ func VotingCount(ethClient model.GoEthClient) {
 			num, err := rand.Int(rand.Reader, big.NewInt(60))
 			if err != nil {
 				zap.L().Error("Generate random number error: ", zap.Error(err))
-				return
+				return err
 			}
 			num.Add(num, big.NewInt(1))
 			power, err := utils.GetPower(vote.Address, num, ethClient)
 			if err != nil {
 				zap.L().Error("get power error: ", zap.Error(err))
-				return
+				return err
 			}
 			if power.BlockHeight.Uint64() == 0 {
 				voterToPowerStatus, err := utils.GetVoterToPowerStatus(vote.Address, ethClient)
 				if err != nil {
 					zap.L().Error("get voter to power status error: ", zap.Error(err))
-					return
+					return err
 				}
 				if voterToPowerStatus.DayId.Int64() != 0 {
 					num, err := rand.Int(rand.Reader, voterToPowerStatus.DayId)
 					if err != nil {
 						zap.L().Error("Generate random number error: ", zap.Error(err))
-						return
+						return err
 					}
 					num.Add(num, big.NewInt(1))
 					power, err = utils.GetPower(vote.Address, num, ethClient)
 					if err != nil {
 						zap.L().Error("get power error: ", zap.Error(err))
-						return
+						return err
 					}
 				}
 			}
@@ -259,4 +285,5 @@ func VotingCount(ethClient model.GoEthClient) {
 		// Save vote history and vote result to database and update status
 		db.VoteResult(proposal.Id, voteHistory, voteResultList)
 	}
+	return nil
 }
