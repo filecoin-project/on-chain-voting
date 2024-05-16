@@ -28,7 +28,8 @@ import {
   UCAN_TYPE_GITHUB_OPTIONS,
   UCAN_GITHUB_STEP_1,
   UCAN_GITHUB_STEP_2,
-  OPERATION_CANCELED_MSG, STORING_DATA_MSG,
+  OPERATION_CANCELED_MSG,
+  STORING_DATA_MSG,
 } from '../../../common/consts';
 import {stringToBase64Url, validateValue, getWeb3IpfsId, getContractAddress} from '../../../utils';
 import './index.less';
@@ -81,13 +82,6 @@ const UcanDelegate = () => {
   }, [githubStep]);
 
   useEffect(() => {
-    if (!isConnected) {
-      navigate("/home");
-      return;
-    }
-  }, []);
-
-  useEffect(() => {
     const prevAddress = prevAddressRef.current;
     if (prevAddress !== address) {
       navigate("/home");
@@ -95,11 +89,26 @@ const UcanDelegate = () => {
   }, [address]);
 
   useEffect(() => {
+    if (writeContractSuccess) {
+      message.success(STORING_DATA_MSG);
+      navigate("/");
+    }
+  }, [writeContractSuccess])
+
+  useEffect(() => {
     if (error) {
       message.error((error as BaseError)?.shortMessage || error?.message);
     }
     resetWriteContract();
   }, [error]);
+
+
+  useEffect(() => {
+    if (!isConnected) {
+      navigate("/home");
+      return;
+    }
+  }, []);
 
   const handleUcanTypeChange = (value: number) => {
     reset({ aud: '' });
@@ -141,7 +150,6 @@ const UcanDelegate = () => {
         cid
       ],
     });
-    console.log(writeContractSuccess);
     // save data to localStorage and set validity period to three minutes
     const ucanStorageData = JSON.parse(localStorage.getItem('ucanStorage') || '[]');
     // Calculate expiration time (three minutes from now)
@@ -547,11 +555,6 @@ const UcanDelegate = () => {
     useWaitForTransactionReceipt({
       hash,
     })
-
-  if (writeContractSuccess) {
-    message.success(STORING_DATA_MSG);
-    navigate("/");
-  }
 
   if (error) {
     message.error((error as BaseError)?.shortMessage || error?.message);

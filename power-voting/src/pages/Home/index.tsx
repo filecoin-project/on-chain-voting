@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useState, useRef} from "react";
 import { Row, Empty, Pagination } from "antd";
 import {useAccount, useReadContract, useReadContracts} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
@@ -84,9 +84,9 @@ function useProposalDataSet(params: any) {
 const Home = () => {
   const navigate = useNavigate();
 
-  const {chain, isConnected} = useAccount();
+  const {chain, address, isConnected} = useAccount();
   const chainId = chain?.id || 0;
-
+  const prevAddressRef = useRef(address);
   const {openConnectModal} = useConnectModal();
 
   const [filterList, setFilterList] = useState([
@@ -104,7 +104,7 @@ const Home = () => {
   const [loading, setLoading] = useState(false);
 
   const { latestId } = useLatestId(chainId);
-  const { proposalData, getProposalIdLoading, getProposalIdSuccess } = useProposalDataSet({
+  const { proposalData, getProposalIdSuccess } = useProposalDataSet({
     chainId,
     total: Number(latestId),
     page,
@@ -121,7 +121,7 @@ const Home = () => {
     if (isConnected && !loading) {
       getProposalList(page);
     }
-  }, [chain, page, isConnected]);
+  }, [chain, page, address, isConnected]);
 
   /**
    * get proposal list

@@ -27,8 +27,8 @@ import {
   IN_PROGRESS_STATUS,
   WRONG_NET_STATUS,
   web3AvatarUrl,
-  VOTE_SUCCESS_MSG,
-  CHOOSE_VOTE_MSG, PENDING_STATUS, STORING_DATA_MSG,
+  CHOOSE_VOTE_MSG,
+  PENDING_STATUS, STORING_DATA_MSG,
 } from "../../common/consts";
 import { timelockEncrypt, roundAt, mainnetClient, Buffer } from "tlock-js";
 import {ProposalList, ProposalOption} from "../../common/types";
@@ -61,6 +61,13 @@ const Vote = () => {
   useEffect(() => {
     initState();
   }, [chain]);
+
+  useEffect(() => {
+    if (writeContractSuccess) {
+      message.success(STORING_DATA_MSG);
+      navigate("/");
+    }
+  }, [writeContractSuccess])
 
   useEffect(() => {
     if (error) {
@@ -198,11 +205,6 @@ const Vote = () => {
     useWaitForTransactionReceipt({
       hash,
     })
-
-  if (writeContractSuccess) {
-    message.success(STORING_DATA_MSG);
-    navigate("/");
-  }
 
   return (
     <div className="flex voting">

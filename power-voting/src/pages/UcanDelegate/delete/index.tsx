@@ -91,6 +91,13 @@ const UcanDelegate = () => {
   }, [address]);
 
   useEffect(() => {
+    if (writeContractSuccess) {
+      message.success(STORING_DATA_MSG);
+      navigate("/");
+    }
+  }, [writeContractSuccess])
+
+  useEffect(() => {
     if (error) {
       message.error((error as BaseError)?.shortMessage || error?.message);
     }
@@ -479,11 +486,6 @@ const UcanDelegate = () => {
     useWaitForTransactionReceipt({
       hash,
     })
-
-  if (writeContractSuccess) {
-    message.success(STORING_DATA_MSG);
-    navigate("/");
-  }
 
   return (
     <>

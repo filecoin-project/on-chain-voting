@@ -121,6 +121,13 @@ const CreateVote = () => {
     reset();
   }, [error]);
 
+  useEffect(() => {
+    if (writeContractSuccess) {
+      message.success(STORING_DATA_MSG);
+      navigate("/");
+    }
+  }, [writeContractSuccess])
+
   /**
    * create proposal
    * @param values
@@ -318,11 +325,6 @@ const CreateVote = () => {
       )
     },
   ];
-
-  if (writeContractSuccess) {
-    message.success(STORING_DATA_MSG);
-    navigate("/");
-  }
 
   return (
     <>
