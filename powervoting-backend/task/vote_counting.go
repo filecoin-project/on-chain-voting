@@ -16,7 +16,6 @@ package task
 
 import (
 	"crypto/rand"
-	"math"
 	"math/big"
 	"powervoting-server/config"
 	"powervoting-server/constant"
@@ -27,6 +26,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
@@ -65,15 +65,15 @@ func VotingCountHandler() {
 }
 
 // bigIntDiv bigInt division, which returns four decimal digits reserved
-func bigIntDiv(x *big.Int, y *big.Int) (z float64) {
-	var x_x = big.NewInt(0)
-	if y.Uint64() == 0 {
-		return 0
+func bigIntDiv(x *big.Int, y *big.Int) decimal.Decimal {
+	xd := decimal.NewFromBigInt(x, 0)
+	yd := decimal.NewFromBigInt(y, 0)
+	if yd.IsZero() {
+		return decimal.Zero
 	}
-	x_x.Mul(x, big.NewInt(10000))
-	x_x.Div(x_x, y)
-	z = float64(x_x.Uint64()) / 10000
-	return
+
+	// align precision
+	return xd.Div(yd).Round(5)
 }
 
 func VotingCount(ethClient model.GoEthClient) error {
@@ -169,19 +169,22 @@ func VotingCount(ethClient model.GoEthClient) error {
 			zap.String("totalDeveloperPower", totalDeveloperPower.String()))
 
 		// vote counting
-		var result = make(map[int64]float64, 5) // max 5 options
+		var result = make(map[int64]decimal.Decimal, 5) // max 5 options
+		var resultPercent = make(map[int64]float64, 5)
+		decimalOneHundred := decimal.NewFromFloat(100.0)
+
 		for _, vote := range voteList {
 			power := powerMap[vote.Address]
-			var votes float64
+			var votes decimal.Decimal
 			if vote.Votes != 0 {
-				var spPercent float64
-				var clientPercent float64
-				var tokenPercent float64
-				var developerPercent float64
+				var spPercent decimal.Decimal
+				var clientPercent decimal.Decimal
+				var tokenPercent decimal.Decimal
+				var developerPercent decimal.Decimal
 
 				// The vote consists of 4 parts,
 				// If any value of part is zero, it will not be included in the votePercent calculation
-				validOption := float64(0)
+				validOption := int64(0)
 				if totalSpPower.Cmp(big.NewInt(0)) != 0 {
 					spPercent = bigIntDiv(power.SpPower, totalSpPower)
 					validOption += 1
@@ -200,62 +203,76 @@ func VotingCount(ethClient model.GoEthClient) error {
 				}
 
 				zap.L().Info("percent data",
-					zap.Float64("spPercent", spPercent),
-					zap.Float64("clientPercent", clientPercent),
-					zap.Float64("tokenPercent", tokenPercent),
-					zap.Float64("developerPercent", developerPercent))
+					zap.String("spPercent", spPercent.StringFixed(7)),
+					zap.String("clientPercent", clientPercent.StringFixed(7)),
+					zap.String("tokenPercent", tokenPercent.StringFixed(7)),
+					zap.String("developerPercent", developerPercent.StringFixed(7)))
 
-				votes = (spPercent + clientPercent + tokenPercent + developerPercent) / validOption
+				votes = spPercent.
+					Add(clientPercent).
+					Add(tokenPercent).
+					Add(developerPercent).
+					Div(decimal.NewFromInt(validOption))
+
 				votePower := model.VotePower{
 					HistoryId:               proposal.ProposalId,
 					Address:                 vote.Address,
 					OptionId:                vote.OptionId,
-					Votes:                   math.Round(votes*10000) / 100,
+					Votes:                   votes.Mul(decimalOneHundred).Round(2).InexactFloat64(),
 					SpPower:                 power.SpPower.String(),
 					ClientPower:             power.ClientPower.String(),
 					TokenHolderPower:        power.TokenHolderPower.String(),
 					DeveloperPower:          power.DeveloperPower.String(),
-					SpPowerPercent:          math.Round(spPercent*10000) / 100,
-					ClientPowerPercent:      math.Round(clientPercent*10000) / 100,
-					TokenHolderPowerPercent: math.Round(tokenPercent*10000) / 100,
-					DeveloperPowerPercent:   math.Round(developerPercent*10000) / 100,
+					SpPowerPercent:          spPercent.Mul(decimalOneHundred).Round(2).InexactFloat64(),
+					ClientPowerPercent:      clientPercent.Mul(decimalOneHundred).Round(2).InexactFloat64(),
+					TokenHolderPowerPercent: tokenPercent.Mul(decimalOneHundred).Round(2).InexactFloat64(),
+					DeveloperPowerPercent:   developerPercent.Mul(decimalOneHundred).Round(2).InexactFloat64(),
 					PowerBlockHeight:        int64(power.BlockHeight.Uint64()),
 				}
 				votePowerList = append(votePowerList, votePower)
 			}
-			result[vote.OptionId] += votes
+			result[vote.OptionId] = result[vote.OptionId].Add(votes)
 		}
 
-		// Ensure totals add up to 100% , we need to add an offset (1 - approveVotes - rejectVotes)
+		// Ensure totals add up to 100% , we need to add an offset = (1 - approveVotes - rejectVotes)
 		// And ensure that this operation does not disrupt the final result.
-		// it would be: if approveVotes > rejectVotes then approveVotes + bv > rejectVotes
+		// it would be: if approveVotes > rejectVotes then approveVotes + offset > rejectVotes
 		// so:
-		// approveVotes > rejectVotes -> approveVotes + bv
+		// approveVotes > rejectVotes -> approveVotes + offset
 		// approveVotes == rejectVotes -> approveVotes = rejectVotes = 0.5
-		// approveVotes < rejectVotes -> rejectVotes + bv
+		// approveVotes < rejectVotes -> rejectVotes + offset
 		if len(voteList) != 0 {
 			approveVotes := result[constant.VoteApprove]
 			rejectVotes := result[constant.VoteReject]
-			bv := 1 - approveVotes - rejectVotes
-			if bv > 0 && math.Abs(bv) > math.SmallestNonzeroFloat64 {
-				if approveVotes > rejectVotes {
-					approveVotes += bv
+			offset := decimal.NewFromFloat(1.0).Sub(approveVotes).Sub(rejectVotes)
+			if offset.IsPositive() && !offset.IsZero() {
+				if approveVotes.GreaterThan(rejectVotes) {
+					approveVotes = approveVotes.Add(offset)
+				} else if approveVotes.LessThan(rejectVotes) {
+					rejectVotes = rejectVotes.Add(offset)
+				} else {
+					approveVotes = decimal.NewFromFloat(0.5)
+					rejectVotes = decimal.NewFromFloat(0.5)
 				}
 
-				if approveVotes < rejectVotes {
-					rejectVotes += bv
-				}
-
-				if math.Abs(approveVotes-rejectVotes) < math.SmallestNonzeroFloat64 {
-					approveVotes = 0.5
-					rejectVotes = 0.5
-				}
-				result[constant.VoteApprove] = approveVotes
-				result[constant.VoteReject] = rejectVotes
 				zap.L().Info("approve and reject",
-					zap.Float64("approve", approveVotes),
-					zap.Float64("reject", rejectVotes))
+					zap.String("approve", approveVotes.StringFixed(5)),
+					zap.String("reject", rejectVotes.StringFixed(5)))
 			}
+			// round five decimal place to four decimal places and recalculate
+			if approveVotes.GreaterThan(rejectVotes) {
+				approveVotes = approveVotes.Round(4)
+				rejectVotes = decimal.NewFromFloat(1.0).Sub(approveVotes)
+			} else if approveVotes.LessThan(rejectVotes) {
+				rejectVotes = rejectVotes.Round(4)
+				approveVotes = decimal.NewFromFloat(1.0).Sub(rejectVotes)
+			}
+			resultPercent[constant.VoteApprove] = approveVotes.Mul(decimalOneHundred).InexactFloat64()
+			resultPercent[constant.VoteReject] = rejectVotes.Mul(decimalOneHundred).InexactFloat64()
+
+			zap.L().Info("result percent",
+				zap.Float64("approve", resultPercent[constant.VoteApprove]),
+				zap.Float64("reject", resultPercent[constant.VoteReject]))
 		}
 
 		voteHistory := model.VoteCompleteHistory{
@@ -277,7 +294,7 @@ func VotingCount(ethClient model.GoEthClient) error {
 			voteResult := model.VoteResult{
 				ProposalId: proposal.ProposalId,
 				OptionId:   int64(i),
-				Votes:      math.Round(result[int64(i)]*10000) / 100,
+				Votes:      resultPercent[int64(i)],
 				Network:    ethClient.Id,
 			}
 			voteResultList = append(voteResultList, voteResult)
