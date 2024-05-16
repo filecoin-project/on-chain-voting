@@ -28,6 +28,8 @@ import { walletConnectProjectId } from './common/consts';
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 
+const queryClient = new QueryClient();
+
 const config = getDefaultConfig({
   appName: 'power-voting',
   projectId: walletConnectProjectId,
@@ -44,26 +46,22 @@ const config = getDefaultConfig({
   ],
 })
 
-const queryClient = new QueryClient();
-
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <WagmiProvider config={config}>
-        <QueryClientProvider client={queryClient}>
-          <RainbowKitProvider
-            locale="en-US"
-            theme={darkTheme({
-              accentColor: "#7b3fe4",
-              accentColorForeground: "white",
-            })}
-            modalSize="compact"
-          >
-            <App />
-          </RainbowKitProvider>
-        </QueryClientProvider>
-      </WagmiProvider>
-    </BrowserRouter>
-  </React.StrictMode>
+  <BrowserRouter>
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider
+          locale="en-US"
+          theme={darkTheme({
+            accentColor: "#7b3fe4",
+            accentColorForeground: "white",
+          })}
+          modalSize="compact"
+        >
+          <App />
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
+  </BrowserRouter>
 )
 

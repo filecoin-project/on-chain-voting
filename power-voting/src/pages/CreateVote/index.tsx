@@ -21,27 +21,45 @@ import {useNavigate, Link} from "react-router-dom";
 import Table from '../../components/Table';
 import {useForm, Controller} from 'react-hook-form';
 import classNames from 'classnames';
-import {useAccount} from "wagmi";
+import {useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, BaseError} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import Editor from '../../components/MDEditor';
 import {
   DEFAULT_TIMEZONE,
   WRONG_EXPIRATION_TIME_MSG,
-  NOT_FIP_EDITOR_MSG, VOTE_OPTIONS, WRONG_START_TIME_MSG,
+  NOT_FIP_EDITOR_MSG,
+  VOTE_OPTIONS,
+  WRONG_START_TIME_MSG,
+  STORING_DATA_MSG
 } from '../../common/consts';
-import {useStaticContract, useDynamicContract, getWeb3IpfsId} from "../../hooks";
 import { useTimezoneSelect, allTimezones } from 'react-timezone-select';
-import { validateValue } from '../../utils';
+import { validateValue, getContractAddress, getWeb3IpfsId } from '../../utils';
 import './index.less';
 import LoadingButton from "../../components/LoadingButton";
+import fileCoinAbi from "../../common/abi/power-voting.json";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const { RangePicker } = DatePicker;
 
+function useCheckFipAddress(chainId: number, address: `0x${string}` | undefined) {
+  const { data: isFipAddress } = useReadContract({
+    // @ts-ignore
+    address: getContractAddress(chainId, 'powerVoting'),
+    abi: fileCoinAbi,
+    functionName: 'fipMap',
+    args: [address]
+  });
+  return {
+    isFipAddress
+  };
+}
+
 const CreateVote = () => {
   const {isConnected, address, chain} = useAccount();
+  const chainId = chain?.id || 0;
+
   const {openConnectModal} = useConnectModal();
   const prevAddressRef = useRef(address);
 
@@ -69,7 +87,18 @@ const CreateVote = () => {
 
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState<boolean>(false);
+  const { isFipAddress } = useCheckFipAddress(chainId, address);
+
+  const {
+    data: hash,
+    writeContract,
+    error,
+    isPending: writeContractPending,
+    isSuccess: writeContractSuccess,
+    reset
+  } = useWriteContract();
+
+  const [loading, setLoading] = useState<boolean>(writeContractPending);
 
   useEffect(() => {
     if (!isConnected) {
@@ -84,6 +113,13 @@ const CreateVote = () => {
       navigate("/home");
     }
   }, [address]);
+
+  useEffect(() => {
+    if (error) {
+      message.error((error as BaseError)?.shortMessage || error?.message);
+    }
+    reset();
+  }, [error]);
 
   /**
    * create proposal
@@ -136,19 +172,19 @@ const CreateVote = () => {
 
     if (isConnected) {
       // Check if user is a FIP editor
-
-      const { isFipEditor } = await useStaticContract(chainId);
-      const res = await isFipEditor(address || '');
-      if (res.code === 200 && res.data) {
+      if (isFipAddress) {
         // Create voting using dynamic contract API
-        const { createVotingApi } = useDynamicContract(chainId);
-        const res1 = await createVotingApi(cid, startTimestamp, expTimestamp, 1);
-        if (res1.code === 200 && res1.data?.hash) {
-          message.success(res1.msg);
-          navigate("/");
-        } else {
-          message.error(res1.msg);
-        }
+        writeContract({
+          abi: fileCoinAbi,
+          address: getContractAddress(chain?.id || 0, 'powerVoting'),
+          functionName: 'createProposal',
+          args: [
+            cid,
+            startTimestamp,
+            expTimestamp,
+            1
+          ],
+        });
       } else {
         message.warning(NOT_FIP_EDITOR_MSG);
       }
@@ -158,6 +194,11 @@ const CreateVote = () => {
       openConnectModal && openConnectModal();
     }
   }
+
+  const { isLoading: transactionLoading } =
+    useWaitForTransactionReceipt({
+      hash,
+    })
 
   const list = [
     {
@@ -169,7 +210,7 @@ const CreateVote = () => {
             control={control}
             render={() => <input
               className={classNames(
-                'form-input w-full rounded bg-[#212B3C] border border-[#313D4F]',
+                'form-input w-full rounded !bg-[#212B3C] border border-[#313D4F]',
                 errors['name'] && 'border-red-500 focus:border-red-500'
               )}
               placeholder='Proposal Title'
@@ -278,6 +319,11 @@ const CreateVote = () => {
     },
   ];
 
+  if (writeContractSuccess) {
+    message.success(STORING_DATA_MSG);
+    navigate("/");
+  }
+
   return (
     <>
       <div className="px-3 mb-6 md:px-0">
@@ -297,7 +343,7 @@ const CreateVote = () => {
           <Table title='Create A Proposal' list={list}/>
 
           <div className='text-center'>
-            <LoadingButton text='Create' loading={loading} />
+            <LoadingButton text='Create' loading={loading || writeContractPending || transactionLoading} />
           </div>
         </div>
       </form>

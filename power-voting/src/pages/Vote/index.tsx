@@ -17,9 +17,9 @@ import { useNavigate, Link, useParams } from "react-router-dom";
 import { message } from "antd";
 import axios from 'axios';
 import dayjs from 'dayjs';
-import {getWeb3IpfsId, useDynamicContract} from "../../hooks";
-import { useAccount } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, BaseError } from "wagmi";
 import { useConnectModal, useChainModal } from "@rainbow-me/rainbowkit";
+import {getContractAddress, getWeb3IpfsId} from '../../utils';
 import MDEditor from "../../components/MDEditor";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
 import LoadingButton from "../../components/LoadingButton";
@@ -28,11 +28,12 @@ import {
   WRONG_NET_STATUS,
   web3AvatarUrl,
   VOTE_SUCCESS_MSG,
-  CHOOSE_VOTE_MSG, PENDING_STATUS,
+  CHOOSE_VOTE_MSG, PENDING_STATUS, STORING_DATA_MSG,
 } from "../../common/consts";
 import { timelockEncrypt, roundAt, mainnetClient, Buffer } from "tlock-js";
 import {ProposalList, ProposalOption} from "../../common/types";
 import "./index.less";
+import fileCoinAbi from "../../common/abi/power-voting.json";
 
 const Vote = () => {
   const { chain, isConnected } = useAccount();
@@ -48,9 +49,25 @@ const Vote = () => {
 
   const [loading, setLoading] = useState(false);
 
+  const {
+    data: hash,
+    writeContract,
+    error,
+    isPending: writeContractPending,
+    isSuccess: writeContractSuccess,
+    reset
+  } = useWriteContract();
+
   useEffect(() => {
     initState();
   }, [chain]);
+
+  useEffect(() => {
+    if (error) {
+      message.error((error as BaseError)?.shortMessage || error?.message);
+    }
+    reset();
+  }, [error]);
 
   const initState = async () => {
     // Fetch data from the IPFS link using the provided CID
@@ -130,24 +147,15 @@ const Vote = () => {
       const optionId = await getWeb3IpfsId(encryptValue);
       // Check if user is connected to the network
       if (isConnected) {
-        // If connected, get the voting API from the dynamic contract using chainId
-        const { voteApi } = useDynamicContract(chainId);
-        // Call the vote API with the voting details
-        const res = await voteApi(Number(id), optionId);
-        // Check if the vote was successful
-        if (res.code === 200 && res.data?.hash) {
-          // If successful, display a success message
-          message.success(VOTE_SUCCESS_MSG, 3);
-
-          // Redirect user to the homepage after a delay
-          setTimeout(() => {
-            navigate("/");
-          }, 3000);
-        } else {
-          // If not successful, display an error message
-          message.error(res.msg, 3);
-        }
-        // Reset loading state
+        writeContract({
+          abi: fileCoinAbi,
+          address: getContractAddress(chain?.id || 0, 'powerVoting'),
+          functionName: 'vote',
+          args: [
+            Number(id),
+            optionId,
+          ],
+        });
         setLoading(false);
       } else {
         // If user is not connected, prompt to connect
@@ -184,6 +192,16 @@ const Vote = () => {
           color: '',
         };
     }
+  }
+
+  const { isLoading: transactionLoading } =
+    useWaitForTransactionReceipt({
+      hash,
+    })
+
+  if (writeContractSuccess) {
+    message.success(STORING_DATA_MSG);
+    navigate("/");
   }
 
   return (
@@ -269,7 +287,7 @@ const Vote = () => {
                             )
                           })
                         }
-                          <LoadingButton text='Vote' isFull={true} loading={loading} handleClick={startVoting} />
+                          <LoadingButton text='Vote' isFull={true} loading={loading || writeContractPending || transactionLoading} handleClick={startVoting} />
                       </div>
                   </div>
               </div>
