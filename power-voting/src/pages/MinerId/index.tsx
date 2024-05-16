@@ -20,7 +20,7 @@ import LoadingButton from '../../components/LoadingButton';
 import {useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt, BaseError} from "wagmi";
 import {filecoinCalibration} from "wagmi/chains";
 import {
-  DUPLICATED_MINER_ID_MSG, NO_MINER_ID_MSG,
+  DUPLICATED_MINER_ID_MSG,
   STORING_DATA_MSG,
   WRONG_MINER_ID_MSG
 } from "../../common/consts";
@@ -30,23 +30,23 @@ import fileCoinAbi from "../../common/abi/power-voting.json";
 import oracleAbi from "../../common/abi/oracle.json";
 import oraclePowerAbi from "../../common/abi/oracle-powers.json";
 
-const MinerId = () => {
-  const {chain, isConnected, address} = useAccount();
-  const chainId = chain?.id || 0;
-  const navigate = useNavigate();
-  const prevAddressRef = useRef(address);
-  const [minerIds, setMinerIds] = useState(['']);
-  const [contracts, setContracts] = useState([] as any);
-  const [submitStart, setSubmitStart] = useState(false);
-
-  const { data, isLoading: getMinerIdsLoading, isSuccess: getMinerIdsSuccess } = useReadContract({
+function useMinerIdSet(chainId: number, address: `0x${string}` | undefined) {
+  const { data: minerIdData, isLoading: getMinerIdsLoading, isSuccess: getMinerIdsSuccess } = useReadContract({
     // @ts-ignore
-    address: getContractAddress(chain?.id || 0, 'oracle'),
+    address: getContractAddress(chainId || 0, 'oracle'),
     abi: oracleAbi,
     functionName: 'getVoterInfo',
     args: [address]
-  }) as any;
+  });
+  console.log(minerIdData);
+  return {
+    minerIdData: minerIdData as any,
+    getMinerIdsLoading,
+    getMinerIdsSuccess
+  }
+}
 
+function useOwnerDataSet(contracts: any[]) {
   const {
     data: ownerData,
     isLoading: getOwnerLoading,
@@ -54,17 +54,44 @@ const MinerId = () => {
   } = useReadContracts({
     // @ts-ignore
     contracts: contracts,
+    query: { enabled: !!contracts.length }
   });
+
+  return {
+    ownerData: ownerData || [],
+    getOwnerLoading,
+    getOwnerSuccess,
+  };
+}
+
+const MinerId = () => {
+  const {chain, isConnected, address} = useAccount();
+  const chainId = chain?.id || 0;
+  const navigate = useNavigate();
+  const prevAddressRef = useRef(address);
+  const [minerIds, setMinerIds] = useState(['']);
+  const [contracts, setContracts] = useState([] as any);
+
+  const { minerIdData, getMinerIdsLoading, getMinerIdsSuccess } = useMinerIdSet(chainId, address);
+  const { ownerData } = useOwnerDataSet(contracts);
 
   const {
     data: hash,
     writeContract,
     error,
     isPending: writeContractPending,
-    isSuccess: writeContractSuccess
+    isSuccess: writeContractSuccess,
+    reset
   } = useWriteContract();
 
   const [loading, setLoading] = useState<boolean>(writeContractPending);
+
+  useEffect(() => {
+    if (error) {
+      message.error((error as BaseError)?.shortMessage || error?.message);
+    }
+    reset();
+  }, [error]);
 
   useEffect(() => {
     if (!isConnected) {
@@ -84,8 +111,15 @@ const MinerId = () => {
     initState();
   }, [chain, getMinerIdsSuccess]);
 
+  useEffect(() => {
+    if (writeContractSuccess) {
+      message.success(STORING_DATA_MSG);
+      navigate("/");
+    }
+  }, [writeContractSuccess])
+
   const initState = async () => {
-    setMinerIds(addMinerIdPrefix(data?.minerIds?.map((id: any) => Number(id))));
+    setMinerIds(addMinerIdPrefix(minerIdData?.minerIds?.map((id: any) => Number(id))));
   }
 
   /**
@@ -94,6 +128,7 @@ const MinerId = () => {
    */
   const handleMinerChange = (ids: string) => {
     const arr = ids ? ids.split(',') : [];
+    console.log(arr);
     setMinerIds(arr);
 
     const { value } = removeMinerIdPrefix(arr);
@@ -151,13 +186,6 @@ const MinerId = () => {
    * Set miner ID
    */
   const onSubmit = async () => {
-    setSubmitStart(true);
-    // Check for empty miner IDs
-    if (minerIds.length === 0) {
-      message.warning(NO_MINER_ID_MSG, 3);
-      return;
-    }
-
     // Check for duplicate miner IDs
     if (minerIds.length && hasDuplicates(minerIds)) {
       message.error(DUPLICATED_MINER_ID_MSG, 3);
@@ -168,14 +196,13 @@ const MinerId = () => {
     setLoading(true);
 
     const { value, hasError } = removeMinerIdPrefix(minerIds);
-
+    console.log(value);
     // Remove prefix from miner IDs and check for errors
     if (hasError) {
       message.warning(WRONG_MINER_ID_MSG);
       setLoading(false);
       return;
     }
-    console.log(ownerData);
     try {
       // Check if all requests were successful
       const allSuccessful = ownerData?.every((res: any) => {
@@ -200,22 +227,12 @@ const MinerId = () => {
       console.log(error);
     }
     setLoading(false);
-    setSubmitStart(false);
   }
 
   const { isLoading: transactionLoading } =
     useWaitForTransactionReceipt({
       hash,
     })
-
-  if (writeContractSuccess) {
-    message.success(STORING_DATA_MSG);
-    navigate("/");
-  }
-
-  if (error) {
-    message.error((error as BaseError)?.shortMessage || error?.message);
-  }
 
   return (
     getMinerIdsLoading ? <Loading /> : <div className="px-3 mb-6 md:px-0">
@@ -242,7 +259,7 @@ const MinerId = () => {
                   defaultValue={minerIds}
                   placeholder='Input miner ID (For multiple miner IDs, use commas to separate them.)'
                   className='form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]'
-                  onChange={(e) => { handleMinerChange(e.target.value) }}
+                  onBlur={(e) => { handleMinerChange(e.target.value) }}
                 />
               )
             }
