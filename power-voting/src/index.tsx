@@ -17,54 +17,51 @@ import ReactDOM from "react-dom/client";
 import {
   darkTheme,
   RainbowKitProvider,
-  connectorsForWallets,
+  getDefaultConfig,
 } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
 import { metaMaskWallet } from '@rainbow-me/rainbowkit/wallets';
-import { WagmiConfig, configureChains, createConfig } from "wagmi";
-import { publicProvider } from "wagmi/providers/public";
-import { walletChainList, walletConnectProjectId } from './common/consts';
-import App from "./App";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { WagmiProvider, http } from "wagmi";
+import { filecoin, filecoinCalibration } from 'wagmi/chains';
+import { walletConnectProjectId } from './common/consts';
 import { BrowserRouter } from "react-router-dom";
+import App from "./App";
 
-const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [...walletChainList],
-  [
-    publicProvider(),
-  ]
-)
+const queryClient = new QueryClient();
 
-const connectors = connectorsForWallets([
-  {
-    groupName: 'Recommended',
-    wallets: [
-      metaMaskWallet({ projectId: walletConnectProjectId, chains }),
-    ],
+const config = getDefaultConfig({
+  appName: 'power-voting',
+  projectId: walletConnectProjectId,
+  chains: [filecoin, filecoinCalibration],
+  transports: {
+    [filecoin.id]: http(),
+    [filecoinCalibration.id]: http(),
   },
-]);
-
-const config = createConfig({
-  autoConnect: true,
-  connectors,
-  publicClient,
-  webSocketPublicClient
+  wallets: [
+    {
+      groupName: 'Recommended',
+      wallets: [metaMaskWallet]
+    },
+  ],
 })
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <BrowserRouter>
-    <WagmiConfig config={config}>
-      <RainbowKitProvider
-        locale="en-US"
-        theme={darkTheme({
-          accentColor: "#7b3fe4",
-          accentColorForeground: "white",
-        })}
-        chains={chains}
-        modalSize="compact"
-      >
-        <App />
-      </RainbowKitProvider>
-    </WagmiConfig>
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider
+          locale="en-US"
+          theme={darkTheme({
+            accentColor: "#7b3fe4",
+            accentColorForeground: "white",
+          })}
+          modalSize="compact"
+        >
+          <App />
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   </BrowserRouter>
 )
 

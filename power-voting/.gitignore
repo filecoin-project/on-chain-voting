@@ -17,6 +17,3 @@ dist.zip
 
 # env
 .env
-
-# lock
-yarn.lock
