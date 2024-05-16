@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import React, {useEffect, useState, useRef} from "react";
-import { Row, Empty, Pagination } from "antd";
-import {useAccount, useReadContract, useReadContracts} from "wagmi";
+import { Row, Empty, Pagination, message } from "antd";
+import {useAccount, useReadContract, useReadContracts, BaseError} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import {useNavigate} from "react-router-dom";
 import axios from "axios";
@@ -42,13 +42,14 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 function useLatestId(chainId: number) {
-  const { data: latestId } = useReadContract({
+  const { data: latestId, isLoading: getLatestIdLoading } = useReadContract({
     address: getContractAddress(chainId, 'powerVoting'),
     abi: fileCoinAbi,
     functionName: 'proposalId',
   });
   return {
-    latestId
+    latestId,
+    getLatestIdLoading
   };
 }
 
@@ -69,15 +70,16 @@ function useProposalDataSet(params: any) {
     data: proposalData,
     isLoading: getProposalIdLoading,
     isSuccess: getProposalIdSuccess,
+    error,
   } = useReadContracts({
     contracts: contracts,
     query: { enabled: !!contracts.length }
   });
-
   return {
     proposalData: proposalData || [],
     getProposalIdLoading,
     getProposalIdSuccess,
+    error,
   };
 }
 
@@ -86,7 +88,6 @@ const Home = () => {
 
   const {chain, address, isConnected} = useAccount();
   const chainId = chain?.id || 0;
-  const prevAddressRef = useRef(address);
   const {openConnectModal} = useConnectModal();
 
   const [filterList, setFilterList] = useState([
@@ -103,13 +104,19 @@ const Home = () => {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const { latestId } = useLatestId(chainId);
-  const { proposalData, getProposalIdSuccess } = useProposalDataSet({
+  const { latestId, getLatestIdLoading } = useLatestId(chainId);
+  const { proposalData, getProposalIdLoading, getProposalIdSuccess, error } = useProposalDataSet({
     chainId,
     total: Number(latestId),
     page,
     pageSize,
   });
+
+  useEffect(() => {
+    if (error) {
+      message.error((error as BaseError)?.shortMessage || error?.message);
+    }
+  }, [error]);
 
   useEffect(() => {
     if (getProposalIdSuccess) {
@@ -118,7 +125,7 @@ const Home = () => {
   }, [getProposalIdSuccess]);
 
   useEffect(() => {
-    if (isConnected && !loading) {
+    if (isConnected && !loading && !getLatestIdLoading && !getProposalIdLoading) {
       getProposalList(page);
     }
   }, [chain, page, address, isConnected]);
@@ -171,9 +178,8 @@ const Home = () => {
     } catch (e) {
       console.log(e);
     } finally {
-      setLoading(!proposalData.length);
+      setLoading(false);
     }
-
   }
 
   /**
@@ -256,6 +262,7 @@ const Home = () => {
   }
 
   const handlePageChange = (page: number) => {
+    // Reset vote status when page change
     setProposalStatus(VOTE_ALL_STATUS);
     setPage(page);
   }
@@ -342,13 +349,15 @@ const Home = () => {
   }
 
   const renderContent = () => {
-    if (loading) {
+    // Display loading when data is loading
+    if (getProposalIdLoading || getLatestIdLoading || loading) {
       return (
         <Loading />
       );
     }
 
-    if (getProposalIdSuccess && proposalList.length === 0) {
+    // Display empty when data is empty
+    if (proposalData.length === 0) {
       return (
         <Empty
           className='empty'
