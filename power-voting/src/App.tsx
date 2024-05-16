@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React,{ useState } from "react";
+import React,{ useState, useEffect, useRef } from "react";
 import {useRoutes, useNavigate, Link} from "react-router-dom";
 import axios from "axios";
 import {
@@ -26,14 +26,13 @@ import routes from "./router";
 import Footer from './components/Footer';
 import "./common/styles/reset.less";
 import "tailwindcss/tailwind.css";
-import Loading from "./components/Loading";
 import {STORING_DATA_MSG} from "./common/consts";
 import oracleAbi from "./common/abi/oracle.json";
 import {getContractAddress} from "./utils";
 
 const App: React.FC = () => {
   const { chain, address, isConnected} = useAccount();
-
+  const prevAddressRef = useRef(address);
   const {openConnectModal} = useConnectModal();
   const navigate = useNavigate();
   const element = useRoutes(routes);
@@ -47,6 +46,13 @@ const App: React.FC = () => {
     functionName: 'voterToInfo',
     args: [address]
   }) as any;
+
+  useEffect(() => {
+    const prevAddress = prevAddressRef.current;
+    if (address && prevAddress !== address) {
+      window.location.reload();
+    }
+  }, [address]);
 
   const handleDelegate = async () => {
     const ucanStorageData = JSON.parse(localStorage.getItem('ucanStorage') || '[]');
