@@ -37,7 +37,6 @@ const App: React.FC = () => {
   const {openConnectModal} = useConnectModal();
   const navigate = useNavigate();
   const element = useRoutes(routes);
-  const [spinning, setSpinning] = useState(false);
   const [expirationTime, setExpirationTime] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -66,13 +65,10 @@ const App: React.FC = () => {
       }
     }
 
-    setSpinning(true);
     if (!isConnected) {
       openConnectModal && openConnectModal();
-      setSpinning(false);
       return;
     }
-    setSpinning(false);
     const isGithubType = !!voterInfo[0];
     if (voterInfo[2]) {
       const { data } = await axios.get(`https://${voterInfo[2]}.ipfs.w3s.link/`);
@@ -109,7 +105,6 @@ const App: React.FC = () => {
   const handleMinerId = () => {
     if (!isConnected) {
       openConnectModal && openConnectModal();
-      setSpinning(false);
       return;
     }
     navigate('/minerid');
@@ -159,22 +154,19 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className='flex items-center'>
-              {
-                isSuccess &&
-                  <Dropdown
-                      menu={{
-                        items,
-                      }}
-                      placement="bottomLeft"
-                      arrow
-                  >
-                      <button
-                          className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-xl mr-4"
-                      >
-                          Tools
-                      </button>
-                  </Dropdown>
-              }
+              <Dropdown
+                menu={{
+                  items,
+                }}
+                placement="bottomLeft"
+                arrow
+              >
+                <button
+                  className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-xl mr-4"
+                >
+                  Tools
+                </button>
+              </Dropdown>
               <div className="connect flex items-center">
                 <ConnectButton />
               </div>
