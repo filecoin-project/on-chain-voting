@@ -127,7 +127,6 @@ const MinerId = () => {
    */
   const handleMinerChange = (ids: string) => {
     const arr = ids ? ids.split(',') : [];
-    console.log(arr);
     setMinerIds(arr);
 
     const { value } = removeMinerIdPrefix(arr);
