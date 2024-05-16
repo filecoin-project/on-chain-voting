@@ -38,7 +38,6 @@ function useMinerIdSet(chainId: number, address: `0x${string}` | undefined) {
     functionName: 'getVoterInfo',
     args: [address]
   });
-  console.log(minerIdData);
   return {
     minerIdData: minerIdData as any,
     getMinerIdsLoading,
@@ -196,7 +195,6 @@ const MinerId = () => {
     setLoading(true);
 
     const { value, hasError } = removeMinerIdPrefix(minerIds);
-    console.log(value);
     // Remove prefix from miner IDs and check for errors
     if (hasError) {
       message.warning(WRONG_MINER_ID_MSG);
