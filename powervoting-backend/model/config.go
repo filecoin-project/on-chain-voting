@@ -14,34 +14,39 @@
 
 package model
 
+// Config represents the configuration structure for the PowerVoting application.
 type Config struct {
-	Server  Server
-	Mysql   Mysql
-	Drand   Drand
-	Network []Network
+	Server  Server    // Server configuration
+	Mysql   Mysql     // MySQL database configuration
+	Drand   Drand     // Drand network configuration
+	Network []Network // List of network configurations
 }
 
+// Server represents the server configuration.
 type Server struct {
-	Port string
+	Port string // Port number for the server
 }
 
+// Mysql represents the MySQL database configuration.
 type Mysql struct {
-	Url      string
-	Username string
-	Password string
+	Url      string // URL of the MySQL database
+	Username string // Username for accessing the MySQL database
+	Password string // Password for accessing the MySQL database
 }
 
+// Drand represents the Drand network configuration.
 type Drand struct {
-	Url       []string
-	ChainHash string
+	Url       []string // List of URLs for the Drand network
+	ChainHash string   // Chain hash for the Drand network
 }
 
+// Network represents the configuration for a specific network.
 type Network struct {
-	Id                  int64
-	Name                string
-	Rpc                 string
-	PowerVotingAbi      string
-	OracleAbi           string
-	PowerVotingContract string
-	OracleContract      string
+	Id                  int64  // Unique identifier for the network
+	Name                string // Name of the network
+	Rpc                 string // RPC endpoint for the network
+	PowerVotingAbi      string // ABI (Application Binary Interface) for PowerVoting contract
+	OracleAbi           string // ABI for Oracle contract
+	PowerVotingContract string // Contract address for PowerVoting
+	OracleContract      string // Contract address for Oracle
 }

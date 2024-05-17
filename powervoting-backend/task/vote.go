@@ -28,7 +28,7 @@ import (
 	"time"
 )
 
-// SyncVoteHandler sync vote handler
+// SyncVoteHandler asynchronously synchronizes votes for proposals across multiple networks.
 func SyncVoteHandler() {
 	wg := sync.WaitGroup{}
 	errList := make([]error, 0)
@@ -70,7 +70,7 @@ func SyncVoteHandler() {
 	zap.L().Info("sync vote finished: ", zap.Int64("timestamp", time.Now().Unix()))
 }
 
-// SyncVote sync vote
+// SyncVote syncs votes for a given proposal and Ethereum client.
 func SyncVote(ethClient model.GoEthClient, proposalId int64) error {
 	dictName := fmt.Sprintf("%s-%d", constant.VoteStartKey, proposalId)
 	var dict model.Dict

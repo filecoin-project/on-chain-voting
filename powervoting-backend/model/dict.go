@@ -14,8 +14,9 @@
 
 package model
 
+// Dict records the ID of the synchronized vote.
 type Dict struct {
-	Id    int64  `json:"id"`
-	Name  string `json:"name" gorm:"not null"`
-	Value string `json:"value" gorm:"not null"`
+	Id    int64  `json:"id"`                    // ID of the synchronized vote
+	Name  string `json:"name" gorm:"not null"`  // Key representing the name
+	Value string `json:"value" gorm:"not null"` // Value associated with the name key
 }

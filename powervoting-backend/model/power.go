@@ -16,23 +16,26 @@ package model
 
 import "math/big"
 
+// Power represents the power information.
 type Power struct {
-	DeveloperPower   *big.Int `json:"developerPower"`
-	SpPower          *big.Int `json:"spPower"`
-	ClientPower      *big.Int `json:"clientPower"`
-	TokenHolderPower *big.Int `json:"tokenHolderPower"`
-	BlockHeight      *big.Int `json:"blockHeight"`
+	DeveloperPower   *big.Int `json:"developerPower"`   // Developer power
+	SpPower          *big.Int `json:"spPower"`          // SP power
+	ClientPower      *big.Int `json:"clientPower"`      // Client power
+	TokenHolderPower *big.Int `json:"tokenHolderPower"` // Token holder power
+	BlockHeight      *big.Int `json:"blockHeight"`      // Block height
 }
 
+// ContractPower represents the contract power information.
 type ContractPower struct {
-	DeveloperPower   *big.Int `json:"developerPower"`
-	SpPower          [][]byte `json:"spPower"`
-	ClientPower      [][]byte `json:"clientPower"`
-	TokenHolderPower *big.Int `json:"tokenHolderPower"`
-	BlockHeight      *big.Int `json:"blockHeight"`
+	DeveloperPower   *big.Int `json:"developerPower"`   // Developer power
+	SpPower          [][]byte `json:"spPower"`          // SP power
+	ClientPower      [][]byte `json:"clientPower"`      // Client power
+	TokenHolderPower *big.Int `json:"tokenHolderPower"` // Token holder power
+	BlockHeight      *big.Int `json:"blockHeight"`      // Block height
 }
 
+// VoterToPowerStatus represents the voter's power status.
 type VoterToPowerStatus struct {
-	DayId        *big.Int `json:"dayId"`
-	HasFullRound *big.Int `json:"hasFullRound"`
+	DayId        *big.Int `json:"dayId"`        // Day ID
+	HasFullRound *big.Int `json:"hasFullRound"` // Has full round
 }
