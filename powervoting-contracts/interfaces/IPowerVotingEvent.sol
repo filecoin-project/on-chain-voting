@@ -19,16 +19,17 @@ import {Proposal} from "../types.sol";
 
 interface IPowerVotingEvent {
     /**
-     * vote event
-     * @param id: proposal id
-     * @param voteInfo: vote info, IPFS cid
+     * @notice Emitted when a vote is cast for a proposal.
+     * @param id The ID of the proposal being voted on.
+     * @param voter The address of the voter who cast the vote.
+     * @param voteInfo Additional information or comments regarding the vote.
      */
     event Vote(uint256 id, address voter, string voteInfo);
 
     /**
-     * create proposal event
-     * @param id: proposal id
-     * @param proposal: proposal detail
+     * @notice Emitted when a new proposal is created.
+     * @param id The ID of the newly created proposal.
+     * @param proposal The details of the created proposal.
      */
     event ProposalCreate(uint256 id, Proposal proposal);
 }
