@@ -14,26 +14,26 @@
 
 package models
 
-// Config config
+// Config represents the overall configuration structure.
 type Config struct {
-	Network []Network
-	Github  Github
+	Network []Network // Network configuration details.
+	Github  GitHub    // Github configuration details.
 }
 
-// Network chain configuration
+// Network  configuration for a blockchain network.
 type Network struct {
-	Id              int64
-	Name            string
-	Rpc             string
-	AbiPath         string
-	ContractAddress string
-	PrivateKey      string
-	WalletAddress   string
-	GasLimit        int64
+	Id              int64  // Identifier for the network.
+	Name            string // Name of the network.
+	Rpc             string // RPC endpoint for the network.
+	AbiPath         string // Path to the ABI file.
+	ContractAddress string // Address of the smart contract.
+	PrivateKey      string // Private key for the wallet.
+	WalletAddress   string // Address of the wallet.
+	GasLimit        int64  // Gas limit for transactions.
 }
 
-// Github github  config
-type Github struct {
-	GithubToken string
-	GraphQl     string
+// GitHub represents the configuration for GitHub integration.
+type GitHub struct {
+	GithubToken string // GitHub token for authentication.
+	GraphQl     string // GraphQL endpoint for GitHub API.
 }

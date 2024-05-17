@@ -63,7 +63,7 @@ func TaskScheduler() {
 	select {}
 }
 
-// HandleContractCallBack Contract Call Back
+// HandleContractCallBack Contract Call Back.
 func HandleContractCallBack() {
 	for _, network := range config.Client.Network {
 		ethClient, err := contract.GetClient(network.Id)
@@ -76,7 +76,7 @@ func HandleContractCallBack() {
 	}
 }
 
-// HandleUpdatePower Update Power
+// HandleUpdatePower Update Power.
 func HandleUpdatePower() {
 	totalWeights := GetDeveloperWeights()
 	for _, network := range config.Client.Network {
@@ -90,7 +90,7 @@ func HandleUpdatePower() {
 	}
 }
 
-// HandleF4Address Update F4address
+// HandleF4Address Update F4address.
 func HandleF4Address() {
 	for _, network := range config.Client.Network {
 		ethClient, err := contract.GetClient(network.Id)

@@ -18,19 +18,18 @@ import (
 	"backend/utils/types"
 	"context"
 	"encoding/json"
-
 	filecoinAddress "github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/crypto"
 	"github.com/ybbus/jsonrpc/v3"
 )
 
-// NewClient create lotus rcp client
+// NewClient create lotus rcp client.
 func NewClient(endpoint string) jsonrpc.RPCClient {
 	return jsonrpc.NewClientWithOpts(endpoint, &jsonrpc.RPCClientOpts{})
 }
 
-// WalletBalance view  address  balance
-func WalletBalance(ctx context.Context, lotusRpcClient jsonrpc.RPCClient, address string) (string, error) {
+// GetWalletBalance retrieves the balance of a Filecoin wallet associated with the given address.
+func GetWalletBalance(ctx context.Context, lotusRpcClient jsonrpc.RPCClient, address string) (string, error) {
 	var balance string
 	addressStr, err := filecoinAddress.NewFromString(address)
 	if err != nil {
@@ -58,8 +57,8 @@ func WalletBalance(ctx context.Context, lotusRpcClient jsonrpc.RPCClient, addres
 	return balance, nil
 }
 
-// IDFormAddress address converted to id
-func IDFormAddress(ctx context.Context, lotusRpcClient jsonrpc.RPCClient, address string) (string, error) {
+// IDFromAddress retrieves the identifier associated with a Filecoin address.
+func IDFromAddress(ctx context.Context, lotusRpcClient jsonrpc.RPCClient, address string) (string, error) {
 	resp, err := lotusRpcClient.Call(ctx, "Filecoin.StateLookupID", address, types.TipSetKey{})
 	if err != nil {
 		return "", err
@@ -72,7 +71,7 @@ func IDFormAddress(ctx context.Context, lotusRpcClient jsonrpc.RPCClient, addres
 	return resp.Result.(string), nil
 }
 
-// WalletVerify verify signature
+// WalletVerify verifies a signature against a specified address and data.
 func WalletVerify(ctx context.Context, lotusRpcClient jsonrpc.RPCClient, address string, signature crypto.Signature, data []byte) (bool, error) {
 	addressStr, err := filecoinAddress.NewFromString(address)
 	if err != nil {

@@ -27,8 +27,8 @@ import (
 	"strconv"
 )
 
-// ContractCallBack is a function to handle contract callbacks
-// It retrieves the task list and starts goroutines to concurrently process tasks
+// ContractCallBack is a function to handle contract callbacks.
+// It retrieves the task list and starts goroutines to concurrently process tasks.
 func ContractCallBack(ethClient models.GoEthClient, lotusRpcClient jsonrpc.RPCClient) {
 	taskList, err := utils.GetTasks(ethClient)
 	if err != nil {
@@ -47,7 +47,7 @@ func ContractCallBack(ethClient models.GoEthClient, lotusRpcClient jsonrpc.RPCCl
 
 }
 
-// ProcessingContractCallBackTaskId processes a specific task identified by its ID
+// ProcessingContractCallBackTaskId processes a specific task identified by its ID.
 func ProcessingContractCallBackTaskId(taskId *big.Int, ethClient models.GoEthClient, lotusRpcClient jsonrpc.RPCClient) {
 	zap.L().Info("processing task", zap.String("id", taskId.String()))
 
@@ -134,7 +134,7 @@ func ProcessingContractCallBackTaskId(taskId *big.Int, ethClient models.GoEthCli
 	return
 }
 
-// ActionIsAdd performs the 'add' action for a given UCAN
+// ActionIsAdd performs the 'add' action for a given UCAN.
 func ActionIsAdd(iss, aud, ucanCid string, isGitHub bool, taskId *big.Int, ethClient models.GoEthClient, lotusRpcClient jsonrpc.RPCClient) error {
 	voterInfo, err := utils.GetVoterInfo(iss, ethClient)
 	if err != nil {
@@ -155,7 +155,7 @@ func ActionIsAdd(iss, aud, ucanCid string, isGitHub bool, taskId *big.Int, ethCl
 
 }
 
-// GitHubAccount handles the 'add' action for a GitHub account
+// GitHubAccount handles the 'add' action for a GitHub account.
 func GitHubAccount(iss, aud, ucanCid string, taskId *big.Int, ethClient models.GoEthClient, lotusRpcClient jsonrpc.RPCClient) error {
 	ethToId, err := utils.GetActorIdFromEthAddress(iss, ethClient)
 	if err != nil {
@@ -199,9 +199,9 @@ func GitHubAccount(iss, aud, ucanCid string, taskId *big.Int, ethClient models.G
 	return nil
 }
 
-// FileCoinAccount handles the 'add' action for a Filecoin account
+// FileCoinAccount handles the 'add' action for a Filecoin account.
 func FileCoinAccount(iss, aud, ucanCid string, taskId *big.Int, ethClient models.GoEthClient, lotusRpcClient jsonrpc.RPCClient) error {
-	filecoinId, err := utils.IDFormAddress(context.Background(), lotusRpcClient, aud)
+	filecoinId, err := utils.IDFromAddress(context.Background(), lotusRpcClient, aud)
 	if err != nil {
 		zap.L().Error("failed to get id from address", zap.Error(err))
 		return err

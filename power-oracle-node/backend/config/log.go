@@ -20,7 +20,7 @@ import (
 	"os"
 )
 
-// InitLogger initializes the global logger instance with a custom configuration.
+// InitLogger initializes the logger with custom configurations.
 func InitLogger() {
 	writeSyncer := getLogWriter()
 	encoder := getEncoder()
@@ -29,7 +29,7 @@ func InitLogger() {
 	zap.ReplaceGlobals(logger)
 }
 
-// getEncoder returns a configured encoder for the logger.
+// getEncoder creates and returns a configured encoder for the logger.
 func getEncoder() zapcore.Encoder {
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
@@ -40,7 +40,7 @@ func getEncoder() zapcore.Encoder {
 	return zapcore.NewJSONEncoder(encoderConfig)
 }
 
-// getLogWriter returns a writer syncer for the logger.
+// getLogWriter returns a WriteSyncer that writes logs to os.Stdout.
 func getLogWriter() zapcore.WriteSyncer {
 	return zapcore.AddSync(os.Stdout)
 }
