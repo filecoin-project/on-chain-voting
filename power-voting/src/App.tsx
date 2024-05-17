@@ -27,11 +27,26 @@ import Footer from './components/Footer';
 import "./common/styles/reset.less";
 import "tailwindcss/tailwind.css";
 import {STORING_DATA_MSG} from "./common/consts";
+import {useVoterInfo} from "./common/store";
 import oracleAbi from "./common/abi/oracle.json";
 import {getContractAddress} from "./utils";
 
+function useVoterInfoSet(chainId: number, address: `0x${string}` | undefined) {
+  const { data: voterInfo } = useReadContract({
+    // @ts-ignore
+    address: getContractAddress(chainId, 'oracle'),
+    abi: oracleAbi,
+    functionName: 'voterToInfo',
+    args: [address]
+  });
+  return {
+    voterInfo: voterInfo as any
+  }
+}
+
 const App: React.FC = () => {
   const { chain, address, isConnected} = useAccount();
+  const chainId = chain?.id || 0;
   const prevAddressRef = useRef(address);
   const {openConnectModal} = useConnectModal();
   const navigate = useNavigate();
@@ -39,13 +54,9 @@ const App: React.FC = () => {
   const [expirationTime, setExpirationTime] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const { data: voterInfo, isSuccess } = useReadContract({
-    // @ts-ignore
-    address: getContractAddress(chain?.id || 0, 'oracle'),
-    abi: oracleAbi,
-    functionName: 'voterToInfo',
-    args: [address]
-  }) as any;
+  const { voterInfo } = useVoterInfoSet(chainId, address);
+
+  const setVoterInfo = useVoterInfo((state: any) => state.setVoterInfo);
 
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
@@ -53,6 +64,12 @@ const App: React.FC = () => {
       window.location.reload();
     }
   }, [address]);
+
+  useEffect(() => {
+    if (voterInfo) {
+      setVoterInfo(voterInfo);
+    }
+  }, [voterInfo]);
 
   const handleDelegate = async () => {
     const ucanStorageData = JSON.parse(localStorage.getItem('ucanStorage') || '[]');
