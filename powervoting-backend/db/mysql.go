@@ -28,6 +28,13 @@ import (
 
 var Engine *gorm.DB
 
+// InitMysql initializes the MySQL database connection and performs necessary migrations.
+// It configures the database connection using the provided MySQL configuration.
+// After establishing the connection, it auto-migrates the required database tables:
+// Proposal, Vote, VoteResult, VoteCompleteHistory, Dict, and VotePower.
+// Additionally, it checks if the Dict table contains an entry for proposal start key,
+// and creates one if not found.
+// Any error encountered during the initialization process is logged.
 func InitMysql() {
 	var err error
 	Engine, err = gorm.Open(mysql.New(mysql.Config{
@@ -65,18 +72,35 @@ func InitMysql() {
 	}
 }
 
+// GetProposalList retrieves a list of proposals based on the provided network ID and timestamp.
+// It queries the database for proposals with the following conditions:
+// 1. Matching network ID.
+// 2. Expiration time before or equal to the provided timestamp.
+// 3. Status set to 0 (active).
+// It returns the list of proposals and any error encountered during the database query.
 func GetProposalList(network int64, timestamp int64) ([]model.Proposal, error) {
 	var proposalList []model.Proposal
 	tx := Engine.Model(model.Proposal{}).Where("network = ? and exp_time <= ? and status = 0", network, timestamp).Find(&proposalList)
 	return proposalList, tx.Error
 }
 
+// GetVoteList retrieves a list of votes based on the provided network ID and proposal ID.
+// It queries the database for votes with the following conditions:
+// 1. Matching network ID.
+// 2. Matching proposal ID.
+// It returns the list of votes and any error encountered during the database query.
 func GetVoteList(network, proposalId int64) ([]model.Vote, error) {
 	var proposalList []model.Vote
 	tx := Engine.Model(model.Vote{}).Where("network", network).Where("proposal_id", proposalId).Find(&proposalList)
 	return proposalList, tx.Error
 }
 
+// VoteResult updates the database with the provided vote result and associated history.
+// It begins a transaction to ensure atomicity and consistency of database operations.
+// It creates a new record in the VoteCompleteHistory table for the given history.
+// It creates multiple records in the VoteResult table in batches.
+// It updates the status of the proposal with the provided ID to indicate that it has been voted on.
+// Any error encountered during the transaction is logged.
 func VoteResult(proposalId int64, history model.VoteCompleteHistory, result []model.VoteResult) {
 	Engine.Transaction(func(tx *gorm.DB) error {
 		create := tx.Model(model.VoteCompleteHistory{}).Create(&history)

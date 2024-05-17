@@ -29,7 +29,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// SyncProposalHandler sync proposal handler
+// SyncProposalHandler asynchronously synchronizes proposals across multiple networks.
 func SyncProposalHandler() {
 	wg := sync.WaitGroup{}
 	errList := make([]error, 0, len(config.Client.Network))
@@ -61,6 +61,7 @@ func SyncProposalHandler() {
 	zap.L().Info("sync proposal finished: ", zap.Int64("timestamp", time.Now().Unix()))
 }
 
+// SyncProposal syncs proposals for a given Ethereum client.
 func SyncProposal(ethClient model.GoEthClient) error {
 	var dict model.Dict
 	if err := db.Engine.Model(model.Dict{}).Where("name", constant.ProposalStartKey).Find(&dict).Error; err != nil {

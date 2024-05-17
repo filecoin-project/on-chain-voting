@@ -23,7 +23,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// VoteResult get vote result
+// VoteResult handles the HTTP request to retrieve the result of a vote for a specific proposal on a given network.
 func VoteResult(c *gin.Context) {
 	proposalId := c.Query("proposalId")
 	network := c.Query("network")
@@ -42,6 +42,7 @@ func VoteResult(c *gin.Context) {
 	response.SuccessWithData(result, c)
 }
 
+// VoteHistory function handles an HTTP request to retrieve the voting history of a specific proposal on a given network.
 func VoteHistory(c *gin.Context) {
 	proposalId := c.Query("proposalId")
 	network := c.Query("network")

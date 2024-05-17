@@ -14,8 +14,9 @@
 
 package model
 
+// Response represents the structure of a generic response.
 type Response struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-	Data    any    `json:"data"`
+	Code    int    `json:"code"`    // Response code
+	Message string `json:"message"` // Response message
+	Data    any    `json:"data"`    // Response data
 }

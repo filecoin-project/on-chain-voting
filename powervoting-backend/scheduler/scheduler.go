@@ -20,6 +20,15 @@ import (
 	"powervoting-server/task"
 )
 
+// TaskScheduler initializes and starts the task scheduler.
+// It creates a new cron scheduler with seconds precision.
+// It defines task functions for voting count, proposal synchronization, and vote synchronization.
+// It schedules the tasks to run at specific intervals:
+//   - Voting count task runs every 5 minutes.
+//   - Proposal synchronization task runs every 30 seconds.
+//   - Vote synchronization task runs every 30 seconds.
+//
+// Any error encountered during task scheduling is logged.
 func TaskScheduler() {
 	// create a new scheduler
 	crontab := cron.New(cron.WithSeconds())
