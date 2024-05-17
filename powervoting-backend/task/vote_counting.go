@@ -30,7 +30,10 @@ import (
 	"go.uber.org/zap"
 )
 
-// VotingCountHandler vote count
+// VotingCountHandler initiates the voting count process.
+// It iterates through the network configurations and retrieves the Ethereum client for each network.
+// It then launches a goroutine to handle the voting count for each network.
+// Any errors encountered during the retrieval of the Ethereum client are logged.
 func VotingCountHandler() {
 	networkList := config.Client.Network
 	wg := sync.WaitGroup{}
@@ -64,7 +67,10 @@ func VotingCountHandler() {
 	zap.L().Info("vote count finished: ", zap.Int64("timestamp", time.Now().Unix()))
 }
 
-// bigIntDiv bigInt division, which returns four decimal digits reserved
+// bigIntDiv performs division operation on big integers and returns the result as a float64.
+// Parameters x and y are pointers to big integers representing the dividend and divisor respectively.
+// The return value z represents the division result as a float64.
+// If the divisor is zero, it returns 0 to avoid division by zero error.
 func bigIntDiv(x *big.Int, y *big.Int) decimal.Decimal {
 	xd := decimal.NewFromBigInt(x, 0)
 	yd := decimal.NewFromBigInt(y, 0)
@@ -76,6 +82,11 @@ func bigIntDiv(x *big.Int, y *big.Int) decimal.Decimal {
 	return xd.Div(yd).Round(5)
 }
 
+// VotingCount performs the vote counting process for proposals.
+// It retrieves the current timestamp from the blockchain or the local system in case of an error.
+// Then, it fetches the list of proposals from the database based on the provided Ethereum client ID and timestamp.
+// For each proposal, it synchronizes the votes from the blockchain, calculates the voting power, and aggregates the results.
+// Finally, it saves the voting history, vote results, and updates the status of the proposals in the database.
 func VotingCount(ethClient model.GoEthClient) error {
 	now, err := utils.GetTimestamp(ethClient)
 	if err != nil {

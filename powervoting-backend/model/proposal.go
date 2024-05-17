@@ -19,39 +19,42 @@ import (
 	"math/big"
 )
 
+// Proposal represents the structure of a proposal.
 type Proposal struct {
-	Id           int64  `json:"id"`
-	ProposalId   int64  `json:"proposalId"`
-	Cid          string `json:"cid" gorm:"not null"`
-	ProposalType int64  `json:"proposalType" gorm:"not null"`
-	Creator      string `json:"creator" gorm:"not null"`
-	StartTime    int64  `json:"startTime" gorm:"not null"`
-	ExpTime      int64  `json:"expTime" gorm:"not null"`
-	VoteCount    int64  `json:"voteCount" gorm:"not null"`
-	Status       int    `json:"status" gorm:"not null"`
-	Network      int64  `json:"network" gorm:"not null"`
+	Id           int64  `json:"id"`                           // Unique identifier
+	ProposalId   int64  `json:"proposalId"`                   // Proposal ID
+	Cid          string `json:"cid" gorm:"not null"`          // CID
+	ProposalType int64  `json:"proposalType" gorm:"not null"` // Proposal type
+	Creator      string `json:"creator" gorm:"not null"`      // Creator address
+	StartTime    int64  `json:"startTime" gorm:"not null"`    // Start time
+	ExpTime      int64  `json:"expTime" gorm:"not null"`      // Expiry time
+	VoteCount    int64  `json:"voteCount" gorm:"not null"`    // Vote count
+	Status       int    `json:"status" gorm:"not null"`       // Proposal status
+	Network      int64  `json:"network" gorm:"not null"`      // Network ID
 }
 
+// ContractProposal represents the structure of a proposal stored on the blockchain.
 type ContractProposal struct {
-	Cid          string         `json:"cid"`
-	ProposalType *big.Int       `json:"proposalType"`
-	Creator      common.Address `json:"creator"`
-	StartTime    *big.Int       `json:"startTime"`
-	ExpTime      *big.Int       `json:"expTime"`
-	VotesCount   *big.Int       `json:"votesCount"`
+	Cid          string         `json:"cid"`          // CID
+	ProposalType *big.Int       `json:"proposalType"` // Proposal type
+	Creator      common.Address `json:"creator"`      // Creator address
+	StartTime    *big.Int       `json:"startTime"`    // Start time
+	ExpTime      *big.Int       `json:"expTime"`      // Expiry time
+	VotesCount   *big.Int       `json:"votesCount"`   // Votes count
 }
 
+// ProposalDetail represents the detailed information about a proposal.
 type ProposalDetail struct {
-	ProposalType int64    `json:"ProposalType"`
-	VoteType     int64    `json:"VoteType"`
-	Timezone     string   `json:"Timezone"`
-	Time         []string `json:"Time"`
-	Name         string   `json:"Name"`
-	Descriptions string   `json:"Descriptions"`
-	Option       []string `json:"option"`
-	GMTOffset    []string `json:"GMTOffset"`
-	ShowTime     []string `json:"showTime"`
-	Address      string   `json:"Address"`
-	ChainId      int64    `json:"chainId"`
-	CurrentTime  int64    `json:"currentTime"`
+	ProposalType int64    `json:"ProposalType"` // Proposal type
+	VoteType     int64    `json:"VoteType"`     // Vote type
+	Timezone     string   `json:"Timezone"`     // Timezone
+	Time         []string `json:"Time"`         // Time
+	Name         string   `json:"Name"`         // Name
+	Descriptions string   `json:"Descriptions"` // Descriptions
+	Option       []string `json:"option"`       // Options
+	GMTOffset    []string `json:"GMTOffset"`    // GMT offset
+	ShowTime     []string `json:"showTime"`     // Show time
+	Address      string   `json:"Address"`      // Address
+	ChainId      int64    `json:"chainId"`      // Chain ID
+	CurrentTime  int64    `json:"currentTime"`  // Current time
 }

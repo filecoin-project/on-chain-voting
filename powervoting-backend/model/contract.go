@@ -20,24 +20,24 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-// GoEthClient go-ethereum client
+// GoEthClient represents the structure for interacting with the Ethereum client.
 type GoEthClient struct {
-	Id                  int64
-	Name                string
-	Client              *ethclient.Client
-	PowerVotingAbi      abi.ABI
-	OracleAbi           abi.ABI
-	PowerVotingContract common.Address
-	OracleContract      common.Address
+	Id                  int64             // Unique identifier for the client
+	Name                string            // Name of the client
+	Client              *ethclient.Client // Ethereum client instance
+	PowerVotingAbi      abi.ABI           // ABI (Application Binary Interface) for PowerVoting contract
+	OracleAbi           abi.ABI           // ABI for Oracle contract
+	PowerVotingContract common.Address    // Contract address for PowerVoting
+	OracleContract      common.Address    // Contract address for Oracle
 }
 
-// ClientConfig config for get go-ethereum client
+// ClientConfig represents the configuration for creating a GoEthClient instance.
 type ClientConfig struct {
-	Id                  int64
-	Name                string
-	Rpc                 string
-	PowerVotingContract string
-	OracleContract      string
-	PowerVotingAbi      string
-	OracleAbi           string
+	Id                  int64  // Unique identifier for the client
+	Name                string // Name of the client
+	Rpc                 string // RPC endpoint for the client
+	PowerVotingContract string // Contract address for PowerVoting
+	OracleContract      string // Contract address for Oracle
+	PowerVotingAbi      string // ABI for PowerVoting contract (as a string)
+	OracleAbi           string // ABI for Oracle contract (as a string)
 }
