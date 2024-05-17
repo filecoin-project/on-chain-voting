@@ -30,6 +30,10 @@ import (
 	"go.uber.org/zap"
 )
 
+// DecodeVoteList decodes the vote information retrieved from IPFS.
+// It decrypts the encrypted data, unmarshals it into a structured format,
+// and constructs a list of vote counts for each option.
+// The function returns the decoded vote list or an error if the decoding fails.
 func DecodeVoteList(voteInfo model.Vote) ([]model.Vote4Counting, error) {
 	var voteList []model.Vote4Counting
 	ipfs, err := GetIpfs(voteInfo.VoteInfo)
@@ -79,9 +83,11 @@ func DecodeVoteList(voteInfo model.Vote) ([]model.Vote4Counting, error) {
 	return voteList, nil
 }
 
+// GetIpfs retrieves data from IPFS using the provided votInfo.
+// It constructs the IPFS URL and sends an HTTP GET request to fetch the data.
+// The function returns the retrieved data or an error if the operation fails.
 func GetIpfs(votInfo string) (string, error) {
 	url := fmt.Sprintf("https://%s.ipfs.w3s.link/", votInfo)
-
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", err
@@ -97,6 +103,10 @@ func GetIpfs(votInfo string) (string, error) {
 	return string(body), err
 }
 
+// Decrypt decrypts the IPFS data using the T-lock encryption scheme.
+// It replaces escape characters in the IPFS string, constructs a drand network,
+// and decrypts the data using T-lock encryption.
+// The function returns the decrypted data or an error if decryption fails.
 func Decrypt(ipfs string) ([]byte, error) {
 	// Construct a network that can talk to a drand network. Example using the mainnet fastnet network.
 	replace := strings.ReplaceAll(ipfs, "\\n", "\n")
@@ -128,6 +138,8 @@ func Decrypt(ipfs string) ([]byte, error) {
 	return data, nil
 }
 
+// GetOptions retrieves the options of a proposal from IPFS.
+// It takes the CID of the proposal as input and returns the options or an error if retrieval fails.
 func GetOptions(cid string) ([]string, error) {
 	ipfs, err := GetIpfs(cid)
 	if err != nil {

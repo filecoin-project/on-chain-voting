@@ -20,6 +20,7 @@ import (
 	"powervoting-server/model"
 )
 
+// R is response function that formats and sends a JSON.
 func R(code int, data any, message string, c *gin.Context) {
 	c.JSON(http.StatusOK, model.Response{
 		Code:    code,
@@ -28,34 +29,37 @@ func R(code int, data any, message string, c *gin.Context) {
 	})
 }
 
-// Success return success
+// Success sends a success response with status code 1 and message "ok".
 func Success(c *gin.Context) {
 	R(1, nil, "ok", c)
 }
 
+// SuccessWithMsg sends a success response with status code 1, custom message, and no data.
 func SuccessWithMsg(msg string, c *gin.Context) {
 	R(1, nil, msg, c)
 }
 
+// SuccessWithData sends a success response with status code 1, data, and message "ok".
 func SuccessWithData(data any, c *gin.Context) {
 	R(1, data, "ok", c)
 }
 
-// Fail return fail
+// Fail sends a failure response with the specified code, message, and no data.
 func Fail(code int, message string, c *gin.Context) {
 	R(code, nil, message, c)
 }
 
-// Error return error
+// Error sends an error response with status code 0 and the error message.
 func Error(err error, c *gin.Context) {
 	R(0, nil, err.Error(), c)
 }
 
-// ParamError param error
+// ParamError sends a response indicating a parameter error.
 func ParamError(c *gin.Context) {
 	R(0, nil, "param error", c)
 }
 
+// SystemError sends a response indicating a system error.
 func SystemError(c *gin.Context) {
 	R(0, nil, "system error", c)
 }

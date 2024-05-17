@@ -15,8 +15,15 @@
 package constant
 
 const (
+	// ProposalStartKey is the key used to record the start of proposals.
 	ProposalStartKey = "ProposalStartKey"
-	VoteStartKey     = "VoteStartKey"
-	VoteApprove      = 0
-	VoteReject       = 1
+
+	// VoteStartKey is the key used to record the start of votes.
+	VoteStartKey = "VoteStartKey"
+
+	// VoteApprove represents the approval vote status.
+	VoteApprove = 0
+
+	// VoteReject represents the rejection vote status.
+	VoteReject = 1
 )
