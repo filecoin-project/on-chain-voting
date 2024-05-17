@@ -14,7 +14,8 @@
 import { filecoin, filecoinCalibration } from 'wagmi/chains';
 import {
   oracleCalibrationContractAddress,
-  oracleMainNetContractAddress, oraclePowerCalibrationContractAddress,
+  oracleMainNetContractAddress,
+  oraclePowerCalibrationContractAddress,
   powerVotingCalibrationContractAddress,
   powerVotingMainNetContractAddress,
   web3StorageEmail

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, {useEffect, useState, useRef} from "react";
+import React, {useEffect, useState} from "react";
 import { Row, Empty, Pagination, message } from "antd";
 import {useAccount, useReadContract, useReadContracts, BaseError} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
@@ -30,6 +30,7 @@ import {
   COMPLETED_STATUS,
   web3AvatarUrl,
   PENDING_STATUS,
+  proposalResultApi
 } from '../../common/consts';
 import ListFilter from "../../components/ListFilter";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
@@ -151,7 +152,7 @@ const Home = () => {
           network: chainId
         };
         // Fetch proposal results data from the API
-        const { data: { data: resultData } } = await axios.get('/api/proposal/result', { params });
+        const { data: { data: resultData } } = await axios.get(proposalResultApi, { params });
         // Map proposal results data to a more structured format
         const proposalResults = resultData.map((item: ProposalResult) => ({
           optionId: item.optionId,
@@ -280,6 +281,15 @@ const Home = () => {
       const maxOption = item.option.reduce((prev, current) => {
         return (prev.count > current.count) ? prev : current;
       });
+      let href = '';
+      let img = '';
+      if (item?.githubName) {
+        href = `https://github.com/${item.githubName}`;
+        img = `${item.githubAvatar}`;
+      } else {
+        href = `${chain?.blockExplorers?.default.url}/address/${item.address}`;
+        img = `${web3AvatarUrl}:${item.address}`
+      }
       return (
         <div
           key={item.cid + index}
@@ -289,12 +299,12 @@ const Home = () => {
             <a
               target='_blank'
               rel="noopener"
-              href={`${chain?.blockExplorers?.default.url}/address/${item.address}`}
+              href={href}
               className="flex justify-center items-center"
             >
-              <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${item.address}`} alt="" />
+              <img className="w-[20px] h-[20px] rounded-full mr-2" src={img} alt="" />
               <div className="truncate text-white">
-                {EllipsisMiddle({suffixCount: 4, children: item.address})}
+                {item.githubName || EllipsisMiddle({suffixCount: 4, children:  item.address})}
               </div>
             </a>
             <div
