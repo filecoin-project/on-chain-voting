@@ -22,30 +22,30 @@ import (
 	"math/big"
 )
 
-// GoEthClient go-ethereum client
+// GoEthClient represents a client for interacting with the go-ethereum library.
 type GoEthClient struct {
-	Id              int64
-	Name            string
-	Rpc             string
-	RpcToken        string
-	Client          *ethclient.Client
-	Abi             abi.ABI
-	Amount          *big.Int
-	GasLimit        uint64
-	ChainID         *big.Int
-	ContractAddress common.Address
-	PrivateKey      *ecdsa.PrivateKey
-	WalletAddress   common.Address
+	Id              int64             // Identifier for the client.
+	Name            string            // Name of the client.
+	Rpc             string            // RPC endpoint for the client.
+	RpcToken        string            // RPC token for authentication.
+	Client          *ethclient.Client // Ethereum client instance.
+	Abi             abi.ABI           // ABI instance for smart contract interaction.
+	Amount          *big.Int          // Amount for transactions.
+	GasLimit        uint64            // Gas limit for transactions.
+	ChainID         *big.Int          // Chain ID for Ethereum network.
+	ContractAddress common.Address    // Address of the smart contract.
+	PrivateKey      *ecdsa.PrivateKey // Private key for the wallet.
+	WalletAddress   common.Address    // Address of the wallet.
 }
 
-// ClientConfig config for get go-ethereum client
+// ClientConfig represents the configuration for obtaining a go-ethereum client.
 type ClientConfig struct {
-	Id              int64
-	Name            string
-	Rpc             string
-	ContractAddress string
-	PrivateKey      string
-	WalletAddress   string
-	AbiPath         string
-	GasLimit        int64
+	Id              int64  // Identifier for the client.
+	Name            string // Name of the client.
+	Rpc             string // RPC endpoint for the client.
+	ContractAddress string // Address of the smart contract.
+	PrivateKey      string // Private key for the wallet.
+	WalletAddress   string // Address of the wallet.
+	AbiPath         string // Path to the ABI file.
+	GasLimit        int64  // Gas limit for transactions.
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// Constants defining the key names for various mappings in the Ethereum smart contract.
 const (
 	F4TaskIdToAddress = "f4TaskIdToAddress"
 	TaskIdToUcanCid   = "taskIdToUcanCid"
@@ -25,10 +26,11 @@ const (
 	VoterToPower      = "voterToPower"
 )
 
+// VoterInfo struct represents information about a voter stored in the Ethereum smart contract.
 type VoterInfo struct {
-	ActorIds      []uint64       `json:"actorIds"`
-	MinerIds      []uint64       `json:"minerIds"`
-	GithubAccount string         `json:"githubAccount"`
-	EthAddress    common.Address `json:"ethAddress"`
-	UcanCid       string         `json:"ucanCid"`
+	ActorIds      []uint64       `json:"actorIds"`      // List of actor IDs associated with the voter.
+	MinerIds      []uint64       `json:"minerIds"`      // List of miner IDs associated with the voter.
+	GithubAccount string         `json:"githubAccount"` // GitHub account linked to the voter.
+	EthAddress    common.Address `json:"ethAddress"`    // Ethereum address of the voter.
+	UcanCid       string         `json:"ucanCid"`       // CID (Content Identifier) of the UCAN (UnixFS) associated with the voter.
 }
