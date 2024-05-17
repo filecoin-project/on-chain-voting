@@ -43,86 +43,86 @@ interface IOracle is IOracleError {
     }
 
     /**
-     * updatePowerVotingContract: update powerVoting contract
-     * @param powerVotingAddress: powerVoting contract address
+     * @notice Updates the PowerVoting contract address.
+     * @param powerVotingAddress The address of the PowerVoting contract.
      */
     function updatePowerVotingContract(address powerVotingAddress) external;
 
     /**
-     * addMinerIds: add miner id list
-     * @param minerIds: miner id list
-     * @param voter: voter address
+     * @notice Adds a list of miner IDs for a specific voter.
+     * @param minerIds List of miner IDs to be added.
+     * @param voter Address of the voter.
      */
     function addMinerIds(uint64[] memory minerIds, address voter) external;
 
     /**
-     * addTask: add task
-     * @param ucanCid: ucan cid
+     * @notice Adds a task with the specified UCAN CID.
+     * @param ucanCid The UCAN CID associated with the task.
      */
     function addTask(string calldata ucanCid) external;
 
     /**
-     * getTasks: get task list
-     * @return Task[]: task list
+     * @notice Retrieves the list of task IDs.
+     * @return Task[] An array containing the task IDs.
      */
     function getTasks() external view returns(uint256[] memory);
 
     /**
-     * addF4Task: add f4 task
-     * @param voter: voter
+     * @notice Adds an F4 task for the specified voter.
+     * @param voter The address of the voter.
      */
     function addF4Task(address voter) external;
 
     /**
-     * getF4Tasks: get f4 task id list
-     * @return uint256[]: task id list
+     * @notice Retrieves the list of F4 task IDs.
+     * @return uint256[] An array containing the F4 task IDs.
      */
     function getF4Tasks() external view returns(uint256[] memory);
 
     /**
-     * taskCallback: task callback function
-     * @param voterInfoParam: voter info
-     * @param taskId: task id
-     * @param power: power
+     * @notice Callback function for updating task information.
+     * @param voterInfoParam Voter information containing the Ethereum address and other details.
+     * @param taskId The ID of the task being updated.
+     * @param power Power information associated with the task.
      */
     function taskCallback(VoterInfo calldata voterInfoParam, uint256 taskId, Power calldata power) external;
 
     /**
-     * getPower: get voting power
-     * @param voterAddress: voter address
-     * @param id: id
+     * @notice Retrieves the power information for a specific voter and day.
+     * @param voterAddress Address of the voter.
+     * @param id ID of the day for which power information is requested.
      */
     function getPower(address voterAddress, uint256 id) external returns(Power memory);
 
     /**
-     * updateNodeAllowList: update node allowlist
-     * @param nodeAddress: node address
-     * @param allow:
+     * @notice Updates the node allow list by adding or removing a node.
+     * @param nodeAddress Address of the node to be added or removed.
+     * @param allow Boolean indicating whether to allow or disallow the node.
      */
     function updateNodeAllowList(address nodeAddress, bool allow) external;
 
     /**
-     * removeVoter: remove voter
-     * @param voterAddress: voter address
+     * @notice Removes a voter along with associated task information.
+     * @param voterAddress Address of the voter to be removed.
      */
     function removeVoter(address voterAddress, uint256 taskId) external;
 
     /**
-     * getVoterAddresses: get voter list
-     * @return address[]: voter address list
+     * @notice Retrieves the list of voter addresses.
+     * @return address[] An array containing the addresses of all voters.
      */
     function getVoterAddresses() external view returns(address[] memory);
 
     /**
-     * getVoterInfo: get voter info
-     * @param voter: voter address
+     * @notice Retrieves the information associated with a specific voter.
+     * @param voter The address of the voter.
      */
     function getVoterInfo(address voter) external view returns(VoterInfo memory);
 
     /**
-     * savePower: save voter power
-     * @param voterAddress: voter address
-     * @param powerParam: power
+     * @notice Saves the power information associated with a voter.
+     * @param voterAddress The address of the voter.
+     * @param powerParam The power information to be saved.
      */
     function savePower(address voterAddress, Power calldata powerParam) external;
 
