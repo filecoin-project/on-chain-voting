@@ -19,69 +19,40 @@ import {
   ConnectButton,
   useConnectModal
 } from "@rainbow-me/rainbowkit";
-import { ConfigProvider, theme, Modal, Dropdown } from 'antd';
-import { useNetwork, useAccount } from "wagmi";
+import { ConfigProvider, theme, Modal, Dropdown, FloatButton } from 'antd';
+import { useAccount, useReadContract } from "wagmi";
 import Countdown from 'react-countdown';
 import routes from "./router";
 import Footer from './components/Footer';
 import "./common/styles/reset.less";
 import "tailwindcss/tailwind.css";
-import {useStaticContract} from "./hooks";
-import Loading from "./components/Loading";
 import {STORING_DATA_MSG} from "./common/consts";
-
+import oracleAbi from "./common/abi/oracle.json";
+import {getContractAddress} from "./utils";
 
 const App: React.FC = () => {
-  const { chain } = useNetwork();
-  const { address, isConnected} = useAccount();
+  const { chain, address, isConnected} = useAccount();
+  const prevAddressRef = useRef(address);
   const {openConnectModal} = useConnectModal();
   const navigate = useNavigate();
   const element = useRoutes(routes);
-  const [showButton, setShowButton] = useState(false);
-  const [spinning, setSpinning] = useState(false);
   const [expirationTime, setExpirationTime] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const prevAddressRef = useRef(address);
-  const scrollRef = useRef(null);
-
-  const scrollToTop = () => {
-    const element = scrollRef.current;
+  const { data: voterInfo, isSuccess } = useReadContract({
     // @ts-ignore
-    element.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  };
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const element = scrollRef.current;
-      // @ts-ignore
-      setShowButton(element.scrollTop > 300)
-    };
-
-    // @ts-ignore
-    scrollRef.current.addEventListener('scroll', handleScroll);
-
-    return () => {
-      // @ts-ignore
-      scrollRef.current.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
-
-
-  useEffect(() => {
-    scrollToTop();
-  }, [location]);
+    address: getContractAddress(chain?.id || 0, 'oracle'),
+    abi: oracleAbi,
+    functionName: 'voterToInfo',
+    args: [address]
+  }) as any;
 
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
-    if (prevAddress !== address) {
+    if (address && prevAddress !== address) {
       window.location.reload();
     }
   }, [address]);
-
 
   const handleDelegate = async () => {
     const ucanStorageData = JSON.parse(localStorage.getItem('ucanStorage') || '[]');
@@ -100,19 +71,13 @@ const App: React.FC = () => {
       }
     }
 
-    setSpinning(true);
     if (!isConnected) {
       openConnectModal && openConnectModal();
-      setSpinning(false);
       return;
     }
-    const chainId = chain?.id || 0;
-    const { getOracleAuthorize }  = await useStaticContract(chainId);
-    const { data: { githubAccount, ucanCid } } = await getOracleAuthorize(address);
-    setSpinning(false);
-    const isGithubType = !!githubAccount;
-    if (ucanCid) {
-      const { data } = await axios.get(`https://${ucanCid}.ipfs.w3s.link/`);
+    const isGithubType = !!voterInfo[0];
+    if (voterInfo[2]) {
+      const { data } = await axios.get(`https://${voterInfo[2]}.ipfs.w3s.link/`);
       if (isGithubType) {
         const regex = /\/([^\/]+)\/([^\/]+)\/git\/blobs\/(\w+)/;
         const result = data.match(regex);
@@ -146,7 +111,6 @@ const App: React.FC = () => {
   const handleMinerId = () => {
     if (!isConnected) {
       openConnectModal && openConnectModal();
-      setSpinning(false);
       return;
     }
     navigate('/minerid');
@@ -154,7 +118,7 @@ const App: React.FC = () => {
 
   const items = [
     {
-      key: '1',
+      key: 'ucan',
       label: (
         <a
           onClick={handleDelegate}
@@ -164,7 +128,7 @@ const App: React.FC = () => {
       ),
     },
     {
-      key: '2',
+      key: 'minerId',
       label: (
         <a
           onClick={handleMinerId}
@@ -177,82 +141,76 @@ const App: React.FC = () => {
 
   return (
     <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
-      <div className="layout font-body" id='scrollBox' ref={scrollRef}>
-      <header className='h-[96px] bg-[#273141]'>
-        <div className='w-[1000px] h-[96px] mx-auto flex items-center justify-between'>
-          <div className='flex items-center'>
-            <div className='flex-shrink-0'>
-              <Link to='/'>
-                <img className="logo" src="/images/logo.png" alt=""/>
-              </Link>
+      <div className="layout font-body">
+        <header className='h-[96px] bg-[#273141]'>
+          <div className='w-[1000px] h-[96px] mx-auto flex items-center justify-between'>
+            <div className='flex items-center'>
+              <div className='flex-shrink-0'>
+                <Link to='/'>
+                  <img className="logo" src="/images/logo.png" alt=""/>
+                </Link>
+              </div>
+              <div className='ml-6 flex items-baseline space-x-20'>
+                <Link
+                  to='/'
+                  className='text-white text-2xl font-semibold hover:opacity-80'
+                >
+                  Power Voting
+                </Link>
+              </div>
             </div>
-            <div className='ml-6 flex items-baseline space-x-20'>
-              <Link
-                to='/'
-                className='text-white text-2xl font-semibold hover:opacity-80'
-              >
-                Power Voting
-              </Link>
-            </div>
-          </div>
-          <div className='flex items-center'>
-            <Dropdown
-              menu={{
-                items,
-              }}
-              placement="bottomLeft"
-              arrow
-            >
-              <button
-                className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-xl mr-4"
-              >
-                Tools
-              </button>
-            </Dropdown>
-
-            <div className="connect flex items-center">
-              <ConnectButton />
-            </div>
-          </div>
-          <Modal
-            width={520}
-            open={modalOpen}
-            title={false}
-            destroyOnClose={true}
-            closeIcon={false}
-            onCancel={() => { setModalOpen(false) }}
-            footer={false}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          >
-            <p>{STORING_DATA_MSG} Please wait:&nbsp;
-              <Countdown
-                date={expirationTime}
-                renderer={({ minutes, seconds, completed }) => {
-                  if (completed) {
-                    // Render a completed state
-                    setModalOpen(false);
-                  } else {
-                    // Render a countdown
-                    return <span>{minutes}:{seconds}</span>;
-                  }
+            <div className='flex items-center'>
+              <Dropdown
+                menu={{
+                  items,
                 }}
-              />
-            </p>
-          </Modal>
+                placement="bottomLeft"
+                arrow
+              >
+                <button
+                  className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-xl mr-4"
+                >
+                  Tools
+                </button>
+              </Dropdown>
+              <div className="connect flex items-center">
+                <ConnectButton />
+              </div>
+            </div>
+            <Modal
+              width={520}
+              open={modalOpen}
+              title={false}
+              destroyOnClose={true}
+              closeIcon={false}
+              onCancel={() => { setModalOpen(false) }}
+              footer={false}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <p>{STORING_DATA_MSG} Please wait:&nbsp;
+                <Countdown
+                  date={expirationTime}
+                  renderer={({ minutes, seconds, completed }) => {
+                    if (completed) {
+                      // Render a completed state
+                      setModalOpen(false);
+                    } else {
+                      // Render a countdown
+                      return <span>{minutes}:{seconds}</span>;
+                    }
+                  }}
+                />
+              </p>
+            </Modal>
+          </div>
+        </header>
+        <div className='content w-[1000px] mx-auto pt-10 pb-10'>
+          {
+            element
+          }
         </div>
-      </header>
-      <div className='content w-[1000px] mx-auto pt-10 pb-10'>
-        {
-          spinning ? <Loading /> : element
-        }
-      </div>
-      <Footer/>
-        <button onClick={scrollToTop} className={`${showButton ? '' : 'hidden'} fixed bottom-[6rem] right-[6rem] z-40  p-2 bg-gray-600 text-white rounded-full hover:bg-gray-700 focus:outline-none`}>
-          <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M12 3l-8 8h5v10h6V11h5z" fill="currentColor" />
-          </svg>
-        </button>
-
+        <Footer/>
+        <FloatButton.BackTop style={{ bottom: 100 }} />
       </div>
     </ConfigProvider>
   )

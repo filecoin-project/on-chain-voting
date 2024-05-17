@@ -14,13 +14,12 @@
 
 import React, {useState, useEffect, useRef} from "react";
 import {useLocation, useNavigate, Link} from "react-router-dom";
-import { ethers } from "ethers";
 import { message } from 'antd';
 import Table from '../../../components/Table';
 import {useForm, Controller} from 'react-hook-form';
 import classNames from 'classnames';
 import {RadioGroup} from '@headlessui/react';
-import {useNetwork, useAccount} from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSignMessage, BaseError} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import {
   UCAN_GITHUB_STEP_1,
@@ -31,13 +30,13 @@ import {
   STORING_DATA_MSG, OPERATION_CANCELED_MSG,
 } from '../../../common/consts';
 import './index.less';
-import {stringToBase64Url, validateValue} from "../../../utils";
-import {getWeb3IpfsId, useDynamicContract} from "../../../hooks";
+import {stringToBase64Url, validateValue, getWeb3IpfsId, getContractAddress} from "../../../utils";
 import LoadingButton from "../../../components/LoadingButton";
+import fileCoinAbi from "../../../common/abi/power-voting.json";
 
 const UcanDelegate = () => {
-  const {chain} = useNetwork();
-  const {isConnected, address} = useAccount();
+  const {chain, isConnected, address} = useAccount();
+  const { signMessageAsync } = useSignMessage();
   const {openConnectModal} = useConnectModal();
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
@@ -45,7 +44,6 @@ const UcanDelegate = () => {
   const location = useLocation();
   const params = location.state?.params;
 
-  const [loading, setLoading] = useState(false);
   const [githubSignature, setGithubSignature] = useState('');
   const [githubStep, setGithubStep] = useState(UCAN_GITHUB_STEP_1);
   const [formValue] = useState({
@@ -68,6 +66,16 @@ const UcanDelegate = () => {
     }
   });
 
+  const {
+    data: hash,
+    writeContract,
+    error,
+    isPending: writeContractPending,
+    isSuccess: writeContractSuccess,
+    reset: resetWriteContract
+  } = useWriteContract();
+  const [loading, setLoading] = useState<boolean>(writeContractPending);
+
   useEffect(() => {
     if (!isConnected) {
       navigate("/home");
@@ -81,6 +89,20 @@ const UcanDelegate = () => {
       navigate("/home");
     }
   }, [address]);
+
+  useEffect(() => {
+    if (writeContractSuccess) {
+      message.success(STORING_DATA_MSG);
+      navigate("/");
+    }
+  }, [writeContractSuccess])
+
+  useEffect(() => {
+    if (error) {
+      message.error((error as BaseError)?.shortMessage || error?.message);
+    }
+    resetWriteContract();
+  }, [error]);
 
   const onSubmit = (values: any, githubStep?: number) => {
     if (params?.isGithubType) {
@@ -98,16 +120,15 @@ const UcanDelegate = () => {
   }
 
   const setUcan = async (ucan: string) => {
-    const chainId = chain?.id || 0;
-    const { ucanDelegate } = useDynamicContract(chainId);
     const cid = await getWeb3IpfsId(ucan);
-    const res = await ucanDelegate(cid);
-    if (res.code === 200 && res.data?.hash) {
-      message.success(STORING_DATA_MSG);
-      navigate("/");
-    } else {
-      message.error(res.msg, 3);
-    }
+    writeContract({
+      abi: fileCoinAbi,
+      address: getContractAddress(chain?.id || 0, 'powerVoting'),
+      functionName: 'ucanDelegate',
+      args: [
+        cid
+      ],
+    });
     setLoading(false);
   }
 
@@ -131,10 +152,6 @@ const UcanDelegate = () => {
       prf,
       act: 'del',
     }
-    // @ts-ignore
-    // Initialize Web3 provider using window.ethereum
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const signer = await provider.getSigner();
 
     // Convert UCAN JWT header to base64
     const base64Header = stringToBase64Url(JSON.stringify(UCAN_JWT_HEADER));
@@ -143,7 +160,7 @@ const UcanDelegate = () => {
     let signature = '';
     try {
       // Sign the message using the signer
-      signature = await signer.signMessage(`${base64Header}.${base64Params}`);
+      signature = await signMessageAsync({ message:  `${base64Header}.${base64Params}`})
     } catch (e) {
       message.error(OPERATION_CANCELED_MSG);
       setLoading(false);
@@ -171,10 +188,6 @@ const UcanDelegate = () => {
           prf:'',
           act: 'del',
         }
-        // Create a new Web3Provider using the current Ethereum provider
-        // @ts-ignore
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = await provider.getSigner();
 
         // Convert header and params to base64 URL
         const base64Header = stringToBase64Url(JSON.stringify(UCAN_JWT_HEADER));
@@ -182,7 +195,7 @@ const UcanDelegate = () => {
         let signature = '';
         try {
           // Sign the concatenated header and params
-          signature = await signer.signMessage(`${base64Header}.${base64Params}`);
+          signature = await signMessageAsync({ message:  `${base64Header}.${base64Params}`})
         } catch (e) {
           message.error(OPERATION_CANCELED_MSG);
           setLoading(false);
@@ -407,7 +420,7 @@ const UcanDelegate = () => {
           />
 
           <div className='text-center'>
-            <LoadingButton className='!bg-red-500 !hover:bg-red-700' text='Deauthorize' loading={loading} />
+            <LoadingButton className='!bg-red-500 !hover:bg-red-700' text='Deauthorize' loading={loading|| writeContractPending || transactionLoading} />
           </div>
         </div>
       </form>
@@ -429,7 +442,7 @@ const UcanDelegate = () => {
           />
 
           <div className='text-center'>
-            <LoadingButton text='Sign' loading={loading} />
+            <LoadingButton text='Sign' loading={loading|| writeContractPending || transactionLoading} />
           </div>
         </div>
       </form>
@@ -448,7 +461,7 @@ const UcanDelegate = () => {
               type='button' onClick={() => { setGithubStep(UCAN_GITHUB_STEP_1) }}>
               Previous
             </button>
-            <LoadingButton className='!bg-red-500 !hover:bg-red-700' text='Deauthorize' loading={loading} />
+            <LoadingButton className='!bg-red-500 !hover:bg-red-700' text='Deauthorize' loading={loading|| writeContractPending || transactionLoading} />
           </div>
         </div>
       </form>
@@ -468,6 +481,11 @@ const UcanDelegate = () => {
       return renderFilecoinDeauthorize();
     }
   }
+
+  const { isLoading: transactionLoading } =
+    useWaitForTransactionReceipt({
+      hash,
+    })
 
   return (
     <>
