@@ -132,10 +132,10 @@ const VotingResults = () => {
   let img = '';
   if (votingData?.githubName) {
     href = `https://github.com/${votingData.githubName}`;
-    img = `${votingData.githubAvatar}`;
+    img = `${votingData?.githubAvatar}`;
   } else {
-    href = `${chain?.blockExplorers?.default.url}/address/${votingData.address}`;
-    img = `${web3AvatarUrl}:${votingData.address}`
+    href = `${chain?.blockExplorers?.default.url}/address/${votingData?.address}`;
+    img = `${web3AvatarUrl}:${votingData?.address}`
   }
 
   return (
