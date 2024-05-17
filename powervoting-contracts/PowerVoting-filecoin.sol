@@ -53,38 +53,45 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
     // proposal id to vote, out key: proposal id, inner key: vote id, value: vote info
     mapping(uint256 => mapping(uint256 => VoteInfo)) public proposalToVote;
 
-    modifier nonZeroAddress(address addr){
+    /**
+     * @dev Modifier that ensures the provided address is non-zero.
+     * @param addr The address to check.
+     */
+    modifier nonZeroAddress(address addr) {
         if(addr == address(0)){
             revert ZeroAddressError("Zero address error.");
         }
         _;
     }
 
-    // override from UUPSUpgradeable
+    /**
+     * @notice Authorizes an upgrade to a new implementation contract.
+     * @param newImplementation The address of the new implementation contract.
+     */
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-    function initialize(address oracleAddress) public initializer nonZeroAddress(oracleAddress) {
+    /**
+     * @notice Initializes the contract by setting up UUPS upgrade ability and ownership.
+     */
+    function initialize(address oracleAddress) public initializer nonZeroAddress (oracleAddress) {
         oracleContract = oracleAddress;
         __UUPSUpgradeable_init();
         __Ownable_init(msg.sender);
     }
 
     /**
-    * update oracle contract address
-    *
-    * @param oracleAddress: new oracle contract address
-    */
-    function updateOracleContract(address oracleAddress) external onlyOwner nonZeroAddress(oracleAddress) {
+     * @notice Updates the address of the Oracle contract.
+     * @param oracleAddress The new address of the Oracle contract.
+     */
+    function updateOracleContract(address oracleAddress) external onlyOwner nonZeroAddress (oracleAddress) {
         oracleContract = oracleAddress;
     }
 
     /**
-    * addFIP: add FIP
-    * @param fipAddress: address
-    */
-    function addFIP(
-        address fipAddress
-    ) external override onlyOwner nonZeroAddress(fipAddress) {
+     * @notice Adds a new FIP address.
+     * @param fipAddress The address of the new FIP.
+     */
+    function addFIP( address fipAddress ) external override onlyOwner nonZeroAddress (fipAddress) {
         bool exist = fipMap[fipAddress];
         // FIP Editor is not allowed to have other roles currently.
         if (exist) {
@@ -94,22 +101,19 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
     }
 
     /**
-    * removeFIP: remove FIP
-    * @param fipAddress: address
-    */
-    function removeFIP(
-        address fipAddress
-    ) external override onlyOwner nonZeroAddress(fipAddress) {
+     * @notice Removes the specified FIP address.
+     * @param fipAddress The address of the FIP to be removed.
+     */
+    function removeFIP( address fipAddress ) external override onlyOwner nonZeroAddress(fipAddress) {
         fipMap[fipAddress] = false;
     }
 
     /**
-     * create a proposal and store it into mapping
-     *
-     * @param proposalCid: proposal content is stored in ipfs, proposal cid is ipfs cid for proposal content
-     * @param startTime: proposal start timestamp
-     * @param expTime: proposal expiration timestamp
-     * @param proposalType: proposal type
+     * @notice Creates a new proposal.
+     * @param proposalCid The CID of the proposal.
+     * @param startTime The start time of the proposal.
+     * @param expTime The expiration time of the proposal.
+     * @param proposalType The type of the proposal.
      */
     function createProposal(string calldata proposalCid, uint248 startTime, uint248 expTime, uint256 proposalType) override external {
         bool fip = fipMap[msg.sender];
@@ -132,12 +136,11 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
 
 
     /**
-     * vote
-     *
-     * @param id: proposal id
-     * @param info: vote info, IPFS cid
+     * @notice Voting rights for proposals.
+     * @param id The ID of the proposal.
+     * @param info Additional information related to the vote.
      */
-    function vote(uint256 id, string calldata info) override external{
+    function vote(uint256 id, string calldata info) override external {
         Proposal storage proposal = idToProposal[id];
         // if proposal is not start, won't be allowed to vote
         if(proposal.startTime > block.timestamp){
@@ -158,11 +161,10 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
     }
 
     /**
-    * addMinerId
-    *
-    * @param minerIds: miner id list
-    */
-    function addMinerId(uint64[] memory minerIds)override external{
+     * @notice Adds miner IDs to the Oracle contract.
+     * @param minerIds An array containing the miner IDs to be added.
+     */
+    function addMinerId(uint64[] memory minerIds) override external {
         _addF4Task();
         (bool addMinerSuccess, ) = oracleContract.call(abi.encodeWithSelector(ADD_MINER_IDS_SELECTOR, minerIds, msg.sender));
         if(!addMinerSuccess){
@@ -171,7 +173,8 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
     }
 
     /**
-     * _addF4Task
+     * @notice Adds an F4 task for the caller if necessary.
+     * @dev This function is called internally to check whether the caller needs to have an F4 task added.
      */
     function _addF4Task() private {
         (bool getVoterInfoSuccess, bytes memory data) = oracleContract.call(abi.encodeWithSelector(GET_VOTER_INFO_SELECTOR, msg.sender));
@@ -188,11 +191,10 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
     }
 
     /**
-     * ucanDelegate
-     *
-     * @param ucanCid: ucan cid
+     * @notice Delegates the specified UCAN CID to the  Oracle for processing.
+     * @param ucanCid The UCAN CID to be delegated.
      */
-    function ucanDelegate(string calldata ucanCid) override external{
+    function ucanDelegate(string calldata ucanCid) override external {
         // call kyc oracle to add task
         (bool success, ) = oracleContract.call(abi.encodeWithSelector(ADD_TASK_SELECTOR, ucanCid));
         if(!success){

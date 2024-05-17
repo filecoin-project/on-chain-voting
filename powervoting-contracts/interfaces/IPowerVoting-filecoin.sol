@@ -21,11 +21,49 @@ import {IPowerVotingError} from "./IPowerVotingError.sol";
 
 
 interface IPowerVoting is IPowerVotingEvent, IPowerVotingError {
+    /**
+     * @notice Adds a new FIP address.
+     * @param fipAddress The address of the new FIP.
+     */
     function addFIP(address fipAddress) external;
+
+    /**
+     * @notice Removes the specified FIP address.
+     * @param fipAddress The address of the FIP to be removed.
+     */
     function removeFIP(address fipAddress) external;
+
+    /**
+     * @notice Creates a new proposal.
+     * @param proposalCid The CID of the proposal.
+     * @param startTime The start time of the proposal.
+     * @param expTime The expiration time of the proposal.
+     * @param proposalType The type of the proposal.
+     */
     function createProposal(string calldata proposalCid, uint248 startTime, uint248 expTime, uint256 proposalType) external;
+
+    /**
+     * @notice Voting rights for proposals.
+     * @param id The ID of the proposal.
+     * @param info Additional information related to the vote.
+     */
     function vote(uint256 id, string calldata info) external;
+
+    /**
+     * @notice Delegates the specified UCAN CID to the  Oracle for processing.
+     * @param ucanCid The UCAN CID to be delegated.
+     */
     function ucanDelegate(string calldata ucanCid) external;
+
+    /**
+     * @notice Updates the address of the Oracle contract.
+     * @param oracleAddress The new address of the Oracle contract.
+     */
     function updateOracleContract(address oracleAddress) external;
+
+    /**
+     * @notice Adds miner IDs to the Oracle contract.
+     * @param minerIds An array containing the miner IDs to be added.
+     */
     function addMinerId(uint64[] memory minerIds) external;
 }
