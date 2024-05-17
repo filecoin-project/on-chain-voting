@@ -16,10 +16,11 @@ package models
 
 import "math/big"
 
+// Power represents the power structure containing various types of power values.
 type Power struct {
-	DeveloperPower   *big.Int `json:"developerPower"`
-	SpPower          [][]byte `json:"spPower"`
-	ClientPower      [][]byte `json:"clientPower"`
-	TokenHolderPower *big.Int `json:"tokenHolderPower"`
-	BlockHeight      *big.Int `json:"blockHeight"`
+	DeveloperPower   *big.Int `json:"developerPower"`   // Developer power value.
+	SpPower          [][]byte `json:"spPower"`          // Service provider power values.
+	ClientPower      [][]byte `json:"clientPower"`      // Client power values.
+	TokenHolderPower *big.Int `json:"tokenHolderPower"` // Token holder power value.
+	BlockHeight      *big.Int `json:"blockHeight"`      // Block height at which the power values were calculated.
 }

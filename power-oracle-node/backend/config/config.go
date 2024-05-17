@@ -26,7 +26,7 @@ import (
 var Client models.Config
 var GithubClient *github.Client
 
-// InitConfig initialization configuration
+// InitConfig initializes the configuration by reading from a YAML file located at the specified path.
 func InitConfig(path string) { // configuration file name
 	viper.SetConfigName("configuration")
 

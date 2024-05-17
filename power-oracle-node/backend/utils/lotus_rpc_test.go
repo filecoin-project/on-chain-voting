@@ -35,7 +35,7 @@ func TestWalletBalance(t *testing.T) {
 		return
 	}
 	lotusRpcClient := NewClient(client.Rpc)
-	rsp, err := WalletBalance(context.Background(), lotusRpcClient, id)
+	rsp, err := GetWalletBalance(context.Background(), lotusRpcClient, id)
 	if err != nil {
 		t.Error(err)
 	}
@@ -51,7 +51,7 @@ func TestIDFormAddress(t *testing.T) {
 	}
 	lotusRpcClient := NewClient(client.Rpc)
 
-	rsp, err := IDFormAddress(context.Background(), lotusRpcClient, address)
+	rsp, err := IDFromAddress(context.Background(), lotusRpcClient, address)
 	if err != nil {
 		t.Error(err)
 	}

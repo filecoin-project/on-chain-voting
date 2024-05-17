@@ -14,7 +14,7 @@
 
 package models
 
-// Miner filecoin miner list
+// Miner represents information about a miner.
 type Miner struct {
-	OwnedMiners []interface{} `json:"ownedMiners"`
+	OwnedMiners []interface{} `json:"ownedMiners"` // List of owned miners.
 }
