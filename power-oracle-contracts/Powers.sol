@@ -26,19 +26,32 @@ import {PrecompilesAPI} from "filecoin-solidity-api/contracts/v0.8/PrecompilesAP
 
 
 library Powers {
-
+    /**
+     * @notice Retrieves storage provider information for a specified miner.
+     * @param minerID ID of the target miner.
+     * @return The raw bytecode representation of the storage provider.
+     */
     function getSp(uint64 minerID) external view returns(bytes memory) {
         (,PowerTypes.MinerRawPowerReturn memory sp )= PowerAPI.minerRawPower(minerID);
         return sp.raw_byte_power.val;
     }
 
+    /**
+     * @notice Retrieves client balance information for a specified actor.
+     * @param actorID ID of the target actor.
+     * @return The bytecode representation of the client balance.
+     */
     function getClient(uint64 actorID) external view returns(bytes memory) {
         CommonTypes.FilAddress memory result = FilAddresses.fromActorID(actorID);
         (,CommonTypes.BigInt memory clientBalance) = DataCapAPI.balance(result);
         return clientBalance.val;
     }
 
-
+    /**
+     * @notice Retrieves owner information for a specified miner.
+     * @param minerID ID of the target miner.
+     * @return The ID of the miner's owner.
+     */
     function getOwner(uint64 minerID) external view returns(uint64) {
         CommonTypes.FilActorId miner = CommonTypes.FilActorId.wrap(minerID);
         (, MinerTypes.GetOwnerReturn memory result )  = MinerAPI.getOwner(miner);
@@ -46,7 +59,11 @@ library Powers {
         return ownerId;
     }
 
-
+    /**
+     * @notice Resolves an Ethereum address and returns the associated ID.
+     * @param addr The Ethereum address to resolve.
+     * @return The ID associated with the provided Ethereum address.
+     */
     function resolveEthAddress(address addr) public view returns (uint64) {
         return PrecompilesAPI.resolveEthAddress(addr);
     }
