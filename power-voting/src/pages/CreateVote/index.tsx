@@ -14,6 +14,7 @@
 
 import React, {useState, useEffect, useRef} from "react";
 import {message, DatePicker} from "antd";
+import axios from 'axios';
 import dayjs from "dayjs";
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -30,8 +31,9 @@ import {
   NOT_FIP_EDITOR_MSG,
   VOTE_OPTIONS,
   WRONG_START_TIME_MSG,
-  STORING_DATA_MSG
+  STORING_DATA_MSG, githubApi
 } from '../../common/consts';
+import { useVoterInfo } from "../../common/store";
 import { useTimezoneSelect, allTimezones } from 'react-timezone-select';
 import { validateValue, getContractAddress, getWeb3IpfsId } from '../../utils';
 import './index.less';
@@ -62,7 +64,7 @@ const CreateVote = () => {
 
   const {openConnectModal} = useConnectModal();
   const prevAddressRef = useRef(address);
-
+  const voterInfo = useVoterInfo((state: any) => state.voterInfo);
   const {
     register,
     handleSubmit,
@@ -162,9 +164,21 @@ const CreateVote = () => {
     const regex = /(?<=\().*?(?=\))/g;
     const GMTOffset = label.match(regex);
 
+    const githubObj = {
+      githubName: '',
+      githubAvatar: ''
+    }
+    if (voterInfo && voterInfo[0]) {
+      const githubName = voterInfo[0];
+      const { data } = await axios.get(`${githubApi}/${githubName}`);
+      githubObj.githubName = githubName;
+      githubObj.githubAvatar = data.avatar_url;
+    }
+
     // Prepare values object with additional information
     const _values = {
       ...values,
+      ...githubObj,
       GMTOffset,
       startTime: startTimestamp,
       expTime: expTimestamp,

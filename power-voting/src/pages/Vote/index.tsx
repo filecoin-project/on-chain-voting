@@ -206,6 +206,16 @@ const Vote = () => {
       hash,
     })
 
+  let href = '';
+  let img = '';
+  if (votingData?.githubName) {
+    href = `https://github.com/${votingData?.githubName}`;
+    img = `${votingData?.githubAvatar}`;
+  } else {
+    href = `${chain?.blockExplorers?.default.url}/address/${votingData?.address}`;
+    img = `${web3AvatarUrl}:${votingData?.address}`
+  }
+
   return (
     <div className="flex voting">
       <div className="relative w-full pr-5 lg:w-8/12">
@@ -235,14 +245,14 @@ const Vote = () => {
                         {handleVoteStatusTag(votingData.voteStatus).name}
                       </button>
                       <div className="flex items-center justify-center">
-                          <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${votingData.address}`} alt="" />
+                          <img className="w-[20px] h-[20px] rounded-full mr-2" src={img} alt="" />
                           <a
                               className="text-white"
                               target="_blank"
                               rel="noopener"
-                              href={`${chain?.blockExplorers?.default.url}/address/${votingData?.address}`}
+                              href={href}
                           >
-                            {EllipsisMiddle({ suffixCount: 4, children: votingData?.address })}
+                            {votingData?.githubName || EllipsisMiddle({suffixCount: 4, children: votingData?.address})}
                           </a>
                       </div>
                   </div>
