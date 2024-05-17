@@ -53,7 +53,7 @@ func SyncVoteHandler() {
 					zap.Int64("networkId", network.Id),
 					zap.Int64("proposalId", proposal.ProposalId),
 					zap.Int64("timestamp", time.Now().Unix()))
-				err := SyncVote(ethClient, proposal.ProposalId)
+				err := SyncVote(ethClient, proposal.ProposalId, db.Engine)
 				if err != nil {
 					mu.Lock()
 					errList = append(errList, err)
@@ -71,11 +71,10 @@ func SyncVoteHandler() {
 }
 
 // SyncVote syncs votes for a given proposal and Ethereum client.
-func SyncVote(ethClient model.GoEthClient, proposalId int64) error {
+func SyncVote(ethClient model.GoEthClient, proposalId int64, db db.DataRepo) error {
 	dictName := fmt.Sprintf("%s-%d", constant.VoteStartKey, proposalId)
-	var dict model.Dict
-	if err := db.Engine.Model(model.Dict{}).Where("name", dictName).Find(&dict).Error; err != nil {
-		zap.L().Error("Get vote start index error: ", zap.Error(err))
+	dict, err := db.GetDict(dictName)
+	if err != nil {
 		return err
 	}
 	start, err := strconv.Atoi(dict.Value)
@@ -100,13 +99,18 @@ func SyncVote(ethClient model.GoEthClient, proposalId int64) error {
 			start++
 			continue
 		}
-		var count int64
-		if err = db.Engine.Model(model.Vote{}).Where("network", ethClient.Id).Where("proposal_id", proposalId).Where("address", contractVote.Voter.String()).Count(&count).Error; err != nil {
-			zap.L().Error("get vote count error: ", zap.Error(err))
+		count, err := db.CountVotes(map[string]any{
+			"network":     ethClient.Id,
+			"proposal_id": proposalId,
+			"address":     contractVote.Voter.String()})
+		if err != nil {
 			return err
 		}
 		if count > 0 {
-			db.Engine.Model(model.Vote{}).Where("network", ethClient.Id).Where("proposal_id", proposalId).Where("address", contractVote.Voter.String()).Update("vote_info", contractVote.VoteInfo)
+			_ = db.UpdateVoteInfo(map[string]any{
+				"network":     ethClient.Id,
+				"proposal_id": proposalId,
+				"address":     contractVote.Voter.String()}, contractVote.VoteInfo)
 			start++
 			continue
 		}
@@ -116,14 +120,15 @@ func SyncVote(ethClient model.GoEthClient, proposalId int64) error {
 			VoteInfo:   contractVote.VoteInfo,
 			Network:    ethClient.Id,
 		}
-		if err = db.Engine.Model(model.Vote{}).Create(&vote).Error; err != nil {
-			zap.L().Error("create vote error: ", zap.Error(err))
+		_, err = db.CreateVote(&vote)
+		if err != nil {
 			return err
 		}
 		start++
 	}
-	if err = db.Engine.Model(model.Dict{}).Where("name", dictName).Update("value", start).Error; err != nil {
-		zap.L().Error("update vote start key error: ", zap.Error(err))
+
+	err = db.UpdateDict(dictName, strconv.Itoa(start))
+	if err != nil {
 		return err
 	}
 
