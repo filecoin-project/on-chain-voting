@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, {useEffect, useState} from "react";
-import { Row, Empty, Pagination, Spin } from "antd";
-import {useNetwork, useAccount} from "wagmi";
+import React, {useEffect, useState, useRef} from "react";
+import { Row, Empty, Pagination, message } from "antd";
+import {useAccount, useReadContract, useReadContracts, BaseError} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import {useNavigate} from "react-router-dom";
 import axios from "axios";
@@ -28,23 +28,66 @@ import {
   IN_PROGRESS_STATUS,
   VOTE_COUNTING_STATUS,
   COMPLETED_STATUS,
-  web3AvatarUrl, PENDING_STATUS,
+  web3AvatarUrl,
+  PENDING_STATUS,
 } from '../../common/consts';
 import ListFilter from "../../components/ListFilter";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
-import {useStaticContract} from "../../hooks";
 import {ProposalData, ProposalFilter, ProposalList, ProposalOption, ProposalResult} from '../../common/types';
 import Loading from "../../components/Loading";
-import {markdownToText} from "../../utils";
+import {markdownToText, getContractAddress} from "../../utils";
+import fileCoinAbi from "../../common/abi/power-voting.json";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
+function useLatestId(chainId: number) {
+  const { data: latestId, isLoading: getLatestIdLoading } = useReadContract({
+    address: getContractAddress(chainId, 'powerVoting'),
+    abi: fileCoinAbi,
+    functionName: 'proposalId',
+  });
+  return {
+    latestId,
+    getLatestIdLoading
+  };
+}
+
+function useProposalDataSet(params: any) {
+  const { chainId, total, page, pageSize } = params;
+  const contracts: any[] = [];
+  const offset = (page - 1) * pageSize;
+  // Generate contract calls for fetching proposals based on pagination
+  for (let i = total - offset; i > Math.max(total - offset - pageSize, 0); i--) {
+    contracts.push({
+      address: getContractAddress(chainId, 'powerVoting'),
+      abi: fileCoinAbi,
+      functionName: 'idToProposal',
+      args: [i],
+    });
+  }
+  const {
+    data: proposalData,
+    isLoading: getProposalIdLoading,
+    isSuccess: getProposalIdSuccess,
+    error,
+  } = useReadContracts({
+    contracts: contracts,
+    query: { enabled: !!contracts.length }
+  });
+  return {
+    proposalData: proposalData || [],
+    getProposalIdLoading,
+    getProposalIdSuccess,
+    error,
+  };
+}
+
 const Home = () => {
   const navigate = useNavigate();
-  const {chain} = useNetwork();
 
-  const {isConnected} = useAccount();
+  const {chain, address, isConnected} = useAccount();
+  const chainId = chain?.id || 0;
   const {openConnectModal} = useConnectModal();
 
   const [filterList, setFilterList] = useState([
@@ -54,16 +97,38 @@ const Home = () => {
     }
   ])
 
-  const [loading, setLoading] = useState(true);
   const [proposalStatus, setProposalStatus] = useState(VOTE_ALL_STATUS);
   const [proposalList, setProposalList] = useState<ProposalList[]>([]);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(5);
   const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  const { latestId, getLatestIdLoading } = useLatestId(chainId);
+  const { proposalData, getProposalIdLoading, getProposalIdSuccess, error } = useProposalDataSet({
+    chainId,
+    total: Number(latestId),
+    page,
+    pageSize,
+  });
 
   useEffect(() => {
-    getProposalList(page);
-  }, [chain, page, isConnected]);
+    if (error) {
+      message.error((error as BaseError)?.shortMessage || error?.message);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (getProposalIdSuccess) {
+      getProposalList(page);
+    }
+  }, [getProposalIdSuccess]);
+
+  useEffect(() => {
+    if (isConnected && !loading && !getLatestIdLoading && !getProposalIdLoading) {
+      getProposalList(page);
+    }
+  }, [chain, page, address, isConnected]);
 
   /**
    * get proposal list
@@ -71,52 +136,50 @@ const Home = () => {
    */
   const getProposalList = async (page: number) => {
     setLoading(true);
-    const chainId = chain?.id || 0;
-    const { getLatestId, getProposal } = await useStaticContract(chainId);
-    const res = await getLatestId();
-    let originList: ProposalList[] = [];
-    if (res?.data?._isBigNumber) {
-      const total = res.data.toNumber();
-      setTotal(total);
-      const offset = (page - 1) * pageSize;
+    // Convert latest ID to number
+    const total = latestId ? Number(latestId) : 0;
+    // Calculate the offset based on the current page number
 
-      const proposalRequests = [];
-
-      for (let i = total - offset; i > Math.max(total - offset - pageSize, 0); i--) {
-        proposalRequests.push(getProposal(i));
-      }
-
-      const proposals = await Promise.all(proposalRequests);
-
-      const list = proposals.map(async ({ data }, index) => {
+    const offset = (page - 1) * pageSize;
+    setTotal(total);
+    try {
+      const list = await Promise.all(proposalData.map(async(data, index) => {
+        const { result } = data as any;
+        const proposalId = total - offset - index;
         const params = {
-          proposalId: total - offset - index,
+          proposalId,
           network: chainId
         };
-
+        // Fetch proposal results data from the API
         const { data: { data: resultData } } = await axios.get('/api/proposal/result', { params });
+        // Map proposal results data to a more structured format
         const proposalResults = resultData.map((item: ProposalResult) => ({
           optionId: item.optionId,
           votes: item.votes
         }));
+        // Return formatted proposal object
         return {
-          id: total - offset - index,
-          cid: data.cid,
-          creator: data.creator,
-          startTime: data.startTime?.toNumber(),
-          expTime: data.expTime?.toNumber(),
-          proposalType: data.proposalType.toNumber(),
+          id: proposalId,
+          cid: result[0],
+          creator: result[2],
+          startTime: Number(result[3]),
+          expTime: Number(result[4]),
+          proposalType: Number(result[1]),
           proposalResults
         };
-      });
-
-      const proposalsList: ProposalData[] = await Promise.all(list);
-      originList = await getList(proposalsList) || [];
+      }));
+      // Process and set the fetched proposal list
+      const proposalsList = await getList(list);
+      const originList = proposalsList || [];
+      // Set filter list for proposal filtering
+      setFilterList(VOTE_FILTER_LIST);
+      // Set the proposal list state
+      setProposalList(originList);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
-    setFilterList(VOTE_FILTER_LIST);
-    setProposalList(originList);
   }
 
   /**
@@ -199,6 +262,7 @@ const Home = () => {
   }
 
   const handlePageChange = (page: number) => {
+    // Reset vote status when page change
     setProposalStatus(VOTE_ALL_STATUS);
     setPage(page);
   }
@@ -210,16 +274,6 @@ const Home = () => {
   const renderList = (list: ProposalList[]) => {
     if (proposalStatus !== VOTE_ALL_STATUS) {
       list = list.filter(item => item.proposalStatus === proposalStatus);
-      if (list.length === 0) {
-        return (
-          <Empty
-            className='empty'
-            description={
-              <span className='text-white'>No Data</span>
-            }
-          />
-        );
-      }
     }
     return list.map((item: ProposalList, index: number) => {
       const proposal = VOTE_LIST?.find((proposal: ProposalFilter) => proposal.value === item.proposalStatus);
@@ -295,13 +349,15 @@ const Home = () => {
   }
 
   const renderContent = () => {
-    if (loading) {
+    // Display loading when data is loading
+    if (getProposalIdLoading || getLatestIdLoading || loading) {
       return (
         <Loading />
       );
     }
 
-    if (proposalList.length === 0) {
+    // Display empty when data is empty
+    if (proposalData.length === 0) {
       return (
         <Empty
           className='empty'
@@ -313,23 +369,21 @@ const Home = () => {
     }
 
     return (
-      <Spin spinning={loading}>
-        <div className='home-table overflow-auto'>
-          {
-            renderList(proposalList)
-          }
-          <Row justify='end'>
-            <Pagination
-              simple
-              showSizeChanger={false}
-              current={page}
-              pageSize={pageSize}
-              total={total}
-              onChange={handlePageChange}
-            />
-          </Row>
-        </div>
-      </Spin>
+      <div className='home-table overflow-auto'>
+        {
+          renderList(proposalList)
+        }
+        <Row justify='end'>
+          <Pagination
+            simple
+            showSizeChanger={false}
+            current={page}
+            pageSize={pageSize}
+            total={total}
+            onChange={handlePageChange}
+          />
+        </Row>
+      </div>
     );
   };
 
