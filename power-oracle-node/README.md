@@ -20,7 +20,7 @@ The responsibilities of an Oracle node include:
 
 ## Deployment
 
-For deployment instructions, please refer to this document: [Deployment Guide](https://chatgpt.com/c/Install.md)
+For deployment instructions, please refer to this document: [Deployment Guide](Install.md)
 
 ## Usage
 
