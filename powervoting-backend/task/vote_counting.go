@@ -52,7 +52,7 @@ func VotingCountHandler() {
 		go func() {
 			defer wg.Done()
 			zap.L().Info("vote count start:", zap.Int64("networkId", network.Id))
-			if err := VotingCount(ethClient); err != nil {
+			if err := VotingCount(ethClient, db.Engine); err != nil {
 				mu.Lock()
 				errList = append(errList, err)
 				mu.Unlock()
@@ -87,7 +87,7 @@ func bigIntDiv(x *big.Int, y *big.Int) decimal.Decimal {
 // Then, it fetches the list of proposals from the database based on the provided Ethereum client ID and timestamp.
 // For each proposal, it synchronizes the votes from the blockchain, calculates the voting power, and aggregates the results.
 // Finally, it saves the voting history, vote results, and updates the status of the proposals in the database.
-func VotingCount(ethClient model.GoEthClient) error {
+func VotingCount(ethClient model.GoEthClient, db db.DataRepo) error {
 	now, err := utils.GetTimestamp(ethClient)
 	if err != nil {
 		zap.L().Error("get timestamp on chain error: ", zap.Error(err))
@@ -101,7 +101,7 @@ func VotingCount(ethClient model.GoEthClient) error {
 		return err
 	}
 	for _, proposal := range proposals {
-		err := SyncVote(ethClient, proposal.ProposalId)
+		err := SyncVote(ethClient, proposal.ProposalId, db)
 		if err != nil {
 			zap.L().Error("sync vote error:", zap.Error(err))
 		}

@@ -46,7 +46,7 @@ func SyncProposalHandler() {
 		go func() {
 			defer wg.Done()
 			zap.L().Info("sync proposal start:", zap.Int64("networkId", network.Id))
-			if err := SyncProposal(ethClient); err != nil {
+			if err := SyncProposal(ethClient, db.Engine); err != nil {
 				mu.Lock()
 				errList = append(errList, err)
 				mu.Unlock()
@@ -62,10 +62,9 @@ func SyncProposalHandler() {
 }
 
 // SyncProposal syncs proposals for a given Ethereum client.
-func SyncProposal(ethClient model.GoEthClient) error {
-	var dict model.Dict
-	if err := db.Engine.Model(model.Dict{}).Where("name", constant.ProposalStartKey).Find(&dict).Error; err != nil {
-		zap.L().Error("Get proposal start index error: ", zap.Error(err))
+func SyncProposal(ethClient model.GoEthClient, db db.DataRepo) error {
+	dict, err := db.GetDict(constant.ProposalStartKey)
+	if err != nil {
 		return err
 	}
 	start, err := strconv.Atoi(dict.Value)
@@ -89,9 +88,8 @@ func SyncProposal(ethClient model.GoEthClient) error {
 			start++
 			continue
 		}
-		var count int64
-		if err = db.Engine.Model(model.Proposal{}).Where("cid", contractProposal.Cid).Count(&count).Error; err != nil {
-			zap.L().Error("get proposal count error: ", zap.Error(err))
+		count, err := db.CountProposal(map[string]any{"cid": contractProposal.Cid})
+		if err != nil {
 			return err
 		}
 		if count > 0 {
@@ -108,20 +106,22 @@ func SyncProposal(ethClient model.GoEthClient) error {
 			VoteCount:    contractProposal.VotesCount.Int64(),
 			Network:      ethClient.Id,
 		}
-		if err = db.Engine.Model(model.Proposal{}).Create(&proposal).Error; err != nil {
-			zap.L().Error("create proposal error: ", zap.Error(err))
+		_, err = db.CreateProposal(&proposal)
+		if err != nil {
 			return err
 		}
-		if err = db.Engine.Model(model.Dict{}).Create(&model.Dict{
+		inDict := &model.Dict{
 			Name:  fmt.Sprintf("%s-%d", constant.VoteStartKey, proposal.ProposalId),
 			Value: "1",
-		}).Error; err != nil {
-			zap.L().Error("create vote dict error: ", zap.Error(err))
+		}
+		_, err = db.CreateDict(inDict)
+		if err != nil {
 			return err
 		}
 		start++
 	}
-	if err = db.Engine.Model(model.Dict{}).Where("name", constant.ProposalStartKey).Update("value", start).Error; err != nil {
+	err = db.UpdateDict(constant.ProposalStartKey, strconv.Itoa(start))
+	if err != nil {
 		zap.L().Error("update proposal start key error: ", zap.Error(err))
 		return err
 	}
