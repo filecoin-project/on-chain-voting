@@ -31,7 +31,7 @@ import (
 )
 
 // VerifyUCAN verifies the authenticity of a User Controlled Authorization Network (UCAN) token.
-// It splits the UCAN into its components, verifies the signature, and performs additional validation
+// It splits the UCAN into its components, verifies the signature, and performs additional validation.
 // depending on whether it is a single or double UCAN.
 func VerifyUCAN(ucan string, lotusRpcClient jsonrpc.RPCClient) (string, string, string, bool, error) {
 	_, payload, signatureBytes, _, err := ucanSplit(ucan)

@@ -36,7 +36,8 @@ func init() {
 	instanceMap = make(map[int64]model.GoEthClient)
 }
 
-// GetClient get go eth client
+// GetClient retrieves a GoEthClient instance associated with the specified ID.
+// it initializes a new client instance with configuration from the network list and returns it.
 func GetClient(id int64) (model.GoEthClient, error) {
 	lock.Lock()
 	defer lock.Unlock()
@@ -69,7 +70,7 @@ func GetClient(id int64) (model.GoEthClient, error) {
 	return ethClient, nil
 }
 
-// getGoEthClient get go-ethereum client
+// getGoEthClient initializes a Go-ethereum client with the provided configuration.
 func getGoEthClient(clientConfig model.ClientConfig) (model.GoEthClient, error) {
 	client, err := ethclient.Dial(clientConfig.Rpc)
 	if err != nil {

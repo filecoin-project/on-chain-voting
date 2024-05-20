@@ -59,7 +59,7 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     // voter to miner id list
     mapping(address => uint64[]) public voterToMinerIds;
     // voter to history power
-    mapping(address => mapping(uint256 => Power)) public voterTohistoryPower;
+    mapping(address => mapping(uint256 => Power)) public voterToHistoryPower;
     // voter to id
     mapping(address => PowerStatus) public voterToPowerStatus;
     // actor id list
@@ -67,6 +67,9 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     // github account list
     mapping(string => bool) public githubAccountList;
 
+    /**
+     * @dev Modifier that allows a function to be called only by addresses in the node allow list.
+     */
     modifier onlyInAllowList(){
         if (!nodeAllowList[msg.sender]) {
             revert PermissionError("Not in allow list error.");
@@ -74,6 +77,10 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
         _;
     }
 
+    /**
+     * @dev Modifier that ensures the provided address is non-zero.
+     * @param addr The address to check.
+     */
     modifier nonZeroAddress(address addr){
         if(addr == address(0)){
             revert ZeroAddressError("Zero address error.");
@@ -81,26 +88,32 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
         _;
     }
 
-    // override from UUPSUpgradeable
+    /**
+     * @notice Authorizes an upgrade to a new implementation contract.
+     * @param newImplementation The address of the new implementation contract.
+     */
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
+    /**
+     * @notice Initializes the contract by setting up UUPS upgrade ability and ownership.
+     */
     function initialize() public initializer {
         __UUPSUpgradeable_init();
         __Ownable_init(msg.sender);
     }
 
     /**
-     * updatePowerVotingContract: update powerVoting contract
-     * @param powerVotingAddress: powerVoting contract address
+     * @notice Updates the address of the PowerVoting contract.
+     * @param powerVotingAddress The new address of the PowerVoting contract.
      */
     function updatePowerVotingContract(address powerVotingAddress) external override onlyOwner nonZeroAddress(powerVotingAddress) {
         powerVotingContract = powerVotingAddress;
     }
 
     /**
-     * addMinerIds: add miner id list
-     * @param minerIds: miner id list
-     * @param voter: voter address
+     * @notice Adds a list of miner IDs for a specific voter.
+     * @param minerIds List of miner IDs to be added.
+     * @param voter Address of the voter.
      */
     function addMinerIds(uint64[] memory minerIds, address voter) external override {
         if(msg.sender != powerVotingContract) {
@@ -111,11 +124,11 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     }
 
     /**
-     * addTask: add task
-     * @param ucanCid: ucan cid
+     * @notice Adds a task with the specified UCAN CID.
+     * @param ucanCid The UCAN CID associated with the task.
      */
-    function addTask(string calldata ucanCid) external override{
-        if(msg.sender != powerVotingContract) {
+    function addTask(string calldata ucanCid) external override {
+        if (msg.sender != powerVotingContract) {
             revert PermissionError("Permission error.");
         }
         _taskId.increment();
@@ -125,16 +138,16 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     }
 
     /**
-     * getTasks: get task id list
-     * @return uint256[]: task id list
+     * @notice Retrieves the list of task IDs.
+     * @return taskIds List of task IDs.
      */
-    function getTasks() external override view returns(uint256[] memory) {
+    function getTasks() external override view returns (uint256[] memory) {
         return taskIdList.values();
     }
 
     /**
-     * addF4Task: add f4 task
-     * @param voter: voter
+     * @notice Adds an F4 task for the specified voter.
+     * @param voter The address of the voter.
      */
     function addF4Task(address voter) external override {
         if(msg.sender != powerVotingContract) {
@@ -147,18 +160,18 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     }
 
     /**
-     * getF4Tasks: get f4 task id list
-     * @return uint256[]: task id list
+     * @notice Retrieves the list of F4 task IDs.
+     * @return An array containing the F4 task IDs.
      */
     function getF4Tasks() external view override returns(uint256[] memory) {
         return f4TaskIdList.values();
     }
 
     /**
-     * taskCallback: task callback function
-     * @param voterInfoParam: voter info
-     * @param taskId: task id
-     * @param powerParam: power
+     * @notice Callback function for updating task information.
+     * @param voterInfoParam Voter information containing the Ethereum address and other details.
+     * @param taskId The ID of the task being updated.
+     * @param powerParam Power information associated with the task.
      */
     function taskCallback(VoterInfo calldata voterInfoParam, uint256 taskId, Power calldata powerParam) external onlyInAllowList override {
 
@@ -206,7 +219,7 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
 
         Power memory power = _calcPower(voterAddress, powerParam);
         uint256 id = _getDayId(voterAddress);
-        voterTohistoryPower[voterAddress][id] = power;
+        voterToHistoryPower[voterAddress][id] = power;
 
         // add to voter list for schedule task
         voterList.add(voterAddress);
@@ -220,8 +233,9 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     }
 
     /**
-     * removeVoter: remove voter
-     * @param voterAddress: voter address
+     * @notice Removes a voter along with associated task information.
+     * @param voterAddress Address of the voter to be removed.
+     * @param taskId ID of the task associated with the voter.
      */
     function removeVoter(address voterAddress, uint256 taskId) external override onlyInAllowList nonZeroAddress(voterAddress) {
         VoterInfo storage voterInfo = voterToInfo[voterAddress];
@@ -242,47 +256,49 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     }
 
     /**
-     * getPower: get voting power
-     * @param voterAddress: voter address
-     * @param id: id
+     * @notice Retrieves the power information for a specific voter and day.
+     * @param voterAddress Address of the voter.
+     * @param id ID of the day for which power information is requested.
+     * @return Power structure containing the power information.
      */
     function getPower(address voterAddress, uint256 id) external view override returns(Power memory){
         PowerStatus storage powerStatus = voterToPowerStatus[voterAddress];
         if (powerStatus.hasFullRound == 0 && id > powerStatus.dayId) {
             return Power(0,new bytes[](0),new bytes[](0),0,0);
         }
-        return voterTohistoryPower[voterAddress][id];
+        return voterToHistoryPower[voterAddress][id];
     }
 
     /**
-     * updateAllowList: update node allowlist
-     * @param nodeAddress: node address
-     * @param allow:
+     * @notice Updates the node allow list by adding or removing a node.
+     * @param nodeAddress Address of the node to be added or removed.
+     * @param allow Boolean indicating whether to allow or disallow the node.
      */
     function updateNodeAllowList(address nodeAddress, bool allow) external override onlyOwner nonZeroAddress(nodeAddress) {
         nodeAllowList[nodeAddress] = allow;
     }
 
     /**
-     * getVoterAddresses: get voter list
-     * @return address[]: voter address list
+     * @notice Retrieves the list of voter addresses.
+     * @return An array containing the addresses of all voters.
      */
     function getVoterAddresses() external override view returns(address[] memory){
         return voterList.values();
     }
 
     /**
-     * getVoterInfo: get voter info
-     * @param voter: voter address
+     * @notice Retrieves the information associated with a specific voter.
+     * @param voter The address of the voter.
+     * @return VoterInfo The information associated with the specified voter.
      */
     function getVoterInfo(address voter) external override view returns(VoterInfo memory){
         return voterToInfo[voter];
     }
 
     /**
-     * savePower: save voter power, schedule task
-     * @param voterAddress: voter address
-     * @param powerParam: power
+     * @notice Saves the power information associated with a voter.
+     * @param voterAddress The address of the voter.
+     * @param powerParam The power information to be saved.
      */
     function savePower(address voterAddress, Power calldata powerParam) external onlyInAllowList nonZeroAddress(voterAddress) override {
         if (voterAddressToBlockHeight[voterAddress] == block.number) {
@@ -290,13 +306,14 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
         }
         Power memory power = _calcPower(voterAddress, powerParam);
         uint256 id = _getDayId(voterAddress);
-        voterTohistoryPower[voterAddress][id] = power;
+        voterToHistoryPower[voterAddress][id] = power;
         voterAddressToBlockHeight[voterAddress] = block.number;
     }
 
     /**
-     * _getDayId: get day id
-     * @param voter: voter address
+     * @notice Increments the day ID for the specified voter and returns the updated day ID.
+     * @param voter The address of the voter.
+     * @return The updated day ID.
      */
     function _getDayId(address voter) private returns(uint256){
         PowerStatus storage powerStatus = voterToPowerStatus[voter];
@@ -311,9 +328,10 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     }
 
     /**
-     * _calcPower: calculate power
-     * @param voterAddress: voter address
-     * @param power: power
+     * @notice Calculates the power for the specified voter address.
+     * @param voterAddress The address of the voter.
+     * @param power The Power struct containing the power information.
+     * @return The updated Power struct.
      */
     function _calcPower(address voterAddress, Power memory power) private returns(Power memory){
         VoterInfo storage voterInfo = voterToInfo[voterAddress];
@@ -339,8 +357,8 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     }
 
     /**
-     * updateMinerId: update miner id
-     * @param voterAddress: voter address
+     * @notice Updates the miner IDs associated with a voter based on their actor IDs.
+     * @param voterAddress The address of the voter.
      */
     function _updateMinerId(address voterAddress) private {
         VoterInfo storage voterInfo = voterToInfo[voterAddress];
@@ -361,14 +379,13 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
         _filterAndSetMinerIds(voterAddress, voterInfo, minerIds, minerIdsLength, actorIdsLength);
     }
 
-
     /**
-     * Filter and set miner ids based on actor ids
-     * @param voterAddress: voter address
-     * @param voterInfo: voter information
-     * @param minerIds: miner ids
-     * @param minerIdsLength: length of miner ids
-     * @param actorIdsLength: length of actor ids
+     * @notice Filters and sets the miner IDs for a voter based on their associated actor IDs.
+     * @param voterAddress The address of the voter.
+     * @param voterInfo The storage reference to the voter's information.
+     * @param minerIds The storage reference to the original miner IDs.
+     * @param minerIdsLength The length of the original miner IDs array.
+     * @param actorIdsLength The length of the actor IDs array associated with the voter.
      */
     function _filterAndSetMinerIds(address voterAddress, VoterInfo storage voterInfo, uint64[] storage minerIds, uint256 minerIdsLength, uint256 actorIdsLength) private {
         uint64[] memory minerIdsRes = new uint64[](minerIdsLength);
@@ -392,13 +409,10 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
         delete voterToMinerIds[voterAddress];
     }
 
-
-
-
-
     /**
-     * resolveEthAddress: resolve eth address
-     * @param addr: eth address
+     * @notice Resolves the Ethereum address to an actor ID.
+     * @param addr The Ethereum address to resolve.
+     * @retzzzurn The resolved actor ID.
      */
     function resolveEthAddress(address addr) external view returns (uint64) {
         uint64 actorId = addr.resolveEthAddress();

@@ -17,26 +17,80 @@ import {Link, useNavigate} from "react-router-dom";
 import { message } from 'antd';
 import Table from '../../components/Table';
 import LoadingButton from '../../components/LoadingButton';
-import {useNetwork, useAccount} from "wagmi";
+import {useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt, BaseError} from "wagmi";
+import {filecoinCalibration} from "wagmi/chains";
 import {
   DUPLICATED_MINER_ID_MSG,
-  filecoinCalibrationChain,
   STORING_DATA_MSG,
   WRONG_MINER_ID_MSG
 } from "../../common/consts";
-import {useDynamicContract, useStaticContract} from "../../hooks";
 import Loading from "../../components/Loading";
-import {hasDuplicates} from "../../utils";
+import {getContractAddress, hasDuplicates} from "../../utils";
+import fileCoinAbi from "../../common/abi/power-voting.json";
+import oracleAbi from "../../common/abi/oracle.json";
+import oraclePowerAbi from "../../common/abi/oracle-powers.json";
+
+function useMinerIdSet(chainId: number, address: `0x${string}` | undefined) {
+  const { data: minerIdData, isLoading: getMinerIdsLoading, isSuccess: getMinerIdsSuccess } = useReadContract({
+    // @ts-ignore
+    address: getContractAddress(chainId || 0, 'oracle'),
+    abi: oracleAbi,
+    functionName: 'getVoterInfo',
+    args: [address]
+  });
+  return {
+    minerIdData: minerIdData as any,
+    getMinerIdsLoading,
+    getMinerIdsSuccess
+  }
+}
+
+function useOwnerDataSet(contracts: any[]) {
+  const {
+    data: ownerData,
+    isLoading: getOwnerLoading,
+    isSuccess: getOwnerSuccess
+  } = useReadContracts({
+    // @ts-ignore
+    contracts: contracts,
+    query: { enabled: !!contracts.length }
+  });
+
+  return {
+    ownerData: ownerData || [],
+    getOwnerLoading,
+    getOwnerSuccess,
+  };
+}
 
 const MinerId = () => {
-  const {chain} = useNetwork();
+  const {chain, isConnected, address} = useAccount();
   const chainId = chain?.id || 0;
-  const {isConnected, address} = useAccount();
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
   const [minerIds, setMinerIds] = useState(['']);
-  const [spinning, setSpinning] = useState(true);
-  const [loading, setLoading] = useState(false);
+  const [contracts, setContracts] = useState([] as any);
+
+  const { minerIdData, getMinerIdsLoading, getMinerIdsSuccess } = useMinerIdSet(chainId, address);
+  const { ownerData } = useOwnerDataSet(contracts);
+
+  const {
+    data: hash,
+    writeContract,
+    error,
+    isPending: writeContractPending,
+    isSuccess: writeContractSuccess,
+    reset
+  } = useWriteContract();
+
+  const [loading, setLoading] = useState<boolean>(writeContractPending);
+
+  useEffect(() => {
+    if (error) {
+      message.error((error as BaseError)?.shortMessage || error?.message);
+    }
+    reset();
+  }, [error]);
 
   useEffect(() => {
     if (!isConnected) {
@@ -54,31 +108,59 @@ const MinerId = () => {
 
   useEffect(() => {
     initState();
-  }, [chain]);
+  }, [chain, getMinerIdsSuccess]);
 
+  useEffect(() => {
+    if (writeContractSuccess) {
+      message.success(STORING_DATA_MSG);
+      navigate("/");
+    }
+  }, [writeContractSuccess])
 
   const initState = async () => {
-    const { getMinerIds } = await useStaticContract(chainId);
-    const { code, data: { minerIds } } = await getMinerIds(address);
-    if (code === 200) {
-      setMinerIds(addMinerIdPrefix(minerIds?.map((id: any) => id.toNumber())));
-    }
-    setSpinning(false);
+    setMinerIds(addMinerIdPrefix(minerIdData?.minerIds?.map((id: any) => Number(id))));
   }
 
-  const handleMinerChange = (value: string) => {
-    const arr = value ? value.split(',') : [];
+  /**
+   * Handle changes in the miner IDs input field
+   * @param ids
+   */
+  const handleMinerChange = (ids: string) => {
+    const arr = ids ? ids.split(',') : [];
     setMinerIds(arr);
+
+    const { value } = removeMinerIdPrefix(arr);
+    const contracts = value.map((item: number) => {
+      return {
+        address: getContractAddress(chain?.id || 0, 'oraclePower'),
+        abi: oraclePowerAbi,
+        functionName: 'getOwner',
+        args: [item],
+      } as const;
+    });
+    setContracts(contracts);
   }
 
+  /**
+   * Get the prefix for a given chain ID
+   * @param chainId
+   */
   const getMinerIdPrefix = (chainId: number) => {
-    return chainId === filecoinCalibrationChain.id ? 't0' : 'f0';
+    return chainId === filecoinCalibration.id ? 't0' : 'f0';
   }
 
+  /**
+   * Add prefix to each miner ID based on the chain ID
+   * @param minerIds
+   */
   const addMinerIdPrefix = (minerIds: number[]) => {
     return minerIds?.length ? minerIds.map(minerId => `${getMinerIdPrefix(chainId)}${minerId}`) : [];
   }
 
+  /**
+   * Remove prefix from each miner ID and validate the format
+   * @param minerIds
+   */
   const removeMinerIdPrefix = (minerIds: string[]) => {
     const prefix = getMinerIdPrefix(chainId);
     const prefixRegex = new RegExp('^' + prefix);
@@ -91,6 +173,7 @@ const MinerId = () => {
       }
       return Number(str);
     }) : [];
+
     return {
       value: arr,
       hasError
@@ -101,58 +184,55 @@ const MinerId = () => {
    * Set miner ID
    */
   const onSubmit = async () => {
-    setLoading(true);
-    const { getMinerIdOwner } = await useStaticContract(chainId);
-    const { addMinerId } = useDynamicContract(chainId);
+    // Check for duplicate miner IDs
     if (minerIds.length && hasDuplicates(minerIds)) {
       message.error(DUPLICATED_MINER_ID_MSG, 3);
+      return;
+    }
+
+    // Set loading state to true to indicate loading
+    setLoading(true);
+
+    const { value, hasError } = removeMinerIdPrefix(minerIds);
+    // Remove prefix from miner IDs and check for errors
+    if (hasError) {
+      message.warning(WRONG_MINER_ID_MSG);
       setLoading(false);
       return;
     }
-    const { value, hasError } = removeMinerIdPrefix(minerIds);
-    if (minerIds.length > 0) {
-      if (hasError) {
-        message.warning(WRONG_MINER_ID_MSG);
+    try {
+      // Check if all requests were successful
+      const allSuccessful = ownerData?.every((res: any) => {
+        return res.status === 'success';
+      });
+
+      if (!allSuccessful) {
+        message.error(WRONG_MINER_ID_MSG, 3);
         setLoading(false);
         return;
-      }
-
-      try {
-        const promises = value.map(async (item) => {
-          const res = await getMinerIdOwner(item);
-          return res;
+      } else {
+        writeContract({
+          abi: fileCoinAbi,
+          address: getContractAddress(chain?.id || 0, 'powerVoting'),
+          functionName: 'addMinerId',
+          args: [
+            value
+          ],
         });
-        const results = await Promise.all(promises);
-        const allSuccessful = results.every((res) => {
-          return res.code === 200;
-        });
-
-        if (!allSuccessful) {
-          message.error(WRONG_MINER_ID_MSG, 3);
-          setLoading(false);
-          return;
-        }
-      } catch (error) {
-        console.log(error);
       }
+    } catch (error) {
+      console.log(error);
     }
-
-    const res = await addMinerId(value);
-
-    if (res.code === 200 && res.data?.hash) {
-      message.success(STORING_DATA_MSG, 3);
-      setTimeout(() => {
-        navigate("/");
-      }, 3000);
-    } else {
-      message.error(res.msg, 3);
-    }
-
     setLoading(false);
   }
 
+  const { isLoading: transactionLoading } =
+    useWaitForTransactionReceipt({
+      hash,
+    })
+
   return (
-    spinning ? <Loading /> : <div className="px-3 mb-6 md:px-0">
+    getMinerIdsLoading ? <Loading /> : <div className="px-3 mb-6 md:px-0">
       <button>
         <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">
           <Link to="/" className="flex items-center">
@@ -176,7 +256,7 @@ const MinerId = () => {
                   defaultValue={minerIds}
                   placeholder='Input miner ID (For multiple miner IDs, use commas to separate them.)'
                   className='form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]'
-                  onChange={(e) => { handleMinerChange(e.target.value) }}
+                  onBlur={(e) => { handleMinerChange(e.target.value) }}
                 />
               )
             }
@@ -184,7 +264,7 @@ const MinerId = () => {
         />
 
         <div className='text-center'>
-          <LoadingButton text='Submit' loading={loading} handleClick={onSubmit} />
+          <LoadingButton text='Submit' loading={loading || writeContractPending || transactionLoading} handleClick={onSubmit} />
         </div>
       </div>
     </div>

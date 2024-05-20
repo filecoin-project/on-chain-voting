@@ -13,14 +13,13 @@
 // limitations under the License.
 
 import React, {useState, useEffect, useRef} from "react";
-import { ethers } from "ethers";
 import {Link, useNavigate} from "react-router-dom";
 import Table from '../../../components/Table';
 import { message } from 'antd';
 import {useForm, Controller} from 'react-hook-form';
 import classNames from 'classnames';
 import {RadioGroup} from '@headlessui/react';
-import {useNetwork, useAccount} from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSignMessage, BaseError} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import {
   UCAN_JWT_HEADER,
@@ -30,21 +29,21 @@ import {
   UCAN_GITHUB_STEP_1,
   UCAN_GITHUB_STEP_2,
   OPERATION_CANCELED_MSG,
+  STORING_DATA_MSG,
 } from '../../../common/consts';
-import { stringToBase64Url } from '../../../utils';
-import {getWeb3IpfsId, useDynamicContract} from "../../../hooks";
+import {stringToBase64Url, validateValue, getWeb3IpfsId, getContractAddress} from '../../../utils';
 import './index.less';
 import LoadingButton from "../../../components/LoadingButton";
+import fileCoinAbi from "../../../common/abi/power-voting.json";
 
 const UcanDelegate = () => {
-  const {chain} = useNetwork();
-  const {isConnected, address} = useAccount();
+  const {chain, isConnected, address} = useAccount();
+  const { signMessageAsync } = useSignMessage();
   const {openConnectModal} = useConnectModal();
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
 
   const [ucanType, setUcanType] = useState(UCAN_TYPE_FILECOIN);
-  const [loading, setLoading] = useState(false);
   const [githubSignature, setGithubSignature] = useState('');
   const [githubStep, setGithubStep] = useState(UCAN_GITHUB_STEP_1);
   const [formValue] = useState({
@@ -68,16 +67,19 @@ const UcanDelegate = () => {
     }
   });
 
+  const {
+    data: hash,
+    writeContract,
+    error,
+    isPending: writeContractPending,
+    isSuccess: writeContractSuccess,
+    reset: resetWriteContract
+  } = useWriteContract();
+  const [loading, setLoading] = useState<boolean>(writeContractPending);
+
   useEffect(() => {
     renderForm();
   }, [githubStep]);
-
-  useEffect(() => {
-    if (!isConnected) {
-      navigate("/home");
-      return;
-    }
-  }, []);
 
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
@@ -86,9 +88,27 @@ const UcanDelegate = () => {
     }
   }, [address]);
 
-  const validateValue = (value: string) => {
-    return value?.trim() !== '';
-  };
+  useEffect(() => {
+    if (writeContractSuccess) {
+      message.success(STORING_DATA_MSG);
+      navigate("/");
+    }
+  }, [writeContractSuccess])
+
+  useEffect(() => {
+    if (error) {
+      message.error((error as BaseError)?.shortMessage || error?.message);
+    }
+    resetWriteContract();
+  }, [error]);
+
+
+  useEffect(() => {
+    if (!isConnected) {
+      navigate("/home");
+      return;
+    }
+  }, []);
 
   const handleUcanTypeChange = (value: number) => {
     reset({ aud: '' });
@@ -120,21 +140,24 @@ const UcanDelegate = () => {
    * @param ucan
    */
   const setUcan = async (ucan: string) => {
-    const chainId = chain?.id || 0;
-    const { ucanDelegate } = useDynamicContract(chainId);
+    // Get the IPFS ID for the provided UCAN
     const cid = await getWeb3IpfsId(ucan);
-    const res = await ucanDelegate(cid);
-    if (res.code === 200 && res.data?.hash) {
-      message.success(res.msg);
-      navigate("/");
-      // save data to localStorage and set validity period to three minutes
-      const ucanStorageData = JSON.parse(localStorage.getItem('ucanStorage') || '[]');
-      const expirationTime = Date.now() + 3 * 60 * 1000;
-      ucanStorageData.push({ timestamp: expirationTime, address })
-      localStorage.setItem('ucanStorage', JSON.stringify(ucanStorageData));
-    } else {
-      message.error(res.msg, 3);
-    }
+    writeContract({
+      abi: fileCoinAbi,
+      address: getContractAddress(chain?.id || 0, 'powerVoting'),
+      functionName: 'ucanDelegate',
+      args: [
+        cid
+      ],
+    });
+    // save data to localStorage and set validity period to three minutes
+    const ucanStorageData = JSON.parse(localStorage.getItem('ucanStorage') || '[]');
+    // Calculate expiration time (three minutes from now)
+    const expirationTime = Date.now() + 3 * 60 * 1000;
+    // Push new data (timestamp and address) to the array
+    ucanStorageData.push({ timestamp: expirationTime, address });
+    // Save updated data to localStorage
+    localStorage.setItem('ucanStorage', JSON.stringify(ucanStorageData));
     setLoading(false);
   }
 
@@ -151,13 +174,11 @@ const UcanDelegate = () => {
       act: 'add',
     }
     // @ts-ignore
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const signer = await provider.getSigner();
     const base64Header = stringToBase64Url(JSON.stringify(UCAN_JWT_HEADER));
     const base64Params = stringToBase64Url(JSON.stringify(ucanParams));
     let signature = '';
     try {
-      signature = await signer.signMessage(`${base64Header}.${base64Params}`);
+      signature = await signMessageAsync({ message:  `${base64Header}.${base64Params}`})
     } catch (e) {
       message.error(OPERATION_CANCELED_MSG);
       setLoading(false);
@@ -173,30 +194,38 @@ const UcanDelegate = () => {
     if (isConnected) {
       try {
         const { aud } = values;
+        // If 'aud' is not provided, return without proceeding
         if (!aud) {
           return;
         }
+        // Define signature parameters
         const signatureParams = {
           iss: address,
           aud,
           prf:'',
           act: 'add',
         }
-        // @ts-ignore
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = await provider.getSigner();
+        // Create a new Web3Provider using the current Ethereum provider
+
+        // Convert header and params to base64 URL
         const base64Header = stringToBase64Url(JSON.stringify(UCAN_JWT_HEADER));
         const base64Params = stringToBase64Url(JSON.stringify(signatureParams));
         let signature = '';
         try {
-          signature = await signer.signMessage(`${base64Header}.${base64Params}`);
+          // Sign the concatenated header and params
+          signature = await signMessageAsync({ message:  `${base64Header}.${base64Params}`})
         } catch (e) {
           message.error(OPERATION_CANCELED_MSG);
           setLoading(false);
           return;
         }
+        // Convert signature to base64 URL
         const base64Signature = stringToBase64Url(signature);
+
+        // Concatenate header, params, and signature
         const githubSignatureParams = `${base64Header}.${base64Params}.${base64Signature}`;
+
+        // Set GitHub signature and step
         setGithubSignature(githubSignatureParams);
         setGithubStep(UCAN_GITHUB_STEP_2);
       } catch (e) {
@@ -452,7 +481,7 @@ const UcanDelegate = () => {
           />
 
           <div className='text-center'>
-            <LoadingButton text='Authorize' loading={loading} />
+            <LoadingButton text='Authorize' loading={loading|| writeContractPending || transactionLoading} />
           </div>
         </div>
       </form>
@@ -474,7 +503,7 @@ const UcanDelegate = () => {
           />
 
           <div className='text-center'>
-            <LoadingButton text='Sign' loading={loading} />
+            <LoadingButton text='Sign' loading={loading || writeContractPending || transactionLoading} />
           </div>
         </div>
       </form>
@@ -501,7 +530,7 @@ const UcanDelegate = () => {
               type='button' onClick={() => { setGithubStep(UCAN_GITHUB_STEP_1) }}>
               Previous
             </button>
-            <LoadingButton text='Authorize' loading={loading} />
+            <LoadingButton text='Authorize' loading={loading || writeContractPending || transactionLoading} />
           </div>
         </div>
       </form>
@@ -520,6 +549,15 @@ const UcanDelegate = () => {
 
       }
     }
+  }
+
+  const { isLoading: transactionLoading } =
+    useWaitForTransactionReceipt({
+      hash,
+    })
+
+  if (error) {
+    message.error((error as BaseError)?.shortMessage || error?.message);
   }
 
   return (

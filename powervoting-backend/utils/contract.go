@@ -27,7 +27,9 @@ import (
 	"go.uber.org/zap"
 )
 
-// GetPower get power
+// GetPower retrieves the voting power of a given address from the blockchain using the provided Ethereum client.
+// It packs the method call parameters, calls the smart contract, and unpacks the result to obtain the power information.
+// The function returns the power information as a model.Power struct or an error if the operation fails.
 func GetPower(address string, num *big.Int, client model.GoEthClient) (model.Power, error) {
 	data, err := client.OracleAbi.Pack("getPower", common.HexToAddress(address), num)
 	if err != nil {
@@ -83,6 +85,9 @@ func GetPower(address string, num *big.Int, client model.GoEthClient) (model.Pow
 	return power, nil
 }
 
+// GetTimestamp retrieves the current timestamp from the Ethereum blockchain using the provided Ethereum client.
+// It fetches the latest block number and then retrieves the block information to obtain the timestamp.
+// The function returns the current timestamp as an int64 or an error if the operation fails.
 func GetTimestamp(client model.GoEthClient) (int64, error) {
 	ctx := context.Background()
 	number, err := client.Client.BlockNumber(ctx)
@@ -97,7 +102,9 @@ func GetTimestamp(client model.GoEthClient) (int64, error) {
 	return now, nil
 }
 
-// GetVote Get vote info
+// GetVote retrieves information about a specific vote associated with a proposal from the PowerVoting smart contract.
+// It packs the necessary parameters and calls the PowerVoting smart contract to fetch the vote details.
+// The function returns the contract vote information or an error if the operation fails.
 func GetVote(client model.GoEthClient, proposalId int64, voteId int64) (model.ContractVote, error) {
 	data, err := client.PowerVotingAbi.Pack("proposalToVote", big.NewInt(proposalId), big.NewInt(voteId))
 	if err != nil {
@@ -122,7 +129,9 @@ func GetVote(client model.GoEthClient, proposalId int64, voteId int64) (model.Co
 	return voteInfo, nil
 }
 
-// GetProposal Get proposal
+// GetProposal retrieves information about a specific proposal from the PowerVoting smart contract.
+// It packs the necessary parameters and calls the PowerVoting smart contract to fetch the proposal details.
+// The function returns the contract proposal information or an error if the operation fails.
 func GetProposal(client model.GoEthClient, proposalId int64) (model.ContractProposal, error) {
 	data, err := client.PowerVotingAbi.Pack("idToProposal", big.NewInt(proposalId))
 	if err != nil {
@@ -147,6 +156,9 @@ func GetProposal(client model.GoEthClient, proposalId int64) (model.ContractProp
 	return proposal, nil
 }
 
+// GetProposalLatestId retrieves the latest proposal ID from the PowerVoting smart contract.
+// It packs the necessary method and parameters and calls the PowerVoting smart contract to fetch the latest proposal ID.
+// The function returns the latest proposal ID or an error if the operation fails.
 func GetProposalLatestId(client model.GoEthClient) (int, error) {
 	data, err := client.PowerVotingAbi.Pack("proposalId")
 	if err != nil {
@@ -181,6 +193,9 @@ func GetProposalLatestId(client model.GoEthClient) (int, error) {
 	return id, nil
 }
 
+// GetVoterToPowerStatus retrieves the power status of a voter from the Oracle contract.
+// It packs the necessary method and parameters and calls the Oracle contract to fetch the power status.
+// The function returns the power status of the voter or an error if the operation fails.
 func GetVoterToPowerStatus(address string, client model.GoEthClient) (model.VoterToPowerStatus, error) {
 	data, err := client.OracleAbi.Pack("voterToPowerStatus", common.HexToAddress(address))
 	if err != nil {

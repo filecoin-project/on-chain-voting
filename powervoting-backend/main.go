@@ -42,9 +42,9 @@ func main() {
 	if err != nil {
 		zap.L().Error("start web server failed: ", zap.Error(err))
 	}
-
 }
 
+// Cors is a middleware function that sets CORS headers.
 func Cors() gin.HandlerFunc {
 	return func(context *gin.Context) {
 		method := context.Request.Method

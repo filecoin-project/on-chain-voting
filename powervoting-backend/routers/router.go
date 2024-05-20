@@ -20,6 +20,11 @@ import (
 	"powervoting-server/response"
 )
 
+// InitRouters initializes the routers for the power voting API endpoints.
+// It defines routes for health check, proposal result, and proposal history.
+// The health check route returns a success response.
+// The proposal result route is mapped to the VoteResult handler function.
+// The proposal history route is mapped to the VoteHistory handler function.
 func InitRouters(r *gin.Engine) {
 	powerVotingRouter := r.Group("/power_voting/api/")
 	powerVotingRouter.GET("/health_check", func(c *gin.Context) {

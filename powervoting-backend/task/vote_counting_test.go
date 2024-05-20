@@ -18,12 +18,15 @@ import (
 	"powervoting-server/config"
 	"powervoting-server/db"
 	"testing"
-	"time"
+
+	"go.uber.org/zap"
 )
 
 func TestVotingCountHandler(t *testing.T) {
 	config.InitConfig("../")
 	db.InitMysql()
+	logger, _ := zap.NewDevelopment()
+	zap.ReplaceGlobals(logger)
+
 	VotingCountHandler()
-	time.Sleep(time.Minute)
 }

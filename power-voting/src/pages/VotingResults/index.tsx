@@ -14,7 +14,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { useNetwork, useAccount } from "wagmi";
+import { useAccount } from "wagmi";
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -23,14 +23,13 @@ import MDEditor from '../../components/MDEditor';
 import {
   web3AvatarUrl,
   COMPLETED_STATUS,
-  WRONG_NET_STATUS, VOTE_COUNTING_STATUS,
+  WRONG_NET_STATUS, VOTE_COUNTING_STATUS, proposalResultApi, proposalHistoryApi,
 } from "../../common/consts";
 import VoteList from "../../components/VoteList";
 import {ProposalOption, ProposalResult, ProposalHistory} from "../../common/types";
 
 const VotingResults = () => {
-  const { chain } = useNetwork();
-  const { isConnected } = useAccount();
+  const { chain, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
   const { openChainModal } = useChainModal();
   const { id, cid } = useParams();
@@ -50,8 +49,11 @@ const VotingResults = () => {
       network: chain?.id
     }
 
+    // Fetch proposal data from IPFS
     const { data: proposalData } = await axios.get(`https://${cid}.ipfs.w3s.link/`);
+    // Check if the proposal chain ID matches the current chain ID
     if (proposalData.chainId !== chain?.id) {
+      // If not, set vote status to wrong network status
       voteStatus = WRONG_NET_STATUS;
       if (isConnected) {
         openChainModal && openChainModal();
@@ -59,10 +61,13 @@ const VotingResults = () => {
         openConnectModal && openConnectModal();
       }
     } else {
-      const { data: { data: resultData } } = await axios.get('/api/proposal/result', {
+      // If proposal chain ID matches, proceed with fetching voting data
+      const { data: { data: resultData } } = await axios.get(proposalResultApi, {
         params,
       })
+      // Determine vote status based on whether votes have been counted
       voteStatus = resultData.length > 0 ? COMPLETED_STATUS : VOTE_COUNTING_STATUS;
+      // Map result data to populate option array
       resultData.map((_: any, index: number) => {
         const voteItem = resultData.find((vote: ProposalResult) => vote.optionId === index);
         option.push({
@@ -70,9 +75,11 @@ const VotingResults = () => {
           count: voteItem?.votes ? Number(voteItem.votes) : 0
         })
       })
-      const { data: { data: historyData } } = await axios.get('/api/proposal/history', {
+      // Fetch voting history data
+      const { data: { data: historyData } } = await axios.get(proposalHistoryApi, {
         params,
       });
+      // Map history data to populate voteList array
       voteList = historyData?.votePowers?.map((item: ProposalHistory) => ({
         ...item,
         optionName: proposalData.option[item.optionId],
@@ -84,12 +91,14 @@ const VotingResults = () => {
         votePowers: historyData.votePowers
       }));
     }
+    // Set voting data state
     setVotingData({
       ...proposalData,
       id,
       cid,
       option,
       voteStatus,
+      // Sort voteList array by number of votes in descending order
       voteList: voteList?.sort((a: any, b: any) => b.votes - a.votes)
     })
   }
@@ -119,6 +128,16 @@ const VotingResults = () => {
     }
   }
 
+  let href = '';
+  let img = '';
+  if (votingData?.githubName) {
+    href = `https://github.com/${votingData.githubName}`;
+    img = `${votingData?.githubAvatar}`;
+  } else {
+    href = `${chain?.blockExplorers?.default.url}/address/${votingData?.address}`;
+    img = `${web3AvatarUrl}:${votingData?.address}`
+  }
+
   return (
     <div className='flex voting-result'>
       <div className='relative w-full pr-4 lg:w-8/12'>
@@ -145,14 +164,14 @@ const VotingResults = () => {
                   {handleVoteStatusTag(votingData?.voteStatus).name}
                 </button>
                 <div className="flex items-center justify-center">
-                  <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${votingData?.address}`} alt="" />
+                  <img className="w-[20px] h-[20px] rounded-full mr-2" src={img} alt="" />
                   <a
                     className="text-white"
                     target="_blank"
                     rel="noopener"
-                    href={`${chain?.blockExplorers?.default.url}/address/${votingData?.address}`}
+                    href={href}
                   >
-                    {EllipsisMiddle({ suffixCount: 4, children: votingData?.address })}
+                    {votingData?.githubName || EllipsisMiddle({suffixCount: 4, children: votingData?.address})}
                   </a>
                 </div>
               </div>

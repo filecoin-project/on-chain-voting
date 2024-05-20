@@ -43,7 +43,8 @@ func init() {
 	instanceMap = make(map[int64]models.GoEthClient)
 }
 
-// GetClient get go eth client
+// GetClient retrieves a GoEthClient instance associated with the specified ID.
+// it initializes a new client instance with configuration from the network list and returns it.
 func GetClient(id int64) (models.GoEthClient, error) {
 	lock.Lock()
 	defer lock.Unlock()
@@ -82,7 +83,7 @@ func GetClient(id int64) (models.GoEthClient, error) {
 	return ethClient, nil
 }
 
-// getGoEthClient get go-ethereum client
+// getGoEthClient initializes a Go-ethereum client with the provided configuration.
 func getGoEthClient(clientConfig models.ClientConfig) (models.GoEthClient, error) {
 	client, err := ethclient.Dial(clientConfig.Rpc)
 	if err != nil {
@@ -126,7 +127,8 @@ func getGoEthClient(clientConfig models.ClientConfig) (models.GoEthClient, error
 	return goEthClient, nil
 }
 
-// TaskCallbackContract contract task call back
+// TaskCallbackContract interacts with the Oracle smart contract by executing a callback function.
+// It prepares and sends a transaction to the Ethereum network to update task information.
 func TaskCallbackContract(voterInfo models.VoterInfo, taskId big.Int, power models.Power, ethClient models.GoEthClient) error {
 	lock.Lock()
 	defer lock.Unlock()
@@ -181,7 +183,7 @@ func TaskCallbackContract(voterInfo models.VoterInfo, taskId big.Int, power mode
 	return nil
 }
 
-// SavePower contract up data power
+// SavePower sends a transaction to the Oracle smart contract to save power information associated with an address.
 func SavePower(address common.Address, power models.Power, ethClient models.GoEthClient) error {
 	lock.Lock()
 	defer lock.Unlock()
@@ -236,7 +238,7 @@ func SavePower(address common.Address, power models.Power, ethClient models.GoEt
 	return nil
 }
 
-// RemoveVoter remove voter
+// RemoveVoter sends a transaction to the Oracle smart contract to remove a voter along with associated task information.
 func RemoveVoter(address common.Address, taskId big.Int, ethClient models.GoEthClient) error {
 	lock.Lock()
 	defer lock.Unlock()

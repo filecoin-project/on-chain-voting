@@ -31,7 +31,7 @@ import (
 
 // GetWalletBalance retrieves the wallet balance for a given address ID using the Lotus JSON-RPC client.
 func GetWalletBalance(addressId string, lotusRpcClient jsonrpc.RPCClient) (*big.Int, error) {
-	balanceStr, err := utils.WalletBalance(context.Background(), lotusRpcClient, addressId)
+	balanceStr, err := utils.GetWalletBalance(context.Background(), lotusRpcClient, addressId)
 	if err != nil {
 		return nil, err
 	}
@@ -47,8 +47,7 @@ func GetWalletBalance(addressId string, lotusRpcClient jsonrpc.RPCClient) (*big.
 
 // GetUcanFromIpfs retrieves a UCAN (User-Centric Access Network) from IPFS (InterPlanetary File System).
 func GetUcanFromIpfs(ucanCid string) (string, error) {
-	url := fmt.Sprintf("https://%s.ipfs.nftstorage.link/", ucanCid)
-
+	url := fmt.Sprintf("https://%s.ipfs.w3s.link/", ucanCid)
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", err

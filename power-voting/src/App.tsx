@@ -19,69 +19,57 @@ import {
   ConnectButton,
   useConnectModal
 } from "@rainbow-me/rainbowkit";
-import { ConfigProvider, theme, Modal, Dropdown } from 'antd';
-import { useNetwork, useAccount } from "wagmi";
+import { ConfigProvider, theme, Modal, Dropdown, FloatButton } from 'antd';
+import { useAccount, useReadContract } from "wagmi";
 import Countdown from 'react-countdown';
 import routes from "./router";
 import Footer from './components/Footer';
 import "./common/styles/reset.less";
 import "tailwindcss/tailwind.css";
-import {useStaticContract} from "./hooks";
-import Loading from "./components/Loading";
 import {STORING_DATA_MSG} from "./common/consts";
+import {useVoterInfo} from "./common/store";
+import oracleAbi from "./common/abi/oracle.json";
+import {getContractAddress} from "./utils";
 
+function useVoterInfoSet(chainId: number, address: `0x${string}` | undefined) {
+  const { data: voterInfo } = useReadContract({
+    // @ts-ignore
+    address: getContractAddress(chainId, 'oracle'),
+    abi: oracleAbi,
+    functionName: 'voterToInfo',
+    args: [address]
+  });
+  return {
+    voterInfo: voterInfo as any
+  }
+}
 
 const App: React.FC = () => {
-  const { chain } = useNetwork();
-  const { address, isConnected} = useAccount();
+  const { chain, address, isConnected} = useAccount();
+  const chainId = chain?.id || 0;
+  const prevAddressRef = useRef(address);
   const {openConnectModal} = useConnectModal();
   const navigate = useNavigate();
   const element = useRoutes(routes);
-  const [showButton, setShowButton] = useState(false);
-  const [spinning, setSpinning] = useState(false);
   const [expirationTime, setExpirationTime] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const prevAddressRef = useRef(address);
-  const scrollRef = useRef(null);
+  const { voterInfo } = useVoterInfoSet(chainId, address);
 
-  const scrollToTop = () => {
-    const element = scrollRef.current;
-    // @ts-ignore
-    element.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  };
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const element = scrollRef.current;
-      // @ts-ignore
-      setShowButton(element.scrollTop > 300)
-    };
-
-    // @ts-ignore
-    scrollRef.current.addEventListener('scroll', handleScroll);
-
-    return () => {
-      // @ts-ignore
-      scrollRef.current.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
-
-
-  useEffect(() => {
-    scrollToTop();
-  }, [location]);
+  const setVoterInfo = useVoterInfo((state: any) => state.setVoterInfo);
 
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
-    if (prevAddress !== address) {
+    if (address && prevAddress !== address) {
       window.location.reload();
     }
   }, [address]);
 
+  useEffect(() => {
+    if (voterInfo) {
+      setVoterInfo(voterInfo);
+    }
+  }, [voterInfo]);
 
   const handleDelegate = async () => {
     const ucanStorageData = JSON.parse(localStorage.getItem('ucanStorage') || '[]');
@@ -100,19 +88,13 @@ const App: React.FC = () => {
       }
     }
 
-    setSpinning(true);
     if (!isConnected) {
       openConnectModal && openConnectModal();
-      setSpinning(false);
       return;
     }
-    const chainId = chain?.id || 0;
-    const { getOracleAuthorize }  = await useStaticContract(chainId);
-    const { data: { githubAccount, ucanCid } } = await getOracleAuthorize(address);
-    setSpinning(false);
-    const isGithubType = !!githubAccount;
-    if (ucanCid) {
-      const { data } = await axios.get(`https://${ucanCid}.ipfs.w3s.link/`);
+    const isGithubType = !!voterInfo[0];
+    if (voterInfo[2]) {
+      const { data } = await axios.get(`https://${voterInfo[2]}.ipfs.w3s.link/`);
       if (isGithubType) {
         const regex = /\/([^\/]+)\/([^\/]+)\/git\/blobs\/(\w+)/;
         const result = data.match(regex);
@@ -146,7 +128,6 @@ const App: React.FC = () => {
   const handleJump = (route: string) => {
     if (!isConnected) {
       openConnectModal && openConnectModal();
-      setSpinning(false);
       return;
     }
     navigate(route);
@@ -154,7 +135,7 @@ const App: React.FC = () => {
 
   const items = [
     {
-      key: '1',
+      key: 'ucan',
       label: (
         <a
           onClick={handleDelegate}
@@ -164,7 +145,7 @@ const App: React.FC = () => {
       ),
     },
     {
-      key: '2',
+      key: 'minerId',
       label: (
         <a
           onClick={() => { handleJump('/minerid') }}
@@ -213,7 +194,7 @@ const App: React.FC = () => {
 
   return (
     <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
-      <div className="layout font-body" id='scrollBox' ref={scrollRef}>
+      <div className="layout font-body">
         <header className='h-[96px] bg-[#273141]'>
           <div className='w-[1000px] h-[96px] mx-auto flex items-center justify-between'>
             <div className='flex items-center'>
@@ -245,7 +226,6 @@ const App: React.FC = () => {
                   Tools
                 </button>
               </Dropdown>
-
               <div className="connect flex items-center">
                 <ConnectButton />
               </div>
@@ -279,16 +259,11 @@ const App: React.FC = () => {
         </header>
         <div className='content w-[1000px] mx-auto pt-10 pb-10'>
           {
-            spinning ? <Loading /> : element
+            element
           }
         </div>
         <Footer/>
-        <button onClick={scrollToTop} className={`${showButton ? '' : 'hidden'} fixed bottom-[6rem] right-[6rem] z-40  p-2 bg-gray-600 text-white rounded-full hover:bg-gray-700 focus:outline-none`}>
-          <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M12 3l-8 8h5v10h6V11h5z" fill="currentColor" />
-          </svg>
-        </button>
-
+        <FloatButton.BackTop style={{ bottom: 100 }} />
       </div>
     </ConfigProvider>
   )

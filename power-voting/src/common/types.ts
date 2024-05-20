@@ -48,6 +48,8 @@ export interface ProposalList extends ProposalData {
   option: ProposalOption[]
   name: string
   address: string
+  githubName: string
+  githubAvatar: string
   descriptions: string
   proposalStatus: number
   showTime: string

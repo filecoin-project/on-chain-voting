@@ -14,25 +14,26 @@
 
 package models
 
+// Constants defining key types and signature types.
 const (
-	KTBLS       = "bls"
-	KTSecp256k1 = "secp256k1"
+	KTBLS       = "bls"       // BLS key type.
+	KTSecp256k1 = "secp256k1" // Secp256k1 key type.
 
-	SigTypeSecp256k1 = 1
-	SigTypeBLS       = 2
+	SigTypeSecp256k1 = 1 // Signature type for Secp256k1.
+	SigTypeBLS       = 2 // Signature type for BLS.
 )
 
-// Payload ucan payload
+// Payload represents the payload of a UCAN (UnixFS Content Addressed Network) token.
 type Payload struct {
-	Iss string `json:"iss" bson:"iss"`
-	Aud string `json:"aud" bson:"aud"`
-	Act string `json:"act" bson:"act"`
-	Prf string `json:"prf" bson:"prf"`
+	Iss string `json:"iss" bson:"iss"` // Issuer of the token.
+	Aud string `json:"aud" bson:"aud"` // Audience of the token.
+	Act string `json:"act" bson:"act"` // Action permitted by the token.
+	Prf string `json:"prf" bson:"prf"` // Profile of the token.
 }
 
-// Header ucan header
+// Header represents the header of a UCAN token.
 type Header struct {
-	Alg     string `json:"alg" bson:"alg"`
-	Type    string `json:"type" bson:"type"`
-	Version string `json:"version" bson:"version"`
+	Alg     string `json:"alg" bson:"alg"`         // Algorithm used for signing.
+	Type    string `json:"type" bson:"type"`       // Type of the token.
+	Version string `json:"version" bson:"version"` // Version of the token.
 }

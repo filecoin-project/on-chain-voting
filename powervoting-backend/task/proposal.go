@@ -16,7 +16,6 @@ package task
 
 import (
 	"fmt"
-	"go.uber.org/zap"
 	"powervoting-server/config"
 	"powervoting-server/constant"
 	"powervoting-server/contract"
@@ -24,35 +23,59 @@ import (
 	"powervoting-server/model"
 	"powervoting-server/utils"
 	"strconv"
+	"sync"
+	"time"
+
+	"go.uber.org/zap"
 )
 
-// SyncProposalHandler sync proposal handler
+// SyncProposalHandler asynchronously synchronizes proposals across multiple networks.
 func SyncProposalHandler() {
+	wg := sync.WaitGroup{}
+	errList := make([]error, 0, len(config.Client.Network))
+	mu := &sync.Mutex{}
+
 	for _, network := range config.Client.Network {
+		network := network
 		ethClient, err := contract.GetClient(network.Id)
 		if err != nil {
 			zap.L().Error("get go-eth client error:", zap.Error(err))
 			continue
 		}
-		go SyncProposal(ethClient)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			zap.L().Info("sync proposal start:", zap.Int64("networkId", network.Id))
+			if err := SyncProposal(ethClient, db.Engine); err != nil {
+				mu.Lock()
+				errList = append(errList, err)
+				mu.Unlock()
+			}
+		}()
 	}
+
+	wg.Wait()
+	if len(errList) != 0 {
+		zap.L().Error("sync finished with err:", zap.Errors("errors", errList))
+	}
+	zap.L().Info("sync proposal finished: ", zap.Int64("timestamp", time.Now().Unix()))
 }
 
-func SyncProposal(ethClient model.GoEthClient) {
-	var dict model.Dict
-	if err := db.Engine.Model(model.Dict{}).Where("name", constant.ProposalStartKey).Find(&dict).Error; err != nil {
-		zap.L().Error("Get proposal start index error: ", zap.Error(err))
-		return
+// SyncProposal syncs proposals for a given Ethereum client.
+func SyncProposal(ethClient model.GoEthClient, db db.DataRepo) error {
+	dict, err := db.GetDict(constant.ProposalStartKey)
+	if err != nil {
+		return err
 	}
 	start, err := strconv.Atoi(dict.Value)
 	if err != nil {
 		zap.L().Error("Translate string to int error: ", zap.Error(err))
-		return
+		return err
 	}
 	end, err := utils.GetProposalLatestId(ethClient)
 	if err != nil {
 		zap.L().Error("get proposal latest id error: ", zap.Error(err))
-		return
+		return err
 	}
 	for start <= end {
 		contractProposal, err := utils.GetProposal(ethClient, int64(start))
@@ -65,10 +88,9 @@ func SyncProposal(ethClient model.GoEthClient) {
 			start++
 			continue
 		}
-		var count int64
-		if err = db.Engine.Model(model.Proposal{}).Where("cid", contractProposal.Cid).Count(&count).Error; err != nil {
-			zap.L().Error("get proposal count error: ", zap.Error(err))
-			return
+		count, err := db.CountProposal(map[string]any{"cid": contractProposal.Cid})
+		if err != nil {
+			return err
 		}
 		if count > 0 {
 			start++
@@ -79,25 +101,30 @@ func SyncProposal(ethClient model.GoEthClient) {
 			ProposalId:   int64(start),
 			ProposalType: contractProposal.ProposalType.Int64(),
 			Creator:      contractProposal.Creator.String(),
+			StartTime:    contractProposal.StartTime.Int64(),
 			ExpTime:      contractProposal.ExpTime.Int64(),
 			VoteCount:    contractProposal.VotesCount.Int64(),
 			Network:      ethClient.Id,
 		}
-		if err = db.Engine.Model(model.Proposal{}).Create(&proposal).Error; err != nil {
-			zap.L().Error("create proposal error: ", zap.Error(err))
-			return
+		_, err = db.CreateProposal(&proposal)
+		if err != nil {
+			return err
 		}
-		if err = db.Engine.Model(model.Dict{}).Create(&model.Dict{
+		inDict := &model.Dict{
 			Name:  fmt.Sprintf("%s-%d", constant.VoteStartKey, proposal.ProposalId),
 			Value: "1",
-		}).Error; err != nil {
-			zap.L().Error("create vote dict error: ", zap.Error(err))
-			return
+		}
+		_, err = db.CreateDict(inDict)
+		if err != nil {
+			return err
 		}
 		start++
 	}
-	if err = db.Engine.Model(model.Dict{}).Where("name", constant.ProposalStartKey).Update("value", start).Error; err != nil {
+	err = db.UpdateDict(constant.ProposalStartKey, strconv.Itoa(start))
+	if err != nil {
 		zap.L().Error("update proposal start key error: ", zap.Error(err))
-		return
+		return err
 	}
+
+	return nil
 }

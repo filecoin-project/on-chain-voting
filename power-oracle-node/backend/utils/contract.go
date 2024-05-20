@@ -25,7 +25,7 @@ import (
 	"strconv"
 )
 
-// GetTasks get task list
+// GetTasks retrieves the list of tasks from the Ethereum smart contract.
 func GetTasks(ethClient models.GoEthClient) ([]*big.Int, error) {
 	data, err := ethClient.Abi.Pack("getTasks")
 	if err != nil {
@@ -50,7 +50,7 @@ func GetTasks(ethClient models.GoEthClient) ([]*big.Int, error) {
 	return unpack[0].([]*big.Int), nil
 }
 
-// GetF4Tasks get voter info
+// GetF4Tasks retrieves the list of F4 tasks from the Ethereum smart contract.
 func GetF4Tasks(ethClient models.GoEthClient) ([]*big.Int, error) {
 	data, err := ethClient.Abi.Pack("getF4Tasks")
 	if err != nil {
@@ -75,7 +75,7 @@ func GetF4Tasks(ethClient models.GoEthClient) ([]*big.Int, error) {
 	return unpack[0].([]*big.Int), nil
 }
 
-// GetVoterInfo get voter info
+// GetVoterInfo retrieves the information of a voter from the Ethereum smart contract.
 func GetVoterInfo(address string, ethClient models.GoEthClient) (models.VoterInfo, error) {
 	data, err := ethClient.Abi.Pack("getVoterInfo", common.HexToAddress(address))
 	if err != nil {
@@ -115,6 +115,7 @@ func GetVoterInfo(address string, ethClient models.GoEthClient) (models.VoterInf
 	return voterInfo, nil
 }
 
+// GetVoterAddresses retrieves the addresses of voters stored in the Ethereum smart contract.
 func GetVoterAddresses(ethClient models.GoEthClient) ([]common.Address, error) {
 	data, err := ethClient.Abi.Pack("getVoterAddresses")
 	if err != nil {
@@ -140,7 +141,7 @@ func GetVoterAddresses(ethClient models.GoEthClient) ([]common.Address, error) {
 	return unpack[0].([]common.Address), nil
 }
 
-// GetActorIdFromEthAddress get  actor id from eth address
+// GetActorIdFromEthAddress retrieves the actor ID associated with the given Ethereum address.
 func GetActorIdFromEthAddress(address string, ethClient models.GoEthClient) (string, error) {
 	data, err := ethClient.Abi.Pack("resolveEthAddress", common.HexToAddress(address))
 	if err != nil {
