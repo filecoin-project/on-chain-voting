@@ -35,12 +35,13 @@ func TestWalletBalance(t *testing.T) {
 	client, err := contract.GetClient(314159)
 	assert.Nil(t, err)
 	lotusRpcClient := NewClient(client.Rpc)
-	rsp, err := GetWalletBalance(context.Background(), lotusRpcClient, id)
+	res, err := GetWalletBalance(context.Background(), lotusRpcClient, id)
 	assert.Nil(t, err)
 
-	testBalance := "677032150115783288520"
-	assert.Equal(t, testBalance, rsp)
-	fmt.Println(rsp)
+	expectedBalance := "677032150115783288520"
+
+	assert.Equal(t, res, expectedBalance)
+	fmt.Println(res)
 }
 
 func TestIDFormAddress(t *testing.T) {
@@ -50,10 +51,10 @@ func TestIDFormAddress(t *testing.T) {
 	assert.Nil(t, err)
 	lotusRpcClient := NewClient(client.Rpc)
 
-	rsp, err := IDFromAddress(context.Background(), lotusRpcClient, address)
+	res, err := IDFromAddress(context.Background(), lotusRpcClient, address)
 	assert.Nil(t, err)
 
-	testID := "t065744"
-	assert.Equal(t, testID, rsp)
-	fmt.Println(rsp)
+	expectedID := "t065744"
+	assert.Equal(t, res, expectedID)
+	fmt.Println(res)
 }

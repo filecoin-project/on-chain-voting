@@ -25,8 +25,7 @@ func TestGetClient(t *testing.T) {
 	config.InitLogger()
 	config.InitConfig("../")
 	client, err := GetClient(314159)
-	if err != nil {
-		assert.Error(t, err)
-	}
+	assert.Nil(t, err)
 	assert.NotNil(t, client.Client)
+	assert.Equal(t, client.Id, int64(314159))
 }
