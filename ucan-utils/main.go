@@ -32,26 +32,41 @@ import (
 )
 
 const (
-	VERSION          = "0.0.1"
-	JWT              = "JWT"
-	SECP256K1        = "secp256k1"
-	BLS              = "bls"
+	// VERSION indicates the version of the application or system.
+	VERSION = "0.0.1"
+
+	// JWT specifies the token format as JSON Web Token.
+
+	JWT = "JWT"
+	// SECP256K1 indicates the use of the secp256k1 elliptic curve algorithm for cryptographic signatures.
+	SECP256K1 = "secp256k1"
+
+	// BLS indicates the use of the BLS (Boneh-Lynn-Shacham) cryptographic signature scheme.
+	BLS = "bls"
+
+	// SigTypeSecp256k1 represents the signature type for the secp256k1 algorithm.
 	SigTypeSecp256k1 = 1
-	SigTypeBLS       = 2
-	DST              = "BLSt_SIG_BLSt12381G2_XMD:SHA-256_SSWU_RO_NUL_"
+
+	// SigTypeBLS represents the signature type for the BLS cryptographic scheme.
+	SigTypeBLS = 2
+
+	// DST specifies the domain separation tag used in the BLS signature scheme.
+	DST = "BLSt_SIG_BLSt12381G2_XMD:SHA-256_SSWU_RO_NUL_"
 )
 
+// Header represents the header section of a JWT containing metadata about the token.
 type Header struct {
-	Alg     string `json:"alg" bson:"alg"`
-	Type    string `json:"type" bson:"type"`
-	Version string `json:"version" bson:"version"`
+	Alg     string `json:"alg" bson:"alg"`         // Alg specifies the algorithm used for signing.
+	Type    string `json:"type" bson:"type"`       // Type specifies the token type.
+	Version string `json:"version" bson:"version"` // Version indicates the version of the token.
 }
 
+// Payload represents the payload section of a token, containing claims or statements about the subject.
 type Payload struct {
-	Iss string `json:"iss" bson:"iss"`
-	Aud string `json:"aud" bson:"aud"`
-	Act string `json:"act" bson:"act"`
-	Prf string `json:"prf" bson:"prf"`
+	Iss string `json:"iss" bson:"iss"` //Iss of who sent it (the “from” field)
+	Aud string `json:"aud" bson:"aud"` //Aud the ID of who it’s intended for (the “to” field)
+	Act string `json:"act" bson:"act"` //Act capabilities delegated to the audience by the issuer
+	Prf string `json:"prf" bson:"prf"` //Prf Nested tokens with the same or greater permissions
 }
 
 func main() {
@@ -111,6 +126,7 @@ func main() {
 
 }
 
+// Signature function generates a signature using the provided private key string and key type, and then creates a JSON Web Token (JWT).
 func Signature(aud, act, privateKeyStr string, keyTypeStr string) (string, error) {
 	switch keyTypeStr {
 	case SECP256K1:
@@ -121,6 +137,7 @@ func Signature(aud, act, privateKeyStr string, keyTypeStr string) (string, error
 	return "", errors.New("unknown key type")
 }
 
+// Secp256k1 function creates a secp256k1 signature using the provided private key string and uses it to generate a JSON Web Token (JWT).
 func Secp256k1(aud, act, privateKeyStr string) (string, error) {
 	privateKeyBytes, err := base64.StdEncoding.DecodeString(privateKeyStr)
 	if err != nil {
@@ -174,6 +191,7 @@ func Secp256k1(aud, act, privateKeyStr string) (string, error) {
 	return fmt.Sprintf("%s.%s.%s", headerStr, payloadStr, signatureStr), nil
 }
 
+// Bls function creates a BLS signature using the provided private key string and uses it to generate a JSON Web Token (JWT).
 func Bls(aud, act, privateKeyStr string) (string, error) {
 	privateKeyBytes, err := base64.StdEncoding.DecodeString(privateKeyStr)
 	if err != nil {
