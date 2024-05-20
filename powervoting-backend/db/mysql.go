@@ -107,8 +107,8 @@ func (m *Mysql) GetVoteList(network, proposalId int64) ([]model.Vote, error) {
 // It creates multiple records in the VoteResult table in batches.
 // It updates the status of the proposal with the provided ID to indicate that it has been voted on.
 // Any error encountered during the transaction is logged.
-func (m *Mysql) VoteResult(proposalId int64, history model.VoteCompleteHistory, result []model.VoteResult) {
-	_ = m.Transaction(func(tx *gorm.DB) error {
+func (m *Mysql) VoteResult(proposalId int64, history model.VoteCompleteHistory, result []model.VoteResult) (int64, error) {
+	err := m.Transaction(func(tx *gorm.DB) error {
 		create := tx.Model(model.VoteCompleteHistory{}).Create(&history)
 		if create.Error != nil {
 			zap.L().Error("batch create error: ", zap.Error(create.Error))
@@ -126,6 +126,8 @@ func (m *Mysql) VoteResult(proposalId int64, history model.VoteCompleteHistory, 
 		}
 		return nil
 	})
+
+	return history.Id, err
 }
 
 func (m *Mysql) GetDict(key string) (*model.Dict, error) {

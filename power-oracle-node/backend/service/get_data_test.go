@@ -20,6 +20,9 @@ import (
 	"backend/utils"
 	"fmt"
 	"testing"
+
+	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetWalletBalance(t *testing.T) {
@@ -31,24 +34,32 @@ func TestGetWalletBalance(t *testing.T) {
 	}
 	contract.LotusRpcClient = utils.NewClient(contract.GoEthClient.Rpc)
 
-	tokenHolder, err := GetWalletBalance("t1wa4gvyeek4oh5zg375oo6lwhcmdwgxws5rgslyy", contract.LotusRpcClient)
-	if err != nil {
-		t.Error(err)
-	}
+	res, err := GetWalletBalance("t1wa4gvyeek4oh5zg375oo6lwhcmdwgxws5rgslyy", contract.LotusRpcClient)
+	assert.Nil(t, err)
 
-	fmt.Println(tokenHolder)
+	expected, err := decimal.NewFromString("49999999118307566058")
+	assert.Nil(t, err)
+
+	assert.Equal(t, res, expected.BigInt())
+
+	// test if addr not exist
+	_, err = GetWalletBalance("", contract.LotusRpcClient)
+	assert.NotNil(t, err)
+
+	fmt.Println(res)
 }
 
 func TestGetUcanIpfs(t *testing.T) {
 	var err error
 	config.InitConfig("../")
 	contract.GoEthClient, err = contract.GetClient(314159)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.Nil(t, err)
+
 	rsp, err := GetUcanFromIpfs("bafkreidnrzkmshm36e4uzj5mxl6gmwv2b6uhkkwvvpxo3anjcxepbskn3q")
-	if err != nil {
-		t.Error(err)
-	}
-	fmt.Println(rsp)
+	assert.Nil(t, err)
+
+	expected := `eyJhbGciOiJlY2RzYSIsInR5cGUiOiJKV1QiLCJ2ZXJzaW9uIjoiMC4wLjEifQ.eyJpc3MiOiIweDc2M0Q0MTA1OTRhMjQwNDg1Mzc5OTBkZGU2Y2E4MWMzOENmRjU2NmEiLCJhdWQiOiJ0MXdhNGd2eWVlazRvaDV6ZzM3NW9vNmx3aGNtZHdneHdzNXJnc2x5eSIsInByZiI6ImV5SmhiR2NpT2lKelpXTndNalUyYXpFaUxDSjBlWEJsSWpvaVNsZFVJaXdpZG1WeWMybHZiaUk2SWpBdU1TSjkuZXlKcGMzTWlPaUowTVhkaE5HZDJlV1ZsYXpSdmFEVjZaek0zTlc5dk5teDNhR050WkhkbmVIZHpOWEpuYzJ4NWVTSXNJbUYxWkNJNklqQjROell6UkRReE1EVTVOR0V5TkRBME9EVXpOems1TUdSa1pUWmpZVGd4WXpNNFEyWkdOVFkyWVNJc0ltRmpkQ0k2SW1Ga1pDSXNJbkJ5WmlJNklpSjkuMWdpSE1mX01HQ2drWFJVRE1Ed2VpeTRWeHpnTzVTeV95a2haYVgteUFZQlpndElQdnIyRUFzYkQ1bTNlYjlWOGJRSEJ0SFVXOXowMVhkRkJzY05tVWdFIiwiYWN0IjoiYWRkIn0.MHgzY2FkNTg0YmE5YzEwODNiMGQwZjBiY2VhOGUwM2VjYjM5NzM3NTlmMTkwNjllYjI0OGUxZmZiNTEwMjIzZjBjMmYyYWYxODYwNzZkM2I0NTkyMzhlMTkxNzE2NWIyYjI3NTEwOTQ2N2QzZWY0ZTcyNTI3MTk1MzMzNmRjN2E4ZTFj`
+
+	assert.NotEmpty(t, rsp)
+	assert.Equal(t, rsp, expected)
 }

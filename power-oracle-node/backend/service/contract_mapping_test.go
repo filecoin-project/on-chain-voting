@@ -19,8 +19,10 @@ import (
 	"backend/contract"
 	"backend/models"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetContractMapping(t *testing.T) {
@@ -28,21 +30,17 @@ func TestGetContractMapping(t *testing.T) {
 	config.InitLogger()
 	config.InitConfig("../")
 	contract.GoEthClient, err = contract.GetClient(314159)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.Nil(t, err)
 
 	ethAddress := common.HexToAddress("0x763D410594a24048537990dde6ca81c38CfF566a")
 
 	voterPower, err := GetContractMapping(models.VoterToPower, contract.GoEthClient, []interface{}{ethAddress})
-	if err != nil {
-		t.Error(err)
-	}
+	assert.Nil(t, err)
+	assert.NotNil(t, voterPower)
 
 	voterInfo, err := GetContractMapping(models.VoterToInfo, contract.GoEthClient, []interface{}{ethAddress})
-	if err != nil {
-		t.Error(err)
-	}
+	assert.Nil(t, err)
+	assert.NotNil(t, voterInfo)
 
 	fmt.Println("voter power:", voterPower)
 	fmt.Println("voter info:", voterInfo)
