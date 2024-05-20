@@ -20,6 +20,8 @@ import (
 	"backend/utils"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -38,9 +40,13 @@ func TestVerifyUCAN(t *testing.T) {
 	lotusRpcClient := utils.NewClient(contract.GoEthClient.Rpc)
 
 	iss, aud, act, isGitHub, err := VerifyUCAN(BlsUcan, lotusRpcClient)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	assert.Nil(t, err)
+	issResult := "0x763D410594a24048537990dde6ca81c38CfF566a"
+	assert.Equal(t, issResult, iss)
+	audResult := "t3w6ljfwruxid6fveirjam62kowz3zn2ul5f5kcmjh6wdf777ge4gj5vdep3ppjbys5aaxybj7dfws7bgrakua"
+	assert.Equal(t, audResult, aud)
+	actResult := "add"
+	assert.Equal(t, actResult, act)
+	assert.Equal(t, false, isGitHub)
 	fmt.Println(iss, aud, act, isGitHub)
 }
