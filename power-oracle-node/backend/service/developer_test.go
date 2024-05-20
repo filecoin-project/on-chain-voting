@@ -16,16 +16,17 @@ package service
 
 import (
 	"backend/config"
-	"fmt"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetDeveloperWeights(t *testing.T) {
 	config.InitLogger()
 	config.InitConfig("../")
 	totalWeights := GetDeveloperWeights()
-	fmt.Println(totalWeights)
+	assert.NotEmpty(t, totalWeights, 1)
 }
 
 func TestGetContributors(t *testing.T) {
@@ -36,20 +37,18 @@ func TestGetContributors(t *testing.T) {
 	since := result.Format("2006-01-02T15:04:05Z")
 
 	nodes, err := getContributors("filecoin-project", "venus", since)
-	if err != nil {
-		t.Error(err)
-	}
-	for _, v := range nodes {
-		fmt.Println(v.Committer.User.Login)
-		fmt.Println(v.Author.User.Login)
+	assert.Nil(t, err)
 
-	}
+	assert.NotEmpty(t, nodes)
 }
 
 func TestAddMonths(t *testing.T) {
 	config.InitConfig("../")
-	rsp := addMonths(time.Now(), -6)
-	fmt.Println(rsp)
+	rsp := addMonths(time.Date(2024, 05, 04, 00, 00, 00, 00, time.Local),
+		-2)
+	res := time.Date(2024, 03, 04, 00, 00, 00, 00, time.Local)
+
+	assert.Equal(t, rsp, res)
 }
 
 func TestAddMerge(t *testing.T) {
@@ -63,6 +62,11 @@ func TestAddMerge(t *testing.T) {
 		"test3": 5,
 	}
 
+	result := map[string]int{
+		"test1": 5,
+		"test2": 2,
+		"test3": 5,
+	}
 	rsp := addMerge(map1, map2)
-	fmt.Println(rsp)
+	assert.Equal(t, rsp, result)
 }
