@@ -104,7 +104,7 @@ func TestVoteResultQuery(t *testing.T) {
 	config.InitConfig("../")
 	InitMysql()
 
-	testHistory := model.VoteCompleteHistory{
+	expectedHistory := model.VoteCompleteHistory{
 		Id:                    1,
 		ProposalId:            65,
 		Network:               314159,
@@ -154,7 +154,7 @@ func TestVoteResultQuery(t *testing.T) {
 	tx := Engine.Preload("VotePowers").Where("proposal_id", proposalId).Where("network", network).Find(&history)
 	assert.Nil(t, tx.Error)
 
-	assert.Equal(t, testHistory, history)
+	assert.Equal(t, history, expectedHistory)
 	fmt.Printf("%+v\n", history)
 }
 
@@ -162,7 +162,7 @@ func TestGetProposalList(t *testing.T) {
 	config.InitConfig("../")
 	InitMysql()
 
-	testProposalList := []model.Proposal{
+	expectedProposalList := []model.Proposal{
 		{
 			Id:           1,
 			ProposalId:   1,
@@ -177,19 +177,19 @@ func TestGetProposalList(t *testing.T) {
 		},
 	}
 
-	list, err := Engine.GetProposalList(314159, 2)
+	res, err := Engine.GetProposalList(314159, 2)
 	assert.Nil(t, err)
 
-	assert.Equal(t, testProposalList, list)
+	assert.Equal(t, res, expectedProposalList)
 
-	fmt.Println(list)
+	fmt.Println(res)
 }
 
 func TestGetVoteList(t *testing.T) {
 	config.InitConfig("../")
 	InitMysql()
 
-	testvoteList := []model.Vote{
+	expectedVoteList := []model.Vote{
 		{
 			Id:         1,
 			ProposalId: 1,
@@ -199,9 +199,9 @@ func TestGetVoteList(t *testing.T) {
 		},
 	}
 
-	list, err := Engine.GetVoteList(314159, 1)
+	res, err := Engine.GetVoteList(314159, 1)
 	assert.Nil(t, err)
 
-	assert.Equal(t, testvoteList, list)
-	fmt.Println(list)
+	assert.Equal(t, res, expectedVoteList)
+	fmt.Println(res)
 }
