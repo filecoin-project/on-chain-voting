@@ -133,18 +133,17 @@ const FipApprove = () => {
       key: 'ratio',
       render: (value: string) => {
         return (
-          <Popover content={
-            <Table
-              dataSource={popoverData}
-              columns={popoverColumns}
-              pagination={false}
-            />
-          }>
-            <div className='flex items-center gap-2'>
-              <span>{value} </span>
-              <InfoCircleOutlined style={{ fontSize: 14 }} />
-            </div>
-          </Popover>
+          <div className='flex items-center gap-2'>
+            <span>{value} </span>
+            <Popover content={
+              <Table
+                dataSource={popoverData}
+                columns={popoverColumns}
+                pagination={false}
+              />
+            }>
+            </Popover>
+          </div>
         )
       }
     },
