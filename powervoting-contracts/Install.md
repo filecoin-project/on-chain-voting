@@ -1,31 +1,50 @@
-# Compilation of the PowerVoting
+# Compilation of the PowerVoting Contract
 
-## 1. Obtain the code for the Oracle Contract, with the repository branch set to: filecoin
+#### 1. Clone the PowerVoting Contracts Repository
 
-```python
-git clone https://github.com/black-domain/powervoting-contracts.git
+First, clone the repository with the branch set to `main `:
+
+```
+git clone https://github.com/filecoin-project/on-chain-voting.git
 ```
 
-## 2. *enter the contract directory*
+#### 2. Enter the Contract Directory
 
-```python
-cd contract
+Navigate to the contract directory:
+
+```
+cd powervoting-contracts
 ```
 
-## 3. Copy the code to[Remix](https://remix.ethereum.org/).
+#### 3. Copy the Code to Remix
 
-![Untitled](img/1.png)
+Open [Remix](https://remix.ethereum.org/) in your browser and copy the code into it.
 
-## 4. Open the PowerVoting-filecoin.sol file and compile it.
+![Open Remix](img/1.png)
 
-![Untitled](img/2.png)
+#### 4. Compile the PowerVoting-filecoin.sol File
 
-## 5. Connect to MetaMask and switch to the Filecoin network.
+In Remix, open the `PowerVoting-filecoin.sol` file and compile it.
 
-## 6. After checking 'Deploy with Proxy' and entering the address of the Oracle contract, click the 'Deploy' button.
+![Compile File](img/2.png)
 
-![Untitled](img/3.png)
+#### 5. Connect to MetaMask and Switch to the Filecoin Network
 
-## 7. After deployment, there are two contracts: POWERVOTING is the logic contract, and ERC1967PROXY is the proxy contract.
+Make sure you are connected to MetaMask and have switched to the Filecoin network.
 
-![Untitled](img/4.png)
+#### 6. Deploy the Contract
+
+- Check 'Deploy with Proxy'.
+- Enter the address of the Oracle contract.
+- Click the 'Deploy' button.
+
+![Deploy Contract](img/3.png)
+
+#### 7. Post-Deployment
+
+After deployment, there will be two contracts:
+
+- `POWERVOTING` (the logic contract)
+- `ERC1967PROXY` (the proxy contract).
+
+![Contracts Deployed](img/4.png)

@@ -1,33 +1,44 @@
-# I.Compiling Ucan Tool
+# Compiling the UCAN Tool
 
+#### 1. Install the Go Toolchain
 
+First, you need to install the Go toolchain. You can find [installation instructions](https://go.dev/doc/install) here. Ensure you install Go version >= 1.20.
 
-## 1.First, you need to install the Go toolchain. You can find [instructions](https://go.dev/doc/install) here, with Go version >= 1.20
+#### 2. Clone the UCAN Signature Tool Repository
 
+Obtain the code for the UCAN signature tool:
 
-
-## 2. Get the code of UCAN signature tool
-
-```bash
-git clone https://github.com/black-domain/ucan-utils.git
+```
+git clone https://github.com/filecoin-project/on-chain-voting.git
 ```
 
-## 3.Install dependencies
+#### 3. Install Dependencies
 
-```bash
+Navigate to the `ucan-utils` directory and install the dependencies:
+
+```
+cd ucan-utils
 go mod tidy
 ```
 
-## 4.Build the binary file
+#### 4. Build the Binary File
 
-```bash
+Build the binary file using the following command:
+
+```
 go build -o signature .
 ```
 
-## 5.Now you should be able to run signature
+#### 5. Run the Signature Tool
 
-```bash
-$ ./signature -h
+Now you should be able to run the signature tool:
+
+```
+./signature -h
 ```
 
-<img src="./img/1.png" style="zoom:50%;" />
+This command will display the help menu for the signature tool.
+
+<img src="./img/1.png" style="zoom:50%;" alt="" />
+
+Following these steps, you will have successfully compiled and run the UCAN tool.
