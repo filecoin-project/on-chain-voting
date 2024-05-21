@@ -15,27 +15,27 @@
 import React, {useState, useEffect, useRef} from "react";
 import {Link, useNavigate} from "react-router-dom";
 import { message } from 'antd';
+import {RadioGroup} from '@headlessui/react';
+import classNames from 'classnames';
 import Table from '../../../components/Table';
 import LoadingButton from '../../../components/LoadingButton';
-import {useNetwork, useAccount} from "wagmi";
+import {useAccount} from "wagmi";
 import {
   DUPLICATED_MINER_ID_MSG,
-  filecoinCalibrationChain,
-  STORING_DATA_MSG,
+  STORING_DATA_MSG, UCAN_TYPE_FILECOIN_OPTIONS, UCAN_TYPE_GITHUB_OPTIONS,
   WRONG_MINER_ID_MSG
 } from "../../../common/consts";
-import {useDynamicContract, useStaticContract} from "../../../hooks";
 import Loading from "../../../components/Loading";
 import {hasDuplicates} from "../../../utils";
 
 const FipPropose = () => {
-  const {chain} = useNetwork();
+  const {isConnected, address, chain} = useAccount();
   const chainId = chain?.id || 0;
-  const {isConnected, address} = useAccount();
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
   const [fipAddress, setFipAddress] = useState('');
   const [fipInfo, setFipInfo] = useState('');
+  const [proposeType, setProposeType] = useState('approve');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -54,6 +54,10 @@ const FipPropose = () => {
 
   const handleChange = (type: string, value: string) => {
     type === 'fipAddress' ? setFipAddress(value) : setFipInfo(value);
+  }
+
+  const handleProposeTypeChange = (value: string) => {
+    setProposeType(value);
   }
 
   /**
@@ -80,25 +84,101 @@ const FipPropose = () => {
       </button>
       <div className='flow-root space-y-8'>
         <Table
-          title='FIP Propose'
+          title='FIP Editor Propose'
           list={[
             {
-              name: 'FIP Address',
+              name: 'Propose Type',
+              width: 100,
+              comp: (
+                <RadioGroup className='flex' value={proposeType} onChange={handleProposeTypeChange}>
+                  <RadioGroup.Option
+                    key='approve'
+                    value='approve'
+                    className='relative flex items-center cursor-pointer p-4 focus:outline-none'
+                  >
+                    {({active, checked}) => (
+                      <>
+                        <span
+                          className={classNames(
+                            checked
+                              ? 'bg-[#45B753] border-transparent'
+                              : 'bg-[#212B3B] border-[#38485C]',
+                            active ? 'ring-2 ring-offset-2 ring-[#45B753]' : '',
+                            'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
+                          )}
+                          aria-hidden='true'
+                        >
+                          {(active || checked) && (
+                            <span className='rounded-full bg-white w-1.5 h-1.5'/>
+                          )}
+                        </span>
+                        <span className='ml-3'>
+                          <RadioGroup.Label
+                            as='span'
+                            className={
+                              checked ? 'text-white' : 'text-[#8896AA]'
+                            }
+                          >
+                            Approve
+                          </RadioGroup.Label>
+                        </span>
+                      </>
+                    )}
+                  </RadioGroup.Option>
+                  <RadioGroup.Option
+                    key='revoke'
+                    value='revoke'
+                    className='relative flex items-center cursor-pointer p-4 focus:outline-none'
+                  >
+                    {({active, checked}) => (
+                      <>
+                        <span
+                          className={classNames(
+                            checked
+                              ? 'bg-[#45B753] border-transparent'
+                              : 'bg-[#212B3B] border-[#38485C]',
+                            active ? 'ring-2 ring-offset-2 ring-[#45B753]' : '',
+                            'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
+                          )}
+                          aria-hidden='true'
+                        >
+                          {(active || checked) && (
+                            <span className='rounded-full bg-white w-1.5 h-1.5'/>
+                          )}
+                        </span>
+                        <span className='ml-3'>
+                          <RadioGroup.Label
+                            as='span'
+                            className={
+                              checked ? 'text-white' : 'text-[#8896AA]'
+                            }
+                          >
+                            Revoke
+                          </RadioGroup.Label>
+                        </span>
+                      </>
+                    )}
+                  </RadioGroup.Option>
+                </RadioGroup>
+              )
+            },
+            {
+              name: 'Editor Address',
               width: 100,
               comp: (
                 <input
-                  placeholder='Input FIP Address.'
-                  className='form-input w-[520px] rounded bg-[#212B3C] border border-[#313D4F] cursor-not-allowed'
+                  placeholder='Input editor address'
+                  className='form-input w-[520px] rounded bg-[#212B3C] border border-[#313D4F]'
                   onChange={(e) => { handleChange('fipAddress', e.target.value) }}
                 />
               )
             },
             {
-              name: 'Address Info.',
+              name: 'Propose Info',
               width: 100,
               comp: (
                 <textarea
-                  placeholder='Input Address Info.'
+                  placeholder='Input propose info'
                   className='form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]'
                   onChange={(e) => { handleChange('fipInfo', e.target.value) }}
                 />

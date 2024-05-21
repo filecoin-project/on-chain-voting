@@ -14,25 +14,91 @@
 
 import React, {useState, useEffect, useRef} from "react";
 import {Link, useNavigate} from "react-router-dom";
-import { message, Table } from 'antd';
-import LoadingButton from '../../../components/LoadingButton';
-import {useNetwork, useAccount} from "wagmi";
+import { Popover, Table, Popconfirm, Tooltip } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import {useAccount} from "wagmi";
 import {
   web3AvatarUrl,
 } from "../../../common/consts";
-import {useStaticContract} from "../../../hooks";
 import Loading from "../../../components/Loading";
 import EllipsisMiddle from "../../../components/EllipsisMiddle";
 
 const FipRevoke = () => {
-  const {chain} = useNetwork();
+  const {isConnected, address, chain} = useAccount();
   const chainId = chain?.id || 0;
-  const {isConnected, address} = useAccount();
+
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
   const [minerIds, setMinerIds] = useState(['']);
-  const [spinning, setSpinning] = useState(true);
+  const [spinning, setSpinning] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const confirm = (e: any) => {
+    console.log(e);
+  };
+  const cancel = (e: any) => {
+    console.log(e);
+  };
+
+  const popoverColumns = [
+    {
+      title: 'FIP Editor',
+      dataIndex: 'address',
+      key: 'address',
+      width: 280,
+      render: (value: string) => {
+        return (
+          <div className="w-[180px] flex items-center">
+            <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${value}`} alt="" />
+            <a
+              className="text-white hover:text-white"
+              target="_blank"
+              rel="noopener"
+              href={`${chain?.blockExplorers?.default.url}/address/${value}`}
+            >
+              {EllipsisMiddle({ suffixCount: 8, children: value })}
+            </a>
+          </div>
+        )
+      }
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+    },
+  ]
+
+  const popoverData = [
+    {
+      address: '0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307',
+      status: 'Revoked',
+    },
+    {
+      address: '0x2E4f5898ec86A71d4D0681B33DAeD47845357BaC',
+      status: 'Revoked',
+    },
+    {
+      address: '0xe4c7b2bb1d600bCD0A9af60dda3874e369C37bc4',
+      status: 'Revoked',
+    },
+    {
+      address: '0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307',
+      status: '-',
+    },
+    {
+      address: '0xe4c7b2bb1d600bCD0A9af60dda3874e369C37bc4',
+      status: '-',
+    },
+    {
+      address: '0x2E4f5898ec86A71d4D0681B33DAeD47845357BaC',
+      status: '-',
+    },
+    {
+      address: '0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307',
+      status: '-',
+    },
+  ]
 
   const columns = [
     {
@@ -60,27 +126,71 @@ const FipRevoke = () => {
       title: 'Info',
       dataIndex: 'info',
       key: 'info',
+      ellipsis: true,
+      render: (value: string) => {
+        return (
+          <Tooltip placement="topLeft" title={value}>
+            {value}
+          </Tooltip>
+        )
+      }
+    },
+    {
+      title: 'Revoke Ratio',
+      dataIndex: 'ratio',
+      key: 'ratio',
+      render: (value: string) => {
+        return (
+          <Popover content={
+            <Table
+              dataSource={popoverData}
+              columns={popoverColumns}
+              pagination={false}
+            />
+          }>
+            <div className='flex items-center gap-2'>
+              <span>{value} </span>
+              <InfoCircleOutlined style={{ fontSize: 14 }} />
+            </div>
+          </Popover>
+        )
+      }
     },
     {
       title: 'Action',
       key: 'total',
       width: 100,
-      render: (_: any, record: any) => <a className='hover:text-white' onClick={() => handleApprove(record.address)}>Revoke</a>
+      render: (_: any, record: any) => <a className='hover:text-white' onClick={() => handleRevoke(record.address)}>
+        <Popconfirm
+          title="Revoke FIP editor"
+          description="Are you sure to revoke?"
+          onConfirm={confirm}
+          onCancel={cancel}
+          okText="Yes"
+          cancelText="No"
+        >
+          <button className='w-[80px] h-[24px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-6 rounded-xl flex justify-center items-center'>Revoke</button>
+        </Popconfirm>
+      </a>
     },
   ];
 
   const dataSource = [
     {
       address: '0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307',
-      info: 'test1'
+      info: 'test1',
+      ratio: '3 / 7'
     },
     {
       address: '0x2E4f5898ec86A71d4D0681B33DAeD47845357BaC',
-      info: 'test2'
+      info: 'test2test2test2test2test2test2test2test2test2test2test2test2test2test2',
+
+      ratio: '5 / 7'
     },
     {
       address: '0xe4c7b2bb1d600bCD0A9af60dda3874e369C37bc4',
-      info: 'test3'
+      info: 'test3',
+      ratio: '6 / 7'
     },
   ]
 
@@ -104,19 +214,12 @@ const FipRevoke = () => {
 
 
   const initState = async () => {
-    const { getMinerIds } = await useStaticContract(chainId);
-    const { code, data: { minerIds } } = await getMinerIds(address);
-    setSpinning(false);
+    // const { getMinerIds } = await useStaticContract(chainId);
+    // const { code, data: { minerIds } } = await getMinerIds(address);
+    // setSpinning(false);
   }
 
-  const handleApprove = (address: string) => {
-
-  }
-
-  /**
-   * Set miner ID
-   */
-  const onSubmit = async () => {
+  const handleRevoke = (address: string) => {
 
   }
 
@@ -137,7 +240,7 @@ const FipRevoke = () => {
         <div className='min-w-full bg-[#273141] rounded text-left'>
           <div className='flow-root space-y-8'>
             <div className='font-normal text-white px-8 py-7 text-2xl border-b border-[#313D4F] flex items-center'>
-              <span>FIP Revoke</span>
+              <span>FIP Editor Revoke</span>
             </div>
             <div className='px-8 pb-10 !mt-0'>
               <Table
@@ -147,10 +250,6 @@ const FipRevoke = () => {
               />
             </div>
           </div>
-        </div>
-
-        <div className='text-center'>
-          <LoadingButton text='Submit' loading={loading} handleClick={onSubmit} />
         </div>
       </div>
     </div>
