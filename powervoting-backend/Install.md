@@ -1,60 +1,71 @@
-# I.Compilation of the PowerVoting backend
+# PowerVoting Backend Compilation Guide
 
+#### 1. Install Go Toolchain
 
+First, ensure you have the Go toolchain installed. You can find installation instructions [here](https://go.dev/doc/install). Make sure you have Go version >= 1.20.
 
-## 1.First, you need to install the Go toolchain. You can find [instructions](https://go.dev/doc/install) here, with Go version >= 1.20
+#### 2. Install Docker
 
+Install Docker by following the instructions for your operating system [here](https://docs.docker.com/engine/install/).
 
+#### 3. Install MySQL Server
 
-## 2.Install [Docker](https://docs.docker.com/engine/install/ubuntu/)
+Install the MySQL server Docker image by running the following command:
 
-
-
-## 3.Install MySQL server [Docker](https://hub.docker.com/r/mysql/mysql-server) image
-
-
-
-## 4.Obtain the PowerVoting backend code, with the repository branch set to: dev-filecoin
-
-```bash
-git clone https://github.com/black-domain/powervoting-backend.git
+```
+docker pull mysql/mysql-server
 ```
 
+#### 4. Clone the PowerVoting Backend Repository
 
-## 5.Modify the configuration.yaml configuration file
+Clone the PowerVoting backend repository with the repository branch set to `main`:
 
-![Untitled](img/1.png)
+```
+git clone https://github.com/filecoin-project/on-chain-voting.git
+```
 
+#### 5. Modify the Configuration File
 
+Edit the `configuration.yaml` file as needed for your environment.
 
-## 6.Install dependencies
+![Edit Configuration](img/1.png)
 
-```bash
+#### 6. Install Dependencies
+
+Run the following command to tidy Go modules and install dependencies:
+
+```
 go mod tidy
 ```
 
+#### 7. Build the Docker Image
 
+Build the Docker image for the PowerVoting backend:
 
-## 7.Build Docker image
-
-```bash
-docker build -t powervoting  .
+```
+docker build -t powervoting .
 ```
 
-![Untitled](img/2.png)
+![Building Docker Image](img/2.png)
 
+#### 8. Run the Docker Image
 
+Run the Docker image, mapping port 9999 of the container to port 9999 of the host, in detached mode:
 
-## 8.Run Docker image
-
-```bash
-docker run -p 9999:9999  -d powervoting
+```
+docker run -p 9999:9999 -d powervoting
 ```
 
-![Untitled](img/3.png)
+![Running Docker Image](img/3.png)
 
+#### 9. View Logs
 
+To monitor the logs of the running container, you can use the Docker logs command:
 
-## 9.View logs
+```
+docker logs <container_id>
+```
 
-![Untitled](img/4.png)
+![Viewing Logs](img/4.png)
+
+By following these steps, you will successfully compile, build, and run the PowerVoting backend using Docker.
