@@ -412,7 +412,7 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     /**
      * @notice Resolves the Ethereum address to an actor ID.
      * @param addr The Ethereum address to resolve.
-     * @retzzzurn The resolved actor ID.
+     * @return The resolved actor ID.
      */
     function resolveEthAddress(address addr) external view returns (uint64) {
         uint64 actorId = addr.resolveEthAddress();
