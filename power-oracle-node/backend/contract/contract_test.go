@@ -16,16 +16,16 @@ package contract
 
 import (
 	"backend/config"
-	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetClient(t *testing.T) {
 	config.InitLogger()
 	config.InitConfig("../")
 	client, err := GetClient(314159)
-	if err != nil {
-		return
-	}
-	fmt.Println(client)
+	assert.Nil(t, err)
+	assert.NotNil(t, client.Client)
+	assert.Equal(t, client.Id, int64(314159))
 }

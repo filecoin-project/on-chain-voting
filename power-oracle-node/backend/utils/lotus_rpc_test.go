@@ -20,6 +20,8 @@ import (
 	"context"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -31,29 +33,28 @@ func TestWalletBalance(t *testing.T) {
 	config.InitLogger()
 	config.InitConfig("../")
 	client, err := contract.GetClient(314159)
-	if err != nil {
-		return
-	}
+	assert.Nil(t, err)
 	lotusRpcClient := NewClient(client.Rpc)
-	rsp, err := GetWalletBalance(context.Background(), lotusRpcClient, id)
-	if err != nil {
-		t.Error(err)
-	}
-	fmt.Println(rsp)
+	res, err := GetWalletBalance(context.Background(), lotusRpcClient, id)
+	assert.Nil(t, err)
+
+	expectedBalance := "677032150115783288520"
+
+	assert.Equal(t, res, expectedBalance)
+	fmt.Println(res)
 }
 
 func TestIDFormAddress(t *testing.T) {
 	config.InitLogger()
 	config.InitConfig("../")
 	client, err := contract.GetClient(314159)
-	if err != nil {
-		return
-	}
+	assert.Nil(t, err)
 	lotusRpcClient := NewClient(client.Rpc)
 
-	rsp, err := IDFromAddress(context.Background(), lotusRpcClient, address)
-	if err != nil {
-		t.Error(err)
-	}
-	fmt.Println(rsp)
+	res, err := IDFromAddress(context.Background(), lotusRpcClient, address)
+	assert.Nil(t, err)
+
+	expectedID := "t065744"
+	assert.Equal(t, res, expectedID)
+	fmt.Println(res)
 }
