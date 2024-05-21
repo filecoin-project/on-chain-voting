@@ -1,39 +1,60 @@
-# Compilation of the Oracle
+# Oracle Contract Compilation Guide
 
-## 1. Obtain the code for the Oracle Contract, with the repository branch set to: filecoin.
+#### 1. Clone the Repository
 
-```python
-git clone https://github.com/black-domain/power-oracle-contracts.git
+Clone the Oracle contract repository with the branch set to main:
+
+```
+git clone https://github.com/filecoin-project/on-chain-voting.git
 ```
 
-## 2. enter the contract directory.
+#### 2. Navigate to the Contract Directory
 
-```python
-cd contract
+Enter the contract directory within the cloned repository:
+
+```
+cd power-oracle-contracts
 ```
 
-## 3. Copy the code to[Remix](https://remix.ethereum.org/).
+#### 3. Open Remix
 
-![Untitled](img/1.png)
+Go to [Remix](https://remix.ethereum.org/) to work with the contracts:
 
-## 4. Open the Oracle.sol file and compile it.
+![Open Remix](img/1.png)
 
-![Untitled](img/2.png)
+#### 4. Upload and Compile the Oracle Contract
 
-## 5. Connect to MetaMask and switch to the Filecoin network.
+Copy the contract files from your local directory to Remix. Open the `Oracle.sol` file in Remix and compile it:
 
-## 6. Check 'Deploy with Proxy' and then click the 'Deploy' button.
+![Compile Oracle.sol](img/2.png)
 
-![Untitled](img/3.png)
+#### 5. Connect MetaMask to Remix
 
-## 7. After deployment, there are two contracts: ORACLE is the logic contract, and ERC1967PROXY is the proxy contract.
+Ensure MetaMask is connected to Remix and switch to the Filecoin network.
 
-![Untitled](img/4.png)
+#### 6. Deploy the Contract with Proxy
 
-## 8. Open the ERC1967PROXY contract, call the updatePowerVotingContract method, and pass the deployed PowerVoting contract as an argument.
+In Remix, check the 'Deploy with Proxy' option and click the 'Deploy' button. This will deploy two contracts:
 
-![Untitled](img/5.png)
+- `ORACLE`: the logic contract
+- `ERC1967PROXY`: the proxy contract
 
-## 9. Call the updateNodeAllowList method and pass the address used by the Oracle Node and true to update the Oracle Node whitelist.
+![Deploy with Proxy](img/3.png)
 
-![Untitled](img/6.png)
+After deployment, you should see two contracts deployed:
+
+![Contracts Deployed](img/4.png)
+
+#### 7. Update the Power Voting Contract
+
+Open the `ERC1967PROXY` contract, call the `updatePowerVotingContract` method, and pass the address of the deployed `PowerVoting` contract:
+
+![Update Power Voting Contract](img/5.png)
+
+#### 8. Update the Oracle Node Whitelist
+
+Call the `updateNodeAllowList` method on the `ERC1967PROXY` contract. Pass the address used by the Oracle Node and set the value to `true` to update the Oracle Node whitelist:
+
+![Update Node Allow List](img/6.png)
+
+By following these steps, you will successfully compile, deploy, and configure the Oracle contract using Remix and MetaMask on the Filecoin network.
