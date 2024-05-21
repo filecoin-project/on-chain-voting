@@ -150,6 +150,7 @@ const FipRevoke = () => {
                 pagination={false}
               />
             }>
+              <InfoCircleOutlined style={{ fontSize: 14 }} />
             </Popover>
           </div>
         )
@@ -158,19 +159,21 @@ const FipRevoke = () => {
     {
       title: 'Action',
       key: 'total',
-      width: 100,
-      render: (_: any, record: any) => <a className='hover:text-white' onClick={() => handleRevoke(record.address)}>
-        <Popconfirm
-          title="Revoke FIP editor"
-          description="Are you sure to revoke?"
-          onConfirm={confirm}
-          onCancel={cancel}
-          okText="Yes"
-          cancelText="No"
-        >
-          <button className='w-[80px] h-[24px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-6 rounded-xl flex justify-center items-center'>Revoke</button>
-        </Popconfirm>
-      </a>
+      align: 'center' as const,
+      width: 120,
+      render: (_: any, record: any) =>
+        <a className='hover:text-white flex justify-center' onClick={() => handleRevoke(record.address)}>
+          <Popconfirm
+            title="Revoke FIP editor"
+            description="Are you sure to revoke?"
+            onConfirm={confirm}
+            onCancel={cancel}
+            okText="Yes"
+            cancelText="No"
+          >
+            <button className='w-[80px] h-[24px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-6 rounded-xl flex justify-center items-center'>Revoke</button>
+          </Popconfirm>
+        </a>
     },
   ];
 

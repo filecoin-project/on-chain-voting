@@ -142,6 +142,7 @@ const FipApprove = () => {
                 pagination={false}
               />
             }>
+              <InfoCircleOutlined style={{ fontSize: 14 }} />
             </Popover>
           </div>
         )
@@ -150,19 +151,21 @@ const FipApprove = () => {
     {
       title: 'Action',
       key: 'total',
-      width: 100,
-      render: (_: any, record: any) => <a className='hover:text-white' onClick={() => handleApprove(record.address)}>
-        <Popconfirm
-          title="Approve FIP editor"
-          description="Are you sure to approve?"
-          onConfirm={confirm}
-          onCancel={cancel}
-          okText="Yes"
-          cancelText="No"
-        >
-          <button className='w-[80px] h-[24px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-6 rounded-xl flex justify-center items-center'>Approve</button>
-        </Popconfirm>
-      </a>
+      align: 'center' as const,
+      width: 120,
+      render: (_: any, record: any) =>
+        <a className='hover:text-white flex justify-center' onClick={() => handleApprove(record.address)}>
+          <Popconfirm
+            title="Approve FIP editor"
+            description="Are you sure to approve?"
+            onConfirm={confirm}
+            onCancel={cancel}
+            okText="Yes"
+            cancelText="No"
+          >
+            <button className='w-[80px] h-[24px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-6 rounded-xl flex justify-center items-center'>Approve</button>
+          </Popconfirm>
+        </a>
     },
   ];
 
