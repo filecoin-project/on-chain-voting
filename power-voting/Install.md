@@ -1,6 +1,6 @@
 ## Power Voting Front-end Compilation Process
 
-### 1.Environment and Development Tools
+#### 1.Environment and Development Tools
 
 1.Node.js 14 or later installed
 
@@ -10,9 +10,9 @@
 
 4.Git
 
-<img src="./img/git.png" style="zoom:50%;" />
+<img src="./img/git.png" style="zoom:50%;" alt="" />
 
-### 2.Download Source Code
+#### 2.Download Source Code
 
 Download the source code with the following command:
 
@@ -20,7 +20,7 @@ Download the source code with the following command:
 git clone https://github.com/black-domain/power-voting.git
 ```
 
-### 3.Install Dependencies
+#### 3.Install Dependencies
 
 Install dependencies with the following command:
 
@@ -31,23 +31,23 @@ yarn
 After yarn, you will get a 'node_modules' folder in the root directory.
 
 
-<img src="img/node_modules.png" style="zoom:50%;" />
+<img src="img/node_modules.png" style="zoom:50%;"  alt="" />
 
-### 4.Update Keys in .env.example
+#### 4.Update Keys in .env.example
 
 Deploying PowerVoting and Oracle contract on Filecoin main network and replace the following address in ‘/.env.example’
 
-<img src="img/mainnet.png" />
+<img src="img/mainnet.png" alt="" />
 
 If you deploy the contract on Filecoin test network Calibration, you should replace the following address in ‘/.env.example’
 
-<img src="img/testnet.png" />
+<img src="img/testnet.png"  alt="" />
 
 If you modify the contract code, you need to update the following abi in ‘/src/common/abi’
 
-<img src="img/abi.png" style="zoom:50%;" />
+<img src="img/abi.png" style="zoom:50%;"  alt="" />
 
-### 5. Update IPFS Storage Email And Wallet Connect Project Id
+#### 5. Update IPFS Storage Email And Wallet Connect Project Id
 
 Create Web3 storage Account by https://web3.storage
 
@@ -55,10 +55,10 @@ Create wallet connect project id by https://www.rainbowkit.com/docs/migration-gu
 
 Replace the following keys in ‘/.env.example’
 
-<img src="img/key.png" />
+<img src="img/key.png" alt="" />
 
 
-### 6.Build And Package
+#### 6.Build And Package
 
 Build  with the following command:
 
@@ -68,9 +68,9 @@ yarn build
 
 After building, you will get a 'dist' folder in the root directory.
 
-<img src="img/dist.png" style="zoom:50%;" />
+<img src="img/dist.png" style="zoom:50%;"  alt="" />
 
-### 7.Deployment
+#### 7.Deployment
 
 To deploy the 'dist ' folder generated after building your front-end project, you can follow these steps:
 

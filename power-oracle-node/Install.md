@@ -1,44 +1,62 @@
-# I.Compilation of the Oracle node
+# Oracle Node Compilation Guide
 
-## 1.First, you need to install the Go toolchain. You can find [instructions](https://go.dev/doc/install) here, with Go version >= 1.20
+#### 1. Install Go Toolchain
 
-## 2.Install [Docker](https://docs.docker.com/engine/install/ubuntu/)
+First, you need to install the Go toolchain. You can find [installation instructions](https://go.dev/doc/install) here. Ensure that you install Go version >= 1.20.
 
-## 3.Obtain the code for the Oracle node
+#### 2. Install Docker
 
-```bash
-git clone https://github.com/black-domain/power-oracle-node.git
-cd backend
+Next, install Docker by following the instructions for your operating system [here](https://docs.docker.com/engine/install/).
+
+#### 3. Clone the Oracle Node Repository
+
+Clone the Oracle node repository and navigate to the backend directory:
+
+```
+https://github.com/filecoin-project/on-chain-voting.git
+cd power-oracle-node/backend
 ```
 
-## 4.Modify the configuration.yaml configuration file
+#### 4. Modify the Configuration File
 
-![Untitled](img/1.png)
+Edit the `configuration.yaml` file as needed for your environment.
 
-## 5.Build Docker image
+![Edit Configuration](img/1.png)
 
-```bash
-docker build -t oracle  .
+#### 5. Build the Docker Image
+
+Build the Docker image for the Oracle node:
+
+```
+docker build -t oracle .
 ```
 
-![Untitled](img/2.png)
+![Building Docker Image](img/2.png)
 
+#### 6. Run the Docker Image
 
+Run the Docker image in detached mode:
 
-## 6.Run Docker image
-
-```bash
+```
 docker run -d oracle
 ```
 
-![Untitled](img/3.png)
+![Running Docker Image](img/3.png)
 
+#### 7. View Logs
 
+To monitor the logs of the running container, use the following command, replacing the container ID with the ID of your running container:
 
-## 7.View logs
+```
+docker logs -f <container_id>
+```
 
-```bash
+For example:
+
+```
 docker logs -f f3b24890eff07a89d7c27c92164b80983a7a12e81692e72db9a8747631aa2230
 ```
 
-![Untitled](img/4.png)
+![Viewing Logs](img/4.png)
+
+By following these steps, you will successfully compile, build, and run the Oracle node using Docker.
