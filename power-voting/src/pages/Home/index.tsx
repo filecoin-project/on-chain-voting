@@ -30,7 +30,7 @@ import {
   COMPLETED_STATUS,
   web3AvatarUrl,
   PENDING_STATUS,
-  proposalResultApi
+  proposalResultApi, worldTimeApi
 } from '../../common/consts';
 import ListFilter from "../../components/ListFilter";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
@@ -38,6 +38,7 @@ import {ProposalData, ProposalFilter, ProposalList, ProposalOption, ProposalResu
 import Loading from "../../components/Loading";
 import {markdownToText, getContractAddress} from "../../utils";
 import fileCoinAbi from "../../common/abi/power-voting.json";
+import {useCurrentTimezone} from "../../common/store";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -104,6 +105,8 @@ const Home = () => {
   const [pageSize] = useState(5);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const timezone = useCurrentTimezone((state: any) => state.timezone);
+  const [messageApi, contextHolder] = message.useMessage();
 
   const { latestId, getLatestIdLoading } = useLatestId(chainId);
   const { proposalData, getProposalIdLoading, getProposalIdSuccess, error } = useProposalDataSet({
@@ -115,7 +118,10 @@ const Home = () => {
 
   useEffect(() => {
     if (error) {
-      message.error((error as BaseError)?.shortMessage || error?.message);
+      messageApi.open({
+        type: 'error',
+        content: (error as BaseError)?.shortMessage || error?.message,
+      });
     }
   }, [error]);
 
@@ -195,9 +201,10 @@ const Home = () => {
     try {
       // IPFS data List
       const responses = await Promise.all(ipfsUrls.map((url: string) => axios.get(url)));
+      const { data } = await axios.get(worldTimeApi);
       const results: ProposalList[] = responses.map((res, i: number) => {
         const  proposal = proposals[i];
-        const now = dayjs().unix();
+        const now = data?.unixtime;
         let proposalStatus = 0;
         // Set proposal status
         if (now < proposal.startTime) {
@@ -351,7 +358,7 @@ const Home = () => {
           }
           <div className="text-[#8B949E] text-sm mt-4">
             <span className="mr-2">End Time:</span>
-            {dayjs(item.showTime[1]).format('MMM.D, YYYY, h:mm A')} ({item.GMTOffset})
+            {dayjs(item.expTime * 1000).format('MMM.D, YYYY, h:mm A')} ({timezone})
           </div>
         </div>
       )
@@ -399,6 +406,7 @@ const Home = () => {
 
   return (
     <div className="home_container main">
+      {contextHolder}
       <div className="flex justify-between items-center rounded-xl border border-[#313D4F] bg-[#273141] mb-8 px-[30px]">
         <div className="flex justify-between">
           <ListFilter

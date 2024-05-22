@@ -35,6 +35,7 @@ export const contractAddressList = [
 export const githubApi = 'https://api.github.com/users';
 export const proposalResultApi = '/api/proposal/result';
 export const proposalHistoryApi = '/api/proposal/history';
+export const worldTimeApi = 'https://worldtimeapi.org/api/timezone/Etc/UTC';
 export const IN_PROGRESS_STATUS = 0;
 export const COMPLETED_STATUS = 1;
 export const PENDING_STATUS = 2;
