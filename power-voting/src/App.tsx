@@ -22,12 +22,13 @@ import {
 import { ConfigProvider, theme, Modal, Dropdown, FloatButton } from 'antd';
 import { useAccount, useReadContract } from "wagmi";
 import Countdown from 'react-countdown';
+import timezones from '../public/json/timezons.json';
 import routes from "./router";
 import Footer from './components/Footer';
 import "./common/styles/reset.less";
 import "tailwindcss/tailwind.css";
 import {STORING_DATA_MSG} from "./common/consts";
-import {useVoterInfo} from "./common/store";
+import {useVoterInfo, useCurrentTimezone} from "./common/store";
 import oracleAbi from "./common/abi/oracle.json";
 import {getContractAddress} from "./utils";
 
@@ -45,19 +46,39 @@ function useVoterInfoSet(chainId: number, address: `0x${string}` | undefined) {
 }
 
 const App: React.FC = () => {
+  // Destructure values from custom hooks
   const { chain, address, isConnected} = useAccount();
   const chainId = chain?.id || 0;
   const prevAddressRef = useRef(address);
   const {openConnectModal} = useConnectModal();
   const navigate = useNavigate();
+
+  // Render routes based on URL
   const element = useRoutes(routes);
+
+  // State variables
   const [expirationTime, setExpirationTime] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
 
+  // Get the user's timezone
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const text = timezones.find((item: any) => item.value === timezone)?.text;
+
+  // Extract GMT offset from timezone
+  const regex = /(?<=\().*?(?=\))/g;
+  const GMTOffset = text?.match(regex);
+
+  // Get voter information using custom hook
   const { voterInfo } = useVoterInfoSet(chainId, address);
 
+  // Update voter information in state
   const setVoterInfo = useVoterInfo((state: any) => state.setVoterInfo);
 
+  // Update current timezone in state
+  const setTimezone = useCurrentTimezone((state: any) => state.setTimezone);
+
+
+  // Reload the page if address changes
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
     if (address && prevAddress !== address) {
@@ -65,13 +86,26 @@ const App: React.FC = () => {
     }
   }, [address]);
 
+
+  // Update voter information when available
   useEffect(() => {
     if (voterInfo) {
       setVoterInfo(voterInfo);
     }
   }, [voterInfo]);
 
+  // Set user's timezone based on GMT offset
+  useEffect(() => {
+    if (GMTOffset) {
+      setTimezone(GMTOffset);
+    }
+  }, [GMTOffset])
+
+  /**
+   * Handle delegation action
+   */
   const handleDelegate = async () => {
+    // Retrieve ucanStorageData from localStorage
     const ucanStorageData = JSON.parse(localStorage.getItem('ucanStorage') || '[]');
     const ucanIndex = ucanStorageData?.findIndex((item: any) => item.address === address);
     if (ucanIndex > -1) {
@@ -88,14 +122,19 @@ const App: React.FC = () => {
       }
     }
 
+    // Prompt user to connect if not already connected
     if (!isConnected) {
       openConnectModal && openConnectModal();
       return;
     }
+
+    // Determine if the user has a GitHub account
     const isGithubType = !!voterInfo[0];
     if (voterInfo[2]) {
+      // Fetch data from IPFS using voter's identifier
       const { data } = await axios.get(`https://${voterInfo[2]}.ipfs.w3s.link/`);
       if (isGithubType) {
+        // Process GitHub data and navigate to appropriate page
         const regex = /\/([^\/]+)\/([^\/]+)\/git\/blobs\/(\w+)/;
         const result = data.match(regex);
         const aud = result[1];
@@ -108,6 +147,7 @@ const App: React.FC = () => {
           }
         });
       } else {
+        // Process non-GitHub data and navigate to appropriate page
         const decodeString = atob(data.split('.')[1]);
         const payload = JSON.parse(decodeString);
         const { aud, prf } = payload;
@@ -121,6 +161,7 @@ const App: React.FC = () => {
         });
       }
     } else {
+      // Navigate to add delegate page if no voter information is available
       navigate('/ucanDelegate/add');
     }
   }
