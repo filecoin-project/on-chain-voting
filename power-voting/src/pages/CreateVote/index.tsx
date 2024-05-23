@@ -31,10 +31,10 @@ import {
   NOT_FIP_EDITOR_MSG,
   VOTE_OPTIONS,
   WRONG_START_TIME_MSG,
-  STORING_DATA_MSG, githubApi
+  STORING_DATA_MSG, githubApi, worldTimeApi
 } from '../../common/consts';
 import { useVoterInfo } from "../../common/store";
-import { useTimezoneSelect, allTimezones } from 'react-timezone-select';
+import timezoneOption from '../../../public/json/timezons.json';
 import { validateValue, getContractAddress, getWeb3IpfsId } from '../../utils';
 import './index.less';
 import LoadingButton from "../../components/LoadingButton";
@@ -64,6 +64,8 @@ const CreateVote = () => {
 
   const {openConnectModal} = useConnectModal();
   const prevAddressRef = useRef(address);
+  const [messageApi, contextHolder] = message.useMessage();
+
   const voterInfo = useVoterInfo((state: any) => state.voterInfo);
   const {
     register,
@@ -82,10 +84,6 @@ const CreateVote = () => {
       ]
     }
   });
-
-  const labelStyle = 'original';
-
-  const { options } = useTimezoneSelect({ labelStyle, timezones: allTimezones });
 
   const navigate = useNavigate();
 
@@ -118,15 +116,23 @@ const CreateVote = () => {
 
   useEffect(() => {
     if (error) {
-      message.error((error as BaseError)?.shortMessage || error?.message);
+      messageApi.open({
+        type: 'error',
+        content: (error as BaseError)?.shortMessage || error?.message,
+      });
     }
     reset();
   }, [error]);
 
   useEffect(() => {
     if (writeContractSuccess) {
-      message.success(STORING_DATA_MSG);
-      navigate("/");
+      messageApi.open({
+        type: 'success',
+        content: STORING_DATA_MSG,
+      });
+      setTimeout(() => {
+        navigate("/");
+      }, 3000);
     }
   }, [writeContractSuccess])
 
@@ -137,32 +143,39 @@ const CreateVote = () => {
   const onSubmit = async (values: any) => {
     setLoading(true);
     // Calculate offset based on selected timezone
-    const offset =  dayjs().tz(values.timezone).utcOffset() - dayjs().utcOffset();
+    const offset = dayjs().utcOffset() - dayjs().tz(values.timezone).utcOffset();
     const startTimestamp = dayjs(values.time[0]).add(offset, 'minute').unix();
     const expTimestamp = dayjs(values.time[1]).add(offset, 'minute').unix();
-    const currentTime = dayjs().unix();
+    const { data } = await axios.get(worldTimeApi);
+    const currentTime = data?.unixtime;
 
     // Check if current time is after start time
     if (currentTime > startTimestamp) {
-      message.warning(WRONG_START_TIME_MSG);
+      messageApi.open({
+        type: 'warning',
+        content: WRONG_START_TIME_MSG,
+      });
       setLoading(false);
       return false;
     }
 
     // Check if current time is after expiration time
     if (currentTime > expTimestamp) {
-      message.warning(WRONG_EXPIRATION_TIME_MSG);
+      messageApi.open({
+        type: 'warning',
+        content: WRONG_EXPIRATION_TIME_MSG,
+      });
       setLoading(false);
       return false;
     }
 
     // Get chain ID
     const chainId = chain?.id || 0;
-    // Get label for selected timezone
-    const label = options?.find(item => item.value === values.timezone)?.label || '';
-    // Extract GMT offset from label using regex
+    // Get text for timezone array
+    const text = timezoneOption?.find((item: any) => item.value === values.value)?.text || '';
+    // Extract GMT offset from text using regex
     const regex = /(?<=\().*?(?=\))/g;
-    const GMTOffset = label.match(regex);
+    const GMTOffset = text.match(regex);
 
     const githubObj = {
       githubName: '',
@@ -207,7 +220,10 @@ const CreateVote = () => {
           ],
         });
       } else {
-        message.warning(NOT_FIP_EDITOR_MSG);
+        messageApi.open({
+          type: 'warning',
+          content: NOT_FIP_EDITOR_MSG,
+        });
       }
       setLoading(false);
     } else {
@@ -323,8 +339,8 @@ const CreateVote = () => {
                         errors['timezone'] && 'border-red-500 focus:border-red-500'
                       )}
                     >
-                      {options.map(option => (
-                        <option value={option.value} key={option.value}>{option.label}</option>
+                      {timezoneOption.map((option: any) => (
+                        <option value={option.value} key={option.value}>{option.text}</option>
                       ))}
                     </select>
                     {errors['timezone'] && (
@@ -342,6 +358,7 @@ const CreateVote = () => {
 
   return (
     <>
+      {contextHolder}
       <div className="px-3 mb-6 md:px-0">
         <button>
           <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">

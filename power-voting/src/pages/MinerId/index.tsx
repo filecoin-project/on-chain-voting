@@ -73,6 +73,7 @@ const MinerId = () => {
 
   const { minerIdData, getMinerIdsLoading, getMinerIdsSuccess } = useMinerIdSet(chainId, address);
   const { ownerData } = useOwnerDataSet(contracts);
+  const [messageApi, contextHolder] = message.useMessage()
 
   const {
     data: hash,
@@ -87,7 +88,10 @@ const MinerId = () => {
 
   useEffect(() => {
     if (error) {
-      message.error((error as BaseError)?.shortMessage || error?.message);
+      messageApi.open({
+        type: 'error',
+        content: (error as BaseError)?.shortMessage || error?.message,
+      });
     }
     reset();
   }, [error]);
@@ -112,8 +116,13 @@ const MinerId = () => {
 
   useEffect(() => {
     if (writeContractSuccess) {
-      message.success(STORING_DATA_MSG);
-      navigate("/");
+      messageApi.open({
+        type: 'success',
+        content: STORING_DATA_MSG,
+      });
+      setTimeout(() => {
+        navigate("/");
+      }, 3000);
     }
   }, [writeContractSuccess])
 
@@ -186,7 +195,10 @@ const MinerId = () => {
   const onSubmit = async () => {
     // Check for duplicate miner IDs
     if (minerIds.length && hasDuplicates(minerIds)) {
-      message.error(DUPLICATED_MINER_ID_MSG, 3);
+      messageApi.open({
+        type: 'error',
+        content: DUPLICATED_MINER_ID_MSG,
+      });
       return;
     }
 
@@ -196,7 +208,10 @@ const MinerId = () => {
     const { value, hasError } = removeMinerIdPrefix(minerIds);
     // Remove prefix from miner IDs and check for errors
     if (hasError) {
-      message.warning(WRONG_MINER_ID_MSG);
+      messageApi.open({
+        type: 'warning',
+        content: WRONG_MINER_ID_MSG,
+      });
       setLoading(false);
       return;
     }
@@ -207,7 +222,10 @@ const MinerId = () => {
       });
 
       if (!allSuccessful) {
-        message.error(WRONG_MINER_ID_MSG, 3);
+        messageApi.open({
+          type: 'error',
+          content: WRONG_MINER_ID_MSG,
+        });
         setLoading(false);
         return;
       } else {
@@ -233,6 +251,7 @@ const MinerId = () => {
 
   return (
     getMinerIdsLoading ? <Loading /> : <div className="px-3 mb-6 md:px-0">
+      {contextHolder}
       <button>
         <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">
           <Link to="/" className="flex items-center">

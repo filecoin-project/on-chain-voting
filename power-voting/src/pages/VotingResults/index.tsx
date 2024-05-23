@@ -27,6 +27,7 @@ import {
 } from "../../common/consts";
 import VoteList from "../../components/VoteList";
 import {ProposalOption, ProposalResult, ProposalHistory} from "../../common/types";
+import {useCurrentTimezone} from "../../common/store";
 
 const VotingResults = () => {
   const { chain, isConnected } = useAccount();
@@ -35,6 +36,7 @@ const VotingResults = () => {
   const { id, cid } = useParams();
   const { state } = useLocation() || null;
   const [votingData, setVotingData] = useState(state);
+  const timezone = useCurrentTimezone((state: any) => state.timezone);
 
   useEffect(() => {
     initState();
@@ -208,15 +210,15 @@ const VotingResults = () => {
               <div className='space-y-1'>
                 <div>
                   <b>Start Time</b>
-                  <span className='float-right text-white'>{votingData?.showTime?.length && dayjs(votingData?.showTime[0]).format('MMM.D, YYYY, h:mm A')}</span>
+                  <span className='float-right text-white'>{votingData?.startTime && dayjs(votingData.startTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
                 </div>
                 <div>
                   <b>End Time</b>
-                  <span className='float-right text-white'>{votingData?.showTime?.length && dayjs(votingData?.showTime[1]).format('MMM.D, YYYY, h:mm A')}</span>
+                  <span className='float-right text-white'>{votingData?.expTime && dayjs(votingData.expTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
                 </div>
                 <div>
                   <b>Timezone</b>
-                  <span className='float-right text-white'>{votingData?.GMTOffset}</span>
+                  <span className='float-right text-white'>{timezone}</span>
                 </div>
               </div>
             </div>
