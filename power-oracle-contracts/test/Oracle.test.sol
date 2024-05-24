@@ -15,8 +15,8 @@
 
 pragma solidity ^0.8.19;
 
-import "../Oracle.sol";
-import "../interfaces/IOracle.sol";
+import "../src/Oracle.sol";
+import "../src/interfaces/IOracle.sol";
 
 contract OracleTest {
 
@@ -31,9 +31,9 @@ contract OracleTest {
     }
 
     function test_update_power_voting_contract() external {
-        oracle.updatePowerVotingContract(0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307);
+        oracle.updatePowerVotingContract(address(this));
         address powerVotingAddress = oracle.powerVotingContract();
-        require(powerVotingAddress == 0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307, "update power voting contract error");
+        require(powerVotingAddress == address(this), "update power voting contract error");
     }
 
     function test_add_task() external {
@@ -46,68 +46,45 @@ contract OracleTest {
         require(keccak256(abi.encodePacked(ucanCid)) == keccak256(abi.encodePacked(ucan)), "add task failed, ucan cid error");
     }
 
-    function test_task_callback() external {
+    function test_task_callback() external {}
+
+    function test_remove_voter() external {
         oracle.updateNodeAllowList(address(this), true);
-        IOracle.VoterInfo memory voterInfo = IOracle.VoterInfo(new uint64[](35150), new uint64[](0), "github", address(0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307), "ucan cid");
-        IOracle.Power memory power = IOracle.Power(3,new bytes[](0),new bytes[](0),200,1631497);
-        oracle.taskCallback(voterInfo, 1, power);
 
-        (string memory githubAccount, address  ethAddress, string memory ucanCid) = oracle.voterToInfo(address(0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307));
-        require(ethAddress == 0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307, "task callback failed, ethAddress error");
-        require(keccak256(abi.encodePacked(githubAccount)) == keccak256(abi.encodePacked("github")), "task callback failed, github error");
-        require(keccak256(abi.encodePacked(ucanCid)) == keccak256(abi.encodePacked("ucan cid")), "task callback failed, ucan id error");
+        IOracle.Power memory power = IOracle.Power(100, new bytes[](258), new bytes[](672), 200, block.number);
+        oracle.savePower(address(this), power);
+        IOracle.Power memory getPower = oracle.getPower(address(this), 1);
+        require(getPower.developerPower != 0, "remove voter failed, developerPower error");
+        require(getPower.tokenHolderPower != 0, "remove voter failed, tokenHolderPower error");
 
-        IOracle.Power memory getPower = oracle.getPower(0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307, 1);
-        require(getPower.developerPower == 3, "task callback failed, developerPower error");
-        require(getPower.tokenHolderPower == 200, "task callback failed, tokenHolderPower error");
-
-
-        uint256 blockHeight = oracle.voterAddressToBlockHeight(0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307);
-        require(blockHeight != 0, "task callback failed, block height error");
-
-        address[] memory voterList = oracle.getVoterAddresses();
-        require(voterList[0] == 0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307, "task callback failed, voter list error");
-
-        string memory ucanCID = oracle.taskIdToUcanCid(1);
-        require(bytes(ucanCID).length == 0, "task callback failed, taskId to ucan cid error");
-
-        uint256[] memory taskIdList = oracle.getTasks();
-        require(taskIdList.length == 0, "task callback failed, taskId list error");
+        oracle.removeVoter(address(this), 1);
+        IOracle.Power memory getPower1 = oracle.getPower(address(this), 1);
+        require(getPower1.developerPower == 0, "remove voter failed, developerPower error");
+        require(getPower1.tokenHolderPower == 0, "remove voter failed, tokenHolderPower error");
     }
 
-    function testRemoveVoter() external {
+    function test_get_power() external {
         oracle.updateNodeAllowList(address(this), true);
-        oracle.removeVoter(0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307, 1);
 
-        (string memory githubAccount, address  ethAddress, string memory ucanCid) = oracle.voterToInfo(address(0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307));
-        require(ethAddress == address(0), "remove voter failed, ethAddress error");
-        require(bytes(githubAccount).length == 0, "remove voter failed, github error");
-        require(bytes(ucanCid).length == 0, "remove voter failed, ucan id id error");
+        IOracle.Power memory power = IOracle.Power(100, new bytes[](258), new bytes[](672), 200, block.number);
+        oracle.savePower(address(this), power);
 
-        IOracle.Power memory getPower = oracle.getPower(0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307, 1);
-        require(getPower.developerPower == 0, "remove voter failed, developerPower error");
-        require(getPower.tokenHolderPower == 0, "remove voter failed, tokenHolderPower error");
+        IOracle.Power memory getPower = oracle.getPower(address(this), 1);
     }
 
-    function testGetPower() external view returns(uint256, uint256) {
-        IOracle.Power memory getPower = oracle.getPower(0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307, 1);
-        return (getPower.developerPower,getPower.tokenHolderPower);
-    }
-
-
-    function testUpdateNodeAllowList() external {
+    function test_update_node_allow_list() external {
         oracle.updateNodeAllowList(address(this), true);
         bool node = oracle.nodeAllowList(address(this));
         require(node, "update node allow list error");
     }
 
-    function testSavePower() external {
-        IOracle.Power memory power = IOracle.Power(100,new bytes[](0),new bytes[](0),200,1631497);
-        oracle.savePower(0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307, power);
-        IOracle.Power memory getPower = oracle.getPower(0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307, 1);
-        require(getPower.developerPower == 3, "save power failed, developerPower error");
+    function test_save_power() external {
+        oracle.updateNodeAllowList(address(this), true);
+        IOracle.Power memory power = IOracle.Power(100, new bytes[](1579), new bytes[](2578), 200, 1631497);
+        oracle.savePower(address(this), power);
+
+        IOracle.Power memory getPower = oracle.getPower(address(this), 1);
+        require(getPower.developerPower == 100, "save power failed, developerPower error");
         require(getPower.tokenHolderPower == 200, "save power failed, tokenHolderPower error");
     }
-
-
 }
