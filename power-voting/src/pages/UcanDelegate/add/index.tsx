@@ -42,6 +42,7 @@ const UcanDelegate = () => {
   const {openConnectModal} = useConnectModal();
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
+  const [messageApi, contextHolder] = message.useMessage();
 
   const [ucanType, setUcanType] = useState(UCAN_TYPE_FILECOIN);
   const [githubSignature, setGithubSignature] = useState('');
@@ -90,14 +91,22 @@ const UcanDelegate = () => {
 
   useEffect(() => {
     if (writeContractSuccess) {
-      message.success(STORING_DATA_MSG);
-      navigate("/");
+      messageApi.open({
+        type: 'success',
+        content: STORING_DATA_MSG,
+      });
+      setTimeout(() => {
+        navigate("/");
+      }, 3000);
     }
   }, [writeContractSuccess])
 
   useEffect(() => {
     if (error) {
-      message.error((error as BaseError)?.shortMessage || error?.message);
+      messageApi.open({
+        type: 'error',
+        content: (error as BaseError)?.shortMessage || error?.message,
+      });
     }
     resetWriteContract();
   }, [error]);
@@ -180,7 +189,10 @@ const UcanDelegate = () => {
     try {
       signature = await signMessageAsync({ message:  `${base64Header}.${base64Params}`})
     } catch (e) {
-      message.error(OPERATION_CANCELED_MSG);
+      messageApi.open({
+        type: 'error',
+        content: OPERATION_CANCELED_MSG,
+      });
       setLoading(false);
       return;
     }
@@ -215,7 +227,10 @@ const UcanDelegate = () => {
           // Sign the concatenated header and params
           signature = await signMessageAsync({ message:  `${base64Header}.${base64Params}`})
         } catch (e) {
-          message.error(OPERATION_CANCELED_MSG);
+          messageApi.open({
+            type: 'error',
+            content: OPERATION_CANCELED_MSG,
+          });
           setLoading(false);
           return;
         }
@@ -556,12 +571,9 @@ const UcanDelegate = () => {
       hash,
     })
 
-  if (error) {
-    message.error((error as BaseError)?.shortMessage || error?.message);
-  }
-
   return (
     <>
+      {contextHolder}
       <div className="px-3 mb-6 md:px-0">
         <button>
           <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">
