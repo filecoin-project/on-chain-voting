@@ -17,7 +17,8 @@ import {Link, useNavigate} from "react-router-dom";
 import { message } from 'antd';
 import Table from '../../components/Table';
 import LoadingButton from '../../components/LoadingButton';
-import {useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt, BaseError} from "wagmi";
+import type { BaseError} from "wagmi";
+import {useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
 import {filecoinCalibration} from "wagmi/chains";
 import {
   DUPLICATED_MINER_ID_MSG,
@@ -101,7 +102,7 @@ const MinerId = () => {
       navigate("/home");
       return;
     }
-  }, []);
+  }, [isConnected]);
 
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
@@ -275,7 +276,7 @@ const MinerId = () => {
                   defaultValue={minerIds}
                   placeholder='Input miner ID (For multiple miner IDs, use commas to separate them.)'
                   className='form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]'
-                  onBlur={(e) => { handleMinerChange(e.target.value) }}
+                  onBlur={e => { handleMinerChange(e.target.value) }}
                 />
               )
             }

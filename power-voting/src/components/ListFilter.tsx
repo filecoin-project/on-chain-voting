@@ -15,13 +15,13 @@
 import React from 'react';
 
 // @ts-ignore
-export default function ListFilter ({ name, value, list, onChange = (value) => {} }) {
+export default function ListFilter ({ name, value, list, onChange, }) {
 
   return (
     <div className='flex text-base pt-6 pb-5'>
       <div className='text-[#7F8FA3]'>{name}:</div>
       <div className='flex'>
-        {list.map((item:any, index:number) => {
+        {list.map((item: any, index: number) => {
           return (
             <button
               onClick={() => onChange(item.value)}

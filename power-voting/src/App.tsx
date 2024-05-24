@@ -135,7 +135,7 @@ const App: React.FC = () => {
       const { data } = await axios.get(`https://${voterInfo[2]}.ipfs.w3s.link/`);
       if (isGithubType) {
         // Process GitHub data and navigate to appropriate page
-        const regex = /\/([^\/]+)\/([^\/]+)\/git\/blobs\/(\w+)/;
+        const regex = /\/([^/]+)\/([^/]+)\/git\/blobs\/(\w+)/;
         const result = data.match(regex);
         const aud = result[1];
         navigate('/ucanDelegate/delete', { state: {

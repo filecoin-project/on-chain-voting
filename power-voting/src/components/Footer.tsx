@@ -41,7 +41,7 @@ const Footer = () => {
           <h4 className='text-xl text-[#7F8FA3] mb-[12px]'>Partners</h4>
           <div className=' flex justify-center text-xs'>
             {partners.map((partner, index) => (
-              <a key={index} className='flex items-center hover:text-blue-300' href={partner.href} target='_blank' >
+              <a key={index} className='flex items-center hover:text-blue-300' href={partner.href} target='_blank' rel="noreferrer" >
                 <img className='h-[14px] mr-2 ' src={partner.icon} alt="" />
                 {partner.text}
               </a>
