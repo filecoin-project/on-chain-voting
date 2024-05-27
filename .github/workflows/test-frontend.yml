@@ -34,7 +34,7 @@ jobs:
           cd power-voting
           npm install -d
 
-      - name: Lint
+      - name: Test
         run: |
           cd power-voting
           npm run test
