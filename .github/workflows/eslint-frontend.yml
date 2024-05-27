@@ -1,4 +1,4 @@
-name: lint
+name: Frontend ESLint
 
 on:
   pull_request:
