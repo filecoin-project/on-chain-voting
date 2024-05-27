@@ -3,12 +3,12 @@ name: lint
 on:
   pull_request:
     branches:
-      - github-action
+      - main
     paths:
       - power-voting/*
   push:
     branches:
-      - github-action
+      - main
     paths:
       - power-voting/*
 
