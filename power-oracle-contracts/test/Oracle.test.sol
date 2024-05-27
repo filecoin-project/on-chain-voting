@@ -46,8 +46,6 @@ contract OracleTest {
         require(keccak256(abi.encodePacked(ucanCid)) == keccak256(abi.encodePacked(ucan)), "add task failed, ucan cid error");
     }
 
-    function test_task_callback() external {}
-
     function test_remove_voter() external {
         oracle.updateNodeAllowList(address(this), true);
 
