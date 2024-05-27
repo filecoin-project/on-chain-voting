@@ -17,7 +17,8 @@ import {Link, useNavigate} from "react-router-dom";
 import { message } from 'antd';
 import Table from '../../components/Table';
 import LoadingButton from '../../components/LoadingButton';
-import {useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt, BaseError} from "wagmi";
+import type { BaseError} from "wagmi";
+import {useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
 import {filecoinCalibration} from "wagmi/chains";
 import {
   DUPLICATED_MINER_ID_MSG,
@@ -32,7 +33,6 @@ import oraclePowerAbi from "../../common/abi/oracle-powers.json";
 
 function useMinerIdSet(chainId: number, address: `0x${string}` | undefined) {
   const { data: minerIdData, isLoading: getMinerIdsLoading, isSuccess: getMinerIdsSuccess } = useReadContract({
-    // @ts-ignore
     address: getContractAddress(chainId || 0, 'oracle'),
     abi: oracleAbi,
     functionName: 'getVoterInfo',
@@ -51,7 +51,6 @@ function useOwnerDataSet(contracts: any[]) {
     isLoading: getOwnerLoading,
     isSuccess: getOwnerSuccess
   } = useReadContracts({
-    // @ts-ignore
     contracts: contracts,
     query: { enabled: !!contracts.length }
   });
@@ -101,7 +100,7 @@ const MinerId = () => {
       navigate("/home");
       return;
     }
-  }, []);
+  }, [isConnected]);
 
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
@@ -275,7 +274,7 @@ const MinerId = () => {
                   defaultValue={minerIds}
                   placeholder='Input miner ID (For multiple miner IDs, use commas to separate them.)'
                   className='form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]'
-                  onBlur={(e) => { handleMinerChange(e.target.value) }}
+                  onBlur={e => { handleMinerChange(e.target.value) }}
                 />
               )
             }
