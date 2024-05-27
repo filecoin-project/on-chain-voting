@@ -48,7 +48,6 @@ const { RangePicker } = DatePicker;
 
 function useCheckFipAddress(chainId: number, address: `0x${string}` | undefined) {
   const { data: isFipAddress } = useReadContract({
-    // @ts-ignore
     address: getContractAddress(chainId, 'powerVoting'),
     abi: fileCoinAbi,
     functionName: 'fipMap',

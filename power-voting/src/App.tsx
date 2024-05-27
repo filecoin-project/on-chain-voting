@@ -34,7 +34,6 @@ import {getContractAddress} from "./utils";
 
 function useVoterInfoSet(chainId: number, address: `0x${string}` | undefined) {
   const { data: voterInfo } = useReadContract({
-    // @ts-ignore
     address: getContractAddress(chainId, 'oracle'),
     abi: oracleAbi,
     functionName: 'voterToInfo',

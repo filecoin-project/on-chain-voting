@@ -183,7 +183,6 @@ const UcanDelegate = () => {
       prf,
       act: 'add',
     }
-    // @ts-ignore
     const base64Header = stringToBase64Url(JSON.stringify(UCAN_JWT_HEADER));
     const base64Params = stringToBase64Url(JSON.stringify(ucanParams));
     let signature = '';
@@ -248,7 +247,6 @@ const UcanDelegate = () => {
         console.log(e);
       }
     } else {
-      // @ts-ignore
       openConnectModal && openConnectModal();
     }
     setLoading(false);

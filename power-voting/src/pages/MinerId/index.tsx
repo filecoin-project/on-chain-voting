@@ -33,7 +33,6 @@ import oraclePowerAbi from "../../common/abi/oracle-powers.json";
 
 function useMinerIdSet(chainId: number, address: `0x${string}` | undefined) {
   const { data: minerIdData, isLoading: getMinerIdsLoading, isSuccess: getMinerIdsSuccess } = useReadContract({
-    // @ts-ignore
     address: getContractAddress(chainId || 0, 'oracle'),
     abi: oracleAbi,
     functionName: 'getVoterInfo',
@@ -52,7 +51,6 @@ function useOwnerDataSet(contracts: any[]) {
     isLoading: getOwnerLoading,
     isSuccess: getOwnerSuccess
   } = useReadContracts({
-    // @ts-ignore
     contracts: contracts,
     query: { enabled: !!contracts.length }
   });

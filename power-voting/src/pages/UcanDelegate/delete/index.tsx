@@ -235,7 +235,6 @@ const UcanDelegate = () => {
         console.log(e);
       }
     } else {
-      // @ts-ignore
       openConnectModal && openConnectModal();
     }
     setLoading(false);

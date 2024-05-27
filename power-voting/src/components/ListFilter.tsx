@@ -14,8 +14,9 @@
 
 import React from 'react';
 
-// @ts-ignore
-export default function ListFilter ({ name, value, list, onChange, }) {
+export default function ListFilter (props: { name: string, value: number, list: { label: string, value: number }[], onChange: (status: number) => Promise<void> }) {
+
+  const { name, value, list, onChange } = props;
 
   return (
     <div className='flex text-base pt-6 pb-5'>
