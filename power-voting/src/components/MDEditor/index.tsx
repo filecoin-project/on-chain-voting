@@ -81,7 +81,7 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
 
   const [showMore, setShowMore] = useState(false);
   const handleClickShowMore = () => {
-    setShowMore((prev) => !prev);
+    setShowMore(prev => !prev);
   };
 
   useEffect(() => {
@@ -110,7 +110,7 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
           value={value}
           readOnly={readOnly}
           style={{ ...style, maxHeight: moreButton && showMore ? '70vh' : 'fit-content' }}
-          renderHTML={(text) => {
+          renderHTML={text => {
             return mdParser.render(text)
           }}
           view={view}
@@ -127,7 +127,7 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
         className={`MDEditor rcmd scrollD ${className}`}
         ref={mdEditor}
         style={style}
-        renderHTML={(text) => mdParser.render(text)}
+        renderHTML={text => mdParser.render(text)}
         onChange={() => { onChange(handleEditorChange()) }}
       />
   )

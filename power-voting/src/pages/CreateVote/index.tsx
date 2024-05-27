@@ -22,7 +22,8 @@ import {useNavigate, Link} from "react-router-dom";
 import Table from '../../components/Table';
 import {useForm, Controller} from 'react-hook-form';
 import classNames from 'classnames';
-import {useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, BaseError} from "wagmi";
+import type { BaseError} from "wagmi";
+import {useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import Editor from '../../components/MDEditor';
 import {
@@ -47,7 +48,6 @@ const { RangePicker } = DatePicker;
 
 function useCheckFipAddress(chainId: number, address: `0x${string}` | undefined) {
   const { data: isFipAddress } = useReadContract({
-    // @ts-ignore
     address: getContractAddress(chainId, 'powerVoting'),
     abi: fileCoinAbi,
     functionName: 'fipMap',
@@ -169,8 +169,6 @@ const CreateVote = () => {
       return false;
     }
 
-    // Get chain ID
-    const chainId = chain?.id || 0;
     // Get text for timezone array
     const text = timezoneOption?.find((item: any) => item.value === values.value)?.text || '';
     // Extract GMT offset from text using regex
@@ -227,7 +225,6 @@ const CreateVote = () => {
       }
       setLoading(false);
     } else {
-      // @ts-ignore
       openConnectModal && openConnectModal();
     }
   }
@@ -248,13 +245,13 @@ const CreateVote = () => {
             render={() => <input
               className={classNames(
                 'form-input w-full rounded !bg-[#212B3C] border border-[#313D4F]',
-                errors['name'] && 'border-red-500 focus:border-red-500'
+                errors.name && 'border-red-500 focus:border-red-500'
               )}
               placeholder='Proposal Title'
               {...register('name', {required: true, validate: validateValue})}
             />}
           />
-          {errors['name'] && (
+          {errors.name && (
             <p className='text-red-500 mt-1'>Proposal Title is required</p>
           )}
         </>
@@ -274,7 +271,7 @@ const CreateVote = () => {
             return (
               <>
                 <Editor style={{height: 500}} value={value} onChange={onChange}/>
-                {errors['descriptions'] && (
+                {errors.descriptions && (
                   <p className='text-red-500 mt-2'>Proposal Description is required</p>
                 )}
               </>
@@ -302,11 +299,11 @@ const CreateVote = () => {
                       onChange={onChange}
                       className={classNames(
                         'form-input rounded !bg-[#212B3C] border border-[#313D4F]',
-                        errors['time'] && 'border-red-500 focus:border-red-500'
+                        errors.time && 'border-red-500 focus:border-red-500'
                       )}
                       style={{color: 'red'}}
                     />
-                    {errors['time'] && (
+                    {errors.time && (
                       <p className='text-red-500 mt-2'>Proposal Time is required</p>
                     )}
                   </>
@@ -336,14 +333,14 @@ const CreateVote = () => {
                       value={value}
                       className={classNames(
                         'form-select rounded bg-[#212B3C] border border-[#313D4F]',
-                        errors['timezone'] && 'border-red-500 focus:border-red-500'
+                        errors.timezone && 'border-red-500 focus:border-red-500'
                       )}
                     >
                       {timezoneOption.map((option: any) => (
                         <option value={option.value} key={option.value}>{option.text}</option>
                       ))}
                     </select>
-                    {errors['timezone'] && (
+                    {errors.timezone && (
                       <p className='text-red-500 mt-2'>Proposal Expiration TimeZone is required</p>
                     )}
                   </>
