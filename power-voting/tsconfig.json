@@ -12,7 +12,6 @@
       "@web3-storage/w3up-client": ["node_modules/@web3-storage/w3up-client"],
       "@tanstack/react-query": ["node_modules/@tanstack/react-query"],
     },
-    "allowJs": false,
     "sourceMap": true,
     "jsx": "react",
     "moduleResolution": "node",
