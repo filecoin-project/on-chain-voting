@@ -17,3 +17,6 @@ dist.zip
 
 # env
 .env
+
+# misc
+.eslintcache
