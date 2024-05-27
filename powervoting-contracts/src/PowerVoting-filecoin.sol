@@ -15,8 +15,8 @@
 
 pragma solidity ^0.8.19;
 
-import { Ownable2StepUpgradeable } from "@openzeppelin-contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import { UUPSUpgradeable } from "@openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { IPowerVoting } from "./interfaces/IPowerVoting-filecoin.sol";
 import { Proposal, VoteInfo, VoterInfo } from "./types.sol";
 
