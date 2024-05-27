@@ -15,16 +15,14 @@
 
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./interfaces/IOracle.sol";
 import "./Powers.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import { UUPSUpgradeable } from "@openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { Ownable2StepUpgradeable } from "@openzeppelin-contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
 
-    using Counters for Counters.Counter;
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.AddressSet;
     using Powers for uint64;
@@ -34,9 +32,9 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     uint64 constant public MAX_HISTORY = 60;
 
     // task id
-    Counters.Counter private _taskId;
+    uint256 private  _taskId;
     // history power id
-    Counters.Counter private _historyPowerId;
+    int8 private  _historyPowerId;
     // PowerVoting contract address
     address public powerVotingContract;
 
@@ -131,8 +129,8 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
         if (msg.sender != powerVotingContract) {
             revert PermissionError("Permission error.");
         }
-        _taskId.increment();
-        uint256 taskId = _taskId.current();
+        ++_taskId;
+        uint256 taskId = _taskId;
         taskIdList.add(taskId);
         taskIdToUcanCid[taskId] = ucanCid;
     }
@@ -153,8 +151,8 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
         if(msg.sender != powerVotingContract) {
             revert PermissionError("Permission error.");
         }
-        _taskId.increment();
-        uint256 f4TaskId = _taskId.current();
+        ++_taskId;
+        uint256 f4TaskId = _taskId;
         f4TaskIdList.add(f4TaskId);
         f4TaskIdToAddress[f4TaskId] = voter;
     }
@@ -317,7 +315,7 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
      */
     function _getDayId(address voter) private returns(uint256){
         PowerStatus storage powerStatus = voterToPowerStatus[voter];
-        powerStatus.dayId++;
+        ++powerStatus.dayId;
         uint256 id = powerStatus.dayId % MAX_HISTORY;
         if (id == 0) {
             id = MAX_HISTORY;
