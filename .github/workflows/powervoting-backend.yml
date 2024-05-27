@@ -45,6 +45,13 @@ jobs:
           echo $(docker ps -q --filter ancestor=mysql:latest)
           docker exec -i $(docker ps -q --filter ancestor=mysql:latest) mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS \`power-voting-filecoin\`;"
 
+      - name: Copy config file to test dir
+        run: |
+          cd ./powervoting-backend
+          cp ./abi/* ./contract
+          cp ./abi/* ./task
+          cp ./abi/* ./utils
+
       - name: Test
         run: |
           cd ./powervoting-backend
