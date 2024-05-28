@@ -31,7 +31,8 @@ import {
   COMPLETED_STATUS,
   web3AvatarUrl,
   PENDING_STATUS,
-  proposalResultApi, worldTimeApi
+  proposalResultApi,
+  worldTimeApi, STORING_STATUS, STORING_DATA_MSG
 } from '../../common/consts';
 import ListFilter from "../../components/ListFilter";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
@@ -39,7 +40,7 @@ import type {ProposalData, ProposalFilter, ProposalList, ProposalOption, Proposa
 import Loading from "../../components/Loading";
 import {markdownToText, getContractAddress} from "../../utils";
 import fileCoinAbi from "../../common/abi/power-voting.json";
-import {useCurrentTimezone} from "../../common/store";
+import {useCurrentTimezone, useStoringCid} from "../../common/store";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -88,7 +89,6 @@ function useProposalDataSet(params: any) {
 
 const Home = () => {
   const navigate = useNavigate();
-
   const {chain, address, isConnected} = useAccount();
   const chainId = chain?.id || 0;
   const {openConnectModal} = useConnectModal();
@@ -106,8 +106,11 @@ const Home = () => {
   const [pageSize] = useState(5);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
-  const timezone = useCurrentTimezone((state: any) => state.timezone);
   const [messageApi, contextHolder] = message.useMessage();
+
+  const timezone = useCurrentTimezone((state: any) => state.timezone);
+  const storingCid = useStoringCid((state: any) => state.storingCid);
+  const setStoringCid = useStoringCid((state: any) => state.setStoringCid);
 
   const { latestId, getLatestIdLoading } = useLatestId(chainId);
   const { proposalData, getProposalIdLoading, getProposalIdSuccess, error } = useProposalDataSet({
@@ -147,10 +150,10 @@ const Home = () => {
     // Convert latest ID to number
     const total = latestId ? Number(latestId) : 0;
     // Calculate the offset based on the current page number
-
     const offset = (page - 1) * pageSize;
     setTotal(total);
     try {
+      // Fetch and process proposal data
       const list = await Promise.all(proposalData.map(async(data, index) => {
         const { result } = data as any;
         const proposalId = total - offset - index;
@@ -176,13 +179,41 @@ const Home = () => {
           proposalResults
         };
       }));
+
+      // Filter out already stored proposals
+      const storingList = storingCid.filter((cid: string) => !list.some(option => option.cid === cid));
+      setStoringCid(storingList);
+
+      // Generate IPFS URLs for storing list
+      const ipfsUrls = storingList.map(
+        (cid: string) => `https://${cid}.ipfs.w3s.link/`
+      );
+
+      // Fetch data from IPFS URLs
+      const responses = await Promise.all(ipfsUrls.map((url: string) => axios.get(url)));
+      // Process the fetched data and create proposal objects
+      const storingData = responses?.map((res, i) => {
+        const { data } = res;
+        return {
+          ...data,
+          cid: ipfsUrls[i],
+          proposalType: 1,
+          proposalStatus: STORING_STATUS,
+          proposalResults: data.option?.map((item: string) => {
+            return {
+              name: item,
+              count: 0
+            }
+          })
+        };
+      })
       // Process and set the fetched proposal list
       const proposalsList = await getList(list);
       const originList = proposalsList || [];
       // Set filter list for proposal filtering
       setFilterList(VOTE_FILTER_LIST);
       // Set the proposal list state
-      setProposalList(originList);
+      setProposalList([...storingData, ...originList]);
     } catch (e) {
       console.log(e);
     } finally {
@@ -258,6 +289,13 @@ const Home = () => {
    * @param item
    */
   const handleJump = (item: ProposalList) => {
+    if  (item.proposalStatus === STORING_STATUS) {
+      messageApi.open({
+        type: 'warning',
+        content: STORING_DATA_MSG,
+      });
+      return;
+    }
     const router = `/${[PENDING_STATUS, IN_PROGRESS_STATUS].includes(item.proposalStatus) ? "vote" : "votingResults"}/${item.id}/${item.cid}`;
     navigate(router, {state: item});
   }
@@ -286,7 +324,7 @@ const Home = () => {
     }
     return list.map((item: ProposalList, index: number) => {
       const proposal = VOTE_LIST?.find((proposal: ProposalFilter) => proposal.value === item.proposalStatus);
-      const maxOption = item.option.reduce((prev, current) => {
+      const maxOption = item.option?.reduce((prev, current) => {
         return (prev.count > current.count) ? prev : current;
       });
       let href = '';
@@ -316,7 +354,7 @@ const Home = () => {
               </div>
             </a>
             <div
-              className={`${proposal?.color} h-[26px] px-[12px] text-white rounded-xl`}>
+              className={`h-[26px] px-[12px] text-white rounded-xl`} style={{ background: proposal?.color }}>
               { proposal?.label }
             </div>
           </div>
