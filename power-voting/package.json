@@ -8,7 +8,8 @@
     "build": "cross-env NODE_ENV=production webpack",
     "start": "npm run lint && cross-env NODE_ENV=development webpack serve --mode development",
     "lint": "eslint --cache --ext .js,.jsx,.ts,.tsx ./src",
-    "lint:fix": "eslint --cache --ext .js,.jsx,.ts,.tsx ./src --fix"
+    "lint:fix": "eslint --cache --ext .js,.jsx,.ts,.tsx ./src --fix",
+    "test": "vitest"
   },
   "dependencies": {
     "@ant-design/icons": "^5.0.1",
@@ -68,6 +69,7 @@
     "ts-loader": "^9.4.2",
     "tsconfig-paths-webpack-plugin": "^4.0.1",
     "typescript": "5.4.2",
+    "vitest": "^1.6.0",
     "webpack": "5.90.3",
     "webpack-cli": "^5.0.1",
     "webpack-dev-server": "^4.13.2"
