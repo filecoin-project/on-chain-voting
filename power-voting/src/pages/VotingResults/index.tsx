@@ -26,7 +26,7 @@ import {
   WRONG_NET_STATUS, VOTE_COUNTING_STATUS, proposalResultApi, proposalHistoryApi,
 } from "../../common/consts";
 import VoteList from "../../components/VoteList";
-import {ProposalOption, ProposalResult, ProposalHistory} from "../../common/types";
+import type {ProposalOption, ProposalResult, ProposalHistory} from "../../common/types";
 import {useCurrentTimezone} from "../../common/store";
 
 const VotingResults = () => {
@@ -37,10 +37,6 @@ const VotingResults = () => {
   const { state } = useLocation() || null;
   const [votingData, setVotingData] = useState(state);
   const timezone = useCurrentTimezone((state: any) => state.timezone);
-
-  useEffect(() => {
-    initState();
-  }, [chain])
 
   const initState = async () => {
     const option: ProposalOption[] = [];
@@ -104,6 +100,10 @@ const VotingResults = () => {
       voteList: voteList?.sort((a: any, b: any) => b.votes - a.votes)
     })
   }
+
+  useEffect(() => {
+    initState();
+  }, [chain]);
 
   const handleVoteStatusTag = (status: number) => {
     switch (status) {
@@ -170,7 +170,7 @@ const VotingResults = () => {
                   <a
                     className="text-white"
                     target="_blank"
-                    rel="noopener"
+                    rel="noreferrer"
                     href={href}
                   >
                     {votingData?.githubName || EllipsisMiddle({suffixCount: 4, children: votingData?.address})}

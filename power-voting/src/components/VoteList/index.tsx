@@ -17,8 +17,8 @@ import { Empty, Table, Popover } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import EllipsisMiddle from "../EllipsisMiddle";
 import {web3AvatarUrl} from "../../common/consts";
-import {Chain} from "viem";
-import {ProposalHistory} from "../../common/types";
+import type {Chain} from "viem";
+import type {ProposalHistory} from "../../common/types";
 import './index.less';
 import {bigNumberToFloat, convertBytes} from "../../utils";
 
@@ -156,7 +156,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
                       <a
                         className="text-white"
                         target="_blank"
-                        rel="noopener"
+                        rel="noopener noreferrer"
                         href={`${chain?.blockExplorers?.default.url}/address/${item?.address}`}
                       >
                         {EllipsisMiddle({ suffixCount: 4, children: item?.address })}
