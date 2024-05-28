@@ -29,7 +29,9 @@ import {
   WRONG_NET_STATUS,
   web3AvatarUrl,
   CHOOSE_VOTE_MSG,
-  PENDING_STATUS, STORING_DATA_MSG, worldTimeApi,
+  PENDING_STATUS,
+  worldTimeApi,
+  VOTE_SUCCESS_MSG,
 } from "../../common/consts";
 import { timelockEncrypt, roundAt, mainnetClient, Buffer } from "tlock-js";
 import type {ProposalList, ProposalOption} from "../../common/types";
@@ -71,7 +73,7 @@ const Vote = () => {
     if (writeContractSuccess) {
       messageApi.open({
         type: 'success',
-        content: STORING_DATA_MSG,
+        content: VOTE_SUCCESS_MSG,
       });
       setTimeout(() => {
         navigate("/");

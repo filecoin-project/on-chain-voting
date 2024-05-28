@@ -41,6 +41,7 @@ export interface ProposalData {
   startTime: number
   expTime: number
   proposalType: number
+  proposalStatus?: number
   proposalResults: ProposalResult[]
 }
 
