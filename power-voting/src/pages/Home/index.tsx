@@ -113,7 +113,6 @@ const Home = () => {
   const setStoringCid = useStoringCid((state: any) => state.setStoringCid);
 
   const { latestId, getLatestIdLoading } = useLatestId(chainId);
-  console.log(latestId);
   const { proposalData, getProposalIdLoading, getProposalIdSuccess, error } = useProposalDataSet({
     chainId,
     total: Number(latestId),
