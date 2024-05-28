@@ -57,25 +57,6 @@ export const convertBytes = (bytes: number | string) => {
 }
 
 /**
- * Handle MetaMask error message
- * @param errorMsg
- */
-export const extractRevertReason = (errorMsg: string) => {
-  const revertReasonIndex = errorMsg?.indexOf('revert reason: ');
-  if (revertReasonIndex === -1) {
-    return null;
-  }
-
-  const endOfRevertReasonIndex = errorMsg?.indexOf(', vm error:', revertReasonIndex);
-  if (endOfRevertReasonIndex === -1) {
-    return null;
-  }
-
-  const startIndex = revertReasonIndex + 'revert reason: '.length;
-  return errorMsg?.slice(startIndex, endOfRevertReasonIndex)?.trim();
-}
-
-/**
  * Check duplicate value
  * @param array
  */

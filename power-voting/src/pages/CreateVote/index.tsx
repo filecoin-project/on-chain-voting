@@ -34,7 +34,7 @@ import {
   WRONG_START_TIME_MSG,
   STORING_DATA_MSG, githubApi, worldTimeApi
 } from '../../common/consts';
-import { useVoterInfo } from "../../common/store";
+import {useStoringCid, useVoterInfo} from "../../common/store";
 import timezoneOption from '../../../public/json/timezons.json';
 import { validateValue, getContractAddress, getWeb3IpfsId } from '../../utils';
 import './index.less';
@@ -67,6 +67,8 @@ const CreateVote = () => {
   const [messageApi, contextHolder] = message.useMessage();
 
   const voterInfo = useVoterInfo((state: any) => state.voterInfo);
+  const addStoringCid = useStoringCid((state: any) => state.addStoringCid);
+
   const {
     register,
     handleSubmit,
@@ -98,6 +100,7 @@ const CreateVote = () => {
     reset
   } = useWriteContract();
 
+  const [cid, setCid] = useState('');
   const [loading, setLoading] = useState<boolean>(writeContractPending);
 
   useEffect(() => {
@@ -130,9 +133,10 @@ const CreateVote = () => {
         type: 'success',
         content: STORING_DATA_MSG,
       });
+      addStoringCid([cid]);
       setTimeout(() => {
-        navigate("/");
-      }, 3000);
+        navigate("/")
+      }, 1000);
     }
   }, [writeContractSuccess])
 
@@ -201,6 +205,7 @@ const CreateVote = () => {
     };
 
     const cid = await getWeb3IpfsId(_values);
+    setCid(cid);
 
     if (isConnected) {
       // Check if user is a FIP editor
