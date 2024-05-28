@@ -14,7 +14,8 @@
 
 import React, {useEffect, useState} from "react";
 import { Row, Empty, Pagination, message } from "antd";
-import {useAccount, useReadContract, useReadContracts, BaseError} from "wagmi";
+import type { BaseError} from "wagmi";
+import {useAccount, useReadContract, useReadContracts} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import {useNavigate} from "react-router-dom";
 import axios from "axios";
@@ -34,7 +35,7 @@ import {
 } from '../../common/consts';
 import ListFilter from "../../components/ListFilter";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
-import {ProposalData, ProposalFilter, ProposalList, ProposalOption, ProposalResult} from '../../common/types';
+import type {ProposalData, ProposalFilter, ProposalList, ProposalOption, ProposalResult} from '../../common/types';
 import Loading from "../../components/Loading";
 import {markdownToText, getContractAddress} from "../../utils";
 import fileCoinAbi from "../../common/abi/power-voting.json";
@@ -305,7 +306,7 @@ const Home = () => {
           <div className="flex justify-between mb-3">
             <a
               target='_blank'
-              rel="noopener"
+              rel="noopener noreferrer"
               href={href}
               className="flex justify-center items-center"
             >

@@ -19,7 +19,8 @@ import Table from '../../../components/Table';
 import {useForm, Controller} from 'react-hook-form';
 import classNames from 'classnames';
 import {RadioGroup} from '@headlessui/react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSignMessage, BaseError} from "wagmi";
+import type { BaseError} from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSignMessage} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import {
   UCAN_GITHUB_STEP_1,
@@ -76,6 +77,11 @@ const UcanDelegate = () => {
     reset: resetWriteContract
   } = useWriteContract();
   const [loading, setLoading] = useState<boolean>(writeContractPending);
+
+  const { isLoading: transactionLoading } =
+    useWaitForTransactionReceipt({
+      hash,
+    })
 
   useEffect(() => {
     if (!isConnected) {
@@ -229,7 +235,6 @@ const UcanDelegate = () => {
         console.log(e);
       }
     } else {
-      // @ts-ignore
       openConnectModal && openConnectModal();
     }
     setLoading(false);
@@ -311,12 +316,12 @@ const UcanDelegate = () => {
               placeholder='The full UCAN content (include header, payload and signature) signed by your Filecoin private key.'
               className={classNames(
                 'form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]',
-                errors['prf'] && 'border-red-500 focus:border-red-500'
+                errors.prf && 'border-red-500 focus:border-red-500'
               )}
               {...register('prf', {required: true, validate: validateValue})}
             />}
           />
-          {errors['prf'] && (
+          {errors.prf && (
             <p className='text-red-500 mt-1'>Proof is required</p>
           )}
         </>
@@ -407,12 +412,12 @@ const UcanDelegate = () => {
             render={() => <input
               className={classNames(
                 'form-input w-full rounded bg-[#212B3C] border border-[#313D4F]',
-                errors['url'] && 'border-red-500 focus:border-red-500'
+                errors.url && 'border-red-500 focus:border-red-500'
               )}
               {...register('url', {required: true, validate: validateValue})}
             />}
           />
-          {errors['url'] && (
+          {errors.url && (
             <p className='text-red-500 mt-1'>URL is required</p>
           )}
         </>
@@ -422,7 +427,7 @@ const UcanDelegate = () => {
 
   const renderFilecoinDeauthorize = () => {
     return (
-      <form onSubmit={handleSubmit((value) => { onSubmit(value) })}>
+      <form onSubmit={handleSubmit(value => { onSubmit(value) })}>
         <div className='flow-root space-y-8'>
           <Table
             title='UCAN Delegates (Deauthorize)'
@@ -444,7 +449,7 @@ const UcanDelegate = () => {
 
   const renderGithubSignature = () => {
     return (
-      <form onSubmit={handleSubmit((value) => { onSubmit(value, UCAN_GITHUB_STEP_1) })}>
+      <form onSubmit={handleSubmit(value => { onSubmit(value, UCAN_GITHUB_STEP_1) })}>
         <div className='flow-root space-y-8'>
           <Table
             title='UCAN Delegates (Deauthorize)'
@@ -466,7 +471,7 @@ const UcanDelegate = () => {
 
   const renderGithubDeauthorize = () => {
     return (
-      <form onSubmit={handleSubmit((value) => { onSubmit(value, UCAN_GITHUB_STEP_2) })}>
+      <form onSubmit={handleSubmit(value => { onSubmit(value, UCAN_GITHUB_STEP_2) })}>
         <div className='flow-root space-y-8'>
           <Table title='UCAN Delegates (Deauthorize)' list={githubAuthorizeList}/>
 
@@ -496,11 +501,6 @@ const UcanDelegate = () => {
       return renderFilecoinDeauthorize();
     }
   }
-
-  const { isLoading: transactionLoading } =
-    useWaitForTransactionReceipt({
-      hash,
-    })
 
   return (
     <>

@@ -85,46 +85,46 @@ export const hasDuplicates = (array: string[]) => {
 
 export const markdownToText = (markdownString: string) => {
   // Remove links ([...](...))
-  let noLinks = markdownString.replace(/\[(.+?)\]\(.+?\)/g, '$1');
+  const noLinks = markdownString.replace(/\[(.+?)\]\(.+?\)/g, '$1');
 
   // Remove images (![...](...))
-  let noImages = noLinks.replace(/!\[(.+?)\]\(.+?\)/g, '$1');
+  const noImages = noLinks.replace(/!\[(.+?)\]\(.+?\)/g, '$1');
 
   // Remove inline code blocks（`...`）
-  let noInlineCode = noImages.replace(/`([^`]+)`/g, '$1');
+  const noInlineCode = noImages.replace(/`([^`]+)`/g, '$1');
 
   // Remove bold (**...** or __...__)
-  let noBold = noInlineCode.replace(/(?:\*{2}|_{2})(.*?)(?:\*{2}|_{2})/g, '$1');
+  const noBold = noInlineCode.replace(/(?:\*{2}|_{2})(.*?)(?:\*{2}|_{2})/g, '$1');
 
   // Remove italic (*...* or _..._)
-  let noItalic = noBold.replace(/(?:\*|_)(.*?)(?:\*|_)/g, '$1');
+  const noItalic = noBold.replace(/(?:\*|_)(.*?)(?:\*|_)/g, '$1');
 
   // Remove headings (#...，##...，###..., etc.)
-  let noHeadings = noItalic.replace(/^#+\s*(.*?)\s*#*$/gm, '$1');
+  const noHeadings = noItalic.replace(/^#+\s*(.*?)\s*#*$/gm, '$1');
 
   // Remove unordered lists（-... or *...）
-  let noUnorderedList = noHeadings.replace(/^[\s]*[-\*][\s]+(.*?)[\s]*$/gm, '$1');
+  const noUnorderedList = noHeadings.replace(/^[\s]*[-*][\s]+(.*?)[\s]*$/gm, '$1');
 
   // Remove ordered lists（1. ...）
-  let noOrderedList = noUnorderedList.replace(/^[\s]*\d+\.[\s]+(.*?)[\s]*$/gm, '$1');
+  const noOrderedList = noUnorderedList.replace(/^[\s]*\d+\.[\s]+(.*?)[\s]*$/gm, '$1');
 
   // Remove strikethrough (~~...~~)
-  let noStrikethrough = noOrderedList.replace(/~~(.*?)~~/g, '$1');
+  const noStrikethrough = noOrderedList.replace(/~~(.*?)~~/g, '$1');
 
   // Remove blockquotes（> ...）
-  let noBlockquote = noStrikethrough.replace(/^\s*>\s*(.*?)[\s]*$/gm, '$1');
+  const noBlockquote = noStrikethrough.replace(/^\s*>\s*(.*?)[\s]*$/gm, '$1');
 
   // Remove horizontal rules（---）
-  let noHorizontalRule = noBlockquote.replace(/^[\s]*[-*_][\s]*[-*_][\s]*[-*_][\s]*$/gm, '');
+  const noHorizontalRule = noBlockquote.replace(/^[\s]*[-*_][\s]*[-*_][\s]*[-*_][\s]*$/gm, '');
 
   // Remove HTML comments rules（<!--...-->）
-  let noHTMLComments = noHorizontalRule.replace(/<!--[\s\S]*?-->/g, '');
+  const noHTMLComments = noHorizontalRule.replace(/<!--[\s\S]*?-->/g, '');
 
   // Remove HTML anchor rules（(#...)）
-  let noHTMLAnchor = noHTMLComments.replace(/\(#([^)]+)\)/g, '');
+  const noHTMLAnchor = noHTMLComments.replace(/\(#([^)]+)\)/g, '');
 
   // Remove blank lines
-  let finalString = noHTMLAnchor.replace(/^\s*[\r\n]/gm, '');
+  const finalString = noHTMLAnchor.replace(/^\s*[\r\n]/gm, '');
 
   return finalString;
 }
