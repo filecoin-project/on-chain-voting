@@ -18,7 +18,7 @@ import { message } from 'antd';
 import Table from '../../components/Table';
 import LoadingButton from '../../components/LoadingButton';
 import type { BaseError} from "wagmi";
-import {useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
+import {useAccount, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
 import {filecoinCalibration} from "wagmi/chains";
 import {
   DUPLICATED_MINER_ID_MSG,
@@ -28,39 +28,8 @@ import {
 import Loading from "../../components/Loading";
 import {getContractAddress, hasDuplicates} from "../../utils";
 import fileCoinAbi from "../../common/abi/power-voting.json";
-import oracleAbi from "../../common/abi/oracle.json";
 import oraclePowerAbi from "../../common/abi/oracle-powers.json";
-
-function useMinerIdSet(chainId: number, address: `0x${string}` | undefined) {
-  const { data: minerIdData, isLoading: getMinerIdsLoading, isSuccess: getMinerIdsSuccess } = useReadContract({
-    address: getContractAddress(chainId || 0, 'oracle'),
-    abi: oracleAbi,
-    functionName: 'getVoterInfo',
-    args: [address]
-  });
-  return {
-    minerIdData: minerIdData as any,
-    getMinerIdsLoading,
-    getMinerIdsSuccess
-  }
-}
-
-function useOwnerDataSet(contracts: any[]) {
-  const {
-    data: ownerData,
-    isLoading: getOwnerLoading,
-    isSuccess: getOwnerSuccess
-  } = useReadContracts({
-    contracts: contracts,
-    query: { enabled: !!contracts.length }
-  });
-
-  return {
-    ownerData: ownerData || [],
-    getOwnerLoading,
-    getOwnerSuccess,
-  };
-}
+import { useMinerIdSet, useOwnerDataSet } from "../../common/hooks";
 
 const MinerId = () => {
   const {chain, isConnected, address} = useAccount();

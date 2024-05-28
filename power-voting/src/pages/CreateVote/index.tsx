@@ -23,7 +23,7 @@ import Table from '../../components/Table';
 import {useForm, Controller} from 'react-hook-form';
 import classNames from 'classnames';
 import type { BaseError} from "wagmi";
-import {useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
+import {useAccount, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import Editor from '../../components/MDEditor';
 import {
@@ -40,23 +40,12 @@ import { validateValue, getContractAddress, getWeb3IpfsId } from '../../utils';
 import './index.less';
 import LoadingButton from "../../components/LoadingButton";
 import fileCoinAbi from "../../common/abi/power-voting.json";
+import { useCheckFipAddress } from "../../common/hooks";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const { RangePicker } = DatePicker;
-
-function useCheckFipAddress(chainId: number, address: `0x${string}` | undefined) {
-  const { data: isFipAddress } = useReadContract({
-    address: getContractAddress(chainId, 'powerVoting'),
-    abi: fileCoinAbi,
-    functionName: 'fipMap',
-    args: [address]
-  });
-  return {
-    isFipAddress
-  };
-}
 
 const CreateVote = () => {
   const {isConnected, address, chain} = useAccount();
