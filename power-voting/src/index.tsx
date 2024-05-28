@@ -23,20 +23,40 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { metaMaskWallet } from '@rainbow-me/rainbowkit/wallets';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider, http } from "wagmi";
-import { filecoin, filecoinCalibration } from 'wagmi/chains';
+import { filecoin } from 'wagmi/chains';
 import { walletConnectProjectId } from './common/consts';
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 
 const queryClient = new QueryClient();
 
+const filecoinCalibrationChain = {
+  id: 314_159,
+  name: 'Filecoin Calibration',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'testnet filecoin',
+    symbol: 'tFIL',
+  },
+  rpcUrls: {
+    default: { http: ['https://api.calibration.node.glif.io/rpc/v1'] },
+  },
+  blockExplorers: {
+    default: {
+      name: 'Filscan',
+      url: 'https://calibration.filscan.io',
+    },
+  },
+  testnet: true,
+}
+
 const config = getDefaultConfig({
   appName: 'power-voting',
   projectId: walletConnectProjectId,
-  chains: [filecoin, filecoinCalibration],
+  chains: [filecoin, filecoinCalibrationChain],
   transports: {
     [filecoin.id]: http(),
-    [filecoinCalibration.id]: http(),
+    [filecoinCalibrationChain.id]: http(),
   },
   wallets: [
     {
