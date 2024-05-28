@@ -15,7 +15,7 @@
 import React, {useEffect, useState} from "react";
 import { Row, Empty, Pagination, message } from "antd";
 import type { BaseError} from "wagmi";
-import {useAccount, useReadContract, useReadContracts} from "wagmi";
+import {useAccount} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import {useNavigate} from "react-router-dom";
 import axios from "axios";
@@ -38,54 +38,12 @@ import ListFilter from "../../components/ListFilter";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
 import type {ProposalData, ProposalFilter, ProposalList, ProposalOption, ProposalResult} from '../../common/types';
 import Loading from "../../components/Loading";
-import {markdownToText, getContractAddress} from "../../utils";
-import fileCoinAbi from "../../common/abi/power-voting.json";
+import {markdownToText} from "../../utils";
 import {useCurrentTimezone, useStoringCid} from "../../common/store";
+import {useLatestId, useCheckFipAddress, useProposalDataSet} from "../../common/hooks";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
-
-function useLatestId(chainId: number) {
-  const { data: latestId, isLoading: getLatestIdLoading } = useReadContract({
-    address: getContractAddress(chainId, 'powerVoting'),
-    abi: fileCoinAbi,
-    functionName: 'proposalId',
-  });
-  return {
-    latestId,
-    getLatestIdLoading
-  };
-}
-
-function useProposalDataSet(params: any) {
-  const { chainId, total, page, pageSize } = params;
-  const contracts: any[] = [];
-  const offset = (page - 1) * pageSize;
-  // Generate contract calls for fetching proposals based on pagination
-  for (let i = total - offset; i > Math.max(total - offset - pageSize, 0); i--) {
-    contracts.push({
-      address: getContractAddress(chainId, 'powerVoting'),
-      abi: fileCoinAbi,
-      functionName: 'idToProposal',
-      args: [i],
-    });
-  }
-  const {
-    data: proposalData,
-    isLoading: getProposalIdLoading,
-    isSuccess: getProposalIdSuccess,
-    error,
-  } = useReadContracts({
-    contracts: contracts,
-    query: { enabled: !!contracts.length }
-  });
-  return {
-    proposalData: proposalData || [],
-    getProposalIdLoading,
-    getProposalIdSuccess,
-    error,
-  };
-}
 
 const Home = () => {
   const navigate = useNavigate();
@@ -112,6 +70,7 @@ const Home = () => {
   const storingCid = useStoringCid((state: any) => state.storingCid);
   const setStoringCid = useStoringCid((state: any) => state.setStoringCid);
 
+  const { isFipAddress } = useCheckFipAddress(chainId, address);
   const { latestId, getLatestIdLoading } = useLatestId(chainId);
   const { proposalData, getProposalIdLoading, getProposalIdSuccess, error } = useProposalDataSet({
     chainId,
@@ -455,12 +414,15 @@ const Home = () => {
             onChange={handleFilter}
           />
         </div>
-        <button
-          className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-4 rounded-xl"
-          onClick={handleCreate}
-        >
-          Create A Proposal
-        </button>
+        {
+          !!isFipAddress &&
+            <button
+                className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-4 rounded-xl"
+                onClick={handleCreate}
+            >
+                Create A Proposal
+            </button>
+        }
       </div>
       {
         renderContent()
