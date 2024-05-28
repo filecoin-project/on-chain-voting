@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import React from "react";
-import { FC } from "react";
+import type { FC } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import MDEditor from "../../../components/MDEditor";
 import './index.less';

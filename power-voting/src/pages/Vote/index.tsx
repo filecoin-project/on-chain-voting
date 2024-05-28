@@ -17,7 +17,8 @@ import { useNavigate, Link, useParams } from "react-router-dom";
 import { message } from "antd";
 import axios from 'axios';
 import dayjs from 'dayjs';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, BaseError } from "wagmi";
+import type { BaseError } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { useConnectModal, useChainModal } from "@rainbow-me/rainbowkit";
 import {getContractAddress, getWeb3IpfsId} from '../../utils';
 import MDEditor from "../../components/MDEditor";
@@ -28,10 +29,12 @@ import {
   WRONG_NET_STATUS,
   web3AvatarUrl,
   CHOOSE_VOTE_MSG,
-  PENDING_STATUS, STORING_DATA_MSG, worldTimeApi,
+  PENDING_STATUS,
+  worldTimeApi,
+  VOTE_SUCCESS_MSG,
 } from "../../common/consts";
 import { timelockEncrypt, roundAt, mainnetClient, Buffer } from "tlock-js";
-import {ProposalList, ProposalOption} from "../../common/types";
+import type {ProposalList, ProposalOption} from "../../common/types";
 import "./index.less";
 import fileCoinAbi from "../../common/abi/power-voting.json";
 import {useCurrentTimezone} from "../../common/store";
@@ -70,7 +73,7 @@ const Vote = () => {
     if (writeContractSuccess) {
       messageApi.open({
         type: 'success',
-        content: STORING_DATA_MSG,
+        content: VOTE_SUCCESS_MSG,
       });
       setTimeout(() => {
         navigate("/");
@@ -182,7 +185,6 @@ const Vote = () => {
         setLoading(false);
       } else {
         // If user is not connected, prompt to connect
-        // @ts-ignore
         openConnectModal && openConnectModal();
       }
     }
@@ -266,7 +268,7 @@ const Vote = () => {
                           <a
                               className="text-white"
                               target="_blank"
-                              rel="noopener"
+                              rel="noopener noreferrer"
                               href={href}
                           >
                             {votingData?.githubName || EllipsisMiddle({suffixCount: 4, children: votingData?.address})}
