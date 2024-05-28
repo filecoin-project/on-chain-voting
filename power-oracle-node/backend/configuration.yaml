@@ -2,11 +2,11 @@ network:
   - id: 314159
     name: Calibration
     # RPC url
-    rpc: https://rpc.ankr.com/filecoin_testnet
+    rpc: http://192.168.11.139:1235/rpc/v1
     #  absolute path
     abiPath: oracle_abi.json
     # contract address
-    contractAddress:
+    contractAddress: 0x14696967B6987Ae34c9018ed8D3955064d88231F
     # wallet private key
     privateKey:
     # wallet address
