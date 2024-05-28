@@ -23,7 +23,6 @@ const (
 	F4TaskIdToAddress = "f4TaskIdToAddress"
 	TaskIdToUcanCid   = "taskIdToUcanCid"
 	VoterToInfo       = "voterToInfo"
-	VoterToPower      = "voterToPower"
 )
 
 // VoterInfo struct represents information about a voter stored in the Ethereum smart contract.
