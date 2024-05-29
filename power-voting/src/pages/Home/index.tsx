@@ -281,6 +281,17 @@ const Home = () => {
     if (proposalStatus !== VOTE_ALL_STATUS) {
       list = list.filter(item => item.proposalStatus === proposalStatus);
     }
+    if (!list.length) {
+      return (
+        <div className='empty'>
+          <Empty
+            description={
+              <span className='text-white'>No Data</span>
+            }
+          />
+        </div>
+      );
+    }
     return list.map((item: ProposalList, index: number) => {
       const proposal = VOTE_LIST?.find((proposal: ProposalFilter) => proposal.value === item.proposalStatus);
       const maxOption = item.option?.reduce((prev, current) => {
@@ -374,12 +385,13 @@ const Home = () => {
     // Display empty when data is empty
     if (proposalData.length === 0) {
       return (
-        <Empty
-          className='empty'
-          description={
-            <span className='text-white'>No Data</span>
-          }
-        />
+        <div className='empty'>
+          <Empty
+            description={
+              <span className='text-white'>No Data</span>
+            }
+          />
+        </div>
       );
     }
 
