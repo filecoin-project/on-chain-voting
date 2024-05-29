@@ -38,6 +38,13 @@ jobs:
           cp ./abi/* ./utils
           cp ./abi/* ./service
 
+      - name: Inject github token to config.yaml
+        env:
+          GH_TOKEN: ${{ secrets.gh_token }}
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq eval ".github.githubToken = strenv(GH_TOKEN)" -i ./power-oracle-node/backend/configuration.yaml
+
       - name: Test
         run: |
           cd ./power-oracle-node/backend
