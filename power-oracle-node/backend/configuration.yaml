@@ -2,7 +2,7 @@ network:
   - id: 314159
     name: Calibration
     # RPC url
-    rpc: http://192.168.11.139:1235/rpc/v1
+    rpc: http://203.160.91.77:27924/rpc/v1
     #  absolute path
     abiPath: oracle_abi.json
     # contract address
