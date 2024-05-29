@@ -65,10 +65,6 @@ export const VOTE_FILTER_LIST = [
     value: VOTE_ALL_STATUS
   },
   {
-    label: "Storing",
-    value: STORING_STATUS
-  },
-  {
     label: "Pending",
     value: PENDING_STATUS
   },
@@ -440,6 +436,8 @@ export const UCAN_JWT_HEADER = {
 };
 export const OPERATION_CANCELED_MSG= 'Operation Canceled';
 export const STORING_DATA_MSG= 'Storing data on chain!';
+export const STORING_SUCCESS_MSG = 'Data stored on chain successfully!';
+export const STORING_FAILED_MSG = 'Data stored on chain failed!';
 export const VOTE_SUCCESS_MSG= 'Vote successful!';
 export const CHOOSE_VOTE_MSG= 'Please choose a option to vote!';
 export const WRONG_START_TIME_MSG= 'Start time can\'t be less than current time!';

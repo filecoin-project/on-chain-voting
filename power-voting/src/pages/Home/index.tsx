@@ -15,7 +15,7 @@
 import React, {useEffect, useState} from "react";
 import { Row, Empty, Pagination, message } from "antd";
 import type { BaseError} from "wagmi";
-import {useAccount} from "wagmi";
+import {useAccount, useWaitForTransactionReceipt } from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import {useNavigate} from "react-router-dom";
 import axios from "axios";
@@ -32,7 +32,7 @@ import {
   web3AvatarUrl,
   PENDING_STATUS,
   proposalResultApi,
-  worldTimeApi, STORING_STATUS, STORING_DATA_MSG
+  worldTimeApi, STORING_STATUS, STORING_DATA_MSG, STORING_SUCCESS_MSG, STORING_FAILED_MSG
 } from '../../common/consts';
 import ListFilter from "../../components/ListFilter";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
@@ -64,6 +64,7 @@ const Home = () => {
   const [pageSize] = useState(5);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [shouldRefetch, setShouldRefetch] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
 
   const timezone = useCurrentTimezone((state: any) => state.timezone);
@@ -71,12 +72,15 @@ const Home = () => {
   const setStoringCid = useStoringCid((state: any) => state.setStoringCid);
 
   const { isFipAddress } = useCheckFipAddress(chainId, address);
-  const { latestId, getLatestIdLoading } = useLatestId(chainId);
+  const { latestId, getLatestIdLoading, refetch } = useLatestId(chainId, !shouldRefetch);
   const { proposalData, getProposalIdLoading, getProposalIdSuccess, error } = useProposalDataSet({
     chainId,
     total: Number(latestId),
     page,
     pageSize,
+  });
+  const { isFetched, isSuccess, isError} = useWaitForTransactionReceipt({
+    hash: storingCid[0]?.hash
   });
 
   useEffect(() => {
@@ -99,6 +103,37 @@ const Home = () => {
       getProposalList(page);
     }
   }, [chain, page, address, isConnected]);
+
+  useEffect(() => {
+    if (isFetched) {
+      // If data is fetched, remove the last item from storingCid array
+      storingCid.splice(storingCid.length - 1, 1);
+      setStoringCid(storingCid);
+      // If the transaction is successful, show a success message
+      if (isSuccess) {
+        messageApi.open({
+          type: 'success',
+          content: STORING_SUCCESS_MSG
+        })
+      }
+      // If the transaction fails, show an error message
+      if (isError) {
+        messageApi.open({
+          type: 'error',
+          content: STORING_FAILED_MSG
+        })
+      }
+      // After 3 seconds, set shouldRefetch to true and trigger a refetch
+      setTimeout(() => {
+        setShouldRefetch(true);
+        refetch().then(() => {
+          // Reset shouldRefetch after refetching
+          setShouldRefetch(false);
+        });
+        getProposalList(page);
+      }, 3000);
+    }
+  }, [isFetched]);
 
   /**
    * get proposal list
@@ -140,12 +175,12 @@ const Home = () => {
       }));
 
       // Filter out already stored proposals
-      const storingList = storingCid.filter((cid: string) => !list.some(option => option.cid === cid));
+      const storingList = storingCid.filter((item: any) => !list.some(option => option.cid === item.cid));
       setStoringCid(storingList);
 
       // Generate IPFS URLs for storing list
       const ipfsUrls = storingList.map(
-        (cid: string) => `https://${cid}.ipfs.w3s.link/`
+        (item: any) => `https://${item.cid}.ipfs.w3s.link/`
       );
 
       // Fetch data from IPFS URLs
@@ -281,6 +316,17 @@ const Home = () => {
     if (proposalStatus !== VOTE_ALL_STATUS) {
       list = list.filter(item => item.proposalStatus === proposalStatus);
     }
+    if (!list.length) {
+      return (
+        <div className='empty'>
+          <Empty
+            description={
+              <span className='text-white'>No Data</span>
+            }
+          />
+        </div>
+      );
+    }
     return list.map((item: ProposalList, index: number) => {
       const proposal = VOTE_LIST?.find((proposal: ProposalFilter) => proposal.value === item.proposalStatus);
       const maxOption = item.option?.reduce((prev, current) => {
@@ -372,14 +418,15 @@ const Home = () => {
     }
 
     // Display empty when data is empty
-    if (proposalData.length === 0) {
+    if (!proposalData.length) {
       return (
-        <Empty
-          className='empty'
-          description={
-            <span className='text-white'>No Data</span>
-          }
-        />
+        <div className='empty'>
+          <Empty
+            description={
+              <span className='text-white'>No Data</span>
+            }
+          />
+        </div>
       );
     }
 
