@@ -65,10 +65,6 @@ export const VOTE_FILTER_LIST = [
     value: VOTE_ALL_STATUS
   },
   {
-    label: "Storing",
-    value: STORING_STATUS
-  },
-  {
     label: "Pending",
     value: PENDING_STATUS
   },

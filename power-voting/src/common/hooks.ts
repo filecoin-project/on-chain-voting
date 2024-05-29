@@ -1,4 +1,4 @@
-import { useReadContract, useReadContracts } from 'wagmi';
+import { useReadContract, useReadContracts, useTransactionReceipt } from 'wagmi';
 import {getContractAddress} from "../utils";
 import fileCoinAbi from "./abi/power-voting.json";
 import oracleAbi from "./abi/oracle.json";
@@ -21,6 +21,7 @@ export const useLatestId = (chainId: number) => {
     abi: fileCoinAbi,
     functionName: 'proposalId',
   });
+  console.log(latestId);
   return {
     latestId,
     getLatestIdLoading
@@ -47,7 +48,7 @@ export const useProposalDataSet = (params: any) => {
     error,
   } = useReadContracts({
     contracts: contracts,
-    query: { enabled: !!contracts.length }
+    query: { enabled: contracts.length > 0 }
   });
   return {
     proposalData: proposalData || [],
@@ -86,4 +87,18 @@ export const useOwnerDataSet = (contracts: any[]) => {
     getOwnerLoading,
     getOwnerSuccess,
   };
+}
+
+export const useTransaction = (hash: `0x${string}`, onSuccess: () => void, onError: () => void) => {
+  const { isSuccess, error} = useTransactionReceipt({
+    hash,
+  });
+
+  if (isSuccess) {
+    onSuccess();
+  }
+
+  if (error) {
+    onError();
+  }
 }

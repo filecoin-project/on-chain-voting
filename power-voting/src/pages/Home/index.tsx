@@ -15,7 +15,7 @@
 import React, {useEffect, useState} from "react";
 import { Row, Empty, Pagination, message } from "antd";
 import type { BaseError} from "wagmi";
-import {useAccount} from "wagmi";
+import {useAccount, useWaitForTransactionReceipt } from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import {useNavigate} from "react-router-dom";
 import axios from "axios";
@@ -69,6 +69,30 @@ const Home = () => {
   const timezone = useCurrentTimezone((state: any) => state.timezone);
   const storingCid = useStoringCid((state: any) => state.storingCid);
   const setStoringCid = useStoringCid((state: any) => state.setStoringCid);
+
+  /*storingCid?.map((item: { hash: `0x${string}`, cid: string }) => {
+    useTransaction(item.hash,
+      () => {
+        console.log(11);
+      },
+      () => {
+        console.log(22);
+      })
+  })*/
+  const { isSuccess: isTransactionSuccess, error: transactionError} = useWaitForTransactionReceipt({
+    hash: storingCid[0]?.hash
+  });
+  console.log(isTransactionSuccess);
+  console.log(transactionError);
+  useEffect(() => {
+    if (isTransactionSuccess) {
+      console.log('transactionSuccess');
+    }
+  }, [isTransactionSuccess]);
+
+  useEffect(() => {
+    console.log(transactionError);
+  }, [transactionError])
 
   const { isFipAddress } = useCheckFipAddress(chainId, address);
   const { latestId, getLatestIdLoading } = useLatestId(chainId);
@@ -140,12 +164,12 @@ const Home = () => {
       }));
 
       // Filter out already stored proposals
-      const storingList = storingCid.filter((cid: string) => !list.some(option => option.cid === cid));
+      const storingList = storingCid.filter((item: any) => !list.some(option => option.cid === item.cid));
       setStoringCid(storingList);
 
       // Generate IPFS URLs for storing list
       const ipfsUrls = storingList.map(
-        (cid: string) => `https://${cid}.ipfs.w3s.link/`
+        (item: any) => `https://${item.cid}.ipfs.w3s.link/`
       );
 
       // Fetch data from IPFS URLs
