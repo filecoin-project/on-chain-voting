@@ -1,7 +1,33 @@
-import { useReadContract, useReadContracts, useTransactionReceipt } from 'wagmi';
+// Copyright (C) 2023-2024 StorSwift Inc.
+// This file is part of the PowerVoting library.
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at:
+// http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import { useReadContract, useReadContracts } from 'wagmi';
 import {getContractAddress} from "../utils";
 import fileCoinAbi from "./abi/power-voting.json";
 import oracleAbi from "./abi/oracle.json";
+
+export const useVoterInfoSet = (chainId: number, address: `0x${string}` | undefined) => {
+  const { data: voterInfo } = useReadContract({
+    address: getContractAddress(chainId, 'oracle'),
+    abi: oracleAbi,
+    functionName: 'voterToInfo',
+    args: [address]
+  });
+  return {
+    voterInfo: voterInfo as any
+  }
+}
 
 export const useCheckFipAddress = (chainId: number, address: `0x${string}` | undefined) => {
   const { data: isFipAddress } = useReadContract({
@@ -15,16 +41,19 @@ export const useCheckFipAddress = (chainId: number, address: `0x${string}` | und
   };
 }
 
-export const useLatestId = (chainId: number) => {
-  const { data: latestId, isLoading: getLatestIdLoading } = useReadContract({
+export const useLatestId = (chainId: number, enabled: boolean) => {
+  const { data: latestId, isLoading: getLatestIdLoading, refetch } = useReadContract({
     address: getContractAddress(chainId, 'powerVoting'),
     abi: fileCoinAbi,
     functionName: 'proposalId',
+    query: {
+      enabled
+    }
   });
-  console.log(latestId);
   return {
     latestId,
-    getLatestIdLoading
+    getLatestIdLoading,
+    refetch
   };
 }
 
@@ -87,18 +116,4 @@ export const useOwnerDataSet = (contracts: any[]) => {
     getOwnerLoading,
     getOwnerSuccess,
   };
-}
-
-export const useTransaction = (hash: `0x${string}`, onSuccess: () => void, onError: () => void) => {
-  const { isSuccess, error} = useTransactionReceipt({
-    hash,
-  });
-
-  if (isSuccess) {
-    onSuccess();
-  }
-
-  if (error) {
-    onError();
-  }
 }
