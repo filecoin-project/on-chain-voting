@@ -17,7 +17,8 @@ import { useNavigate, Link, useParams } from "react-router-dom";
 import { message } from "antd";
 import axios from 'axios';
 import dayjs from 'dayjs';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, BaseError } from "wagmi";
+import type { BaseError } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { useConnectModal, useChainModal } from "@rainbow-me/rainbowkit";
 import {getContractAddress, getWeb3IpfsId} from '../../utils';
 import MDEditor from "../../components/MDEditor";
@@ -28,12 +29,15 @@ import {
   WRONG_NET_STATUS,
   web3AvatarUrl,
   CHOOSE_VOTE_MSG,
-  PENDING_STATUS, STORING_DATA_MSG,
+  PENDING_STATUS,
+  worldTimeApi,
+  VOTE_SUCCESS_MSG,
 } from "../../common/consts";
 import { timelockEncrypt, roundAt, mainnetClient, Buffer } from "tlock-js";
-import {ProposalList, ProposalOption} from "../../common/types";
+import type {ProposalList, ProposalOption} from "../../common/types";
 import "./index.less";
 import fileCoinAbi from "../../common/abi/power-voting.json";
+import {useCurrentTimezone} from "../../common/store";
 
 const Vote = () => {
   const { chain, isConnected } = useAccount();
@@ -48,6 +52,9 @@ const Vote = () => {
   const [selectedOptionIndex, setSelectedOptionIndex] = useState(-1);
 
   const [loading, setLoading] = useState(false);
+  const timezone = useCurrentTimezone((state: any) => state.timezone);
+
+  const [messageApi, contextHolder] = message.useMessage();
 
   const {
     data: hash,
@@ -64,14 +71,22 @@ const Vote = () => {
 
   useEffect(() => {
     if (writeContractSuccess) {
-      message.success(STORING_DATA_MSG);
-      navigate("/");
+      messageApi.open({
+        type: 'success',
+        content: VOTE_SUCCESS_MSG,
+      });
+      setTimeout(() => {
+        navigate("/");
+      }, 3000);
     }
   }, [writeContractSuccess])
 
   useEffect(() => {
     if (error) {
-      message.error((error as BaseError)?.shortMessage || error?.message);
+      messageApi.open({
+        type: 'error',
+        content: (error as BaseError)?.shortMessage || error?.message,
+      });
     }
     reset();
   }, [error]);
@@ -92,8 +107,9 @@ const Vote = () => {
         openConnectModal && openConnectModal();
       }
     } else {
+      const { data: { unixtime } } = await axios.get(worldTimeApi);
       // If chain ID matches, determine the vote status based on current time and start time
-      voteStatus = dayjs().unix() < data?.startTime ? PENDING_STATUS : IN_PROGRESS_STATUS;
+      voteStatus = unixtime < data?.startTime ? PENDING_STATUS : IN_PROGRESS_STATUS;
     }
     // Map each option from the fetched data to include count initialized to 0
     const option = data.option?.map((item: string) => {
@@ -144,7 +160,10 @@ const Vote = () => {
     // Check if a valid option is selected
     if (selectedOptionIndex < 0) {
       // If not, display a warning message
-      message.warning(CHOOSE_VOTE_MSG);
+      messageApi.open({
+        type: 'warning',
+        content: CHOOSE_VOTE_MSG,
+      });
     } else {
       // If a valid option is selected, proceed with voting
       setLoading(true);
@@ -166,7 +185,6 @@ const Vote = () => {
         setLoading(false);
       } else {
         // If user is not connected, prompt to connect
-        // @ts-ignore
         openConnectModal && openConnectModal();
       }
     }
@@ -218,6 +236,7 @@ const Vote = () => {
 
   return (
     <div className="flex voting">
+      {contextHolder}
       <div className="relative w-full pr-5 lg:w-8/12">
         <div className="px-3 mb-6 md:px-0">
           <button>
@@ -249,7 +268,7 @@ const Vote = () => {
                           <a
                               className="text-white"
                               target="_blank"
-                              rel="noopener"
+                              rel="noopener noreferrer"
                               href={href}
                           >
                             {votingData?.githubName || EllipsisMiddle({suffixCount: 4, children: votingData?.address})}
@@ -289,10 +308,10 @@ const Vote = () => {
                                   <div className="text-ellipsis h-[100%] overflow-hidden">{item.name}</div>
                                   {
                                     selectedOptionIndex === index &&
-                                    <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-md">
-                                      <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
-                                            strokeWidth="2" d="m5 13l4 4L19 7" />
-                                    </svg>
+                                      <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-md">
+                                          <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
+                                                strokeWidth="2" d="m5 13l4 4L19 7" />
+                                      </svg>
                                   }
                                 </div>
                               </div>
@@ -317,24 +336,18 @@ const Vote = () => {
               </h4>
             </div>
             <div className="p-4 leading-6 sm:leading-8">
-              <div className="space-y-1">
+              <div className='space-y-1'>
                 <div>
                   <b>Start Time</b>
-                  <span className="float-right text-white">
-                    {votingData?.showTime?.length && dayjs(votingData.showTime[0]).format('MMM.D, YYYY, h:mm A')}
-                  </span>
+                  <span className='float-right text-white'>{votingData?.startTime && dayjs(votingData.startTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
                 </div>
                 <div>
                   <b>End Time</b>
-                  <span className="float-right text-white">
-                    {votingData?.showTime?.length && dayjs(votingData.showTime[1]).format('MMM.D, YYYY, h:mm A')}
-                  </span>
+                  <span className='float-right text-white'>{votingData?.expTime && dayjs(votingData.expTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
                 </div>
                 <div>
                   <b>Timezone</b>
-                  <span className="float-right text-white">
-                    {votingData?.GMTOffset}
-                  </span>
+                  <span className='float-right text-white'>{timezone}</span>
                 </div>
               </div>
             </div>

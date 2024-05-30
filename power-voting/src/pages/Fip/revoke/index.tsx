@@ -26,13 +26,11 @@ import EllipsisMiddle from "../../../components/EllipsisMiddle";
 const FipRevoke = () => {
   const {isConnected, address, chain} = useAccount();
   const chainId = chain?.id || 0;
-
+  console.log(chainId);
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
-  const [minerIds, setMinerIds] = useState(['']);
   const [spinning, setSpinning] = useState(false);
-  const [loading, setLoading] = useState(false);
-
+  setSpinning(false);
   const confirm = (e: any) => {
     console.log(e);
   };
@@ -222,7 +220,7 @@ const FipRevoke = () => {
   }
 
   const handleRevoke = (address: string) => {
-
+    console.log(address);
   }
 
   return (

@@ -14,7 +14,8 @@
 
 import React, {useEffect, useState} from "react";
 import { Row, Empty, Pagination, message } from "antd";
-import {useAccount, useReadContract, useReadContracts, BaseError} from "wagmi";
+import type { BaseError} from "wagmi";
+import {useAccount, useWaitForTransactionReceipt } from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import {useNavigate} from "react-router-dom";
 import axios from "axios";
@@ -30,63 +31,22 @@ import {
   COMPLETED_STATUS,
   web3AvatarUrl,
   PENDING_STATUS,
-  proposalResultApi
+  proposalResultApi,
+  worldTimeApi, STORING_STATUS, STORING_DATA_MSG, STORING_SUCCESS_MSG, STORING_FAILED_MSG
 } from '../../common/consts';
 import ListFilter from "../../components/ListFilter";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
-import {ProposalData, ProposalFilter, ProposalList, ProposalOption, ProposalResult} from '../../common/types';
+import type {ProposalData, ProposalFilter, ProposalList, ProposalOption, ProposalResult} from '../../common/types';
 import Loading from "../../components/Loading";
-import {markdownToText, getContractAddress} from "../../utils";
-import fileCoinAbi from "../../common/abi/power-voting.json";
+import {markdownToText} from "../../utils";
+import {useCurrentTimezone, useStoringCid} from "../../common/store";
+import {useLatestId, useCheckFipAddress, useProposalDataSet} from "../../common/hooks";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-function useLatestId(chainId: number) {
-  const { data: latestId, isLoading: getLatestIdLoading } = useReadContract({
-    address: getContractAddress(chainId, 'powerVoting'),
-    abi: fileCoinAbi,
-    functionName: 'proposalId',
-  });
-  return {
-    latestId,
-    getLatestIdLoading
-  };
-}
-
-function useProposalDataSet(params: any) {
-  const { chainId, total, page, pageSize } = params;
-  const contracts: any[] = [];
-  const offset = (page - 1) * pageSize;
-  // Generate contract calls for fetching proposals based on pagination
-  for (let i = total - offset; i > Math.max(total - offset - pageSize, 0); i--) {
-    contracts.push({
-      address: getContractAddress(chainId, 'powerVoting'),
-      abi: fileCoinAbi,
-      functionName: 'idToProposal',
-      args: [i],
-    });
-  }
-  const {
-    data: proposalData,
-    isLoading: getProposalIdLoading,
-    isSuccess: getProposalIdSuccess,
-    error,
-  } = useReadContracts({
-    contracts: contracts,
-    query: { enabled: !!contracts.length }
-  });
-  return {
-    proposalData: proposalData || [],
-    getProposalIdLoading,
-    getProposalIdSuccess,
-    error,
-  };
-}
-
 const Home = () => {
   const navigate = useNavigate();
-
   const {chain, address, isConnected} = useAccount();
   const chainId = chain?.id || 0;
   const {openConnectModal} = useConnectModal();
@@ -104,18 +64,31 @@ const Home = () => {
   const [pageSize] = useState(5);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [shouldRefetch, setShouldRefetch] = useState(false);
+  const [messageApi, contextHolder] = message.useMessage();
 
-  const { latestId, getLatestIdLoading } = useLatestId(chainId);
+  const timezone = useCurrentTimezone((state: any) => state.timezone);
+  const storingCid = useStoringCid((state: any) => state.storingCid);
+  const setStoringCid = useStoringCid((state: any) => state.setStoringCid);
+
+  const { isFipAddress } = useCheckFipAddress(chainId, address);
+  const { latestId, getLatestIdLoading, refetch } = useLatestId(chainId, !shouldRefetch);
   const { proposalData, getProposalIdLoading, getProposalIdSuccess, error } = useProposalDataSet({
     chainId,
     total: Number(latestId),
     page,
     pageSize,
   });
+  const { isFetched, isSuccess, isError} = useWaitForTransactionReceipt({
+    hash: storingCid[0]?.hash
+  });
 
   useEffect(() => {
     if (error) {
-      message.error((error as BaseError)?.shortMessage || error?.message);
+      messageApi.open({
+        type: 'error',
+        content: (error as BaseError)?.shortMessage || error?.message,
+      });
     }
   }, [error]);
 
@@ -131,6 +104,37 @@ const Home = () => {
     }
   }, [chain, page, address, isConnected]);
 
+  useEffect(() => {
+    if (isFetched) {
+      // If data is fetched, remove the last item from storingCid array
+      storingCid.splice(storingCid.length - 1, 1);
+      setStoringCid(storingCid);
+      // If the transaction is successful, show a success message
+      if (isSuccess) {
+        messageApi.open({
+          type: 'success',
+          content: STORING_SUCCESS_MSG
+        })
+      }
+      // If the transaction fails, show an error message
+      if (isError) {
+        messageApi.open({
+          type: 'error',
+          content: STORING_FAILED_MSG
+        })
+      }
+      // After 3 seconds, set shouldRefetch to true and trigger a refetch
+      setTimeout(() => {
+        setShouldRefetch(true);
+        refetch().then(() => {
+          // Reset shouldRefetch after refetching
+          setShouldRefetch(false);
+        });
+        getProposalList(page);
+      }, 3000);
+    }
+  }, [isFetched]);
+
   /**
    * get proposal list
    * @param page
@@ -140,10 +144,10 @@ const Home = () => {
     // Convert latest ID to number
     const total = latestId ? Number(latestId) : 0;
     // Calculate the offset based on the current page number
-
     const offset = (page - 1) * pageSize;
     setTotal(total);
     try {
+      // Fetch and process proposal data
       const list = await Promise.all(proposalData.map(async(data, index) => {
         const { result } = data as any;
         const proposalId = total - offset - index;
@@ -169,13 +173,41 @@ const Home = () => {
           proposalResults
         };
       }));
+
+      // Filter out already stored proposals
+      const storingList = storingCid.filter((item: any) => !list.some(option => option.cid === item.cid));
+      setStoringCid(storingList);
+
+      // Generate IPFS URLs for storing list
+      const ipfsUrls = storingList.map(
+        (item: any) => `https://${item.cid}.ipfs.w3s.link/`
+      );
+
+      // Fetch data from IPFS URLs
+      const responses = await Promise.all(ipfsUrls.map((url: string) => axios.get(url)));
+      // Process the fetched data and create proposal objects
+      const storingData = responses?.map((res, i) => {
+        const { data } = res;
+        return {
+          ...data,
+          cid: ipfsUrls[i],
+          proposalType: 1,
+          proposalStatus: STORING_STATUS,
+          proposalResults: data.option?.map((item: string) => {
+            return {
+              name: item,
+              count: 0
+            }
+          })
+        };
+      })
       // Process and set the fetched proposal list
       const proposalsList = await getList(list);
       const originList = proposalsList || [];
       // Set filter list for proposal filtering
       setFilterList(VOTE_FILTER_LIST);
       // Set the proposal list state
-      setProposalList(originList);
+      setProposalList([...storingData, ...originList]);
     } catch (e) {
       console.log(e);
     } finally {
@@ -195,9 +227,10 @@ const Home = () => {
     try {
       // IPFS data List
       const responses = await Promise.all(ipfsUrls.map((url: string) => axios.get(url)));
+      const { data } = await axios.get(worldTimeApi);
       const results: ProposalList[] = responses.map((res, i: number) => {
         const  proposal = proposals[i];
-        const now = dayjs().unix();
+        const now = data?.unixtime;
         let proposalStatus = 0;
         // Set proposal status
         if (now < proposal.startTime) {
@@ -250,6 +283,13 @@ const Home = () => {
    * @param item
    */
   const handleJump = (item: ProposalList) => {
+    if  (item.proposalStatus === STORING_STATUS) {
+      messageApi.open({
+        type: 'warning',
+        content: STORING_DATA_MSG,
+      });
+      return;
+    }
     const router = `/${[PENDING_STATUS, IN_PROGRESS_STATUS].includes(item.proposalStatus) ? "vote" : "votingResults"}/${item.id}/${item.cid}`;
     navigate(router, {state: item});
   }
@@ -276,9 +316,20 @@ const Home = () => {
     if (proposalStatus !== VOTE_ALL_STATUS) {
       list = list.filter(item => item.proposalStatus === proposalStatus);
     }
+    if (!list.length) {
+      return (
+        <div className='empty'>
+          <Empty
+            description={
+              <span className='text-white'>No Data</span>
+            }
+          />
+        </div>
+      );
+    }
     return list.map((item: ProposalList, index: number) => {
       const proposal = VOTE_LIST?.find((proposal: ProposalFilter) => proposal.value === item.proposalStatus);
-      const maxOption = item.option.reduce((prev, current) => {
+      const maxOption = item.option?.reduce((prev, current) => {
         return (prev.count > current.count) ? prev : current;
       });
       let href = '';
@@ -298,7 +349,7 @@ const Home = () => {
           <div className="flex justify-between mb-3">
             <a
               target='_blank'
-              rel="noopener"
+              rel="noopener noreferrer"
               href={href}
               className="flex justify-center items-center"
             >
@@ -308,7 +359,7 @@ const Home = () => {
               </div>
             </a>
             <div
-              className={`${proposal?.color} h-[26px] px-[12px] text-white rounded-xl`}>
+              className={`h-[26px] px-[12px] text-white rounded-xl`} style={{ background: proposal?.color }}>
               { proposal?.label }
             </div>
           </div>
@@ -351,7 +402,7 @@ const Home = () => {
           }
           <div className="text-[#8B949E] text-sm mt-4">
             <span className="mr-2">End Time:</span>
-            {dayjs(item.showTime[1]).format('MMM.D, YYYY, h:mm A')} ({item.GMTOffset})
+            {dayjs(item.expTime * 1000).format('MMM.D, YYYY, h:mm A')} ({timezone})
           </div>
         </div>
       )
@@ -367,14 +418,15 @@ const Home = () => {
     }
 
     // Display empty when data is empty
-    if (proposalData.length === 0) {
+    if (!proposalData.length) {
       return (
-        <Empty
-          className='empty'
-          description={
-            <span className='text-white'>No Data</span>
-          }
-        />
+        <div className='empty'>
+          <Empty
+            description={
+              <span className='text-white'>No Data</span>
+            }
+          />
+        </div>
       );
     }
 
@@ -399,6 +451,7 @@ const Home = () => {
 
   return (
     <div className="home_container main">
+      {contextHolder}
       <div className="flex justify-between items-center rounded-xl border border-[#313D4F] bg-[#273141] mb-8 px-[30px]">
         <div className="flex justify-between">
           <ListFilter
@@ -408,12 +461,15 @@ const Home = () => {
             onChange={handleFilter}
           />
         </div>
-        <button
-          className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-4 rounded-xl"
-          onClick={handleCreate}
-        >
-          Create A Proposal
-        </button>
+        {
+          !!isFipAddress &&
+            <button
+                className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-4 rounded-xl"
+                onClick={handleCreate}
+            >
+                Create A Proposal
+            </button>
+        }
       </div>
       {
         renderContent()

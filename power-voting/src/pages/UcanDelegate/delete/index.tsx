@@ -19,7 +19,8 @@ import Table from '../../../components/Table';
 import {useForm, Controller} from 'react-hook-form';
 import classNames from 'classnames';
 import {RadioGroup} from '@headlessui/react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSignMessage, BaseError} from "wagmi";
+import type { BaseError} from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSignMessage} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import {
   UCAN_GITHUB_STEP_1,
@@ -40,6 +41,7 @@ const UcanDelegate = () => {
   const {openConnectModal} = useConnectModal();
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
+  const [messageApi, contextHolder] = message.useMessage();
 
   const location = useLocation();
   const params = location.state?.params;
@@ -76,6 +78,11 @@ const UcanDelegate = () => {
   } = useWriteContract();
   const [loading, setLoading] = useState<boolean>(writeContractPending);
 
+  const { isLoading: transactionLoading } =
+    useWaitForTransactionReceipt({
+      hash,
+    })
+
   useEffect(() => {
     if (!isConnected) {
       navigate("/home");
@@ -92,14 +99,22 @@ const UcanDelegate = () => {
 
   useEffect(() => {
     if (writeContractSuccess) {
-      message.success(STORING_DATA_MSG);
-      navigate("/");
+      messageApi.open({
+        type: 'success',
+        content: STORING_DATA_MSG,
+      });
+      setTimeout(() => {
+        navigate("/");
+      }, 3000);
     }
   }, [writeContractSuccess])
 
   useEffect(() => {
     if (error) {
-      message.error((error as BaseError)?.shortMessage || error?.message);
+      messageApi.open({
+        type: 'error',
+        content: (error as BaseError)?.shortMessage || error?.message,
+      });
     }
     resetWriteContract();
   }, [error]);
@@ -162,7 +177,10 @@ const UcanDelegate = () => {
       // Sign the message using the signer
       signature = await signMessageAsync({ message:  `${base64Header}.${base64Params}`})
     } catch (e) {
-      message.error(OPERATION_CANCELED_MSG);
+      messageApi.open({
+        type: 'error',
+        content: OPERATION_CANCELED_MSG,
+      });
       setLoading(false);
       return;
     }
@@ -197,7 +215,10 @@ const UcanDelegate = () => {
           // Sign the concatenated header and params
           signature = await signMessageAsync({ message:  `${base64Header}.${base64Params}`})
         } catch (e) {
-          message.error(OPERATION_CANCELED_MSG);
+          messageApi.open({
+            type: 'error',
+            content: OPERATION_CANCELED_MSG,
+          });
           setLoading(false);
           return;
         }
@@ -214,7 +235,6 @@ const UcanDelegate = () => {
         console.log(e);
       }
     } else {
-      // @ts-ignore
       openConnectModal && openConnectModal();
     }
     setLoading(false);
@@ -296,12 +316,12 @@ const UcanDelegate = () => {
               placeholder='The full UCAN content (include header, payload and signature) signed by your Filecoin private key.'
               className={classNames(
                 'form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]',
-                errors['prf'] && 'border-red-500 focus:border-red-500'
+                errors.prf && 'border-red-500 focus:border-red-500'
               )}
               {...register('prf', {required: true, validate: validateValue})}
             />}
           />
-          {errors['prf'] && (
+          {errors.prf && (
             <p className='text-red-500 mt-1'>Proof is required</p>
           )}
         </>
@@ -392,12 +412,12 @@ const UcanDelegate = () => {
             render={() => <input
               className={classNames(
                 'form-input w-full rounded bg-[#212B3C] border border-[#313D4F]',
-                errors['url'] && 'border-red-500 focus:border-red-500'
+                errors.url && 'border-red-500 focus:border-red-500'
               )}
               {...register('url', {required: true, validate: validateValue})}
             />}
           />
-          {errors['url'] && (
+          {errors.url && (
             <p className='text-red-500 mt-1'>URL is required</p>
           )}
         </>
@@ -407,7 +427,7 @@ const UcanDelegate = () => {
 
   const renderFilecoinDeauthorize = () => {
     return (
-      <form onSubmit={handleSubmit((value) => { onSubmit(value) })}>
+      <form onSubmit={handleSubmit(value => { onSubmit(value) })}>
         <div className='flow-root space-y-8'>
           <Table
             title='UCAN Delegates (Deauthorize)'
@@ -429,7 +449,7 @@ const UcanDelegate = () => {
 
   const renderGithubSignature = () => {
     return (
-      <form onSubmit={handleSubmit((value) => { onSubmit(value, UCAN_GITHUB_STEP_1) })}>
+      <form onSubmit={handleSubmit(value => { onSubmit(value, UCAN_GITHUB_STEP_1) })}>
         <div className='flow-root space-y-8'>
           <Table
             title='UCAN Delegates (Deauthorize)'
@@ -451,7 +471,7 @@ const UcanDelegate = () => {
 
   const renderGithubDeauthorize = () => {
     return (
-      <form onSubmit={handleSubmit((value) => { onSubmit(value, UCAN_GITHUB_STEP_2) })}>
+      <form onSubmit={handleSubmit(value => { onSubmit(value, UCAN_GITHUB_STEP_2) })}>
         <div className='flow-root space-y-8'>
           <Table title='UCAN Delegates (Deauthorize)' list={githubAuthorizeList}/>
 
@@ -482,13 +502,9 @@ const UcanDelegate = () => {
     }
   }
 
-  const { isLoading: transactionLoading } =
-    useWaitForTransactionReceipt({
-      hash,
-    })
-
   return (
     <>
+      {contextHolder}
       <div className="px-3 mb-6 md:px-0">
         <button>
           <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">

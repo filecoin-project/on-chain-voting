@@ -19,15 +19,11 @@ import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/acc
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { IPowerVoting } from "./interfaces/IPowerVoting-filecoin.sol";
 import { Proposal, VoteInfo, VoterInfo } from "./types.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 
 
 contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
-
-    using Counters for Counters.Counter;
-
     // proposal id
-    Counters.Counter public proposalId;
+    uint256 public proposalId;
 
     // Power Oracle contract address
     address public oracleContract;
@@ -121,9 +117,8 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
             revert CallError("Not FIP.");
         }
 
-        // increment proposal id
-        proposalId.increment();
-        uint256 id = proposalId.current();
+        ++proposalId;
+        uint256 id = proposalId;
         // create proposal
         Proposal storage proposal = idToProposal[id];
         proposal.cid = proposalCid;

@@ -22,7 +22,8 @@ import {useNavigate, Link} from "react-router-dom";
 import Table from '../../components/Table';
 import {useForm, Controller} from 'react-hook-form';
 import classNames from 'classnames';
-import {useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, BaseError} from "wagmi";
+import type { BaseError} from "wagmi";
+import {useAccount, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
 import {useConnectModal} from "@rainbow-me/rainbowkit";
 import Editor from '../../components/MDEditor';
 import {
@@ -31,32 +32,20 @@ import {
   NOT_FIP_EDITOR_MSG,
   VOTE_OPTIONS,
   WRONG_START_TIME_MSG,
-  STORING_DATA_MSG, githubApi
+  STORING_DATA_MSG, githubApi, worldTimeApi
 } from '../../common/consts';
-import { useVoterInfo } from "../../common/store";
-import { useTimezoneSelect, allTimezones } from 'react-timezone-select';
+import {useStoringCid, useVoterInfo} from "../../common/store";
+import timezoneOption from '../../../public/json/timezons.json';
 import { validateValue, getContractAddress, getWeb3IpfsId } from '../../utils';
 import './index.less';
 import LoadingButton from "../../components/LoadingButton";
 import fileCoinAbi from "../../common/abi/power-voting.json";
+import { useCheckFipAddress } from "../../common/hooks";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const { RangePicker } = DatePicker;
-
-function useCheckFipAddress(chainId: number, address: `0x${string}` | undefined) {
-  const { data: isFipAddress } = useReadContract({
-    // @ts-ignore
-    address: getContractAddress(chainId, 'powerVoting'),
-    abi: fileCoinAbi,
-    functionName: 'fipMap',
-    args: [address]
-  });
-  return {
-    isFipAddress
-  };
-}
 
 const CreateVote = () => {
   const {isConnected, address, chain} = useAccount();
@@ -64,7 +53,11 @@ const CreateVote = () => {
 
   const {openConnectModal} = useConnectModal();
   const prevAddressRef = useRef(address);
+  const [messageApi, contextHolder] = message.useMessage();
+
   const voterInfo = useVoterInfo((state: any) => state.voterInfo);
+  const addStoringCid = useStoringCid((state: any) => state.addStoringCid);
+
   const {
     register,
     handleSubmit,
@@ -83,10 +76,6 @@ const CreateVote = () => {
     }
   });
 
-  const labelStyle = 'original';
-
-  const { options } = useTimezoneSelect({ labelStyle, timezones: allTimezones });
-
   const navigate = useNavigate();
 
   const { isFipAddress } = useCheckFipAddress(chainId, address);
@@ -100,6 +89,7 @@ const CreateVote = () => {
     reset
   } = useWriteContract();
 
+  const [cid, setCid] = useState('');
   const [loading, setLoading] = useState<boolean>(writeContractPending);
 
   useEffect(() => {
@@ -118,15 +108,27 @@ const CreateVote = () => {
 
   useEffect(() => {
     if (error) {
-      message.error((error as BaseError)?.shortMessage || error?.message);
+      messageApi.open({
+        type: 'error',
+        content: (error as BaseError)?.shortMessage || error?.message,
+      });
     }
     reset();
   }, [error]);
 
   useEffect(() => {
     if (writeContractSuccess) {
-      message.success(STORING_DATA_MSG);
-      navigate("/");
+      messageApi.open({
+        type: 'success',
+        content: STORING_DATA_MSG,
+      });
+      addStoringCid([{
+        hash,
+        cid
+      }]);
+      setTimeout(() => {
+        navigate("/")
+      }, 1000);
     }
   }, [writeContractSuccess])
 
@@ -137,32 +139,37 @@ const CreateVote = () => {
   const onSubmit = async (values: any) => {
     setLoading(true);
     // Calculate offset based on selected timezone
-    const offset =  dayjs().tz(values.timezone).utcOffset() - dayjs().utcOffset();
+    const offset = dayjs().utcOffset() - dayjs().tz(values.timezone).utcOffset();
     const startTimestamp = dayjs(values.time[0]).add(offset, 'minute').unix();
     const expTimestamp = dayjs(values.time[1]).add(offset, 'minute').unix();
-    const currentTime = dayjs().unix();
+    const { data } = await axios.get(worldTimeApi);
+    const currentTime = data?.unixtime;
 
     // Check if current time is after start time
     if (currentTime > startTimestamp) {
-      message.warning(WRONG_START_TIME_MSG);
+      messageApi.open({
+        type: 'warning',
+        content: WRONG_START_TIME_MSG,
+      });
       setLoading(false);
       return false;
     }
 
     // Check if current time is after expiration time
     if (currentTime > expTimestamp) {
-      message.warning(WRONG_EXPIRATION_TIME_MSG);
+      messageApi.open({
+        type: 'warning',
+        content: WRONG_EXPIRATION_TIME_MSG,
+      });
       setLoading(false);
       return false;
     }
 
-    // Get chain ID
-    const chainId = chain?.id || 0;
-    // Get label for selected timezone
-    const label = options?.find(item => item.value === values.timezone)?.label || '';
-    // Extract GMT offset from label using regex
+    // Get text for timezone array
+    const text = timezoneOption?.find((item: any) => item.value === values.value)?.text || '';
+    // Extract GMT offset from text using regex
     const regex = /(?<=\().*?(?=\))/g;
-    const GMTOffset = label.match(regex);
+    const GMTOffset = text.match(regex);
 
     const githubObj = {
       githubName: '',
@@ -190,6 +197,7 @@ const CreateVote = () => {
     };
 
     const cid = await getWeb3IpfsId(_values);
+    setCid(cid);
 
     if (isConnected) {
       // Check if user is a FIP editor
@@ -207,11 +215,13 @@ const CreateVote = () => {
           ],
         });
       } else {
-        message.warning(NOT_FIP_EDITOR_MSG);
+        messageApi.open({
+          type: 'warning',
+          content: NOT_FIP_EDITOR_MSG,
+        });
       }
       setLoading(false);
     } else {
-      // @ts-ignore
       openConnectModal && openConnectModal();
     }
   }
@@ -232,13 +242,13 @@ const CreateVote = () => {
             render={() => <input
               className={classNames(
                 'form-input w-full rounded !bg-[#212B3C] border border-[#313D4F]',
-                errors['name'] && 'border-red-500 focus:border-red-500'
+                errors.name && 'border-red-500 focus:border-red-500'
               )}
               placeholder='Proposal Title'
               {...register('name', {required: true, validate: validateValue})}
             />}
           />
-          {errors['name'] && (
+          {errors.name && (
             <p className='text-red-500 mt-1'>Proposal Title is required</p>
           )}
         </>
@@ -258,7 +268,7 @@ const CreateVote = () => {
             return (
               <>
                 <Editor style={{height: 500}} value={value} onChange={onChange}/>
-                {errors['descriptions'] && (
+                {errors.descriptions && (
                   <p className='text-red-500 mt-2'>Proposal Description is required</p>
                 )}
               </>
@@ -286,11 +296,11 @@ const CreateVote = () => {
                       onChange={onChange}
                       className={classNames(
                         'form-input rounded !bg-[#212B3C] border border-[#313D4F]',
-                        errors['time'] && 'border-red-500 focus:border-red-500'
+                        errors.time && 'border-red-500 focus:border-red-500'
                       )}
                       style={{color: 'red'}}
                     />
-                    {errors['time'] && (
+                    {errors.time && (
                       <p className='text-red-500 mt-2'>Proposal Time is required</p>
                     )}
                   </>
@@ -320,14 +330,14 @@ const CreateVote = () => {
                       value={value}
                       className={classNames(
                         'form-select rounded bg-[#212B3C] border border-[#313D4F]',
-                        errors['timezone'] && 'border-red-500 focus:border-red-500'
+                        errors.timezone && 'border-red-500 focus:border-red-500'
                       )}
                     >
-                      {options.map(option => (
-                        <option value={option.value} key={option.value}>{option.label}</option>
+                      {timezoneOption.map((option: any) => (
+                        <option value={option.value} key={option.value}>{option.text}</option>
                       ))}
                     </select>
-                    {errors['timezone'] && (
+                    {errors.timezone && (
                       <p className='text-red-500 mt-2'>Proposal Expiration TimeZone is required</p>
                     )}
                   </>
@@ -342,6 +352,7 @@ const CreateVote = () => {
 
   return (
     <>
+      {contextHolder}
       <div className="px-3 mb-6 md:px-0">
         <button>
           <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">

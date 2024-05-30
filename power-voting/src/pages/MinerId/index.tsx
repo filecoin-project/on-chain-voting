@@ -17,7 +17,8 @@ import {Link, useNavigate} from "react-router-dom";
 import { message } from 'antd';
 import Table from '../../components/Table';
 import LoadingButton from '../../components/LoadingButton';
-import {useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt, BaseError} from "wagmi";
+import type { BaseError} from "wagmi";
+import {useAccount, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
 import {filecoinCalibration} from "wagmi/chains";
 import {
   DUPLICATED_MINER_ID_MSG,
@@ -27,41 +28,8 @@ import {
 import Loading from "../../components/Loading";
 import {getContractAddress, hasDuplicates} from "../../utils";
 import fileCoinAbi from "../../common/abi/power-voting.json";
-import oracleAbi from "../../common/abi/oracle.json";
 import oraclePowerAbi from "../../common/abi/oracle-powers.json";
-
-function useMinerIdSet(chainId: number, address: `0x${string}` | undefined) {
-  const { data: minerIdData, isLoading: getMinerIdsLoading, isSuccess: getMinerIdsSuccess } = useReadContract({
-    // @ts-ignore
-    address: getContractAddress(chainId || 0, 'oracle'),
-    abi: oracleAbi,
-    functionName: 'getVoterInfo',
-    args: [address]
-  });
-  return {
-    minerIdData: minerIdData as any,
-    getMinerIdsLoading,
-    getMinerIdsSuccess
-  }
-}
-
-function useOwnerDataSet(contracts: any[]) {
-  const {
-    data: ownerData,
-    isLoading: getOwnerLoading,
-    isSuccess: getOwnerSuccess
-  } = useReadContracts({
-    // @ts-ignore
-    contracts: contracts,
-    query: { enabled: !!contracts.length }
-  });
-
-  return {
-    ownerData: ownerData || [],
-    getOwnerLoading,
-    getOwnerSuccess,
-  };
-}
+import { useMinerIdSet, useOwnerDataSet } from "../../common/hooks";
 
 const MinerId = () => {
   const {chain, isConnected, address} = useAccount();
@@ -73,6 +41,7 @@ const MinerId = () => {
 
   const { minerIdData, getMinerIdsLoading, getMinerIdsSuccess } = useMinerIdSet(chainId, address);
   const { ownerData } = useOwnerDataSet(contracts);
+  const [messageApi, contextHolder] = message.useMessage()
 
   const {
     data: hash,
@@ -87,7 +56,10 @@ const MinerId = () => {
 
   useEffect(() => {
     if (error) {
-      message.error((error as BaseError)?.shortMessage || error?.message);
+      messageApi.open({
+        type: 'error',
+        content: (error as BaseError)?.shortMessage || error?.message,
+      });
     }
     reset();
   }, [error]);
@@ -97,7 +69,7 @@ const MinerId = () => {
       navigate("/home");
       return;
     }
-  }, []);
+  }, [isConnected]);
 
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
@@ -112,8 +84,13 @@ const MinerId = () => {
 
   useEffect(() => {
     if (writeContractSuccess) {
-      message.success(STORING_DATA_MSG);
-      navigate("/");
+      messageApi.open({
+        type: 'success',
+        content: STORING_DATA_MSG,
+      });
+      setTimeout(() => {
+        navigate("/");
+      }, 3000);
     }
   }, [writeContractSuccess])
 
@@ -186,7 +163,10 @@ const MinerId = () => {
   const onSubmit = async () => {
     // Check for duplicate miner IDs
     if (minerIds.length && hasDuplicates(minerIds)) {
-      message.error(DUPLICATED_MINER_ID_MSG, 3);
+      messageApi.open({
+        type: 'error',
+        content: DUPLICATED_MINER_ID_MSG,
+      });
       return;
     }
 
@@ -196,7 +176,10 @@ const MinerId = () => {
     const { value, hasError } = removeMinerIdPrefix(minerIds);
     // Remove prefix from miner IDs and check for errors
     if (hasError) {
-      message.warning(WRONG_MINER_ID_MSG);
+      messageApi.open({
+        type: 'warning',
+        content: WRONG_MINER_ID_MSG,
+      });
       setLoading(false);
       return;
     }
@@ -207,7 +190,10 @@ const MinerId = () => {
       });
 
       if (!allSuccessful) {
-        message.error(WRONG_MINER_ID_MSG, 3);
+        messageApi.open({
+          type: 'error',
+          content: WRONG_MINER_ID_MSG,
+        });
         setLoading(false);
         return;
       } else {
@@ -233,6 +219,7 @@ const MinerId = () => {
 
   return (
     getMinerIdsLoading ? <Loading /> : <div className="px-3 mb-6 md:px-0">
+      {contextHolder}
       <button>
         <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">
           <Link to="/" className="flex items-center">
@@ -256,7 +243,7 @@ const MinerId = () => {
                   defaultValue={minerIds}
                   placeholder='Input miner ID (For multiple miner IDs, use commas to separate them.)'
                   className='form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]'
-                  onBlur={(e) => { handleMinerChange(e.target.value) }}
+                  onBlur={e => { handleMinerChange(e.target.value) }}
                 />
               )
             }

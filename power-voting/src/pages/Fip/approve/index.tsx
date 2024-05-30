@@ -26,12 +26,11 @@ import EllipsisMiddle from "../../../components/EllipsisMiddle";
 const FipApprove = () => {
   const {isConnected, address, chain} = useAccount();
   const chainId = chain?.id || 0;
+  console.log(chainId);
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
-  const [minerIds, setMinerIds] = useState(['']);
   const [spinning, setSpinning] = useState(false);
-  const [loading, setLoading] = useState(false);
-
+  setSpinning(false);
   const popoverColumns = [
     {
       title: 'FIP Editor',
@@ -220,15 +219,15 @@ const FipApprove = () => {
   }
 
   const handleApprove = (address: string) => {
-
+    console.log(address);
   }
 
   /**
    * Set miner ID
    */
-  const onSubmit = async () => {
-
-  }
+  // const onSubmit = async () => {
+  //   console.log(1);
+  // }
 
   return (
     spinning ? <Loading /> : <div className="px-3 mb-6 md:px-0">

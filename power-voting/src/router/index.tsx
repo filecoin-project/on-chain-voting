@@ -51,7 +51,7 @@ const routes = [
     element: <FipRevoke />,
   },
   {
-    path: "/ucanDelegate/propose",
+    path: "/ucanDelegate/add",
     element: <UcanDelegateAdd />,
   },
   {

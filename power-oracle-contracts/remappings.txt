@@ -1,0 +1,5 @@
+filecoin-solidity-api=lib/filecoin-solidity/
+solidity-cborutils/contracts=lib/solidity-cborutils/contracts/
+@ensdomains/buffer=lib/buffer
+@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
+@openzeppelin/contracts-upgradeable=lib/openzeppelin-contracts-upgradeable/contracts/

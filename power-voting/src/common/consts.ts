@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { filecoin, filecoinCalibration } from 'wagmi/chains';
 export const powerVotingMainNetContractAddress = process.env.POWER_VOTING_MAINNET_CONTRACT_ADDRESS || '';
 export const oracleMainNetContractAddress = process.env.ORACLE_MAINNET_CONTRACT_ADDRESS || '';
 export const oraclePowerMainNetContractAddress = process.env.ORACLE_POWER_MAINNET_CONTRACT_ADDRESS || '';
@@ -21,47 +20,43 @@ export const oracleCalibrationContractAddress = process.env.ORACLE_CALIBRATION_C
 export const oraclePowerCalibrationContractAddress = process.env.ORACLE_POWER_CALIBRATION_CONTRACT_ADDRESS || '';
 export const walletConnectProjectId = process.env.WALLET_CONNECT_ID || '';
 export const web3StorageEmail: any = process.env.WEB3_STORAGE_EMAIL || '';
-
-export const contractAddressList = [
-  {
-    id: filecoin.id,
-    address: powerVotingMainNetContractAddress
-  },
-  {
-    id: filecoinCalibration.id,
-    address: powerVotingCalibrationContractAddress
-  },
-];
 export const githubApi = 'https://api.github.com/users';
 export const proposalResultApi = '/api/proposal/result';
 export const proposalHistoryApi = '/api/proposal/history';
+export const worldTimeApi = 'https://worldtimeapi.org/api/timezone/Etc/UTC';
 export const IN_PROGRESS_STATUS = 0;
 export const COMPLETED_STATUS = 1;
 export const PENDING_STATUS = 2;
 export const VOTE_COUNTING_STATUS = 3;
 export const VOTE_ALL_STATUS = 4;
 export const WRONG_NET_STATUS = 5;
+export const STORING_STATUS = 6;
 export const VOTE_OPTIONS = ['Approve', 'Reject'];
 export const VOTE_LIST = [
   {
     value: PENDING_STATUS,
-    color: 'bg-cyan-700',
+    color: '#0E7490',
     label: 'Pending'
   },
   {
     value: IN_PROGRESS_STATUS,
-    color: 'bg-green-700',
+    color: '#15803D',
     label: 'In Progress'
   },
   {
     value: VOTE_COUNTING_STATUS,
-    color: 'bg-yellow-700',
+    color: '#A16207',
     label: 'Vote Counting'
   },
   {
     value: COMPLETED_STATUS,
-    color: 'bg-[#6D28D9]',
+    color: '#6D28D9',
     label: 'Completed'
+  },
+  {
+    value: STORING_STATUS,
+    color: '#047857',
+    label: 'Storing'
   },
 ]
 export const VOTE_FILTER_LIST = [
@@ -339,13 +334,13 @@ export const GITHUB_AUTHORIZE_DOC = `
 
 #### 2. Example：
 
-​\tThe OWNER here 1.1 Create a UCAN signature authorized by Eth account to Github account is the Github handle entered in field Aud.
+The OWNER here 1.1 Create a UCAN signature authorized by Eth account to Github account is the Github handle entered in field Aud.
 
-​\t The UCAN signature here is the one generated from 1.1 Create a UCAN signature authorized by Eth account to Github account.
+The UCAN signature here is the one generated from 1.1 Create a UCAN signature authorized by Eth account to Github account.
 
-​\t The REPO here is repo name created from 1.2 Create an initialized public repository on Github.
+The REPO here is repo name created from 1.2 Create an initialized public repository on Github.
 
-​\t The TOKEN here is one generated from 1.3 Create a Token used to upload the UCAN signature to the repository.
+The TOKEN here is one generated from 1.3 Create a Token used to upload the UCAN signature to the repository.
 
 \`\`\`
   curl -L \\
@@ -439,17 +434,14 @@ export const UCAN_JWT_HEADER = {
   type: 'JWT',
   version: '0.0.1'
 };
-export const SUCCESS_INFO= 'success';
-export const ERROR_INFO= 'error';
 export const OPERATION_CANCELED_MSG= 'Operation Canceled';
-export const OPERATION_FAILED_MSG= 'Operation Failed';
 export const STORING_DATA_MSG= 'Storing data on chain!';
-export const STORING_DATA_SUCCESS_MSG= 'Data stored on chain successfully!';
+export const STORING_SUCCESS_MSG = 'Data stored on chain successfully!';
+export const STORING_FAILED_MSG = 'Data stored on chain failed!';
 export const VOTE_SUCCESS_MSG= 'Vote successful!';
 export const CHOOSE_VOTE_MSG= 'Please choose a option to vote!';
 export const WRONG_START_TIME_MSG= 'Start time can\'t be less than current time!';
 export const WRONG_EXPIRATION_TIME_MSG= 'Expiration time can\'t be less than current time!';
-export const NO_MINER_ID_MSG= 'Please input your miner ID!';
 export const WRONG_MINER_ID_MSG= 'Please check your miner ID!';
 export const DUPLICATED_MINER_ID_MSG= 'Your miner ID is duplicated!';
 export const NOT_FIP_EDITOR_MSG= 'Please select a FIP Editor to create proposals!';

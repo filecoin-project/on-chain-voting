@@ -14,30 +14,24 @@
 
 import React, {useState, useEffect, useRef} from "react";
 import {Link, useNavigate} from "react-router-dom";
-import { message } from 'antd';
 import {RadioGroup} from '@headlessui/react';
 import classNames from 'classnames';
 import Table from '../../../components/Table';
 import LoadingButton from '../../../components/LoadingButton';
 import {useAccount} from "wagmi";
-import {
-  DUPLICATED_MINER_ID_MSG,
-  STORING_DATA_MSG, UCAN_TYPE_FILECOIN_OPTIONS, UCAN_TYPE_GITHUB_OPTIONS,
-  WRONG_MINER_ID_MSG
-} from "../../../common/consts";
-import Loading from "../../../components/Loading";
-import {hasDuplicates} from "../../../utils";
 
 const FipPropose = () => {
   const {isConnected, address, chain} = useAccount();
   const chainId = chain?.id || 0;
+  console.log(chainId);
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
   const [fipAddress, setFipAddress] = useState('');
   const [fipInfo, setFipInfo] = useState('');
   const [proposeType, setProposeType] = useState('approve');
   const [loading, setLoading] = useState(false);
-
+  console.log(fipAddress);
+  console.log(fipInfo);
   useEffect(() => {
     if (!isConnected) {
       navigate("/home");

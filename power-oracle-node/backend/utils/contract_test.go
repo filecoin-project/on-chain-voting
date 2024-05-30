@@ -17,8 +17,13 @@ package utils
 import (
 	"backend/config"
 	"backend/contract"
+	"backend/models"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
+	"math/big"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetTasks(t *testing.T) {
@@ -30,10 +35,11 @@ func TestGetTasks(t *testing.T) {
 	}
 
 	taskList, err := GetTasks(ethClient)
-	if err != nil {
-		fmt.Println("get task list error: ", err)
-		return
-	}
+	assert.Nil(t, err)
+
+	testTasks := []*big.Int{}
+	assert.Equal(t, taskList, testTasks)
+
 	fmt.Printf("task list: %+v\n", taskList)
 
 }
@@ -41,16 +47,14 @@ func TestGetTasks(t *testing.T) {
 func TestGetF4Tasks(t *testing.T) {
 	config.InitConfig("../")
 	ethClient, err := contract.GetClient(314159)
-	if err != nil {
-		fmt.Println("get client error: ", err)
-		return
-	}
+	assert.Error(t, err)
 
 	taskList, err := GetF4Tasks(ethClient)
-	if err != nil {
-		fmt.Println("get f4 task list error: ", err)
-		return
-	}
+	assert.Nil(t, err)
+
+	testTasks := []*big.Int{}
+	assert.Equal(t, taskList, testTasks)
+
 	fmt.Printf("f4 task list: %+v\n", taskList)
 
 }
@@ -58,18 +62,13 @@ func TestGetF4Tasks(t *testing.T) {
 func TestGetVoterAddresses(t *testing.T) {
 	config.InitConfig("../")
 	ethClient, err := contract.GetClient(314159)
-	if err != nil {
-		fmt.Println("get client error: ", err)
-		return
-	}
+	assert.Nil(t, err)
 
 	ethAddressList, err := GetVoterAddresses(ethClient)
-	if err != nil {
-		fmt.Println("get eth address list error: ", err)
-		return
-	}
-	fmt.Printf("eth address list: %+v\n", ethAddressList)
+	assert.Nil(t, err)
 
+	assert.NotEmpty(t, ethAddressList)
+	fmt.Printf("eth address list: %+v\n", ethAddressList)
 }
 
 func TestGetVoterInfo(t *testing.T) {
@@ -81,10 +80,16 @@ func TestGetVoterInfo(t *testing.T) {
 	}
 
 	voterInfo, err := GetVoterInfo("0x763D410594a24048537990dde6ca81c38CfF566a", ethClient)
-	if err != nil {
-		fmt.Println("get voter info error: ", err)
-		return
+	assert.Nil(t, err)
+
+	testVoterInfo := models.VoterInfo{
+		ActorIds:      []uint64{35363},
+		MinerIds:      []uint64{},
+		GithubAccount: "",
+		EthAddress:    common.HexToAddress("0x763D410594a24048537990dde6ca81c38CfF566a"),
+		UcanCid:       "",
 	}
+	assert.Equal(t, testVoterInfo, voterInfo)
 	fmt.Printf("voter info: %+v\n", voterInfo)
 
 }
@@ -92,16 +97,9 @@ func TestGetVoterInfo(t *testing.T) {
 func TestGetActorIdFromEthAddress(t *testing.T) {
 	config.InitConfig("../")
 	ethClient, err := contract.GetClient(314159)
-	if err != nil {
-		fmt.Println("get client error: ", err)
-		return
-	}
+	assert.Nil(t, err)
 
 	actorId, err := GetActorIdFromEthAddress("0x763D410594a24048537990dde6ca81c38CfF566a", ethClient)
-	if err != nil {
-		fmt.Println("get actor id error: ", err)
-		return
-	}
+	assert.Equal(t, "t035363", actorId)
 	fmt.Printf("actor id: %+v\n", actorId)
-
 }
