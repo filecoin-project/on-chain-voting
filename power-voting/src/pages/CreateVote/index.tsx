@@ -201,7 +201,7 @@ const CreateVote = () => {
 
     if (isConnected) {
       // Check if user is a FIP editor
-      if (isFipAddress !== 1) {
+      if (isFipAddress) {
         // Create voting using dynamic contract API
         writeContract({
           abi: fileCoinAbi,
