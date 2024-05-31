@@ -14,23 +14,42 @@
 
 import React, {useState, useEffect, useRef} from "react";
 import {Link, useNavigate} from "react-router-dom";
-import { Popover, Table, Tooltip, Popconfirm } from 'antd';
+import { message, Popover, Table, Tooltip, Popconfirm, Button, Row, Pagination } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import {useAccount} from "wagmi";
+import axios from "axios";
+import {useAccount, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
+import type { BaseError} from "wagmi";
 import {
+  STORING_DATA_MSG,
   web3AvatarUrl,
 } from "../../../common/consts";
 import Loading from "../../../components/Loading";
 import EllipsisMiddle from "../../../components/EllipsisMiddle";
+import {useFipEditors, useApproveFipId, useFipProposalDataSet} from "../../../common/hooks";
+import fileCoinAbi from "../../../common/abi/power-voting.json";
+import {getContractAddress} from "../../../utils";
 
 const FipApprove = () => {
   const {isConnected, address, chain} = useAccount();
   const chainId = chain?.id || 0;
-  console.log(chainId);
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
-  const [spinning, setSpinning] = useState(false);
-  setSpinning(false);
+  const [messageApi, contextHolder] = message.useMessage();
+
+  const [fipProposalList, setFipProposalList] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(5);
+  const [loading, setLoading] = useState(false);
+  const { fipEditors } = useFipEditors(chainId);
+
+  const { approveFipId, getApproveFipIdLoading } = useApproveFipId(chainId);
+  const { fipProposalData, getFipProposalIdLoading, getFipProposalIdSuccess, error } = useFipProposalDataSet({
+    chainId,
+    idList: approveFipId,
+    page,
+    pageSize,
+  });
+
   const popoverColumns = [
     {
       title: 'FIP Editor',
@@ -57,37 +76,7 @@ const FipApprove = () => {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-    },
-  ]
-
-  const popoverData = [
-    {
-      address: '0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307',
-      status: 'Approved',
-    },
-    {
-      address: '0x2E4f5898ec86A71d4D0681B33DAeD47845357BaC',
-      status: 'Approved',
-    },
-    {
-      address: '0xe4c7b2bb1d600bCD0A9af60dda3874e369C37bc4',
-      status: 'Approved',
-    },
-    {
-      address: '0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307',
-      status: '-',
-    },
-    {
-      address: '0xe4c7b2bb1d600bCD0A9af60dda3874e369C37bc4',
-      status: '-',
-    },
-    {
-      address: '0x2E4f5898ec86A71d4D0681B33DAeD47845357BaC',
-      status: '-',
-    },
-    {
-      address: '0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307',
-      status: '-',
+      render: (value: string) => value || '-'
     },
   ]
 
@@ -130,18 +119,19 @@ const FipApprove = () => {
       title: 'Approve Ratio',
       dataIndex: 'ratio',
       key: 'ratio',
-      render: (value: string) => {
+      render: (value: string, record: any) => {
         return (
           <div className='flex items-center gap-2'>
-            <span>{value} </span>
+            <span>{value}</span>
             <Popover content={
               <Table
-                dataSource={popoverData}
+                rowKey={(record: any) => record.address}
+                dataSource={record.voteList}
                 columns={popoverColumns}
                 pagination={false}
               />
             }>
-              <InfoCircleOutlined style={{ fontSize: 14 }} />
+              <InfoCircleOutlined style={{ fontSize: 14, cursor: 'pointer' }} />
             </Popover>
           </div>
         )
@@ -153,45 +143,26 @@ const FipApprove = () => {
       align: 'center' as const,
       width: 120,
       render: (_: any, record: any) =>
-        <a className='hover:text-white flex justify-center' onClick={() => handleApprove(record.address)}>
-          <Popconfirm
-            title="Approve FIP editor"
-            description="Are you sure to approve?"
-            onConfirm={confirm}
-            onCancel={cancel}
-            okText="Yes"
-            cancelText="No"
-          >
-            <button className='w-[80px] h-[24px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-6 rounded-xl flex justify-center items-center'>Approve</button>
-          </Popconfirm>
-        </a>
+        <Popconfirm
+          title="Approve FIP editor"
+          description="Are you sure to approve?"
+          onConfirm={() => { confirm(record) }}
+          okText="Yes"
+          cancelText="No"
+        >
+          <Button type='primary' className='w-[80px] h-[24px] flex justify-center items-center' loading={loading || writeContractPending || transactionLoading} >Approve</Button>
+        </Popconfirm>
     },
   ];
 
-  const dataSource = [
-    {
-      address: '0xBc27ca842D22cD5BdBC41B27A571EC1FbB559307',
-      info: 'test1',
-      ratio: '3 / 7'
-    },
-    {
-      address: '0x2E4f5898ec86A71d4D0681B33DAeD47845357BaC',
-      info: 'test2test2test2test2test2test2test2test2test2test2test2test2test2test2',
-      ratio: '4 / 7'
-    },
-    {
-      address: '0xe4c7b2bb1d600bCD0A9af60dda3874e369C37bc4',
-      info: 'test3',
-      ratio: '2 / 7'
-    },
-  ]
-
-  const confirm = (e: any) => {
-    console.log(e);
-  };
-  const cancel = (e: any) => {
-    console.log(e);
-  };
+  const {
+    data: hash,
+    writeContract,
+    error: writeContractError,
+    isPending: writeContractPending,
+    isSuccess: writeContractSuccess,
+    reset
+  } = useWriteContract();
 
   useEffect(() => {
     if (!isConnected) {
@@ -208,29 +179,93 @@ const FipApprove = () => {
   }, [address]);
 
   useEffect(() => {
-    initState();
-  }, [chain]);
+    if (error) {
+      messageApi.open({
+        type: 'error',
+        content: (error as BaseError)?.shortMessage || error?.message,
+      });
+    }
+  }, [error]);
 
+  useEffect(() => {
+    if (writeContractError) {
+      messageApi.open({
+        type: 'error',
+        content: (writeContractError as BaseError)?.shortMessage || writeContractError?.message,
+      });
+    }
+    reset();
+  }, [writeContractError]);
+
+  useEffect(() => {
+    if (getFipProposalIdSuccess) {
+      initState();
+    }
+  }, [getFipProposalIdSuccess]);
+
+  useEffect(() => {
+    if (isConnected && !loading && !getApproveFipIdLoading && !getFipProposalIdLoading) {
+      initState();
+    }
+  }, [chain,  page, address]);
+
+  useEffect(() => {
+    if (writeContractSuccess) {
+      messageApi.open({
+        type: 'success',
+        content: STORING_DATA_MSG,
+      });
+      setTimeout(() => {
+        navigate("/")
+      }, 1000);
+    }
+  }, [writeContractSuccess])
 
   const initState = async () => {
-    // const { getMinerIds } = await useStaticContract(chainId);
-    // const { code, data: { minerIds } } = await getMinerIds(address);
-    // setSpinning(false);
+    setLoading(true);
+    setFipProposalList([]);
+    await Promise.all(fipProposalData.map(async (item: any) => {
+      const { result } = item;
+      const url = `https://${result.voterInfoCid}.ipfs.w3s.link/`;
+      const { data } = await axios.get(url);
+      fipProposalList.push({
+        proposalId: result.proposalId,
+        address: result.fipEditorAddress,
+        info: data,
+        ratio: `${result.voters?.length} / ${fipEditors?.length}`,
+        voteList: fipEditors?.map((address: string) => {
+          return { address, status: result.voters?.includes(address) ? 'Approved' : '' }
+        }).sort((a) => (a.status ? -1 : 1))
+      });
+    }))
+    setFipProposalList(fipProposalList);
+    setLoading(false);
   }
 
-  const handleApprove = (address: string) => {
-    console.log(address);
+  const handlePageChange = (page: number) => {
+    setPage(page);
   }
 
-  /**
-   * Set miner ID
-   */
-  // const onSubmit = async () => {
-  //   console.log(1);
-  // }
+  const confirm = (record: any) => {
+    writeContract({
+      abi: fileCoinAbi,
+      address: getContractAddress(chainId, 'powerVoting'),
+      functionName: 'approveFipEditor',
+      args: [
+        record.address,
+        record.proposalId,
+      ],
+    });
+  };
+
+  const { isLoading: transactionLoading } =
+    useWaitForTransactionReceipt({
+      hash,
+    })
 
   return (
-    spinning ? <Loading /> : <div className="px-3 mb-6 md:px-0">
+    loading ? <Loading /> : <div className="px-3 mb-6 md:px-0">
+      {contextHolder}
       <button>
         <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">
           <Link to="/" className="flex items-center">
@@ -242,19 +277,31 @@ const FipApprove = () => {
           </Link>
         </div>
       </button>
-      <div className='flow-root space-y-8'>
-        <div className='min-w-full bg-[#273141] rounded text-left'>
-          <div className='flow-root space-y-8'>
-            <div className='font-normal text-white px-8 py-7 text-2xl border-b border-[#313D4F] flex items-center'>
-              <span>FIP Editor Approve</span>
-            </div>
-            <div className='px-8 pb-10 !mt-0'>
-              <Table
-                dataSource={dataSource}
-                columns={columns}
-                pagination={false}
-              />
-            </div>
+      <div className='min-w-full bg-[#273141] rounded text-left'>
+        <div className='flow-root space-y-4'>
+          <div className='font-normal text-white px-8 py-7 text-2xl border-b border-[#313D4F] flex items-center'>
+            <span>FIP Editor Approve</span>
+          </div>
+          <div className='px-8 pb-4 !mt-0'>
+            <Table
+              className='mb-4'
+              rowKey={(record: any) => record.proposalId}
+              dataSource={fipProposalList}
+              columns={columns}
+              pagination={false}
+            />
+            {
+              !!fipProposalData?.length && <Row justify='end'>
+                    <Pagination
+                        simple
+                        showSizeChanger={false}
+                        current={page}
+                        pageSize={pageSize}
+                        total={fipProposalData.length}
+                        onChange={handlePageChange}
+                    />
+                </Row>
+            }
           </div>
         </div>
       </div>

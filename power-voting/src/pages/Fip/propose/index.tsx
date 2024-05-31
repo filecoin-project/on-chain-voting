@@ -13,25 +13,50 @@
 // limitations under the License.
 
 import React, {useState, useEffect, useRef} from "react";
+import {message} from "antd";
 import {Link, useNavigate} from "react-router-dom";
 import {RadioGroup} from '@headlessui/react';
 import classNames from 'classnames';
 import Table from '../../../components/Table';
 import LoadingButton from '../../../components/LoadingButton';
-import {useAccount} from "wagmi";
+import {useAccount, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
+import type { BaseError } from "wagmi";
+import { useFipEditors } from "../../../common/hooks"
+import fileCoinAbi from "../../../common/abi/power-voting.json";
+import {getContractAddress, getWeb3IpfsId} from "../../../utils";
+import {
+  FIP_APPROVE_TYPE,
+  FIP_REVOKE_TYPE,
+  NO_FIP_EDITOR_PROPOSAL_ADDRESS_MSG,
+  STORING_DATA_MSG,
+} from "../../../common/consts";
 
 const FipPropose = () => {
   const {isConnected, address, chain} = useAccount();
   const chainId = chain?.id || 0;
-  console.log(chainId);
+
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
+  const [messageApi, contextHolder] = message.useMessage();
+
+
   const [fipAddress, setFipAddress] = useState('');
+  const [selectedAddress, setSelectedAddress] = useState('');
   const [fipInfo, setFipInfo] = useState('');
-  const [proposeType, setProposeType] = useState('approve');
-  const [loading, setLoading] = useState(false);
-  console.log(fipAddress);
-  console.log(fipInfo);
+  const [fipProposalType, setFipProposeType] = useState(FIP_APPROVE_TYPE);
+  const { fipEditors } = useFipEditors(chainId);
+
+  const {
+    data: hash,
+    writeContract,
+    error,
+    isPending: writeContractPending,
+    isSuccess: writeContractSuccess,
+    reset
+  } = useWriteContract();
+
+  const [loading, setLoading] = useState(writeContractPending);
+
   useEffect(() => {
     if (!isConnected) {
       navigate("/home");
@@ -46,52 +71,111 @@ const FipPropose = () => {
     }
   }, [address]);
 
+  useEffect(() => {
+    if (writeContractSuccess) {
+      messageApi.open({
+        type: 'success',
+        content: STORING_DATA_MSG,
+      });
+      setTimeout(() => {
+        navigate("/")
+      }, 1000);
+    }
+  }, [writeContractSuccess]);
+
+  useEffect(() => {
+    if (error) {
+      messageApi.open({
+        type: 'error',
+        content: (error as BaseError)?.shortMessage || error?.message,
+      });
+    }
+    reset();
+  }, [error]);
+
   const handleChange = (type: string, value: string) => {
     type === 'fipAddress' ? setFipAddress(value) : setFipInfo(value);
   }
 
-  const handleProposeTypeChange = (value: string) => {
-    setProposeType(value);
+  const handleProposeTypeChange = (value: number) => {
+    setFipProposeType(value);
+    value === FIP_APPROVE_TYPE ? setSelectedAddress('') : setFipAddress('');
   }
 
   /**
    * Set miner ID
    */
   const onSubmit = async () => {
+    // Check if required fields are filled based on proposal type
+    if ((fipProposalType === FIP_APPROVE_TYPE && !fipAddress) || (fipProposalType === FIP_REVOKE_TYPE && !selectedAddress)) {
+      messageApi.open({
+        type: 'warning',
+        // Prompt user to fill required fields
+        content: NO_FIP_EDITOR_PROPOSAL_ADDRESS_MSG,
+      });
+      return;
+    }
+
+    // Set loading state to true while submitting proposal
     setLoading(true);
+
+    // Get the IPFS CID for the proposal information
+    const cid = await getWeb3IpfsId(fipInfo);
+
+    // Construct the arguments and call the writeContract function to create the proposal
+    const proposalArgs = [
+      // Use appropriate address based on proposal type
+      fipProposalType === FIP_APPROVE_TYPE ? fipAddress : selectedAddress,
+      cid,
+      fipProposalType, // Proposal type (approve or revoke)
+    ];
+
+    // Write the contract based on the proposal type
+    writeContract({
+      abi: fileCoinAbi,
+      address: getContractAddress(chainId, 'powerVoting'),
+      functionName: 'createFipEditorProposal',
+      args: proposalArgs,
+    });
 
     setLoading(false);
   }
 
+  const { isLoading: transactionLoading } =
+    useWaitForTransactionReceipt({
+      hash,
+    })
+
   return (
-    <div className="px-3 mb-6 md:px-0">
-      <button>
-        <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">
-          <Link to="/" className="flex items-center">
-            <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
-              <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                    d="m11 17l-5-5m0 0l5-5m-5 5h12" />
-            </svg>
-            Back
-          </Link>
-        </div>
-      </button>
-      <div className='flow-root space-y-8'>
-        <Table
-          title='FIP Editor Propose'
-          list={[
-            {
-              name: 'Propose Type',
-              width: 100,
-              comp: (
-                <RadioGroup className='flex' value={proposeType} onChange={handleProposeTypeChange}>
-                  <RadioGroup.Option
-                    key='approve'
-                    value='approve'
-                    className='relative flex items-center cursor-pointer p-4 focus:outline-none'
-                  >
-                    {({active, checked}) => (
-                      <>
+    <>
+      {contextHolder}
+      <div className="px-3 mb-6 md:px-0">
+        <button>
+          <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">
+            <Link to="/" className="flex items-center">
+              <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
+                <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                      d="m11 17l-5-5m0 0l5-5m-5 5h12" />
+              </svg>
+              Back
+            </Link>
+          </div>
+        </button>
+        <div className='flow-root space-y-8'>
+          <Table
+            title='FIP Editor Propose'
+            list={[
+              {
+                name: 'Propose Type',
+                comp: (
+                  <RadioGroup className='flex' value={fipProposalType} onChange={handleProposeTypeChange}>
+                    <RadioGroup.Option
+                      key='approve'
+                      value={FIP_APPROVE_TYPE}
+                      className='relative flex items-center cursor-pointer p-4 focus:outline-none'
+                    >
+                      {({active, checked}) => (
+                        <>
                         <span
                           className={classNames(
                             checked
@@ -106,7 +190,7 @@ const FipPropose = () => {
                             <span className='rounded-full bg-white w-1.5 h-1.5'/>
                           )}
                         </span>
-                        <span className='ml-3'>
+                          <span className='ml-3'>
                           <RadioGroup.Label
                             as='span'
                             className={
@@ -116,16 +200,16 @@ const FipPropose = () => {
                             Approve
                           </RadioGroup.Label>
                         </span>
-                      </>
-                    )}
-                  </RadioGroup.Option>
-                  <RadioGroup.Option
-                    key='revoke'
-                    value='revoke'
-                    className='relative flex items-center cursor-pointer p-4 focus:outline-none'
-                  >
-                    {({active, checked}) => (
-                      <>
+                        </>
+                      )}
+                    </RadioGroup.Option>
+                    <RadioGroup.Option
+                      key='revoke'
+                      value={FIP_REVOKE_TYPE}
+                      className='relative flex items-center cursor-pointer p-4 focus:outline-none'
+                    >
+                      {({active, checked}) => (
+                        <>
                         <span
                           className={classNames(
                             checked
@@ -140,7 +224,7 @@ const FipPropose = () => {
                             <span className='rounded-full bg-white w-1.5 h-1.5'/>
                           )}
                         </span>
-                        <span className='ml-3'>
+                          <span className='ml-3'>
                           <RadioGroup.Label
                             as='span'
                             className={
@@ -150,42 +234,60 @@ const FipPropose = () => {
                             Revoke
                           </RadioGroup.Label>
                         </span>
-                      </>
+                        </>
+                      )}
+                    </RadioGroup.Option>
+                  </RadioGroup>
+                )
+              },
+              {
+                name: 'Editor Address',
+                hide: fipProposalType === FIP_REVOKE_TYPE,
+                comp: (
+                  <input
+                    placeholder='Input editor address'
+                    className='form-input w-[520px] rounded bg-[#212B3C] border border-[#313D4F]'
+                    onChange={(e) => { handleChange('fipAddress', e.target.value) }}
+                  />
+                )
+              },
+              {
+                name: 'FIP Editor Address',
+                hide: fipProposalType === FIP_APPROVE_TYPE,
+                comp: (
+                  <select
+                    onChange={(e: any) => { setSelectedAddress(e.target.value) }}
+                    value={selectedAddress}
+                    className={classNames(
+                      'form-select w-[520px] rounded bg-[#212B3C] border border-[#313D4F]'
                     )}
-                  </RadioGroup.Option>
-                </RadioGroup>
-              )
-            },
-            {
-              name: 'Editor Address',
-              width: 100,
-              comp: (
-                <input
-                  placeholder='Input editor address'
-                  className='form-input w-[520px] rounded bg-[#212B3C] border border-[#313D4F]'
-                  onChange={(e) => { handleChange('fipAddress', e.target.value) }}
-                />
-              )
-            },
-            {
-              name: 'Propose Info',
-              width: 100,
-              comp: (
-                <textarea
-                  placeholder='Input propose info'
-                  className='form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]'
-                  onChange={(e) => { handleChange('fipInfo', e.target.value) }}
-                />
-              )
-            }
-          ]}
-        />
+                  >
+                    {fipEditors?.map((address: string) => (
+                      <option value={address} key={address}>{address}</option>
+                    ))}
+                  </select>
+                )
+              },
+              {
+                name: 'Propose Info',
+                width: 100,
+                comp: (
+                  <textarea
+                    placeholder='Input propose info'
+                    className='form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]'
+                    onChange={(e) => { handleChange('fipInfo', e.target.value) }}
+                  />
+                )
+              }
+            ]}
+          />
 
-        <div className='text-center'>
-          <LoadingButton text='Submit' loading={loading} handleClick={onSubmit} />
+          <div className='text-center'>
+            <LoadingButton text='Submit' loading={loading || writeContractPending || transactionLoading} handleClick={onSubmit} />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 
