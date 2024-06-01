@@ -26,7 +26,7 @@ import {
 } from "../../../common/consts";
 import Loading from "../../../components/Loading";
 import EllipsisMiddle from "../../../components/EllipsisMiddle";
-import {useFipEditors, useApproveFipId, useFipProposalDataSet} from "../../../common/hooks";
+import {useFipEditors, useApproveFipId, useFipProposalDataSet, useCheckFipAddress} from "../../../common/hooks";
 import fileCoinAbi from "../../../common/abi/power-voting.json";
 import {getContractAddress} from "../../../utils";
 
@@ -43,6 +43,7 @@ const FipApprove = () => {
   const [loading, setLoading] = useState(false);
   const [currentProposalId, setCurrentProposalId] = useState(null);
 
+  const { isFipAddress } = useCheckFipAddress(chainId, address);
   const { fipEditors } = useFipEditors(chainId);
 
   const { approveFipId, getApproveFipIdLoading } = useApproveFipId(chainId);
@@ -175,7 +176,7 @@ const FipApprove = () => {
   ];
 
   useEffect(() => {
-    if (!isConnected) {
+    if (!isConnected || !isFipAddress) {
       navigate("/home");
       return;
     }

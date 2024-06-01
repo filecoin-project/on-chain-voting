@@ -21,7 +21,7 @@ import Table from '../../../components/Table';
 import LoadingButton from '../../../components/LoadingButton';
 import {useAccount, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
 import type { BaseError } from "wagmi";
-import { useFipEditors } from "../../../common/hooks"
+import {useCheckFipAddress, useFipEditors} from "../../../common/hooks"
 import fileCoinAbi from "../../../common/abi/power-voting.json";
 import {getContractAddress, getWeb3IpfsId} from "../../../utils";
 import {
@@ -45,6 +45,8 @@ const FipPropose = () => {
   const [selectedAddress, setSelectedAddress] = useState('');
   const [fipInfo, setFipInfo] = useState('');
   const [fipProposalType, setFipProposeType] = useState(FIP_APPROVE_TYPE);
+
+  const { isFipAddress } = useCheckFipAddress(chainId, address);
   const { fipEditors } = useFipEditors(chainId);
 
   const {
@@ -59,7 +61,7 @@ const FipPropose = () => {
   const [loading, setLoading] = useState(writeContractPending);
 
   useEffect(() => {
-    if (!isConnected) {
+    if (!isConnected || !isFipAddress) {
       navigate("/home");
       return;
     }

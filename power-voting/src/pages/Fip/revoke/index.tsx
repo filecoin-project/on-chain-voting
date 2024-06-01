@@ -26,7 +26,7 @@ import {
 } from "../../../common/consts";
 import Loading from "../../../components/Loading";
 import EllipsisMiddle from "../../../components/EllipsisMiddle";
-import {useFipEditors, useRevokeFipId, useFipProposalDataSet} from "../../../common/hooks";
+import {useFipEditors, useRevokeFipId, useFipProposalDataSet, useCheckFipAddress} from "../../../common/hooks";
 import fileCoinAbi from "../../../common/abi/power-voting.json";
 import {getContractAddress} from "../../../utils";
 
@@ -44,6 +44,7 @@ const FipRevoke = () => {
   const [loading, setLoading] = useState(false);
   const [currentProposalId, setCurrentProposalId] = useState(null);
 
+  const { isFipAddress } = useCheckFipAddress(chainId, address);
   const { fipEditors } = useFipEditors(chainId);
 
   const { revokeFipId, getRevokeFipIdLoading } = useRevokeFipId(chainId);
@@ -205,7 +206,7 @@ const FipRevoke = () => {
   };
 
   useEffect(() => {
-    if (!isConnected) {
+    if (!isConnected || !isFipAddress) {
       navigate("/home");
       return;
     }
