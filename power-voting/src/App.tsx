@@ -29,7 +29,7 @@ import "./common/styles/reset.less";
 import "tailwindcss/tailwind.css";
 import {STORING_DATA_MSG} from "./common/consts";
 import {useVoterInfo, useCurrentTimezone} from "./common/store";
-import { useVoterInfoSet } from "./common/hooks";
+import {useCheckFipAddress, useVoterInfoSet} from "./common/hooks";
 
 const App: React.FC = () => {
   // Destructure values from custom hooks
@@ -56,6 +56,8 @@ const App: React.FC = () => {
 
   // Get voter information using custom hook
   const { voterInfo } = useVoterInfoSet(chainId, address);
+
+  const { isFipAddress } = useCheckFipAddress(chainId, address);
 
   // Update voter information in state
   const setVoterInfo = useVoterInfo((state: any) => state.setVoterInfo);
@@ -160,7 +162,7 @@ const App: React.FC = () => {
     navigate(route);
   }
 
-  const items = [
+  const items: any = [
     {
       key: 'ucan',
       label: (
@@ -181,7 +183,10 @@ const App: React.FC = () => {
         </a>
       ),
     },
-    {
+  ];
+
+  if (isFipAddress) {
+    items.push({
       key: '3',
       label: 'FIP Editor Management',
       children: [
@@ -216,8 +221,8 @@ const App: React.FC = () => {
           ),
         },
       ],
-    },
-  ];
+    })
+  }
 
   return (
     <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
