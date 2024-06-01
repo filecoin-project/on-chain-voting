@@ -448,3 +448,6 @@ export const WRONG_MINER_ID_MSG= 'Please check your miner ID!';
 export const DUPLICATED_MINER_ID_MSG= 'Your miner ID is duplicated!';
 export const NOT_FIP_EDITOR_MSG= 'Please select a FIP Editor to create proposals!';
 export const NO_FIP_EDITOR_PROPOSAL_ADDRESS_MSG= 'Please input an address!';
+export const CAN_NOT_REVOKE_YOURSELF_MSG= 'You can\'t revoke yourself!';
+export const HAVE_APPROVED_MSG= 'You have already approved!';
+export const HAVE_REVOKED_MSG= 'You have already revoked!';

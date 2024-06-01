@@ -20,6 +20,7 @@ import axios from "axios";
 import {useAccount, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
 import type { BaseError} from "wagmi";
 import {
+  HAVE_APPROVED_MSG,
   STORING_DATA_MSG,
   web3AvatarUrl,
 } from "../../../common/consts";
@@ -40,6 +41,8 @@ const FipApprove = () => {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(5);
   const [loading, setLoading] = useState(false);
+  const [currentProposalId, setCurrentProposalId] = useState(null);
+
   const { fipEditors } = useFipEditors(chainId);
 
   const { approveFipId, getApproveFipIdLoading } = useApproveFipId(chainId);
@@ -49,6 +52,22 @@ const FipApprove = () => {
     page,
     pageSize,
   });
+
+  const {
+    data: hash,
+    writeContract,
+    error: writeContractError,
+    isPending: writeContractPending,
+    isSuccess: writeContractSuccess,
+    reset
+  } = useWriteContract();
+
+  const { isLoading: transactionLoading } =
+    useWaitForTransactionReceipt({
+      hash,
+    })
+
+  const isLoading = loading || writeContractPending || transactionLoading;
 
   const popoverColumns = [
     {
@@ -150,19 +169,10 @@ const FipApprove = () => {
           okText="Yes"
           cancelText="No"
         >
-          <Button type='primary' className='w-[80px] h-[24px] flex justify-center items-center' loading={loading || writeContractPending || transactionLoading} >Approve</Button>
+          <Button type='primary' className='w-[80px] h-[24px] flex justify-center items-center' loading={record.proposalId === currentProposalId && isLoading} >Approve</Button>
         </Popconfirm>
     },
   ];
-
-  const {
-    data: hash,
-    writeContract,
-    error: writeContractError,
-    isPending: writeContractPending,
-    isSuccess: writeContractSuccess,
-    reset
-  } = useWriteContract();
 
   useEffect(() => {
     if (!isConnected) {
@@ -232,6 +242,7 @@ const FipApprove = () => {
         proposalId: result.proposalId,
         address: result.fipEditorAddress,
         info: data,
+        voters: result.voters,
         ratio: `${result.voters?.length} / ${fipEditors?.length}`,
         voteList: fipEditors?.map((address: string) => {
           return { address, status: result.voters?.includes(address) ? 'Approved' : '' }
@@ -247,6 +258,13 @@ const FipApprove = () => {
   }
 
   const confirm = (record: any) => {
+    if (record.voters.includes(address)) {
+      messageApi.open({
+        type: 'warning',
+        content: HAVE_APPROVED_MSG,
+      });
+      return;
+    }
     writeContract({
       abi: fileCoinAbi,
       address: getContractAddress(chainId, 'powerVoting'),
@@ -256,12 +274,8 @@ const FipApprove = () => {
         record.proposalId,
       ],
     });
+    setCurrentProposalId(record.proposalId);
   };
-
-  const { isLoading: transactionLoading } =
-    useWaitForTransactionReceipt({
-      hash,
-    })
 
   return (
     loading ? <Loading /> : <div className="px-3 mb-6 md:px-0">

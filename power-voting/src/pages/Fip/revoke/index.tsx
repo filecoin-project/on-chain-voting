@@ -20,6 +20,7 @@ import axios from "axios";
 import {useAccount, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
 import type { BaseError} from "wagmi";
 import {
+  HAVE_REVOKED_MSG,
   STORING_DATA_MSG,
   web3AvatarUrl,
 } from "../../../common/consts";
@@ -41,6 +42,8 @@ const FipRevoke = () => {
   const [pageSize] = useState(5);
   const [selectData, setSelectData] = useState<any>({});
   const [loading, setLoading] = useState(false);
+  const [currentProposalId, setCurrentProposalId] = useState(null);
+
   const { fipEditors } = useFipEditors(chainId);
 
   const { revokeFipId, getRevokeFipIdLoading } = useRevokeFipId(chainId);
@@ -50,6 +53,22 @@ const FipRevoke = () => {
     page,
     pageSize,
   });
+
+  const {
+    data: hash,
+    writeContract,
+    error: writeContractError,
+    isPending: writeContractPending,
+    isSuccess: writeContractSuccess,
+    reset
+  } = useWriteContract();
+
+  const { isLoading: transactionLoading } =
+    useWaitForTransactionReceipt({
+      hash,
+    })
+
+  const isLoading = loading || writeContractPending || transactionLoading;
 
   const popoverColumns = [
     {
@@ -148,16 +167,15 @@ const FipRevoke = () => {
           <Popconfirm
             title="Revoke FIP editor"
             description="Are you sure to revoke?"
-            onConfirm={confirm}
+            onConfirm={(record: any) => { confirm(record) }}
             okText="Yes"
             cancelText="No"
           >
-            <Button type='primary' className='w-[80px] h-[24px] flex justify-center items-center' loading={loading || writeContractPending || transactionLoading} >Revoke</Button>
+            <Button type='primary' className='w-[80px] h-[24px] flex justify-center items-center' loading={record.proposalId === currentProposalId && isLoading} >Revoke</Button>
           </Popconfirm>
         </a>
     },
   ];
-
   const handlePageChange = (page: number) => {
     setPage(page);
   }
@@ -166,7 +184,14 @@ const FipRevoke = () => {
     setSelectData(record);
   };
 
-  const confirm = () => {
+  const confirm = (record: any) => {
+    if (record.voters.includes(address)) {
+      messageApi.open({
+        type: 'warning',
+        content: HAVE_REVOKED_MSG,
+      });
+      return;
+    }
     writeContract({
       abi: fileCoinAbi,
       address: getContractAddress(chainId, 'powerVoting'),
@@ -176,17 +201,8 @@ const FipRevoke = () => {
         selectData.proposalId,
       ],
     });
+    setCurrentProposalId(record.proposalId);
   };
-
-  const {
-    data: hash,
-    writeContract,
-    error: writeContractError,
-    isPending: writeContractPending,
-    isSuccess: writeContractSuccess,
-    reset
-  } = useWriteContract();
-
 
   useEffect(() => {
     if (!isConnected) {
@@ -265,11 +281,6 @@ const FipRevoke = () => {
     setFipProposalList(fipProposalList);
     setLoading(false);
   }
-
-  const { isLoading: transactionLoading } =
-    useWaitForTransactionReceipt({
-      hash,
-    })
 
   return (
     loading ? <Loading /> : <div className="px-3 mb-6 md:px-0">

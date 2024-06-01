@@ -25,6 +25,7 @@ import { useFipEditors } from "../../../common/hooks"
 import fileCoinAbi from "../../../common/abi/power-voting.json";
 import {getContractAddress, getWeb3IpfsId} from "../../../utils";
 import {
+  CAN_NOT_REVOKE_YOURSELF_MSG,
   FIP_APPROVE_TYPE,
   FIP_REVOKE_TYPE,
   NO_FIP_EDITOR_PROPOSAL_ADDRESS_MSG,
@@ -100,6 +101,7 @@ const FipPropose = () => {
   const handleProposeTypeChange = (value: number) => {
     setFipProposeType(value);
     value === FIP_APPROVE_TYPE ? setSelectedAddress('') : setFipAddress('');
+    handleChange('fipInfo', '');
   }
 
   /**
@@ -112,6 +114,16 @@ const FipPropose = () => {
         type: 'warning',
         // Prompt user to fill required fields
         content: NO_FIP_EDITOR_PROPOSAL_ADDRESS_MSG,
+      });
+      return;
+    }
+
+    // Check if the user revoke himself
+    if (fipProposalType === FIP_REVOKE_TYPE && selectedAddress === address) {
+      messageApi.open({
+        type: 'warning',
+        // Prompt user to fill required fields
+        content: CAN_NOT_REVOKE_YOURSELF_MSG,
       });
       return;
     }
@@ -262,6 +274,7 @@ const FipPropose = () => {
                       'form-select w-[520px] rounded bg-[#212B3C] border border-[#313D4F]'
                     )}
                   >
+                    <option style={{ display: 'none' }}></option>
                     {fipEditors?.map((address: string) => (
                       <option value={address} key={address}>{address}</option>
                     ))}
@@ -273,6 +286,7 @@ const FipPropose = () => {
                 width: 100,
                 comp: (
                   <textarea
+                    value={fipInfo}
                     placeholder='Input propose info'
                     className='form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]'
                     onChange={(e) => { handleChange('fipInfo', e.target.value) }}
