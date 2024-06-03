@@ -28,7 +28,8 @@ import {
   CAN_NOT_REVOKE_YOURSELF_MSG,
   FIP_APPROVE_TYPE,
   FIP_REVOKE_TYPE,
-  NO_FIP_EDITOR_PROPOSAL_ADDRESS_MSG,
+  NO_FIP_EDITOR_APPROVE_ADDRESS_MSG,
+  NO_FIP_EDITOR_REVOKE_ADDRESS_MSG,
   STORING_DATA_MSG,
 } from "../../../common/consts";
 
@@ -111,11 +112,20 @@ const FipPropose = () => {
    */
   const onSubmit = async () => {
     // Check if required fields are filled based on proposal type
-    if ((fipProposalType === FIP_APPROVE_TYPE && !fipAddress) || (fipProposalType === FIP_REVOKE_TYPE && !selectedAddress)) {
+    if (fipProposalType === FIP_APPROVE_TYPE && !fipAddress) {
       messageApi.open({
         type: 'warning',
         // Prompt user to fill required fields
-        content: NO_FIP_EDITOR_PROPOSAL_ADDRESS_MSG,
+        content: NO_FIP_EDITOR_APPROVE_ADDRESS_MSG,
+      });
+      return;
+    }
+
+    if (fipProposalType === FIP_REVOKE_TYPE && !selectedAddress) {
+      messageApi.open({
+        type: 'warning',
+        // Prompt user to fill required fields
+        content: NO_FIP_EDITOR_REVOKE_ADDRESS_MSG,
       });
       return;
     }
@@ -289,6 +299,7 @@ const FipPropose = () => {
                 comp: (
                   <textarea
                     value={fipInfo}
+                    maxLength={300}
                     placeholder='Input propose info'
                     className='form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]'
                     onChange={(e) => { handleChange('fipInfo', e.target.value) }}

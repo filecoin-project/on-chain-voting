@@ -126,12 +126,12 @@ const FipApprove = () => {
       title: 'Info',
       dataIndex: 'info',
       key: 'info',
-      ellipsis: true,
+      ellipsis: { showTitle: false },
       render: (value: string) => {
         return (
-          <Tooltip placement="topLeft" title={value}>
+          value ? <Tooltip placement="topLeft" title={value}>
             {value}
-          </Tooltip>
+          </Tooltip> : '-'
         )
       }
     },
@@ -230,16 +230,16 @@ const FipApprove = () => {
         navigate("/")
       }, 1000);
     }
-  }, [writeContractSuccess])
+  }, [writeContractSuccess]);
 
   const initState = async () => {
     setLoading(true);
-    setFipProposalList([]);
+    const list: any = [];
     await Promise.all(fipProposalData.map(async (item: any) => {
       const { result } = item;
       const url = `https://${result.voterInfoCid}.ipfs.w3s.link/`;
       const { data } = await axios.get(url);
-      fipProposalList.push({
+      list.push({
         proposalId: result.proposalId,
         address: result.fipEditorAddress,
         info: data,
@@ -249,8 +249,8 @@ const FipApprove = () => {
           return { address, status: result.voters?.includes(address) ? 'Approved' : '' }
         }).sort((a) => (a.status ? -1 : 1))
       });
-    }))
-    setFipProposalList(fipProposalList);
+    }));
+    setFipProposalList(list);
     setLoading(false);
   }
 

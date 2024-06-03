@@ -127,12 +127,12 @@ const FipRevoke = () => {
       title: 'Info',
       dataIndex: 'info',
       key: 'info',
-      ellipsis: true,
+      ellipsis: { showTitle: false },
       render: (value: string) => {
         return (
-          <Tooltip placement="topLeft" title={value}>
+          value ? <Tooltip placement="topLeft" title={value}>
             {value}
-          </Tooltip>
+          </Tooltip> : '-'
         )
       }
     },
@@ -264,22 +264,24 @@ const FipRevoke = () => {
 
   const initState = async () => {
     setLoading(true);
-    setFipProposalList([]);
+    const list: any = [];
     await Promise.all(fipProposalData.map(async (item: any) => {
       const { result } = item;
       const url = `https://${result.voterInfoCid}.ipfs.w3s.link/`;
       const { data } = await axios.get(url);
-      fipProposalList.push({
+      const revokeList = fipEditors?.filter((address: string) => address !== result.fipEditorAddress);
+      list.push({
         proposalId: result.proposalId,
         address: result.fipEditorAddress,
         info: data,
-        ratio: `${result.voters?.length} / ${fipEditors?.length}`,
-        voteList: fipEditors?.map((address: string) => {
+        ratio: `${result.voters?.length} / ${revokeList?.length}`,
+        voteList: revokeList.map((address: string) => {
           return { address, status: result.voters?.includes(address) ? 'Revoked' : '' }
         }).sort((a) => (a.status ? -1 : 1))
       });
     }));
-    setFipProposalList(fipProposalList);
+    // Remove current address
+    setFipProposalList(list);
     setLoading(false);
   }
 
