@@ -46,3 +46,18 @@ struct VoterInfo {
     address ethAddress;
     string ucanCid;
 }
+
+struct FipEditorProposal {
+     // Unique identifier for the proposal
+    uint256 proposalId;        
+    // Address of the FIP editor
+    address fipEditorAddress;   
+    // CID (Content Identifier) of the voter's information
+    string voterInfoCid;        
+    // Array containing addresses of voters
+    address[] voters;           
+}
+
+struct HasVoted {
+    mapping(address => bool) hasVotedAddress;
+}
