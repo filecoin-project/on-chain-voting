@@ -18,20 +18,56 @@ pragma solidity ^0.8.19;
 
 import {IPowerVotingEvent} from "./IPowerVotingEvent.sol";
 import {IPowerVotingError} from "./IPowerVotingError.sol";
+import {FipEditorProposal} from "../types.sol";
 
 
 interface IPowerVoting is IPowerVotingEvent, IPowerVotingError {
     /**
-     * @notice Adds a new FIP address.
-     * @param fipAddress The address of the new FIP.
-     */
-    function addFIP(address fipAddress) external;
+    * @notice Creates a new FIP editor proposal.
+    * @param fipEditorAddress The address of the FIP editor.
+    * @param voterInfoCid The CID (Content Identifier) of the voter's information.
+    * @param fipEditorProposalType The type of FIP editor proposal.
+    */
+    function createFipEditorProposal(address fipEditorAddress, string calldata voterInfoCid, int8 fipEditorProposalType) external;
 
     /**
-     * @notice Removes the specified FIP address.
-     * @param fipAddress The address of the FIP to be removed.
-     */
-    function removeFIP(address fipAddress) external;
+    * @notice Approves a FIP editor proposal.
+    * @param fipEditorAddress The address of the FIP editor.
+    * @param proposalId The ID of the proposal.
+    */
+    function approveFipEditor(address fipEditorAddress, uint256 proposalId) external;
+
+    /**
+    * @notice Revokes a FIP editor proposal.
+    * @param fipEditorAddress The address of the FIP editor.
+    * @param proposalId The ID of the proposal.
+    */
+    function revokeFipEditor(address fipEditorAddress, uint256 proposalId) external;
+
+    /**
+    * @notice Gets the list of FIP editor addresses.
+    * @return An array containing the addresses of all FIP editors.
+    */
+    function getFipAddressList() external returns (address[] memory);
+
+    /**
+    * @notice Gets the details of a FIP editor proposal based on its ID.
+    * @param id The ID of the proposal.
+    * @return The details of the proposal.
+    */
+    function getFipEditorProposal(uint256 id) external returns (FipEditorProposal memory);
+
+    /**
+    * @notice Gets the list of IDs of all approved proposals.
+    * @return An array containing the IDs of all approved proposals.
+    */
+    function getApproveProposalId() external view returns (uint256[] memory);
+
+    /**
+    * @notice Gets the list of IDs of all revoked proposals.
+    * @return An array containing the IDs of all revoked proposals.
+    */
+    function getRevokeProposalId() external view returns (uint256[] memory);
 
     /**
      * @notice Creates a new proposal.

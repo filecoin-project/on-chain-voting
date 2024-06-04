@@ -30,4 +30,25 @@ interface IPowerVotingError {
 
     // add FIP editor role error
     error AddFIPError(string);
+
+    // fip already exists error
+    error AddressIsAlreadyFipEditor(string);
+
+    // address has active proposal error
+    error AddressHasActiveProposal(string);
+
+    // cannot propose to self error
+    error CannotProposeToSelf(string);
+
+    // only fip editors allowed error
+    error OnlyFipEditorsAllowed(string);
+
+    // cannot vote for own proposal error
+    error CannotVoteForOwnProposal(string);
+
+    // Invalid Proposal id error
+    error InvalidProposalId(string);
+
+    // Invalid Proposal type error
+    error InvalidProposalType(string);
 }

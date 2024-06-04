@@ -16,10 +16,12 @@
 pragma solidity ^0.8.19;
 
 import "../src/PowerVoting-filecoin.sol";
+import "forge-std/Test.sol";
 
-contract TestPowerVoting  {
+contract TestPowerVoting is Test {
     PowerVoting public powerVoting;
-
+    address fipEditorAddressOne = address(0x123);
+    address fipEditorAddressTwo = address(0x123456);
     constructor() {
         powerVoting = new PowerVoting();
         powerVoting.initialize(address(this));
@@ -29,17 +31,45 @@ contract TestPowerVoting  {
         require(powerVoting.oracleContract() == address(this), "Oracle contract address mismatch");
     }
 
-    function test_fip_management() public {
-        powerVoting.addFIP(address(this));
-        require(powerVoting.fipMap(address(this)) == true, "FIP address not added correctly");
 
-        powerVoting.removeFIP(address(this));
-        require(powerVoting.fipMap(address(this)) == false, "FIP address not removed correctly");
+    function test_create_fip_editor_proposal() public {
+        string memory voterInfoCid = "test";
+        int8 fipEditorProposalType = 1;
+
+        powerVoting.createFipEditorProposal(fipEditorAddressOne, voterInfoCid, fipEditorProposalType);
+        require(powerVoting.fipAddressMap(fipEditorAddressOne), "Not a fip address");
+    }
+
+    function test_approve_fip_editor() public {
+        string memory voterInfoCid = "test";
+        int8 fipEditorProposalType = 1;
+
+        powerVoting.createFipEditorProposal(fipEditorAddressOne, voterInfoCid, fipEditorProposalType);
+
+        powerVoting.createFipEditorProposal(fipEditorAddressTwo, voterInfoCid, fipEditorProposalType);
+        vm.prank(fipEditorAddressOne);
+        powerVoting.approveFipEditor(fipEditorAddressTwo, 2);
+
+        require(powerVoting.fipAddressMap(fipEditorAddressOne), "Not a fip address");
+        require(powerVoting.fipAddressMap(fipEditorAddressTwo), "Not a fip address");
+    }
+
+    function test_revoke_Fip_editor() public {
+        string memory voterInfoCid = "test";
+
+        powerVoting.createFipEditorProposal(fipEditorAddressOne, voterInfoCid, 1);
+
+        powerVoting.createFipEditorProposal(fipEditorAddressTwo, voterInfoCid, 1);
+        vm.prank(fipEditorAddressOne);
+        powerVoting.approveFipEditor(fipEditorAddressTwo, 2);
+
+        powerVoting.createFipEditorProposal(fipEditorAddressOne, voterInfoCid, 0);
+        vm.prank(fipEditorAddressTwo);
+        powerVoting.revokeFipEditor(fipEditorAddressOne, 3);
+        require(!powerVoting.fipAddressMap(fipEditorAddressOne), "Not a fip address");
     }
 
     function test_proposal_creation() public {
-        powerVoting.addFIP(address(this));
-
         string memory proposalCid = "ProposalCID";
         uint248 startTime = uint248(block.timestamp + 60);
         uint248 expTime = uint248(startTime + 3600);
