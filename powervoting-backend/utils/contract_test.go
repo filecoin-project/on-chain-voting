@@ -24,6 +24,8 @@ import (
 )
 
 func TestGetProposal(t *testing.T) {
+	d, _ := zap.NewDevelopment()
+	zap.ReplaceGlobals(d)
 	config.InitConfig("../")
 	ethClient, err := contract.GetClient(314159)
 	if err != nil {
@@ -37,6 +39,9 @@ func TestGetProposal(t *testing.T) {
 }
 
 func TestGetVote(t *testing.T) {
+	d, _ := zap.NewDevelopment()
+	zap.ReplaceGlobals(d)
+
 	config.InitConfig("../")
 	ethClient, err := contract.GetClient(314159)
 	if err != nil {
@@ -50,7 +55,8 @@ func TestGetVote(t *testing.T) {
 }
 
 func TestGetPower(t *testing.T) {
-
+	d, _ := zap.NewDevelopment()
+	zap.ReplaceGlobals(d)
 	config.InitConfig("../")
 	client, err := contract.GetClient(314159)
 	if err != nil {
@@ -67,6 +73,9 @@ func TestGetPower(t *testing.T) {
 }
 
 func TestGetProposalLatestId(t *testing.T) {
+	d, _ := zap.NewDevelopment()
+	zap.ReplaceGlobals(d)
+
 	config.InitConfig("../")
 	ethClient, err := contract.GetClient(314159)
 	if err != nil {
@@ -80,6 +89,9 @@ func TestGetProposalLatestId(t *testing.T) {
 }
 
 func TestGetVoterToPowerStatus(t *testing.T) {
+	d, _ := zap.NewDevelopment()
+	zap.ReplaceGlobals(d)
+
 	config.InitConfig("../")
 	client, err := contract.GetClient(314159)
 
