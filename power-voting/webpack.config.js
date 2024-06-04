@@ -32,12 +32,19 @@ module.exports = {
     historyApiFallback: true,
     proxy: {
       '/api': {
-        target: 'http://192.168.11.94:10000/power_voting',
+        target: 'http://192.168.11.94:9999/power_voting',
         changeOrigin: true,
         pathRewrite: {
           '^/api': '/api'
         }
-      }
+      },
+      '/rpc/v1': {
+        target: 'http://192.168.11.139:1235',
+        changeOrigin: true,
+        pathRewrite: {
+          '^/rpc/v1': '/rpc/v1'
+        }
+      },
     }
   },
   stats: {
