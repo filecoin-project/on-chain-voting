@@ -25,7 +25,6 @@ import {useCheckFipAddress, useFipEditors} from "../../../common/hooks"
 import fileCoinAbi from "../../../common/abi/power-voting.json";
 import {getContractAddress, getWeb3IpfsId} from "../../../utils";
 import {
-  CAN_NOT_REVOKE_YOURSELF_MSG,
   FIP_APPROVE_TYPE,
   FIP_REVOKE_TYPE,
   NO_FIP_EDITOR_APPROVE_ADDRESS_MSG,
@@ -47,7 +46,7 @@ const FipPropose = () => {
   const [fipInfo, setFipInfo] = useState('');
   const [fipProposalType, setFipProposeType] = useState(FIP_APPROVE_TYPE);
 
-  const { isFipAddress } = useCheckFipAddress(chainId, address);
+  const { isFipAddress, checkFipAddressSuccess } = useCheckFipAddress(chainId, address);
   const { fipEditors } = useFipEditors(chainId);
 
   const {
@@ -62,11 +61,11 @@ const FipPropose = () => {
   const [loading, setLoading] = useState(writeContractPending);
 
   useEffect(() => {
-    if (!isConnected || !isFipAddress) {
+    if (!isConnected || (checkFipAddressSuccess && !isFipAddress)) {
       navigate("/home");
       return;
     }
-  }, []);
+  }, [isConnected, checkFipAddressSuccess, isFipAddress]);
 
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
@@ -130,16 +129,6 @@ const FipPropose = () => {
       return;
     }
 
-    // Check if the user revoke himself
-    if (fipProposalType === FIP_REVOKE_TYPE && selectedAddress === address) {
-      messageApi.open({
-        type: 'warning',
-        // Prompt user to fill required fields
-        content: CAN_NOT_REVOKE_YOURSELF_MSG,
-      });
-      return;
-    }
-
     // Set loading state to true while submitting proposal
     setLoading(true);
 
@@ -170,6 +159,8 @@ const FipPropose = () => {
       hash,
     })
 
+  const isLoading = loading || writeContractPending || transactionLoading;
+
   return (
     <>
       {contextHolder}
@@ -195,8 +186,9 @@ const FipPropose = () => {
                   <RadioGroup className='flex' value={fipProposalType} onChange={handleProposeTypeChange}>
                     <RadioGroup.Option
                       key='approve'
+                      disabled={isLoading}
                       value={FIP_APPROVE_TYPE}
-                      className='relative flex items-center cursor-pointer p-4 focus:outline-none'
+                      className='relative flex items-center cursor-pointer p-4 focus:outline-none data-[disabled]:cursor-not-allowed'
                     >
                       {({active, checked}) => (
                         <>
@@ -229,8 +221,9 @@ const FipPropose = () => {
                     </RadioGroup.Option>
                     <RadioGroup.Option
                       key='revoke'
+                      disabled={isLoading}
                       value={FIP_REVOKE_TYPE}
-                      className='relative flex items-center cursor-pointer p-4 focus:outline-none'
+                      className='relative flex items-center cursor-pointer p-4 focus:outline-none data-[disabled]:cursor-not-allowed'
                     >
                       {({active, checked}) => (
                         <>
@@ -287,8 +280,14 @@ const FipPropose = () => {
                     )}
                   >
                     <option style={{ display: 'none' }}></option>
-                    {fipEditors?.map((address: string) => (
-                      <option value={address} key={address}>{address}</option>
+                    {fipEditors?.map((fipEditor: string) => (
+                      <option
+                        disabled={ address === fipEditor }
+                        value={fipEditor}
+                        key={fipEditor}
+                      >
+                        {fipEditor}
+                      </option>
                     ))}
                   </select>
                 )
@@ -310,7 +309,7 @@ const FipPropose = () => {
           />
 
           <div className='text-center'>
-            <LoadingButton text='Submit' loading={loading || writeContractPending || transactionLoading} handleClick={onSubmit} />
+            <LoadingButton text='Submit' loading={isLoading} handleClick={onSubmit} />
           </div>
         </div>
       </div>

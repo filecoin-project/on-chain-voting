@@ -20,10 +20,11 @@ import axios from "axios";
 import {useAccount, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
 import type { BaseError} from "wagmi";
 import {
+  CAN_NOT_REVOKE_YOURSELF_MSG,
   HAVE_REVOKED_MSG,
   STORING_DATA_MSG,
-  web3AvatarUrl,
-} from "../../../common/consts";
+  web3AvatarUrl
+} from "../../../common/consts"
 import Loading from "../../../components/Loading";
 import EllipsisMiddle from "../../../components/EllipsisMiddle";
 import {useFipEditors, useRevokeFipId, useFipProposalDataSet, useCheckFipAddress} from "../../../common/hooks";
@@ -44,7 +45,7 @@ const FipRevoke = () => {
   const [loading, setLoading] = useState(false);
   const [currentProposalId, setCurrentProposalId] = useState(null);
 
-  const { isFipAddress } = useCheckFipAddress(chainId, address);
+  const { isFipAddress, checkFipAddressSuccess } = useCheckFipAddress(chainId, address);
   const { fipEditors } = useFipEditors(chainId);
 
   const { revokeFipId, getRevokeFipIdLoading } = useRevokeFipId(chainId);
@@ -168,7 +169,7 @@ const FipRevoke = () => {
           <Popconfirm
             title="Revoke FIP editor"
             description="Are you sure to revoke?"
-            onConfirm={(record: any) => { confirm(record) }}
+            onConfirm={() => { confirm(record) }}
             okText="Yes"
             cancelText="No"
           >
@@ -186,17 +187,26 @@ const FipRevoke = () => {
   };
 
   const confirm = (record: any) => {
-    if (record.voters.includes(address)) {
+    if (record.address === address) {
+      messageApi.open({
+        type: 'warning',
+        content: CAN_NOT_REVOKE_YOURSELF_MSG
+      });
+      return;
+    }
+
+    if (record.voters?.includes(address)) {
       messageApi.open({
         type: 'warning',
         content: HAVE_REVOKED_MSG,
       });
       return;
     }
+
     writeContract({
       abi: fileCoinAbi,
       address: getContractAddress(chainId, 'powerVoting'),
-      functionName: 'approveFipEditor',
+      functionName: 'revokeFipEditor',
       args: [
         selectData.address,
         selectData.proposalId,
@@ -206,11 +216,11 @@ const FipRevoke = () => {
   };
 
   useEffect(() => {
-    if (!isConnected || !isFipAddress) {
+    if (!isConnected || (checkFipAddressSuccess && !isFipAddress)) {
       navigate("/home");
       return;
     }
-  }, []);
+  }, [isConnected, checkFipAddressSuccess, isFipAddress]);
 
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
@@ -274,6 +284,7 @@ const FipRevoke = () => {
         proposalId: result.proposalId,
         address: result.fipEditorAddress,
         info: data,
+        voters: result.voters,
         ratio: `${result.voters?.length} / ${revokeList?.length}`,
         voteList: revokeList.map((address: string) => {
           return { address, status: result.voters?.includes(address) ? 'Revoked' : '' }
@@ -313,13 +324,13 @@ const FipRevoke = () => {
               pagination={false}
             />
             {
-              !!fipProposalData?.length && <Row justify='end'>
+              !!revokeFipId?.length && <Row justify='end'>
                     <Pagination
                         simple
                         showSizeChanger={false}
                         current={page}
                         pageSize={pageSize}
-                        total={fipProposalData.length}
+                        total={revokeFipId.length}
                         onChange={handlePageChange}
                     />
                 </Row>

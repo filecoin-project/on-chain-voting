@@ -43,10 +43,10 @@ const FipApprove = () => {
   const [loading, setLoading] = useState(false);
   const [currentProposalId, setCurrentProposalId] = useState(null);
 
-  const { isFipAddress } = useCheckFipAddress(chainId, address);
+  const { isFipAddress, checkFipAddressSuccess } = useCheckFipAddress(chainId, address);
   const { fipEditors } = useFipEditors(chainId);
-
   const { approveFipId, getApproveFipIdLoading } = useApproveFipId(chainId);
+
   const { fipProposalData, getFipProposalIdLoading, getFipProposalIdSuccess, error } = useFipProposalDataSet({
     chainId,
     idList: approveFipId,
@@ -176,11 +176,11 @@ const FipApprove = () => {
   ];
 
   useEffect(() => {
-    if (!isConnected || !isFipAddress) {
+    if (!isConnected || (checkFipAddressSuccess && !isFipAddress)) {
       navigate("/home");
       return;
     }
-  }, []);
+  }, [isConnected, checkFipAddressSuccess, isFipAddress]);
 
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
@@ -306,13 +306,13 @@ const FipApprove = () => {
               pagination={false}
             />
             {
-              !!fipProposalData?.length && <Row justify='end'>
+              !!approveFipId?.length && <Row justify='end'>
                     <Pagination
                         simple
                         showSizeChanger={false}
                         current={page}
                         pageSize={pageSize}
-                        total={fipProposalData.length}
+                        total={approveFipId.length}
                         onChange={handlePageChange}
                     />
                 </Row>

@@ -30,14 +30,15 @@ export const useVoterInfoSet = (chainId: number, address: `0x${string}` | undefi
 }
 
 export const useCheckFipAddress = (chainId: number, address: `0x${string}` | undefined) => {
-  const { data: isFipAddress } = useReadContract({
+  const { data: isFipAddress, isSuccess: checkFipAddressSuccess } = useReadContract({
     address: getContractAddress(chainId, 'powerVoting'),
     abi: fileCoinAbi,
     functionName: 'fipAddressMap',
     args: [address]
   });
   return {
-    isFipAddress
+    isFipAddress,
+    checkFipAddressSuccess
   };
 }
 
@@ -138,6 +139,9 @@ export const useApproveFipId = (chainId: number) => {
   return {
     approveFipId,
     getApproveFipIdLoading,
+  } as {
+    approveFipId: string[],
+    getApproveFipIdLoading: boolean
   };
 }
 
@@ -150,6 +154,9 @@ export const useRevokeFipId = (chainId: number) => {
   return {
     revokeFipId,
     getRevokeFipIdLoading,
+  } as {
+    revokeFipId: string[],
+    getRevokeFipIdLoading: boolean
   };
 }
 
@@ -157,10 +164,11 @@ export const useFipProposalDataSet = (params: any) => {
   const { chainId, idList, page, pageSize } = params;
   const contracts: any[] = [];
   const offset = (page - 1) * pageSize;
+  idList?.sort((a: bigint, b: bigint) => Number(b) - Number(a));
 
   // Generate contract calls for fetching proposals based on pagination
-  const startIndex = Math.max(idList?.length - offset - pageSize, 0);
-  const endIndex = Math.max(idList?.length - offset, 0);
+  const startIndex = offset;
+  const endIndex = Math.min(startIndex + pageSize, idList?.length);
   for (let i = startIndex; i < endIndex; i++) {
     const id = Number(idList[i]);
     contracts.push({
