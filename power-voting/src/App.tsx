@@ -20,7 +20,7 @@ import {
   useConnectModal
 } from "@rainbow-me/rainbowkit";
 import { ConfigProvider, theme, Modal, Dropdown, FloatButton } from 'antd';
-import { useAccount, useReadContract } from "wagmi";
+import { useAccount } from "wagmi";
 import Countdown from 'react-countdown';
 import timezones from '../public/json/timezons.json';
 import routes from "./router";
@@ -29,20 +29,7 @@ import "./common/styles/reset.less";
 import "tailwindcss/tailwind.css";
 import {STORING_DATA_MSG} from "./common/consts";
 import {useVoterInfo, useCurrentTimezone} from "./common/store";
-import oracleAbi from "./common/abi/oracle.json";
-import {getContractAddress} from "./utils";
-
-function useVoterInfoSet(chainId: number, address: `0x${string}` | undefined) {
-  const { data: voterInfo } = useReadContract({
-    address: getContractAddress(chainId, 'oracle'),
-    abi: oracleAbi,
-    functionName: 'voterToInfo',
-    args: [address]
-  });
-  return {
-    voterInfo: voterInfo as any
-  }
-}
+import {useCheckFipAddress, useVoterInfoSet} from "./common/hooks";
 
 const App: React.FC = () => {
   // Destructure values from custom hooks
@@ -69,6 +56,8 @@ const App: React.FC = () => {
 
   // Get voter information using custom hook
   const { voterInfo } = useVoterInfoSet(chainId, address);
+
+  const { isFipAddress } = useCheckFipAddress(chainId, address);
 
   // Update voter information in state
   const setVoterInfo = useVoterInfo((state: any) => state.setVoterInfo);
@@ -165,15 +154,15 @@ const App: React.FC = () => {
     }
   }
 
-  const handleMinerId = () => {
+  const handleJump = (route: string) => {
     if (!isConnected) {
       openConnectModal && openConnectModal();
       return;
     }
-    navigate('/minerid');
+    navigate(route);
   }
 
-  const items = [
+  const items: any = [
     {
       key: 'ucan',
       label: (
@@ -188,13 +177,52 @@ const App: React.FC = () => {
       key: 'minerId',
       label: (
         <a
-          onClick={handleMinerId}
+          onClick={() => { handleJump('/minerid') }}
         >
           Miner IDs Management
         </a>
       ),
     },
   ];
+
+  if (isFipAddress) {
+    items.push({
+      key: '3',
+      label: 'FIP Editor Management',
+      children: [
+        {
+          key: '3-1',
+          label: (
+            <a
+              onClick={() => { handleJump('/fip/propose') }}
+            >
+              Propose
+            </a>
+          ),
+        },
+        {
+          key: '3-2',
+          label: (
+            <a
+              onClick={() => { handleJump('/fip/approve') }}
+            >
+              Approve
+            </a>
+          ),
+        },
+        {
+          key: '3-3',
+          label: (
+            <a
+              onClick={() => { handleJump('/fip/revoke') }}
+            >
+              Revoke
+            </a>
+          ),
+        },
+      ],
+    })
+  }
 
   return (
     <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>

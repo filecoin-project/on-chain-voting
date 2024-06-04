@@ -65,10 +65,6 @@ export const VOTE_FILTER_LIST = [
     value: VOTE_ALL_STATUS
   },
   {
-    label: "Storing",
-    value: STORING_STATUS
-  },
-  {
     label: "Pending",
     value: PENDING_STATUS
   },
@@ -430,6 +426,8 @@ export const GITHUB_DEAUTHORIZE_DOC = `
     <img src="/images/img_16.png" />
 </p>
 `;
+export const FIP_REVOKE_TYPE = 0;
+export const FIP_APPROVE_TYPE = 1;
 export const DEFAULT_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 export const web3AvatarUrl = 'https://cdn.stamp.fyi/avatar/eth';
 
@@ -440,6 +438,8 @@ export const UCAN_JWT_HEADER = {
 };
 export const OPERATION_CANCELED_MSG= 'Operation Canceled';
 export const STORING_DATA_MSG= 'Storing data on chain!';
+export const STORING_SUCCESS_MSG = 'Data stored on chain successfully!';
+export const STORING_FAILED_MSG = 'Data stored on chain failed!';
 export const VOTE_SUCCESS_MSG= 'Vote successful!';
 export const CHOOSE_VOTE_MSG= 'Please choose a option to vote!';
 export const WRONG_START_TIME_MSG= 'Start time can\'t be less than current time!';
@@ -447,3 +447,8 @@ export const WRONG_EXPIRATION_TIME_MSG= 'Expiration time can\'t be less than cur
 export const WRONG_MINER_ID_MSG= 'Please check your miner ID!';
 export const DUPLICATED_MINER_ID_MSG= 'Your miner ID is duplicated!';
 export const NOT_FIP_EDITOR_MSG= 'Please select a FIP Editor to create proposals!';
+export const NO_FIP_EDITOR_APPROVE_ADDRESS_MSG= 'Please input an address!';
+export const NO_FIP_EDITOR_REVOKE_ADDRESS_MSG= 'Please select an address!';
+export const HAVE_APPROVED_MSG= 'You have already approved!';
+export const HAVE_REVOKED_MSG= 'You have already revoked!';
+export const CAN_NOT_REVOKE_YOURSELF_MSG= 'You can\'t revoke yourself!';

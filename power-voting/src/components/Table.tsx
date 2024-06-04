@@ -18,7 +18,7 @@ import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { FILECOIN_AUTHORIZE_DOC, FILECOIN_DEAUTHORIZE_DOC, GITHUB_AUTHORIZE_DOC, GITHUB_DEAUTHORIZE_DOC } from "../common/consts";
 
-export default function Table ({ title = '', link= {} as { type: string, action: string, href: string }, list = [] as { name: string, comp: ReactNode, width?: number }[], subTitle = '' }) {
+export default function Table ({ title = '', link= {} as { type: string, action: string, href: string }, list = [] as { name: string, hide?: boolean, comp: ReactNode, width?: number }[], subTitle = '' }) {
   const navigate = useNavigate();
   const { type, action, href } = link;
 
@@ -57,7 +57,7 @@ export default function Table ({ title = '', link= {} as { type: string, action:
         </tr>
       </thead>
       <tbody className='divide-y divide-[#313D4F]'>
-        {list.map((item: { name: string, comp: ReactNode, width?: number }) => (
+        {list.filter((item: { name: string, hide?: boolean, comp: ReactNode, width?: number }) => !item.hide).map((item: { name: string, hide?: boolean, comp: ReactNode, width?: number }) => (
           <tr key={item.name} className='divide-x divide-[#313D4F]'>
             <td className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} whitespace-nowrap py-9 px-8 text-xl text-[#8896AA]`}>
               {item.name}
