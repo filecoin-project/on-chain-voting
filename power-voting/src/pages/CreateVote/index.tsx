@@ -122,7 +122,10 @@ const CreateVote = () => {
         type: 'success',
         content: STORING_DATA_MSG,
       });
-      addStoringCid([cid]);
+      addStoringCid([{
+        hash,
+        cid
+      }]);
       setTimeout(() => {
         navigate("/")
       }, 1000);
