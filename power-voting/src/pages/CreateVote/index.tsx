@@ -220,10 +220,10 @@ const CreateVote = () => {
           content: NOT_FIP_EDITOR_MSG,
         });
       }
-      setLoading(false);
     } else {
       openConnectModal && openConnectModal();
     }
+    setLoading(false);
   }
 
   const { isLoading: transactionLoading } =
@@ -295,7 +295,7 @@ const CreateVote = () => {
                       allowClear={false}
                       onChange={onChange}
                       className={classNames(
-                        'form-input rounded !bg-[#212B3C] border border-[#313D4F]',
+                        'form-input rounded w-[450px] !bg-[#212B3C] border border-[#313D4F]',
                         errors.time && 'border-red-500 focus:border-red-500'
                       )}
                       style={{color: 'red'}}

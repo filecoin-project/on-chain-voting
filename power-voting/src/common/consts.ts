@@ -426,6 +426,8 @@ export const GITHUB_DEAUTHORIZE_DOC = `
     <img src="/images/img_16.png" />
 </p>
 `;
+export const FIP_REVOKE_TYPE = 0;
+export const FIP_APPROVE_TYPE = 1;
 export const DEFAULT_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 export const web3AvatarUrl = 'https://cdn.stamp.fyi/avatar/eth';
 
@@ -445,3 +447,8 @@ export const WRONG_EXPIRATION_TIME_MSG= 'Expiration time can\'t be less than cur
 export const WRONG_MINER_ID_MSG= 'Please check your miner ID!';
 export const DUPLICATED_MINER_ID_MSG= 'Your miner ID is duplicated!';
 export const NOT_FIP_EDITOR_MSG= 'Please select a FIP Editor to create proposals!';
+export const NO_FIP_EDITOR_APPROVE_ADDRESS_MSG= 'Please input an address!';
+export const NO_FIP_EDITOR_REVOKE_ADDRESS_MSG= 'Please select an address!';
+export const HAVE_APPROVED_MSG= 'You have already approved!';
+export const HAVE_REVOKED_MSG= 'You have already revoked!';
+export const CAN_NOT_REVOKE_YOURSELF_MSG= 'You can\'t revoke yourself!';
