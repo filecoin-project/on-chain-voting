@@ -29,16 +29,16 @@ export const useVoterInfoSet = (chainId: number, address: `0x${string}` | undefi
   }
 }
 
-export const useCheckFipAddress = (chainId: number, address: `0x${string}` | undefined) => {
-  const { data: isFipAddress, isSuccess: checkFipAddressSuccess } = useReadContract({
+export const useCheckFipEditorAddress = (chainId: number, address: `0x${string}` | undefined) => {
+  const { data: isFipEditorAddress, isSuccess: checkFipEditorAddressSuccess } = useReadContract({
     address: getContractAddress(chainId, 'powerVoting'),
     abi: fileCoinAbi,
     functionName: 'fipAddressMap',
     args: [address]
   });
   return {
-    isFipAddress,
-    checkFipAddressSuccess
+    isFipEditorAddress,
+    checkFipEditorAddressSuccess
   };
 }
 
@@ -130,37 +130,37 @@ export const useFipEditors = (chainId: number) => {
   };
 }
 
-export const useApproveFipId = (chainId: number) => {
-  const { data: approveFipId, isLoading: getApproveFipIdLoading } = useReadContract({
+export const useApproveProposalId = (chainId: number) => {
+  const { data: approveProposalId, isLoading: getApproveProposalLoading } = useReadContract({
     address: getContractAddress(chainId, 'powerVoting'),
     abi: fileCoinAbi,
     functionName: 'getApproveProposalId',
   });
   return {
-    approveFipId,
-    getApproveFipIdLoading,
+    approveProposalId,
+    getApproveProposalLoading,
   } as {
-    approveFipId: string[],
-    getApproveFipIdLoading: boolean
+    approveProposalId: string[],
+    getApproveProposalLoading: boolean
   };
 }
 
-export const useRevokeFipId = (chainId: number) => {
-  const { data: revokeFipId, isLoading: getRevokeFipIdLoading } = useReadContract({
+export const useRevokeProposalId = (chainId: number) => {
+  const { data: revokeProposalId, isLoading: getRevokeProposalIdLoading } = useReadContract({
     address: getContractAddress(chainId, 'powerVoting'),
     abi: fileCoinAbi,
     functionName: 'getRevokeProposalId',
   });
   return {
-    revokeFipId,
-    getRevokeFipIdLoading,
+    revokeProposalId,
+    getRevokeProposalIdLoading,
   } as {
-    revokeFipId: string[],
-    getRevokeFipIdLoading: boolean
+    revokeProposalId: string[],
+    getRevokeProposalIdLoading: boolean
   };
 }
 
-export const useFipProposalDataSet = (params: any) => {
+export const useFipEditorProposalDataSet = (params: any) => {
   const { chainId, idList, page, pageSize } = params;
   const contracts: any[] = [];
   const offset = (page - 1) * pageSize;
@@ -181,18 +181,18 @@ export const useFipProposalDataSet = (params: any) => {
     });
   }
   const {
-    data: fipProposalData,
-    isLoading: getFipProposalIdLoading,
-    isSuccess: getFipProposalIdSuccess,
+    data: fipEditorProposalData,
+    isLoading: getFipEditorProposalIdLoading,
+    isSuccess: getFipEditorProposalIdSuccess,
     error,
   } = useReadContracts({
     contracts: contracts,
     query: { enabled: contracts.length > 0 }
   });
   return {
-    fipProposalData: fipProposalData || [],
-    getFipProposalIdLoading,
-    getFipProposalIdSuccess,
+    fipEditorProposalData: fipEditorProposalData || [],
+    getFipEditorProposalIdLoading,
+    getFipEditorProposalIdSuccess,
     error,
   };
 }

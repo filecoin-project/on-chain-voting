@@ -26,11 +26,11 @@ import {
 } from "../../../common/consts";
 import Loading from "../../../components/Loading";
 import EllipsisMiddle from "../../../components/EllipsisMiddle";
-import {useFipEditors, useApproveFipId, useFipProposalDataSet, useCheckFipAddress} from "../../../common/hooks";
+import {useFipEditors, useApproveProposalId, useFipEditorProposalDataSet, useCheckFipEditorAddress} from "../../../common/hooks";
 import fileCoinAbi from "../../../common/abi/power-voting.json";
 import {getContractAddress} from "../../../utils";
 
-const FipApprove = () => {
+const FipEditorApprove = () => {
   const {isConnected, address, chain} = useAccount();
   const chainId = chain?.id || 0;
   const navigate = useNavigate();
@@ -43,13 +43,13 @@ const FipApprove = () => {
   const [loading, setLoading] = useState(false);
   const [currentProposalId, setCurrentProposalId] = useState(null);
 
-  const { isFipAddress, checkFipAddressSuccess } = useCheckFipAddress(chainId, address);
+  const { isFipEditorAddress, checkFipEditorAddressSuccess } = useCheckFipEditorAddress(chainId, address);
   const { fipEditors } = useFipEditors(chainId);
-  const { approveFipId, getApproveFipIdLoading } = useApproveFipId(chainId);
+  const { approveProposalId, getApproveProposalLoading } = useApproveProposalId(chainId);
 
-  const { fipProposalData, getFipProposalIdLoading, getFipProposalIdSuccess, error } = useFipProposalDataSet({
+  const { fipEditorProposalData, getFipEditorProposalIdLoading, getFipEditorProposalIdSuccess, error } = useFipEditorProposalDataSet({
     chainId,
-    idList: approveFipId,
+    idList: approveProposalId,
     page,
     pageSize,
   });
@@ -176,11 +176,11 @@ const FipApprove = () => {
   ];
 
   useEffect(() => {
-    if (!isConnected || (checkFipAddressSuccess && !isFipAddress)) {
+    if (!isConnected || (checkFipEditorAddressSuccess && !isFipEditorAddress)) {
       navigate("/home");
       return;
     }
-  }, [isConnected, checkFipAddressSuccess, isFipAddress]);
+  }, [isConnected, checkFipEditorAddressSuccess, isFipEditorAddress]);
 
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
@@ -209,13 +209,13 @@ const FipApprove = () => {
   }, [writeContractError]);
 
   useEffect(() => {
-    if (getFipProposalIdSuccess) {
+    if (getFipEditorProposalIdSuccess) {
       initState();
     }
-  }, [getFipProposalIdSuccess]);
+  }, [getFipEditorProposalIdSuccess]);
 
   useEffect(() => {
-    if (isConnected && !loading && !getApproveFipIdLoading && !getFipProposalIdLoading) {
+    if (isConnected && !loading && !getApproveProposalLoading && !getFipEditorProposalIdLoading) {
       initState();
     }
   }, [chain,  page, address]);
@@ -235,7 +235,7 @@ const FipApprove = () => {
   const initState = async () => {
     setLoading(true);
     const list: any = [];
-    await Promise.all(fipProposalData.map(async (item: any) => {
+    await Promise.all(fipEditorProposalData.map(async (item: any) => {
       const { result } = item;
       const url = `https://${result.voterInfoCid}.ipfs.w3s.link/`;
       const { data } = await axios.get(url);
@@ -306,13 +306,13 @@ const FipApprove = () => {
               pagination={false}
             />
             {
-              !!approveFipId?.length && <Row justify='end'>
+              !!approveProposalId?.length && <Row justify='end'>
                     <Pagination
                         simple
                         showSizeChanger={false}
                         current={page}
                         pageSize={pageSize}
-                        total={approveFipId.length}
+                        total={approveProposalId.length}
                         onChange={handlePageChange}
                     />
                 </Row>
@@ -324,4 +324,4 @@ const FipApprove = () => {
   )
 }
 
-export default FipApprove;
+export default FipEditorApprove;

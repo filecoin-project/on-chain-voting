@@ -21,18 +21,18 @@ import Table from '../../../components/Table';
 import LoadingButton from '../../../components/LoadingButton';
 import {useAccount, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
 import type { BaseError } from "wagmi";
-import {useCheckFipAddress, useFipEditors} from "../../../common/hooks"
+import {useCheckFipEditorAddress, useFipEditors} from "../../../common/hooks"
 import fileCoinAbi from "../../../common/abi/power-voting.json";
 import {getContractAddress, getWeb3IpfsId} from "../../../utils";
 import {
-  FIP_APPROVE_TYPE,
-  FIP_REVOKE_TYPE,
+  FIP_EDITOR_APPROVE_TYPE,
+  FIP_EDITOR_REVOKE_TYPE,
   NO_FIP_EDITOR_APPROVE_ADDRESS_MSG,
   NO_FIP_EDITOR_REVOKE_ADDRESS_MSG,
   STORING_DATA_MSG,
 } from "../../../common/consts";
 
-const FipPropose = () => {
+const FipEditorPropose = () => {
   const {isConnected, address, chain} = useAccount();
   const chainId = chain?.id || 0;
 
@@ -44,9 +44,9 @@ const FipPropose = () => {
   const [fipAddress, setFipAddress] = useState('');
   const [selectedAddress, setSelectedAddress] = useState('');
   const [fipInfo, setFipInfo] = useState('');
-  const [fipProposalType, setFipProposeType] = useState(FIP_APPROVE_TYPE);
+  const [fipProposalType, setFipEditorProposeType] = useState(FIP_EDITOR_APPROVE_TYPE);
 
-  const { isFipAddress, checkFipAddressSuccess } = useCheckFipAddress(chainId, address);
+  const { isFipEditorAddress, checkFipEditorAddressSuccess } = useCheckFipEditorAddress(chainId, address);
   const { fipEditors } = useFipEditors(chainId);
 
   const {
@@ -61,11 +61,11 @@ const FipPropose = () => {
   const [loading, setLoading] = useState(writeContractPending);
 
   useEffect(() => {
-    if (!isConnected || (checkFipAddressSuccess && !isFipAddress)) {
+    if (!isConnected || (checkFipEditorAddressSuccess && !isFipEditorAddress)) {
       navigate("/home");
       return;
     }
-  }, [isConnected, checkFipAddressSuccess, isFipAddress]);
+  }, [isConnected, checkFipEditorAddressSuccess, isFipEditorAddress]);
 
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
@@ -101,8 +101,8 @@ const FipPropose = () => {
   }
 
   const handleProposeTypeChange = (value: number) => {
-    setFipProposeType(value);
-    value === FIP_APPROVE_TYPE ? setSelectedAddress('') : setFipAddress('');
+    setFipEditorProposeType(value);
+    value === FIP_EDITOR_APPROVE_TYPE ? setSelectedAddress('') : setFipAddress('');
     handleChange('fipInfo', '');
   }
 
@@ -111,7 +111,7 @@ const FipPropose = () => {
    */
   const onSubmit = async () => {
     // Check if required fields are filled based on proposal type
-    if (fipProposalType === FIP_APPROVE_TYPE && !fipAddress) {
+    if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && !fipAddress) {
       messageApi.open({
         type: 'warning',
         // Prompt user to fill required fields
@@ -120,7 +120,7 @@ const FipPropose = () => {
       return;
     }
 
-    if (fipProposalType === FIP_REVOKE_TYPE && !selectedAddress) {
+    if (fipProposalType === FIP_EDITOR_REVOKE_TYPE && !selectedAddress) {
       messageApi.open({
         type: 'warning',
         // Prompt user to fill required fields
@@ -138,7 +138,7 @@ const FipPropose = () => {
     // Construct the arguments and call the writeContract function to create the proposal
     const proposalArgs = [
       // Use appropriate address based on proposal type
-      fipProposalType === FIP_APPROVE_TYPE ? fipAddress : selectedAddress,
+      fipProposalType === FIP_EDITOR_APPROVE_TYPE ? fipAddress : selectedAddress,
       cid,
       fipProposalType, // Proposal type (approve or revoke)
     ];
@@ -187,7 +187,7 @@ const FipPropose = () => {
                     <RadioGroup.Option
                       key='approve'
                       disabled={isLoading}
-                      value={FIP_APPROVE_TYPE}
+                      value={FIP_EDITOR_APPROVE_TYPE}
                       className='relative flex items-center cursor-pointer p-4 focus:outline-none data-[disabled]:cursor-not-allowed'
                     >
                       {({active, checked}) => (
@@ -222,7 +222,7 @@ const FipPropose = () => {
                     <RadioGroup.Option
                       key='revoke'
                       disabled={isLoading}
-                      value={FIP_REVOKE_TYPE}
+                      value={FIP_EDITOR_REVOKE_TYPE}
                       className='relative flex items-center cursor-pointer p-4 focus:outline-none data-[disabled]:cursor-not-allowed'
                     >
                       {({active, checked}) => (
@@ -259,7 +259,7 @@ const FipPropose = () => {
               },
               {
                 name: 'Editor Address',
-                hide: fipProposalType === FIP_REVOKE_TYPE,
+                hide: fipProposalType === FIP_EDITOR_REVOKE_TYPE,
                 comp: (
                   <input
                     placeholder='Input editor address'
@@ -270,7 +270,7 @@ const FipPropose = () => {
               },
               {
                 name: 'FIP Editor Address',
-                hide: fipProposalType === FIP_APPROVE_TYPE,
+                hide: fipProposalType === FIP_EDITOR_APPROVE_TYPE,
                 comp: (
                   <select
                     onChange={(e: any) => { setSelectedAddress(e.target.value) }}
@@ -317,4 +317,4 @@ const FipPropose = () => {
   )
 }
 
-export default FipPropose;
+export default FipEditorPropose;
