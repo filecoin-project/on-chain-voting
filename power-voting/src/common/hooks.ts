@@ -29,15 +29,16 @@ export const useVoterInfoSet = (chainId: number, address: `0x${string}` | undefi
   }
 }
 
-export const useCheckFipAddress = (chainId: number, address: `0x${string}` | undefined) => {
-  const { data: isFipAddress } = useReadContract({
+export const useCheckFipEditorAddress = (chainId: number, address: `0x${string}` | undefined) => {
+  const { data: isFipEditorAddress, isSuccess: checkFipEditorAddressSuccess } = useReadContract({
     address: getContractAddress(chainId, 'powerVoting'),
     abi: fileCoinAbi,
-    functionName: 'fipMap',
+    functionName: 'fipAddressMap',
     args: [address]
   });
   return {
-    isFipAddress
+    isFipEditorAddress,
+    checkFipEditorAddressSuccess
   };
 }
 
@@ -112,8 +113,86 @@ export const useOwnerDataSet = (contracts: any[]) => {
   });
 
   return {
-    ownerData: ownerData || [],
+    ownerData: ownerData as any[],
     getOwnerLoading,
     getOwnerSuccess,
+  };
+}
+
+export const useFipEditors = (chainId: number) => {
+  const { data: fipEditors } = useReadContract({
+    address: getContractAddress(chainId, 'powerVoting'),
+    abi: fileCoinAbi,
+    functionName: 'getFipAddressList',
+  });
+  return {
+    fipEditors: fipEditors as string[]
+  };
+}
+
+export const useApproveProposalId = (chainId: number) => {
+  const { data: approveProposalId, isLoading: getApproveProposalLoading } = useReadContract({
+    address: getContractAddress(chainId, 'powerVoting'),
+    abi: fileCoinAbi,
+    functionName: 'getApproveProposalId',
+  });
+  return {
+    approveProposalId,
+    getApproveProposalLoading,
+  } as {
+    approveProposalId: string[],
+    getApproveProposalLoading: boolean
+  };
+}
+
+export const useRevokeProposalId = (chainId: number) => {
+  const { data: revokeProposalId, isLoading: getRevokeProposalIdLoading } = useReadContract({
+    address: getContractAddress(chainId, 'powerVoting'),
+    abi: fileCoinAbi,
+    functionName: 'getRevokeProposalId',
+  });
+  return {
+    revokeProposalId,
+    getRevokeProposalIdLoading,
+  } as {
+    revokeProposalId: string[],
+    getRevokeProposalIdLoading: boolean
+  };
+}
+
+export const useFipEditorProposalDataSet = (params: any) => {
+  const { chainId, idList, page, pageSize } = params;
+  const contracts: any[] = [];
+  const offset = (page - 1) * pageSize;
+  idList?.sort((a: bigint, b: bigint) => Number(b) - Number(a));
+
+  // Generate contract calls for fetching proposals based on pagination
+  const startIndex = offset;
+  const endIndex = Math.min(startIndex + pageSize, idList?.length);
+  for (let i = startIndex; i < endIndex; i++) {
+    const id = Number(idList[i]);
+    contracts.push({
+      address: getContractAddress(chainId, 'powerVoting'),
+      abi: fileCoinAbi,
+      functionName: 'getFipEditorProposal',
+      args: [
+        id
+      ],
+    });
+  }
+  const {
+    data: fipEditorProposalData,
+    isLoading: getFipEditorProposalIdLoading,
+    isSuccess: getFipEditorProposalIdSuccess,
+    error,
+  } = useReadContracts({
+    contracts: contracts,
+    query: { enabled: contracts.length > 0 }
+  });
+  return {
+    fipEditorProposalData: fipEditorProposalData || [],
+    getFipEditorProposalIdLoading,
+    getFipEditorProposalIdSuccess,
+    error,
   };
 }

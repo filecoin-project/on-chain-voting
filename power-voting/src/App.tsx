@@ -29,7 +29,7 @@ import "./common/styles/reset.less";
 import "tailwindcss/tailwind.css";
 import {STORING_DATA_MSG} from "./common/consts";
 import {useVoterInfo, useCurrentTimezone} from "./common/store";
-import { useVoterInfoSet } from "./common/hooks";
+import {useCheckFipEditorAddress, useVoterInfoSet} from "./common/hooks";
 
 const App: React.FC = () => {
   // Destructure values from custom hooks
@@ -56,6 +56,8 @@ const App: React.FC = () => {
 
   // Get voter information using custom hook
   const { voterInfo } = useVoterInfoSet(chainId, address);
+
+  const { isFipEditorAddress } = useCheckFipEditorAddress(chainId, address);
 
   // Update voter information in state
   const setVoterInfo = useVoterInfo((state: any) => state.setVoterInfo);
@@ -152,15 +154,15 @@ const App: React.FC = () => {
     }
   }
 
-  const handleMinerId = () => {
+  const handleJump = (route: string) => {
     if (!isConnected) {
       openConnectModal && openConnectModal();
       return;
     }
-    navigate('/minerid');
+    navigate(route);
   }
 
-  const items = [
+  const items: any = [
     {
       key: 'ucan',
       label: (
@@ -175,13 +177,52 @@ const App: React.FC = () => {
       key: 'minerId',
       label: (
         <a
-          onClick={handleMinerId}
+          onClick={() => { handleJump('/minerid') }}
         >
           Miner IDs Management
         </a>
       ),
     },
   ];
+
+  if (isFipEditorAddress) {
+    items.push({
+      key: '3',
+      label: 'FIP Editor Management',
+      children: [
+        {
+          key: '3-1',
+          label: (
+            <a
+              onClick={() => { handleJump('/fip-editor/propose') }}
+            >
+              Propose
+            </a>
+          ),
+        },
+        {
+          key: '3-2',
+          label: (
+            <a
+              onClick={() => { handleJump('/fip-editor/approve') }}
+            >
+              Approve
+            </a>
+          ),
+        },
+        {
+          key: '3-3',
+          label: (
+            <a
+              onClick={() => { handleJump('/fip-editor/revoke') }}
+            >
+              Revoke
+            </a>
+          ),
+        },
+      ],
+    })
+  }
 
   return (
     <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>

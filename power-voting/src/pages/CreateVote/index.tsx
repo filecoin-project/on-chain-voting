@@ -40,7 +40,7 @@ import { validateValue, getContractAddress, getWeb3IpfsId } from '../../utils';
 import './index.less';
 import LoadingButton from "../../components/LoadingButton";
 import fileCoinAbi from "../../common/abi/power-voting.json";
-import { useCheckFipAddress } from "../../common/hooks";
+import { useCheckFipEditorAddress } from "../../common/hooks";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -78,7 +78,7 @@ const CreateVote = () => {
 
   const navigate = useNavigate();
 
-  const { isFipAddress } = useCheckFipAddress(chainId, address);
+  const { isFipEditorAddress } = useCheckFipEditorAddress(chainId, address);
 
   const {
     data: hash,
@@ -201,7 +201,7 @@ const CreateVote = () => {
 
     if (isConnected) {
       // Check if user is a FIP editor
-      if (isFipAddress) {
+      if (isFipEditorAddress) {
         // Create voting using dynamic contract API
         writeContract({
           abi: fileCoinAbi,
@@ -220,10 +220,10 @@ const CreateVote = () => {
           content: NOT_FIP_EDITOR_MSG,
         });
       }
-      setLoading(false);
     } else {
       openConnectModal && openConnectModal();
     }
+    setLoading(false);
   }
 
   const { isLoading: transactionLoading } =
@@ -295,7 +295,7 @@ const CreateVote = () => {
                       allowClear={false}
                       onChange={onChange}
                       className={classNames(
-                        'form-input rounded !bg-[#212B3C] border border-[#313D4F]',
+                        'form-input rounded w-[450px] !bg-[#212B3C] border border-[#313D4F]',
                         errors.time && 'border-red-500 focus:border-red-500'
                       )}
                       style={{color: 'red'}}
