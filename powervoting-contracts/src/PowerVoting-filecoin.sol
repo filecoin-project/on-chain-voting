@@ -23,6 +23,11 @@ import { Proposal, VoteInfo, VoterInfo, FipEditorProposal, HasVoted } from "./ty
 
 
 contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
+    // Define constants for proposal types
+    int8 public constant APPROVE_PROPOSAL_TYPE = 1;
+
+    int8 public constant REVOKE_PROPOSAL_TYPE = 0;
+
     // proposal id
     uint256 public proposalId;
 
@@ -134,36 +139,46 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
     * @param fipEditorProposalType The type of proposal: 1 for adding a FIP editor, 0 for removing.
     */
     function createFipEditorProposal(address fipEditorAddress, string calldata voterInfoCid, int8 fipEditorProposalType) override external onlyFIPEditors nonZeroAddress(fipEditorAddress) {
-        if (fipAddressMap[fipEditorAddress] && fipEditorProposalType != 0) {
+        // Check if the address is already a FIP editor and the proposal is not to revoke (0)
+        if (fipAddressMap[fipEditorAddress] && fipEditorProposalType != REVOKE_PROPOSAL_TYPE) {
             revert AddressIsAlreadyFipEditor("Address is already a FIP editor");
         }
 
+        // Check if the address already has an active proposal
         if (hasActiveProposal[fipEditorAddress]) {
             revert AddressHasActiveProposal("Address has an active proposal");
         }
 
+        // Ensure the proposer is not proposing themselves
         if (fipEditorAddress == msg.sender) {
             revert CannotProposeToSelf("Cannot propose to self");
         }
 
-        if (fipEditorProposalType != 0 && fipEditorProposalType != 1) {
+        // Ensure the proposal type is valid (must be 1 for approval or 0 for revocation)
+        if (fipEditorProposalType != APPROVE_PROPOSAL_TYPE && fipEditorProposalType != REVOKE_PROPOSAL_TYPE) {
             revert InvalidProposalType("Invalid proposal type: must be 0 or 1");
         }
 
+        // Increment the global proposal ID counter
         ++fipEditorProposalId;
+
+        // Create a new proposal and store it in the mapping
         FipEditorProposal storage proposal = idToFipEditorProposal[fipEditorProposalId];
         proposal.fipEditorAddress = fipEditorAddress;
         proposal.voterInfoCid = voterInfoCid;
         proposal.proposalId = fipEditorProposalId;
+
+        // Mark the address as having an active proposal
         hasActiveProposal[fipEditorAddress] = true;
 
-
-        if (fipEditorProposalType==1) {
+        // If the proposal is to approve (1), add to the approval set and call approve function
+        if (fipEditorProposalType == APPROVE_PROPOSAL_TYPE) {
             approveProposalId.add(fipEditorProposalId);
             approveFipEditor(fipEditorAddress, fipEditorProposalId);
         }
 
-        if (fipEditorProposalType==0) {
+        // If the proposal is to revoke (0), add to the revocation set and call revoke function
+        if (fipEditorProposalType == REVOKE_PROPOSAL_TYPE) {
             revokeProposalId.add(fipEditorProposalId);
             revokeFipEditor(fipEditorAddress, fipEditorProposalId);
         }
@@ -176,25 +191,34 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
     * Only FIP editors can call this function. The caller must not have already voted for this proposal.
     */
     function approveFipEditor(address fipEditorAddress, uint256 id) override public onlyFIPEditors {
+        // Fetch the voting record for the proposal
         HasVoted storage hasVoted = idToHasVoted[id];
 
+        // Check if the sender has already voted for this proposal
         if (hasVoted.hasVotedAddress[msg.sender]) {
             revert AddressHasActiveProposal("Address has already voted for this proposal");
         }
 
+        // Ensure the proposal ID is valid for approval
         if (!approveProposalId.contains(id)) {
             revert InvalidProposalId("The proposal ID is not valid for approval");
         }
 
-
+        // Fetch the proposal details
         FipEditorProposal storage proposal = idToFipEditorProposal[id];
+
+        // Add the sender to the list of voters for this proposal
         proposal.voters.push(msg.sender);
         hasVoted.hasVotedAddress[msg.sender] = true;
 
+        // Check if all FIP editors have voted
         if (proposal.voters.length == fipAddressList.length()) {
+            // Add the new FIP editor to the list
             fipAddressList.add(fipEditorAddress);
+            // Remove the proposal from the approval list
             approveProposalId.remove(id);
 
+            // Clean up storage
             delete idToHasVoted[id];
             delete idToFipEditorProposal[id];
             fipAddressMap[fipEditorAddress] = true;
@@ -208,30 +232,42 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
     * @param id The ID of the proposal.
     */
     function revokeFipEditor(address fipEditorAddress, uint256 id) override public onlyFIPEditors {
+        // Fetch the voting record for the proposal
         HasVoted storage hasVoted = idToHasVoted[id];
+
+        // Check if the sender has already voted for this proposal
         if (hasVoted.hasVotedAddress[msg.sender]) {
             revert AddressHasActiveProposal("Address has already voted for this proposal");
         }
 
+        // Ensure the proposal ID is valid for revocation
         if (!revokeProposalId.contains(id)) {
-            revert InvalidProposalId("The proposal ID is not valid for approval");
+            revert InvalidProposalId("The proposal ID is not valid for revocation");
         }
 
+        // Ensure the voter is not voting on their own proposal
         if (fipEditorAddress == msg.sender) {
-        revert CannotVoteForOwnProposal("Cannot vote for own proposal");
+            revert CannotVoteForOwnProposal("Cannot vote for own proposal");
         }
 
+        // Fetch the proposal details
         FipEditorProposal storage proposal = idToFipEditorProposal[id];
+
+        // Add the sender to the list of voters for this proposal
         proposal.voters.push(msg.sender);
         hasVoted.hasVotedAddress[msg.sender] = true;
 
+        // Check if all FIP editors, except the one being revoked, have voted
         if (proposal.voters.length == fipAddressList.length() - 1) {
+            // Remove the FIP editor from the list
             fipAddressList.remove(fipEditorAddress);
+            // Remove the proposal ID from the revocation list
             revokeProposalId.remove(id);
 
+            // Clean up storage
             delete idToHasVoted[id];
             delete idToFipEditorProposal[id];
-            fipAddressMap[fipEditorAddress]=false;
+            fipAddressMap[fipEditorAddress] = false;
             hasActiveProposal[fipEditorAddress] = false;
         }
     }
