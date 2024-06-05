@@ -40,7 +40,7 @@ import type {ProposalData, ProposalFilter, ProposalList, ProposalOption, Proposa
 import Loading from "../../components/Loading";
 import {markdownToText} from "../../utils";
 import {useCurrentTimezone, useStoringCid} from "../../common/store";
-import {useLatestId, useCheckFipAddress, useProposalDataSet} from "../../common/hooks";
+import {useLatestId, useCheckFipEditorAddress, useProposalDataSet} from "../../common/hooks";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -71,7 +71,7 @@ const Home = () => {
   const storingCid = useStoringCid((state: any) => state.storingCid);
   const setStoringCid = useStoringCid((state: any) => state.setStoringCid);
 
-  const { isFipAddress } = useCheckFipAddress(chainId, address);
+  const { isFipEditorAddress } = useCheckFipEditorAddress(chainId, address);
   const { latestId, getLatestIdLoading, refetch } = useLatestId(chainId, !shouldRefetch);
   const { proposalData, getProposalIdLoading, getProposalIdSuccess, error } = useProposalDataSet({
     chainId,
@@ -462,7 +462,7 @@ const Home = () => {
           />
         </div>
         {
-          !!isFipAddress &&
+          !!isFipEditorAddress &&
             <button
                 className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-4 rounded-xl"
                 onClick={handleCreate}

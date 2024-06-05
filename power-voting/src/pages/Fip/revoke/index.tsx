@@ -27,11 +27,11 @@ import {
 } from "../../../common/consts"
 import Loading from "../../../components/Loading";
 import EllipsisMiddle from "../../../components/EllipsisMiddle";
-import {useFipEditors, useRevokeFipId, useFipProposalDataSet, useCheckFipAddress} from "../../../common/hooks";
+import {useFipEditors, useRevokeProposalId, useFipEditorProposalDataSet, useCheckFipEditorAddress} from "../../../common/hooks";
 import fileCoinAbi from "../../../common/abi/power-voting.json";
 import {getContractAddress} from "../../../utils";
 
-const FipRevoke = () => {
+const FipEditorRevoke = () => {
   const {isConnected, address, chain} = useAccount();
   const chainId = chain?.id || 0;
   const navigate = useNavigate();
@@ -45,13 +45,13 @@ const FipRevoke = () => {
   const [loading, setLoading] = useState(false);
   const [currentProposalId, setCurrentProposalId] = useState(null);
 
-  const { isFipAddress, checkFipAddressSuccess } = useCheckFipAddress(chainId, address);
+  const { isFipEditorAddress, checkFipEditorAddressSuccess } = useCheckFipEditorAddress(chainId, address);
   const { fipEditors } = useFipEditors(chainId);
 
-  const { revokeFipId, getRevokeFipIdLoading } = useRevokeFipId(chainId);
-  const { fipProposalData, getFipProposalIdLoading, getFipProposalIdSuccess, error } = useFipProposalDataSet({
+  const { revokeProposalId, getRevokeProposalIdLoading } = useRevokeProposalId(chainId);
+  const { fipEditorProposalData, getFipEditorProposalIdLoading, getFipEditorProposalIdSuccess, error } = useFipEditorProposalDataSet({
     chainId,
-    idList: revokeFipId,
+    idList: revokeProposalId,
     page,
     pageSize,
   });
@@ -216,11 +216,11 @@ const FipRevoke = () => {
   };
 
   useEffect(() => {
-    if (!isConnected || (checkFipAddressSuccess && !isFipAddress)) {
+    if (!isConnected || (checkFipEditorAddressSuccess && !isFipEditorAddress)) {
       navigate("/home");
       return;
     }
-  }, [isConnected, checkFipAddressSuccess, isFipAddress]);
+  }, [isConnected, checkFipEditorAddressSuccess, isFipEditorAddress]);
 
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
@@ -249,13 +249,13 @@ const FipRevoke = () => {
   }, [writeContractError]);
 
   useEffect(() => {
-    if (getFipProposalIdSuccess) {
+    if (getFipEditorProposalIdSuccess) {
       initState();
     }
-  }, [getFipProposalIdSuccess]);
+  }, [getFipEditorProposalIdSuccess]);
 
   useEffect(() => {
-    if (isConnected && !loading && !getRevokeFipIdLoading && !getFipProposalIdLoading) {
+    if (isConnected && !loading && !getRevokeProposalIdLoading && !getFipEditorProposalIdLoading) {
       initState();
     }
   }, [chain, page, address]);
@@ -275,7 +275,7 @@ const FipRevoke = () => {
   const initState = async () => {
     setLoading(true);
     const list: any = [];
-    await Promise.all(fipProposalData.map(async (item: any) => {
+    await Promise.all(fipEditorProposalData.map(async (item: any) => {
       const { result } = item;
       const url = `https://${result.voterInfoCid}.ipfs.w3s.link/`;
       const { data } = await axios.get(url);
@@ -324,13 +324,13 @@ const FipRevoke = () => {
               pagination={false}
             />
             {
-              !!revokeFipId?.length && <Row justify='end'>
+              !!revokeProposalId?.length && <Row justify='end'>
                     <Pagination
                         simple
                         showSizeChanger={false}
                         current={page}
                         pageSize={pageSize}
-                        total={revokeFipId.length}
+                        total={revokeProposalId.length}
                         onChange={handlePageChange}
                     />
                 </Row>
@@ -342,4 +342,4 @@ const FipRevoke = () => {
   )
 }
 
-export default FipRevoke;
+export default FipEditorRevoke;
