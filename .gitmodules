@@ -1,0 +1,25 @@
+[submodule "power-oracle-contracts/lib/buffer"]
+	path = power-oracle-contracts/lib/buffer
+	url = https://github.com/ensdomains/buffer
+[submodule "power-oracle-contracts/lib/openzeppelin-contracts"]
+	path = power-oracle-contracts/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "power-oracle-contracts/lib/openzeppelin-contracts-upgradeable"]
+	path = power-oracle-contracts/lib/openzeppelin-contracts-upgradeable
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable
+[submodule "power-oracle-contracts/lib/solidity-cborutils"]
+	path = power-oracle-contracts/lib/solidity-cborutils
+	url = https://github.com/smartcontractkit/solidity-cborutils
+[submodule "power-oracle-contracts/lib/filecoin-solidity"]
+	path = power-oracle-contracts/lib/filecoin-solidity
+	url = https://github.com/filecoin-project/filecoin-solidity
+
+[submodule "powervoting-contracts/lib/openzeppelin-contracts"]
+	path = powervoting-contracts/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "powervoting-contracts/lib/openzeppelin-contracts-upgradeable"]
+	path = powervoting-contracts/lib/openzeppelin-contracts-upgradeable
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable
+[submodule "powervoting-contracts/lib/solidity-cborutils"]
+	path = powervoting-contracts/lib/solidity-cborutils
+	url = https://github.com/smartcontractkit/solidity-cborutils

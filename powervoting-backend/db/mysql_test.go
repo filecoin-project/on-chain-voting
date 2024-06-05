@@ -93,14 +93,22 @@ func TestVoteResult(t *testing.T) {
 }
 
 func TestDatabaseInit(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	zap.ReplaceGlobals(logger)
+
 	config.InitConfig("../")
+
 	InitMysql()
 	var voteHistory model.VoteCompleteHistory
 	var votePower []model.VotePower
-	Engine.AutoMigrate(&voteHistory, &votePower)
+	err := Engine.AutoMigrate(&voteHistory, &votePower)
+	assert.Nil(t, err)
 }
 
 func TestVoteResultQuery(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	zap.ReplaceGlobals(logger)
+
 	config.InitConfig("../")
 	InitMysql()
 
@@ -159,6 +167,9 @@ func TestVoteResultQuery(t *testing.T) {
 }
 
 func TestGetProposalList(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	zap.ReplaceGlobals(logger)
+
 	config.InitConfig("../")
 	InitMysql()
 
@@ -176,6 +187,8 @@ func TestGetProposalList(t *testing.T) {
 			Network:      314159,
 		},
 	}
+	err := Engine.Model(model.Proposal{}).Create(&expectedProposalList).Error
+	assert.Nil(t, err)
 
 	res, err := Engine.GetProposalList(314159, 2)
 	assert.Nil(t, err)
@@ -186,7 +199,10 @@ func TestGetProposalList(t *testing.T) {
 }
 
 func TestGetVoteList(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	zap.ReplaceGlobals(logger)
 	config.InitConfig("../")
+
 	InitMysql()
 
 	expectedVoteList := []model.Vote{
@@ -198,6 +214,9 @@ func TestGetVoteList(t *testing.T) {
 			Network:    314159,
 		},
 	}
+
+	err := Engine.Model(model.Vote{}).Create(&expectedVoteList).Error
+	assert.Nil(t, err)
 
 	res, err := Engine.GetVoteList(314159, 1)
 	assert.Nil(t, err)

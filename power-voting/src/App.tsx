@@ -30,6 +30,7 @@ import "tailwindcss/tailwind.css";
 import {STORING_DATA_MSG} from "./common/consts";
 import {useVoterInfo, useCurrentTimezone} from "./common/store";
 import {useCheckFipAddress, useVoterInfoSet} from "./common/hooks";
+import { useVoterInfoSet } from "./common/hooks";
 
 const App: React.FC = () => {
   // Destructure values from custom hooks

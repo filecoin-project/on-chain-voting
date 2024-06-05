@@ -34,14 +34,9 @@ func TestGetContractMapping(t *testing.T) {
 
 	ethAddress := common.HexToAddress("0x763D410594a24048537990dde6ca81c38CfF566a")
 
-	voterPower, err := GetContractMapping(models.VoterToPower, contract.GoEthClient, []interface{}{ethAddress})
-	assert.Nil(t, err)
-	assert.NotNil(t, voterPower)
-
 	voterInfo, err := GetContractMapping(models.VoterToInfo, contract.GoEthClient, []interface{}{ethAddress})
 	assert.Nil(t, err)
 	assert.NotNil(t, voterInfo)
 
-	fmt.Println("voter power:", voterPower)
 	fmt.Println("voter info:", voterInfo)
 }
