@@ -426,8 +426,8 @@ export const GITHUB_DEAUTHORIZE_DOC = `
     <img src="/images/img_16.png" />
 </p>
 `;
-export const FIP_REVOKE_TYPE = 0;
-export const FIP_APPROVE_TYPE = 1;
+export const FIP_EDITOR_REVOKE_TYPE = 0;
+export const FIP_EDITOR_APPROVE_TYPE = 1;
 export const DEFAULT_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 export const web3AvatarUrl = 'https://cdn.stamp.fyi/avatar/eth';
 
