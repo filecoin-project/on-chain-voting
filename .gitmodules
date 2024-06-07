@@ -23,3 +23,6 @@
 [submodule "powervoting-contracts/lib/solidity-cborutils"]
 	path = powervoting-contracts/lib/solidity-cborutils
 	url = https://github.com/smartcontractkit/solidity-cborutils
+[submodule "powervoting-contracts/lib/forge-std"]
+	path = powervoting-contracts/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std

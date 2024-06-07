@@ -15,15 +15,24 @@
 
 pragma solidity ^0.8.19;
 
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { IPowerVoting } from "./interfaces/IPowerVoting-filecoin.sol";
-import { Proposal, VoteInfo, VoterInfo } from "./types.sol";
+import { Proposal, VoteInfo, VoterInfo, FipEditorProposal, HasVoted } from "./types.sol";
 
 
 contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
+    // Define constants for proposal types
+    int8 public constant APPROVE_PROPOSAL_TYPE = 1;
+
+    int8 public constant REVOKE_PROPOSAL_TYPE = 0;
+
     // proposal id
     uint256 public proposalId;
+
+    // fip editor proposal id
+    uint256 public fipEditorProposalId;
 
     // Power Oracle contract address
     address public oracleContract;
@@ -43,11 +52,46 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
     // proposal mapping, key: proposal id, value: Proposal
     mapping(uint256 => Proposal) public idToProposal;
 
-    // fip map
-    mapping(address => bool) public fipMap;
-
     // proposal id to vote, out key: proposal id, inner key: vote id, value: vote info
     mapping(uint256 => mapping(uint256 => VoteInfo)) public proposalToVote;
+
+    // fip editor address mapping, key: address, value: boolean
+    mapping(address => bool) public fipAddressMap;
+
+    // fip editor proposal mapping, key: fip editor proposal id, value: fip editor proposal
+    mapping(uint256 => FipEditorProposal) public idToFipEditorProposal;
+
+    // proposal id to vote status, outer key: proposal id, inner key: address, value: HasVoted
+    mapping(uint256 => HasVoted) private idToHasVoted;
+
+    // active proposal mapping, key: address, value: boolean
+    mapping(address => bool) public hasActiveProposal;
+
+    // Use EnumerableSet library to handle  addresses
+    using EnumerableSet for EnumerableSet.AddressSet;
+
+    // Use EnumerableSet library to handle integers
+    using EnumerableSet for EnumerableSet.UintSet;
+
+    // Set to store addresses of FIP editors
+    EnumerableSet.AddressSet fipAddressList;
+
+    // Set to store IDs of approved proposals id
+    EnumerableSet.UintSet approveProposalId;
+
+    // Set to store IDs of revoked proposals id
+    EnumerableSet.UintSet revokeProposalId;
+
+    /**
+    * @dev Modifier to allow only FIP editors to call the function.
+    * Reverts with a custom error message if the caller is not a FIP editor.
+    */
+    modifier onlyFIPEditors() {
+        if(!fipAddressMap[msg.sender]){
+            revert OnlyFipEditorsAllowed("Only FIP editors can call this function");
+        }
+        _;
+    }
 
     /**
      * @dev Modifier that ensures the provided address is non-zero.
@@ -71,8 +115,13 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
      */
     function initialize(address oracleAddress) public initializer nonZeroAddress (oracleAddress) {
         oracleContract = oracleAddress;
+
+        address sender = msg.sender;
+        fipAddressMap[sender] = true;
+        fipAddressList.add(sender);
+
         __UUPSUpgradeable_init();
-        __Ownable_init(msg.sender);
+        __Ownable_init(sender);
     }
 
     /**
@@ -84,24 +133,176 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
     }
 
     /**
-     * @notice Adds a new FIP address.
-     * @param fipAddress The address of the new FIP.
-     */
-    function addFIP( address fipAddress ) external override onlyOwner nonZeroAddress (fipAddress) {
-        bool exist = fipMap[fipAddress];
-        // FIP Editor is not allowed to have other roles currently.
-        if (exist) {
-            revert AddFIPError("Add FIP editor error.");
+    * @notice Creates a proposal to add or remove a FIP editor.
+    * @param fipEditorAddress The address of the proposed FIP editor.
+    * @param voterInfoCid The CID of the voter's information.
+    * @param fipEditorProposalType The type of proposal: 1 for adding a FIP editor, 0 for removing.
+    */
+    function createFipEditorProposal(address fipEditorAddress, string calldata voterInfoCid, int8 fipEditorProposalType) override external onlyFIPEditors nonZeroAddress(fipEditorAddress) {
+        // Check if the address is already a FIP editor and the proposal is not to revoke (0)
+        if (fipAddressMap[fipEditorAddress] && fipEditorProposalType != REVOKE_PROPOSAL_TYPE) {
+            revert AddressIsAlreadyFipEditor("Address is already a FIP editor");
         }
-        fipMap[fipAddress] = true;
+
+        // Check if the address already has an active proposal
+        if (hasActiveProposal[fipEditorAddress]) {
+            revert AddressHasActiveProposal("Address has an active proposal");
+        }
+
+        // Ensure the proposer is not proposing themselves
+        if (fipEditorAddress == msg.sender) {
+            revert CannotProposeToSelf("Cannot propose to self");
+        }
+
+        // Ensure the proposal type is valid (must be 1 for approval or 0 for revocation)
+        if (fipEditorProposalType != APPROVE_PROPOSAL_TYPE && fipEditorProposalType != REVOKE_PROPOSAL_TYPE) {
+            revert InvalidProposalType("Invalid proposal type: must be 0 or 1");
+        }
+
+        // Increment the global proposal ID counter
+        ++fipEditorProposalId;
+
+        // Create a new proposal and store it in the mapping
+        FipEditorProposal storage proposal = idToFipEditorProposal[fipEditorProposalId];
+        proposal.fipEditorAddress = fipEditorAddress;
+        proposal.voterInfoCid = voterInfoCid;
+        proposal.proposalId = fipEditorProposalId;
+
+        // Mark the address as having an active proposal
+        hasActiveProposal[fipEditorAddress] = true;
+
+        // If the proposal is to approve (1), add to the approval set and call approve function
+        if (fipEditorProposalType == APPROVE_PROPOSAL_TYPE) {
+            approveProposalId.add(fipEditorProposalId);
+            approveFipEditor(fipEditorAddress, fipEditorProposalId);
+        }
+
+        // If the proposal is to revoke (0), add to the revocation set and call revoke function
+        if (fipEditorProposalType == REVOKE_PROPOSAL_TYPE) {
+            revokeProposalId.add(fipEditorProposalId);
+            revokeFipEditor(fipEditorAddress, fipEditorProposalId);
+        }
     }
 
     /**
-     * @notice Removes the specified FIP address.
-     * @param fipAddress The address of the FIP to be removed.
-     */
-    function removeFIP( address fipAddress ) external override onlyOwner nonZeroAddress(fipAddress) {
-        fipMap[fipAddress] = false;
+    * @notice Approves the proposal to add a new FIP editor.
+    * @param fipEditorAddress The address of the proposed FIP editor.
+    * @param id The ID of the proposal.
+    * Only FIP editors can call this function. The caller must not have already voted for this proposal.
+    */
+    function approveFipEditor(address fipEditorAddress, uint256 id) override public onlyFIPEditors {
+        // Fetch the voting record for the proposal
+        HasVoted storage hasVoted = idToHasVoted[id];
+
+        // Check if the sender has already voted for this proposal
+        if (hasVoted.hasVotedAddress[msg.sender]) {
+            revert AddressHasActiveProposal("Address has already voted for this proposal");
+        }
+
+        // Ensure the proposal ID is valid for approval
+        if (!approveProposalId.contains(id)) {
+            revert InvalidProposalId("The proposal ID is not valid for approval");
+        }
+
+        // Fetch the proposal details
+        FipEditorProposal storage proposal = idToFipEditorProposal[id];
+
+        // Add the sender to the list of voters for this proposal
+        proposal.voters.push(msg.sender);
+        hasVoted.hasVotedAddress[msg.sender] = true;
+
+        // Check if all FIP editors have voted
+        if (proposal.voters.length == fipAddressList.length()) {
+            // Add the new FIP editor to the list
+            fipAddressList.add(fipEditorAddress);
+            // Remove the proposal from the approval list
+            approveProposalId.remove(id);
+
+            // Clean up storage
+            delete idToHasVoted[id];
+            delete idToFipEditorProposal[id];
+            fipAddressMap[fipEditorAddress] = true;
+            hasActiveProposal[fipEditorAddress] = false;
+        }
+    }
+
+    /**
+    * @notice Revokes the proposal to remove a FIP editor.
+    * @param fipEditorAddress The address of the FIP editor to be removed.
+    * @param id The ID of the proposal.
+    */
+    function revokeFipEditor(address fipEditorAddress, uint256 id) override public onlyFIPEditors {
+        // Fetch the voting record for the proposal
+        HasVoted storage hasVoted = idToHasVoted[id];
+
+        // Check if the sender has already voted for this proposal
+        if (hasVoted.hasVotedAddress[msg.sender]) {
+            revert AddressHasActiveProposal("Address has already voted for this proposal");
+        }
+
+        // Ensure the proposal ID is valid for revocation
+        if (!revokeProposalId.contains(id)) {
+            revert InvalidProposalId("The proposal ID is not valid for revocation");
+        }
+
+        // Ensure the voter is not voting on their own proposal
+        if (fipEditorAddress == msg.sender) {
+            revert CannotVoteForOwnProposal("Cannot vote for own proposal");
+        }
+
+        // Fetch the proposal details
+        FipEditorProposal storage proposal = idToFipEditorProposal[id];
+
+        // Add the sender to the list of voters for this proposal
+        proposal.voters.push(msg.sender);
+        hasVoted.hasVotedAddress[msg.sender] = true;
+
+        // Check if all FIP editors, except the one being revoked, have voted
+        if (proposal.voters.length == fipAddressList.length() - 1) {
+            // Remove the FIP editor from the list
+            fipAddressList.remove(fipEditorAddress);
+            // Remove the proposal ID from the revocation list
+            revokeProposalId.remove(id);
+
+            // Clean up storage
+            delete idToHasVoted[id];
+            delete idToFipEditorProposal[id];
+            fipAddressMap[fipEditorAddress] = false;
+            hasActiveProposal[fipEditorAddress] = false;
+        }
+    }
+
+    /**
+    * @notice Get the list of addresses of all FIP editors.
+    * @return An array containing the addresses of all FIP editors.
+    */
+    function getFipAddressList() override external view returns (address[] memory) {
+        return fipAddressList.values();
+    }
+
+    /**
+    * @notice Get the details of a proposal based on its ID.
+    * @param id The ID of the proposal.
+    * @return The details of the proposal.
+    */
+    function getFipEditorProposal(uint256 id) override external view returns (FipEditorProposal memory) {
+        return idToFipEditorProposal[id];
+    }
+
+    /**
+    * @notice Get the list of IDs of all approved proposals.
+    * @return An array containing the IDs of all approved proposals.
+    */
+    function getApproveProposalId() external override view returns (uint256[] memory) {
+        return approveProposalId.values();
+    }
+
+    /**
+    * @notice Get the list of IDs of all revoked proposals.
+    * @return An array containing the IDs of all revoked proposals.
+    */
+    function getRevokeProposalId() external override view returns (uint256[] memory) {
+        return revokeProposalId.values();
     }
 
     /**
@@ -111,12 +312,7 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
      * @param expTime The expiration time of the proposal.
      * @param proposalType The type of the proposal.
      */
-    function createProposal(string calldata proposalCid, uint248 startTime, uint248 expTime, uint256 proposalType) override external {
-        bool fip = fipMap[msg.sender];
-        if(!fip){
-            revert CallError("Not FIP.");
-        }
-
+    function createProposal(string calldata proposalCid, uint248 startTime, uint248 expTime, uint256 proposalType) onlyFIPEditors override external {
         ++proposalId;
         uint256 id = proposalId;
         // create proposal
@@ -196,5 +392,4 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
             revert CallError("Call oracle contract to add task failed.");
         }
     }
-
 }
