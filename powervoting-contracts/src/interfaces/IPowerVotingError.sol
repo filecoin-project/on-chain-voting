@@ -51,4 +51,7 @@ interface IPowerVotingError {
 
     // Invalid Proposal type error
     error InvalidProposalType(string);
+
+    // Insufficient Editors error
+    error InsufficientEditors(string);
 }
