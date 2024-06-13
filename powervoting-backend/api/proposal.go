@@ -15,9 +15,17 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"math/rand"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"powervoting-server/db"
 	"powervoting-server/model"
 	"powervoting-server/response"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -59,4 +67,57 @@ func VoteHistory(c *gin.Context) {
 		return
 	}
 	response.SuccessWithData(history, c)
+}
+
+func W3Upload(c *gin.Context) {
+	file, err := c.FormFile("file")
+	if err != nil {
+		zap.L().Error("upload file error: ", zap.Error(err))
+		response.SystemError(c)
+		return
+	}
+
+	//rand file name
+	randSource := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(randSource)
+	randomNumber := r.Intn(1000000)
+	timeStamp := time.Now().Unix()
+
+	filePath := fmt.Sprintf("./uploads/%d_%d", timeStamp, randomNumber)
+	if err := c.SaveUploadedFile(file, filePath); err != nil {
+		zap.L().Error("save file error: ", zap.Error(err))
+		response.SystemError(c)
+		return
+	}
+
+	absolutePath, err := filepath.Abs(filePath)
+	if err != nil {
+		zap.L().Error("get file path error: ", zap.Error(err))
+		response.SystemError(c)
+		return
+	}
+	zap.L().Info("upload with w3")
+	cmd := exec.Command("w3", "upload", absolutePath, "--json", "--no-wrap")
+
+	//execut w3 upload xxxx
+	var outBuf, errBuf bytes.Buffer
+	cmd.Stdout = &outBuf
+	cmd.Stderr = &errBuf
+	err = cmd.Run()
+	if err != nil {
+		os.Remove(absolutePath)
+		zap.L().Error("upload file error: ", zap.Error(err))
+		response.SystemError(c)
+		return
+	}
+	var jsonData map[string]interface{}
+	err = json.Unmarshal([]byte(outBuf.Bytes()), &jsonData)
+	if err != nil {
+		os.Remove(absolutePath)
+		zap.L().Error("upload file error: ", zap.Error(err))
+		response.SystemError(c)
+		return
+	}
+	os.Remove(absolutePath)
+	response.SuccessWithData(jsonData, c)
 }

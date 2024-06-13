@@ -1,4 +1,4 @@
-FROM golang:alpine
+FROM golang:alpine AS backend-builder
 
 # env
 ENV GO111MODULE=on \
@@ -16,14 +16,21 @@ COPY . .
 # go build
 RUN go build -o app .
 
+
+#requires Node 18 or higher
+FROM node:22
+
+# 
+RUN npm install -g @web3-storage/w3cli
+
 # move to /dist
 WORKDIR /dist
 
 # copy file to /dist
-RUN cp /build/app .
-RUN cp /build/configuration.yaml .
-RUN cp /build/abi/power-voting.json .
-RUN cp /build/abi/oracle.json .
+RUN cp --from=backend-builder /build/app .
+RUN cp --from=backend-builder /build/configuration.yaml .
+RUN cp --from=backend-builder /build/abi/power-voting.json .
+RUN cp --from=backend-builder /build/abi/oracle.json .
 
 # expose server port
 EXPOSE 9999
