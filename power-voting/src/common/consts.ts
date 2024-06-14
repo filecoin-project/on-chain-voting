@@ -22,6 +22,7 @@ export const walletConnectProjectId = process.env.WALLET_CONNECT_ID || '';
 export const web3StorageEmail: any = process.env.WEB3_STORAGE_EMAIL || '';
 export const githubApi = 'https://api.github.com/users';
 export const proposalResultApi = '/api/proposal/result';
+export const uploadApi = '/api/w3storage/upload';
 export const proposalHistoryApi = '/api/proposal/history';
 export const worldTimeApi = 'https://worldtimeapi.org/api/timezone/Etc/UTC';
 export const IN_PROGRESS_STATUS = 0;
