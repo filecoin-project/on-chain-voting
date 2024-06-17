@@ -210,7 +210,7 @@ const FipEditorPropose = () => {
                           <RadioGroup.Label
                             as='span'
                             className={
-                              checked ? 'text-white' : 'text-[#8896AA]'
+                              checked ? 'text-black' : 'text-[#8896AA]'
                             }
                           >
                             Approve
