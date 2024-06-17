@@ -78,13 +78,14 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
 
   const mdEditor: any = React.useRef(null);
   const handleEditorChange = () => mdEditor.current?.getMdValue();
-
+  const [currentValue,setCurrentValue]=useState(value)
   const [showMore, setShowMore] = useState(false);
   const handleClickShowMore = () => {
     setShowMore(prev => !prev);
   };
-
+ 
   useEffect(() => {
+    setCurrentValue(value)
     setShowMore(moreButton && value.length > 800)
   }, [moreButton, value]);
   const renderMoreButton = () => {
@@ -101,7 +102,6 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
       );
     }
   };
-
   return (
     readOnly ?
       <div className='relative'>
@@ -126,9 +126,13 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
       <MdEditor
         className={`MDEditor rcmd scrollD ${className}`}
         ref={mdEditor}
+        value={currentValue}
         style={style}
         renderHTML={text => mdParser.render(text)}
-        onChange={() => { onChange(handleEditorChange()) }}
+        onChange={(v) => {
+          setCurrentValue(v.text)
+          onChange(handleEditorChange())
+        }}
       />
   )
 }

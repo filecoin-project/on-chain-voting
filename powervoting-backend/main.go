@@ -15,13 +15,14 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 	"net/http"
 	"powervoting-server/config"
 	"powervoting-server/db"
 	"powervoting-server/routers"
 	"powervoting-server/scheduler"
+
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func main() {

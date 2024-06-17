@@ -15,8 +15,9 @@ package model
 // limitations under the License.
 
 import (
-	"github.com/ethereum/go-ethereum/common"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // Proposal represents the structure of a proposal.
@@ -57,4 +58,14 @@ type ProposalDetail struct {
 	Address      string   `json:"Address"`      // Address
 	ChainId      int64    `json:"chainId"`      // Chain ID
 	CurrentTime  int64    `json:"currentTime"`  // Current time
+}
+
+type ProposalDraft struct {
+	Timezone     string `json:"Timezone"`     // Timezone
+	Time         string `json:"Time"`         // Time
+	Name         string `json:"Name"`         // Name
+	Descriptions string `json:"Descriptions"` // Descriptions
+	Option       string `json:"Option"`       // Options
+	Address      string `json:"Address"`      // Address
+	ChainId      int64  `json:"ChainId"`      // Chain ID
 }
