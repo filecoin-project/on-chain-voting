@@ -115,32 +115,6 @@ func GetVoterInfo(address string, ethClient models.GoEthClient) (models.VoterInf
 	return voterInfo, nil
 }
 
-// GetVoterAddresses retrieves the addresses of voters stored in the Ethereum smart contract.
-func GetVoterAddresses(ethClient models.GoEthClient) ([]common.Address, error) {
-	data, err := ethClient.Abi.Pack("getVoterAddresses")
-	if err != nil {
-		zap.L().Error("pack method and param error", zap.Error(err))
-		return nil, err
-	}
-	msg := ethereum.CallMsg{
-		To:   &ethClient.ContractAddress,
-		Data: data,
-	}
-	result, err := ethClient.Client.CallContract(context.Background(), msg, nil)
-	if err != nil {
-		zap.L().Error("call contract error", zap.Error(err))
-		return nil, err
-	}
-
-	unpack, err := ethClient.Abi.Unpack("getVoterAddresses", result)
-	if err != nil {
-		zap.L().Error("unpack return data to interface error", zap.Error(err))
-		return nil, err
-	}
-
-	return unpack[0].([]common.Address), nil
-}
-
 // GetActorIdFromEthAddress retrieves the actor ID associated with the given Ethereum address.
 func GetActorIdFromEthAddress(address string, ethClient models.GoEthClient) (string, error) {
 	data, err := ethClient.Abi.Pack("resolveEthAddress", common.HexToAddress(address))

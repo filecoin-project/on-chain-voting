@@ -22,12 +22,11 @@ import (
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ybbus/jsonrpc/v3"
 	"go.uber.org/zap"
 )
 
 // F4Address retrieves F4 tasks from the smart contract and processes each task asynchronously.
-func F4Address(ethClient models.GoEthClient, lotusRpcClient jsonrpc.RPCClient) {
+func F4Address(ethClient models.GoEthClient) {
 	f4TaskList, err := utils.GetF4Tasks(ethClient)
 	if err != nil {
 		zap.L().Error("failed to get task id", zap.Error(err))
@@ -40,12 +39,12 @@ func F4Address(ethClient models.GoEthClient, lotusRpcClient jsonrpc.RPCClient) {
 	}
 
 	for _, taskId := range f4TaskList {
-		go ProcessingF4AddressTaskId(taskId, ethClient, lotusRpcClient)
+		go ProcessingF4AddressTaskId(taskId, ethClient)
 	}
 }
 
 // ProcessingF4AddressTaskId processes a specific F4 task ID retrieved from the smart contract.
-func ProcessingF4AddressTaskId(taskId *big.Int, ethClient models.GoEthClient, lotusRpcClient jsonrpc.RPCClient) {
+func ProcessingF4AddressTaskId(taskId *big.Int, ethClient models.GoEthClient) {
 	zap.L().Info("processing f4 address task", zap.String("task id", taskId.String()))
 
 	args := []interface{}{taskId}
@@ -92,23 +91,12 @@ func ProcessingF4AddressTaskId(taskId *big.Int, ethClient models.GoEthClient, lo
 		return
 	}
 
-	ethAddressWalletBalance, err := GetWalletBalance(ethToId, lotusRpcClient)
-	if err != nil {
-		zap.L().Error("failed to get balance", zap.Error(err))
-		return
-	}
-	power := models.Power{
-		DeveloperPower:   big.NewInt(0),
-		TokenHolderPower: ethAddressWalletBalance,
-		BlockHeight:      big.NewInt(0),
-	}
-
 	voterInfo := models.VoterInfo{
 		EthAddress: ethAddress,
 		ActorIds:   []uint64{ethToIdIdUint64},
 	}
 
-	if err := contract.TaskCallbackContract(voterInfo, *taskId, power, ethClient); err != nil {
+	if err := contract.TaskCallbackContract(voterInfo, *taskId, ethClient); err != nil {
 		zap.L().Error("failed to execute task call back contract", zap.Error(err))
 		return
 	}

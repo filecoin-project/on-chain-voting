@@ -16,34 +16,15 @@ package service
 
 import (
 	"backend/config"
-	"backend/utils"
 	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/ybbus/jsonrpc/v3"
 	"go.uber.org/zap"
 	"io"
-	"math/big"
 	"net/http"
 	"strings"
 )
-
-// GetWalletBalance retrieves the wallet balance for a given address ID using the Lotus JSON-RPC client.
-func GetWalletBalance(addressId string, lotusRpcClient jsonrpc.RPCClient) (*big.Int, error) {
-	balanceStr, err := utils.GetWalletBalance(context.Background(), lotusRpcClient, addressId)
-	if err != nil {
-		return nil, err
-	}
-
-	balance := new(big.Int)
-	_, success := balance.SetString(balanceStr, 10)
-	if !success {
-		return nil, errors.New("failed to parse wallet balance")
-	}
-
-	return balance, nil
-}
 
 // GetUcanFromIpfs retrieves a UCAN (User-Centric Access Network) from IPFS (InterPlanetary File System).
 func GetUcanFromIpfs(ucanCid string) (string, error) {
