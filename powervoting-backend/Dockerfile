@@ -34,6 +34,6 @@ COPY --from=backend-builder /build/abi/oracle.json .
 
 # expose server port
 EXPOSE 9999
-d
+
 # run
 CMD ["/dist/app"]
