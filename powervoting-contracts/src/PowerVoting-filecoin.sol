@@ -159,6 +159,11 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
             revert InvalidProposalType("Invalid proposal type: must be 0 or 1");
         }
 
+        // There must be at minimum two votes to revoke a FIP Editor.
+        if (fipEditorProposalType == REVOKE_PROPOSAL_TYPE && fipAddressList.length() <= 2) {
+            revert InsufficientEditors("There must be more than two FIP editors to revoke an editor's FIP status");
+        }
+
         // Increment the global proposal ID counter
         ++fipEditorProposalId;
 
