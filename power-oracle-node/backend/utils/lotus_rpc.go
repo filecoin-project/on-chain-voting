@@ -17,7 +17,6 @@ package utils
 import (
 	"backend/utils/types"
 	"context"
-	"encoding/json"
 	filecoinAddress "github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/crypto"
 	"github.com/ybbus/jsonrpc/v3"
@@ -26,35 +25,6 @@ import (
 // NewClient create lotus rcp client.
 func NewClient(endpoint string) jsonrpc.RPCClient {
 	return jsonrpc.NewClientWithOpts(endpoint, &jsonrpc.RPCClientOpts{})
-}
-
-// GetWalletBalance retrieves the balance of a Filecoin wallet associated with the given address.
-func GetWalletBalance(ctx context.Context, lotusRpcClient jsonrpc.RPCClient, address string) (string, error) {
-	var balance string
-	addressStr, err := filecoinAddress.NewFromString(address)
-	if err != nil {
-		return "", err
-	}
-	var params = []filecoinAddress.Address{addressStr}
-
-	resp, err := lotusRpcClient.Call(ctx, "Filecoin.WalletBalance", params)
-	if err != nil {
-		return balance, err
-	}
-
-	if resp.Error != nil {
-		return balance, resp.Error
-	}
-
-	tmp, err := json.Marshal(resp.Result)
-	if err != nil {
-		return balance, err
-	}
-	if err := json.Unmarshal(tmp, &balance); err != nil {
-		return balance, err
-	}
-
-	return balance, nil
 }
 
 // IDFromAddress retrieves the identifier associated with a Filecoin address.

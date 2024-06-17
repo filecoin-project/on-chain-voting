@@ -29,19 +29,6 @@ var (
 	id      = "t035363"
 )
 
-func TestWalletBalance(t *testing.T) {
-	config.InitLogger()
-	config.InitConfig("../")
-	client, err := contract.GetClient(314159)
-	assert.Nil(t, err)
-	lotusRpcClient := NewClient(client.Rpc)
-	res, err := GetWalletBalance(context.Background(), lotusRpcClient, id)
-	assert.Nil(t, err)
-
-	assert.NotEmpty(t, res, res)
-	fmt.Println(res)
-}
-
 func TestIDFormAddress(t *testing.T) {
 	config.InitLogger()
 	config.InitConfig("../")
