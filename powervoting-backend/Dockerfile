@@ -27,10 +27,10 @@ RUN npm install -g @web3-storage/w3cli
 WORKDIR /dist
 
 # copy file to /dist
-RUN cp --from=backend-builder /build/app .
-RUN cp --from=backend-builder /build/configuration.yaml .
-RUN cp --from=backend-builder /build/abi/power-voting.json .
-RUN cp --from=backend-builder /build/abi/oracle.json .
+COPY --from=backend-builder /build/app .
+COPY --from=backend-builder /build/configuration.yaml .
+COPY --from=backend-builder /build/abi/power-voting.json .
+COPY --from=backend-builder /build/abi/oracle.json .
 
 # expose server port
 EXPOSE 9999
