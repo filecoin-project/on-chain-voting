@@ -386,7 +386,7 @@ const Home = () => {
                 {dayjs(item.currentTime * 1000).format('MMM.D, YYYY, h:mm A')} ({timezone})
               </div>
             </a>
-            <VoteStatusBtn status={(item.subStatus > 0) ? item.subStatus : item.voteStatus} />
+            <VoteStatusBtn status={(item.subStatus > 0) ? item.subStatus : item.proposalStatus} />
 
 
           </div>
