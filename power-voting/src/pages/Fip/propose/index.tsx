@@ -245,7 +245,7 @@ const FipEditorPropose = () => {
                           <RadioGroup.Label
                             as='span'
                             className={
-                              checked ? 'text-white' : 'text-[#8896AA]'
+                              checked ? 'text-black' : 'text-[#8896AA]'
                             }
                           >
                             Revoke
@@ -263,7 +263,7 @@ const FipEditorPropose = () => {
                 comp: (
                   <input
                     placeholder='Input editor address'
-                    className='form-input w-[520px] rounded bg-[#212B3C] border border-[#313D4F]'
+                    className='form-input w-[520px] rounded bg-[#ffffff] border border-[#eeeeee] text-black'
                     onChange={(e) => { handleChange('fipAddress', e.target.value) }}
                   />
                 )
@@ -276,7 +276,7 @@ const FipEditorPropose = () => {
                     onChange={(e: any) => { setSelectedAddress(e.target.value) }}
                     value={selectedAddress}
                     className={classNames(
-                      'form-select w-[520px] rounded bg-[#212B3C] border border-[#313D4F]'
+                      'form-select w-[520px] rounded bg-[#ffffff] border border-[#eeeeee] text-black'
                     )}
                   >
                     <option style={{ display: 'none' }}></option>
@@ -300,7 +300,7 @@ const FipEditorPropose = () => {
                     value={fipInfo}
                     maxLength={300}
                     placeholder='Input propose info'
-                    className='form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]'
+                    className='form-input h-[320px] w-full rounded bg-[#ffffff] border border-[#eeeeee] text-black'
                     onChange={(e) => { handleChange('fipInfo', e.target.value) }}
                   />
                 )

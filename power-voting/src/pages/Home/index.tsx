@@ -414,7 +414,6 @@ const Home = () => {
                 item.option?.map((option: ProposalOption, index: number) => {
                   const isapprove = option.name == "Approve"
                   //  const passed= maxOption.name=="Approve"
-                  console.log(option, maxOption)
                   return (
                     <div className="relative mt-1 w-full" key={option.name + index}>
                       <div
