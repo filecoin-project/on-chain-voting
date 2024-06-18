@@ -84,7 +84,7 @@ const Footer = () => {
           maxWidth: "32rem",
           marginTop:"32px"
         }}> 
-          <p className='text-[12px] font-normal'>© 2023 All rights reserved. StorSwift</p>
+          <p className='text-[12px] font-normal'>All Right Reserved © 2024</p>
         </div>
       </div>
       <div className='flex pr-[64px]'>
