@@ -398,7 +398,7 @@ const Home = () => {
             onClick={() => {
               handleJump(item);
             }}>
-            <h3 className="inline pr-2 text-2xl font-semibold text-white">
+            <h3 className="inline pr-2 text-2xl font-semibold text-[#313D4F]">
               {item.name}
             </h3>
           </div>
@@ -458,7 +458,7 @@ const Home = () => {
         <div className='empty'>
           <Empty
             description={
-              <span className='text-white'>No Data</span>
+              <span className='text-black'>No Data</span>
             }
           />
         </div>
