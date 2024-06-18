@@ -272,7 +272,7 @@ const Home = () => {
           const maxResult = option?.reduce((prev: any, current: any) => {
             return (prev.count > current.count) ? prev : current;
           });
-          if(maxResult.count>0){
+          if (maxResult.count > 0) {
             if (maxResult.name === VOTE_OPTIONS[0]) {
               subStatus = PASSED_STATUS
             } else if (maxResult.name === VOTE_OPTIONS[1]) {
@@ -371,23 +371,25 @@ const Home = () => {
           className="rounded-xl border-[1px] border-solid border-[#DFDFDF] bg-[#FFFFFF] px-[30px] py-[12px] mb-8"
         >
           <div className="flex justify-between mb-3">
-            <a
-              target='_blank'
-              rel="noopener noreferrer"
-              href={href}
+            <div
               className="flex justify-center items-center"
             >
-              <div className="bg-[#F5F5F5] rounded-full  flex p-[5px]">
-                <img className="w-[20px] h-[20px] rounded-full mr-2" src={img} alt="" />
-                <div className="truncate text-#313D4F">
-                  {item.githubName || EllipsisMiddle({ suffixCount: 4, children: item.address })}
+              <a
+                target='_blank'
+                rel="noopener noreferrer"
+                href={href}
+              >
+                <div className="bg-[#F5F5F5] rounded-full  flex p-[5px]">
+                  <img className="w-[20px] h-[20px] rounded-full mr-2" src={img} alt="" />
+                  <div className="truncate text-#313D4F">
+                    {item.githubName || EllipsisMiddle({ suffixCount: 4, children: item.address })}
+                  </div>
                 </div>
-              </div>
-
+              </a>
               <div className="truncate text-##4B535B text-sm ml-5">
                 {dayjs(item.currentTime * 1000).format('MMM.D, YYYY, h:mm A')} ({timezone})
               </div>
-            </a>
+            </div>
             <VoteStatusBtn status={(item.subStatus > 0) ? item.subStatus : item.proposalStatus} />
 
 
