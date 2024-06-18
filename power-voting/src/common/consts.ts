@@ -126,7 +126,7 @@ export const VOTE_FILTER_LIST = [
     value: VOTE_COUNTING_STATUS
   },
   {
-    label: "Complet",
+    label: "Complete",
     value: COMPLETED_STATUS
   }
 ];
