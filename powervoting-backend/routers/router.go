@@ -15,9 +15,10 @@
 package routers
 
 import (
-	"github.com/gin-gonic/gin"
 	"powervoting-server/api"
 	"powervoting-server/response"
+
+	"github.com/gin-gonic/gin"
 )
 
 // InitRouters initializes the routers for the power voting API endpoints.
@@ -34,4 +35,8 @@ func InitRouters(r *gin.Engine) {
 
 	powerVotingRouter.GET("/proposal/result", api.VoteResult)
 	powerVotingRouter.GET("/proposal/history", api.VoteHistory)
+	powerVotingRouter.POST("/proposal/draft/add", api.AddDraft)
+	powerVotingRouter.GET("/proposal/draft/get", api.GetDraft)
+
+	powerVotingRouter.POST("/w3storage/upload", api.W3Upload)
 }

@@ -24,7 +24,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className='h-[135px] flex px-8 items-center justify-between bg-[#273141]'>
+    <footer className='h-[135px] flex px-8 items-center justify-between bg-[#000000]'>
       <div className='flex items-center'>
         <img src="/images/logo.png" alt="" className='w-[100px] mr-8' />
         <div style={{
@@ -38,7 +38,7 @@ const Footer = () => {
       </div>
       <div className='flex items-center'>
         <div className='mr-6'>
-          <h4 className='text-xl text-[#7F8FA3] mb-[12px]'>Partners</h4>
+          <h4 className='text-xl #7F8FA3] mb-[12px]'>Partners</h4>
           <div className=' flex justify-center text-xs'>
             {partners.map((partner, index) => (
               <a key={index} className='flex items-center hover:text-blue-300' href={partner.href} target='_blank' rel="noreferrer" >

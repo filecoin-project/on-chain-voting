@@ -31,6 +31,7 @@ import {
   UCAN_GITHUB_STEP_2,
   OPERATION_CANCELED_MSG,
   STORING_DATA_MSG,
+  UCAN_TYPE_GITHUB,
 } from '../../../common/consts';
 import {stringToBase64Url, validateValue, getWeb3IpfsId, getContractAddress} from '../../../utils';
 import './index.less';
@@ -45,7 +46,7 @@ const UcanDelegate = () => {
   const prevAddressRef = useRef(address);
   const [messageApi, contextHolder] = message.useMessage();
 
-  const [ucanType, setUcanType] = useState(UCAN_TYPE_FILECOIN);
+  const [ucanType, setUcanType] = useState(UCAN_TYPE_GITHUB);
   const [githubSignature, setGithubSignature] = useState('');
   const [githubStep, setGithubStep] = useState(UCAN_GITHUB_STEP_1);
   const [formValue] = useState({
@@ -363,51 +364,51 @@ const UcanDelegate = () => {
   ];
 
   const githubSignatureList = [
-    {
-      name: 'UCAN Type',
-      width: 100,
-      hide: false,
-      comp: (
-        <RadioGroup className='flex' value={ucanType} onChange={handleUcanTypeChange}>
-          {[...UCAN_TYPE_FILECOIN_OPTIONS, ...UCAN_TYPE_GITHUB_OPTIONS].map(item => (
-            <RadioGroup.Option
-              key={item.label}
-              value={item.value}
-              className='relative flex items-center cursor-pointer p-4 focus:outline-none'
-            >
-              {({active, checked}) => (
-                <>
-                        <span
-                          className={classNames(
-                            checked
-                              ? 'bg-[#45B753] border-transparent'
-                              : 'bg-[#212B3B] border-[#38485C]',
-                            active ? 'ring-2 ring-offset-2 ring-[#45B753]' : '',
-                            'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
-                          )}
-                          aria-hidden='true'
-                        >
-                          {(active || checked) && (
-                            <span className='rounded-full bg-white w-1.5 h-1.5'/>
-                          )}
-                        </span>
-                  <span className='ml-3'>
-                          <RadioGroup.Label
-                            as='span'
-                            className={
-                              checked ? 'text-white' : 'text-[#8896AA]'
-                            }
-                          >
-                            {item.label}
-                          </RadioGroup.Label>
-                        </span>
-                </>
-              )}
-            </RadioGroup.Option>
-          ))}
-        </RadioGroup>
-      )
-    },
+    // {
+    //   name: 'UCAN Type',
+    //   width: 100,
+    //   hide: false,
+    //   comp: (
+    //     <RadioGroup className='flex' value={ucanType} onChange={handleUcanTypeChange}>
+    //       {[...UCAN_TYPE_FILECOIN_OPTIONS, ...UCAN_TYPE_GITHUB_OPTIONS].map(item => (
+    //         <RadioGroup.Option
+    //           key={item.label}
+    //           value={item.value}
+    //           className='relative flex items-center cursor-pointer p-4 focus:outline-none'
+    //         >
+    //           {({active, checked}) => (
+    //             <>
+    //                     <span
+    //                       className={classNames(
+    //                         checked
+    //                           ? 'bg-[#45B753] border-transparent'
+    //                           : 'bg-[#212B3B] border-[#38485C]',
+    //                         active ? 'ring-2 ring-offset-2 ring-[#45B753]' : '',
+    //                         'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
+    //                       )}
+    //                       aria-hidden='true'
+    //                     >
+    //                       {(active || checked) && (
+    //                         <span className='rounded-full bg-white w-1.5 h-1.5'/>
+    //                       )}
+    //                     </span>
+    //               <span className='ml-3'>
+    //                       <RadioGroup.Label
+    //                         as='span'
+    //                         className={
+    //                           checked ? 'text-white' : 'text-[#8896AA]'
+    //                         }
+    //                       >
+    //                         {item.label}
+    //                       </RadioGroup.Label>
+    //                     </span>
+    //             </>
+    //           )}
+    //         </RadioGroup.Option>
+    //       ))}
+    //     </RadioGroup>
+    //   )
+    // },
     {
       name: 'Issuer',
       width: 100,
@@ -415,7 +416,7 @@ const UcanDelegate = () => {
         <input
           disabled
           value={address}
-          className='form-input w-[520px] rounded bg-[#212B3C] border border-[#313D4F] cursor-not-allowed'
+          className='form-input w-[520px] rounded bg-[#FFFFFF] border border-[#EEEEEE] text-[#4B535B] cursor-not-allowed '
         />
       )
     },
@@ -430,7 +431,7 @@ const UcanDelegate = () => {
             render={() => <input
               placeholder='Your github account.'
               className={classNames(
-                'form-input w-[520px] rounded bg-[#212B3C] border border-[#313D4F]',
+                'form-input w-[520px] rounded bg-[#FFFFFF] border border-[#EEEEEE] text-[#4B535B]',
                 errors.aud && 'border-red-500 focus:border-red-500'
               )}
               {...register('aud', {required: true, validate: validateValue})}

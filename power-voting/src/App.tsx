@@ -116,6 +116,11 @@ const App: React.FC = () => {
       return;
     }
 
+    
+    if(!voterInfo){
+      navigate('/ucanDelegate/add');
+      return
+    }
     // Determine if the user has a GitHub account
     const isGithubType = !!voterInfo[0];
     if (voterInfo[2]) {
@@ -169,7 +174,7 @@ const App: React.FC = () => {
         <a
           onClick={handleDelegate}
         >
-          UCAN Delegates
+         Connect GitHub
         </a>
       ),
     },
@@ -225,10 +230,10 @@ const App: React.FC = () => {
   }
 
   return (
-    <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
+    <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
       <div className="layout font-body">
-        <header className='h-[96px] bg-[#273141]'>
-          <div className='w-[1000px] h-[96px] mx-auto flex items-center justify-between'>
+        <header className='h-[96px] bg-[#ffffff]'>
+          <div className='w-[1000px] h-[88px] mx-auto flex items-center justify-between'>
             <div className='flex items-center'>
               <div className='flex-shrink-0'>
                 <Link to='/'>
@@ -238,7 +243,7 @@ const App: React.FC = () => {
               <div className='ml-6 flex items-baseline space-x-20'>
                 <Link
                   to='/'
-                  className='text-white text-2xl font-semibold hover:opacity-80'
+                  className='text-black text-2xl font-semibold hover:opacity-80'
                 >
                   Power Voting
                 </Link>
@@ -259,7 +264,7 @@ const App: React.FC = () => {
                 </button>
               </Dropdown>
               <div className="connect flex items-center">
-                <ConnectButton />
+                <ConnectButton showBalance={false} />
               </div>
             </div>
             <Modal

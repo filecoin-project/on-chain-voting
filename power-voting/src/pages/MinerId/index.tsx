@@ -242,7 +242,7 @@ const MinerId = () => {
                 <textarea
                   defaultValue={minerIds}
                   placeholder='Input miner ID (For multiple miner IDs, use commas to separate them.)'
-                  className='form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]'
+                  className='form-input h-[320px] w-full rounded bg-[#ffffff] border border-[#EEEEEE] text-black'
                   onBlur={e => { handleMinerChange(e.target.value) }}
                 />
               )
