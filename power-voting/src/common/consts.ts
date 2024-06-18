@@ -42,7 +42,7 @@ export const VOTE_OPTIONS = ['Approve', 'Reject'];
 export const VOTE_LIST = [
   {
     value: WRONG_NET_STATUS,
-    label: 'Network Error',
+    label: 'Wrong Network',
     bgColor: "#FFF3F3",
     textColor: "#AA0101",
     borderColor: "#FFDBDB",
@@ -126,7 +126,7 @@ export const VOTE_FILTER_LIST = [
     value: VOTE_COUNTING_STATUS
   },
   {
-    label: "Completed",
+    label: "Complete",
     value: COMPLETED_STATUS
   }
 ];

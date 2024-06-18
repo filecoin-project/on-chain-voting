@@ -272,10 +272,12 @@ const Home = () => {
           const maxResult = option?.reduce((prev: any, current: any) => {
             return (prev.count > current.count) ? prev : current;
           });
-          if (maxResult.name === VOTE_OPTIONS[0]) {
-            subStatus = PASSED_STATUS
-          } else if (maxResult.name === VOTE_OPTIONS[1]) {
-            subStatus = REJECTED_STATUS
+          if (maxResult.count > 0) {
+            if (maxResult.name === VOTE_OPTIONS[0]) {
+              subStatus = PASSED_STATUS
+            } else if (maxResult.name === VOTE_OPTIONS[1]) {
+              subStatus = REJECTED_STATUS
+            }
           }
         }
         return {
@@ -369,24 +371,26 @@ const Home = () => {
           className="rounded-xl border-[1px] border-solid border-[#DFDFDF] bg-[#FFFFFF] px-[30px] py-[12px] mb-8"
         >
           <div className="flex justify-between mb-3">
-            <a
-              target='_blank'
-              rel="noopener noreferrer"
-              href={href}
+            <div
               className="flex justify-center items-center"
             >
-              <div className="bg-[#F5F5F5] rounded-full  flex p-[5px]">
-                <img className="w-[20px] h-[20px] rounded-full mr-2" src={img} alt="" />
-                <div className="truncate text-#313D4F">
-                  {item.githubName || EllipsisMiddle({ suffixCount: 4, children: item.address })}
+              <a
+                target='_blank'
+                rel="noopener noreferrer"
+                href={href}
+              >
+                <div className="bg-[#F5F5F5] rounded-full  flex p-[5px]">
+                  <img className="w-[20px] h-[20px] rounded-full mr-2" src={img} alt="" />
+                  <div className="truncate text-#313D4F">
+                    {item.githubName || EllipsisMiddle({ suffixCount: 4, children: item.address })}
+                  </div>
                 </div>
-              </div>
-
+              </a>
               <div className="truncate text-##4B535B text-sm ml-5">
-                {dayjs(item.currentTime * 1000).format('MMM.D, YYYY, h:mm A')} ({timezone})
+              Created {dayjs(item.currentTime * 1000).format('YYYY-MM-D')}
               </div>
-            </a>
-            <VoteStatusBtn status={(item.subStatus > 0) ? item.subStatus : item.voteStatus} />
+            </div>
+            <VoteStatusBtn status={(item.subStatus > 0) ? item.subStatus : item.proposalStatus} />
 
 
           </div>
@@ -394,7 +398,7 @@ const Home = () => {
             onClick={() => {
               handleJump(item);
             }}>
-            <h3 className="inline pr-2 text-2xl font-semibold text-white">
+            <h3 className="inline pr-2 text-2xl font-semibold text-[#313D4F]">
               {item.name}
             </h3>
           </div>
@@ -410,7 +414,6 @@ const Home = () => {
                 item.option?.map((option: ProposalOption, index: number) => {
                   const isapprove = option.name == "Approve"
                   //  const passed= maxOption.name=="Approve"
-                  console.log(option, maxOption)
                   return (
                     <div className="relative mt-1 w-full" key={option.name + index}>
                       <div
@@ -455,7 +458,7 @@ const Home = () => {
         <div className='empty'>
           <Empty
             description={
-              <span className='text-white'>No Data</span>
+              <span className='text-black'>No Data</span>
             }
           />
         </div>
