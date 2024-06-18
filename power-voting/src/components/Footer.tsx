@@ -87,7 +87,7 @@ const Footer = () => {
           <p className='text-[12px] font-normal'>© 2023 All rights reserved. StorSwift</p>
         </div>
       </div>
-      <div className='flex '>
+      <div className='flex pr-[64px]'>
         <div className='mr-[91px]'>
           <h4 className='text-xl text-[#ffffff] mb-[12px]'>Partners</h4>
           <div className='justify-center text-xs'>
