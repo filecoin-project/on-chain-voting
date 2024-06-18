@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import React, { useState, useEffect, useRef } from "react";
-import { message, DatePicker} from "antd";
+import { message, DatePicker } from "antd";
 import axios from 'axios';
 import dayjs from "dayjs";
 import utc from 'dayjs/plugin/utc';
@@ -99,6 +99,7 @@ const CreateVote = () => {
   const [cid, setCid] = useState('');
   const [loading, setLoading] = useState<boolean>(writeContractPending);
   const [isDraftSave, setDraftSave] = useState(false)
+  const [hasDraft, setHasDraft] = useState(false)
   useEffect(() => {
     if (!isConnected) {
       navigate("/home");
@@ -139,6 +140,7 @@ const CreateVote = () => {
         setValue("name", result.Name)
         setValue("time", result.Time.split(OPTION_SPLIT_TAG) ?? [])
         setValue("timezone", result.Timezone)
+        setHasDraft(true)
       }
     } catch (e) {
       console.log(e)
@@ -256,7 +258,28 @@ const CreateVote = () => {
     } else {
       openConnectModal && openConnectModal();
     }
+    //clear draft
+    if (hasDraft) {
+      clearDraft()
+    }
     setLoading(false);
+  }
+  const clearDraft = async () => {
+    try {
+      const data = {
+        Timezone: "",
+        Time: "",
+        Name: "",
+        Descriptions: "",
+        Option: "",
+        Address: address,
+        ChainId: chainId,
+      }
+      await axios.post(proposalDraftAddApi, data)
+      setHasDraft(false)
+    } catch (e) {
+      console.log(e)
+    }
   }
 
   const saveDraft = async () => {
@@ -369,10 +392,10 @@ const CreateVote = () => {
       width: 260,
       desc: <div className="text-red">
         <span>
-        Describe FIP objectives, implementation details, risks, and include GitHub links for transparency. See a template <a href="" style={{color:"blue"}}>here↗</a>.
-       <br/> You can use Markdown formatting in the text input field.
+          Describe FIP objectives, implementation details, risks, and include GitHub links for transparency. See a template <a href="" style={{ color: "blue" }}>here↗</a>.
+          <br /> You can use Markdown formatting in the text input field.
         </span>
-       
+
       </div>,
       comp:
         <Controller
@@ -489,7 +512,7 @@ const CreateVote = () => {
       <form onSubmit={handleSubmit(onSubmit)} >
         <div className='flow-root space-y-8'>
           <Table title='Create A Proposal' subTitle={<div className="text-m">
-            Proposals should be clear, concise, and focused on specific improvements or changes. FIPs must adhere to the Filecoin community's <a href="" style={{color:"blue"}}>code of conduct and best practices↗</a>.
+            Proposals should be clear, concise, and focused on specific improvements or changes. FIPs must adhere to the Filecoin community's <a href="" style={{ color: "blue" }}>code of conduct and best practices↗</a>.
           </div>} list={list} />
 
           <div className="flex justify-center items-center text-center ">
@@ -498,7 +521,7 @@ const CreateVote = () => {
             </Link>
             <div className='w-full items-center flex justify-end text-center'>
               <div className="text-[#313D4F] mr-4 cursor-pointer" onClick={saveDraft} >Save Draft</div>
-              <LoadingButton  className="create-submit" text='Create' loading={loading || writeContractPending || transactionLoading} />
+              <LoadingButton className="create-submit" text='Create' loading={loading || writeContractPending || transactionLoading} />
             </div>
           </div>
         </div>
