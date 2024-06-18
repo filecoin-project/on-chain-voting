@@ -387,7 +387,7 @@ const Home = () => {
                 </div>
               </a>
               <div className="truncate text-##4B535B text-sm ml-5">
-                {dayjs(item.currentTime * 1000).format('MMM.D, YYYY, h:mm A')} ({timezone})
+              Created {dayjs(item.currentTime * 1000).format('YYYY-MM-D')}
               </div>
             </div>
             <VoteStatusBtn status={(item.subStatus > 0) ? item.subStatus : item.proposalStatus} />
