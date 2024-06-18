@@ -70,7 +70,7 @@ const VotingResults = () => {
       })
       // Determine vote status based on whether votes have been counted
       voteStatus = resultData.length > 0 ? COMPLETED_STATUS : VOTE_COUNTING_STATUS;
-     
+
       // Map result data to populate option array
       resultData.map((_: any, index: number) => {
         const voteItem = resultData.find((vote: ProposalResult) => vote.optionId === index);
@@ -105,6 +105,10 @@ const VotingResults = () => {
         votePowers: historyData.votePowers
       }));
     }
+    let powerBlockHeight = 0
+    if (voteList?.length) {
+      powerBlockHeight = voteList[0].powerBlockHeight
+    }
     // Set voting data state
     setVotingData({
       ...proposalData,
@@ -113,6 +117,7 @@ const VotingResults = () => {
       option,
       voteStatus,
       subStatus,
+      powerBlockHeight,
       // Sort voteList array by number of votes in descending order
       voteList: voteList?.sort((a: any, b: any) => b.votes - a.votes)
     })
@@ -235,6 +240,12 @@ const VotingResults = () => {
                   <span className='float-right text-[#313D4F]'>{timezone}</span>
                 </div>
               </div>
+              {
+                votingData?.powerBlockHeight && <div>
+                  <b>Block Height</b>
+                  <span className='float-right text-[#313D4F]'>{votingData?.powerBlockHeight}</span>
+                </div>
+              }
             </div>
           </div>
           {
