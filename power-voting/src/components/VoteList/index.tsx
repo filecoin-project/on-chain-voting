@@ -154,7 +154,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
                     <div className="w-[140px] flex items-center">
                       <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${item.address}`} alt="" />
                       <a
-                        className="text-white"
+                        className="text-[#313D4F]"
                         target="_blank"
                         rel="noopener noreferrer"
                         href={`${chain?.blockExplorers?.default.url}/address/${item?.address}`}
@@ -168,6 +168,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
                     <div className="flex min-w-[110px] items-center justify-end whitespace-nowrap text-center text-skin-link xs:w-[130px] xs:min-w-[130px] cursor-pointer">
                       <Popover content={
                         <Table
+                          rowKey={(record: any) => record.key}
                           dataSource={getPowerData(item)}
                           columns={columns}
                           pagination={false}
@@ -185,7 +186,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
           <Empty
             className='my-12'
             description={
-              <span className='text-white'>No Data</span>
+              <span className='text-[#313D4F]'>No Data</span>
             }
           />
       }

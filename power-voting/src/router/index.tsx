@@ -21,6 +21,9 @@ import UcanDelegateHelp from "../pages/UcanDelegate/help/index";
 import Vote from "../pages/Vote";
 import VotingResults from "../pages/VotingResults";
 import MinerId from "../pages/MinerId";
+import FipEditorPropose from "../pages/Fip/propose";
+import FipEditorApprove from "../pages/Fip/approve";
+import FipEditorRevoke from "../pages/Fip/revoke";
 
 const routes = [
   {
@@ -34,6 +37,18 @@ const routes = [
   {
     path: "/minerid",
     element: <MinerId />,
+  },
+  {
+    path: "/fip-editor/propose",
+    element: <FipEditorPropose />,
+  },
+  {
+    path: "/fip-editor/approve",
+    element: <FipEditorApprove />,
+  },
+  {
+    path: "/fip-editor/revoke",
+    element: <FipEditorRevoke />,
   },
   {
     path: "/ucanDelegate/add",

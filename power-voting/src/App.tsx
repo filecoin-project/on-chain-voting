@@ -29,7 +29,7 @@ import "./common/styles/reset.less";
 import "tailwindcss/tailwind.css";
 import {STORING_DATA_MSG} from "./common/consts";
 import {useVoterInfo, useCurrentTimezone} from "./common/store";
-import { useVoterInfoSet } from "./common/hooks";
+import {useCheckFipEditorAddress, useVoterInfoSet} from "./common/hooks";
 
 const App: React.FC = () => {
   // Destructure values from custom hooks
@@ -56,6 +56,8 @@ const App: React.FC = () => {
 
   // Get voter information using custom hook
   const { voterInfo } = useVoterInfoSet(chainId, address);
+
+  const { isFipEditorAddress } = useCheckFipEditorAddress(chainId, address);
 
   // Update voter information in state
   const setVoterInfo = useVoterInfo((state: any) => state.setVoterInfo);
@@ -114,6 +116,11 @@ const App: React.FC = () => {
       return;
     }
 
+    
+    if(!voterInfo){
+      navigate('/ucanDelegate/add');
+      return
+    }
     // Determine if the user has a GitHub account
     const isGithubType = !!voterInfo[0];
     if (voterInfo[2]) {
@@ -152,22 +159,22 @@ const App: React.FC = () => {
     }
   }
 
-  const handleMinerId = () => {
+  const handleJump = (route: string) => {
     if (!isConnected) {
       openConnectModal && openConnectModal();
       return;
     }
-    navigate('/minerid');
+    navigate(route);
   }
 
-  const items = [
+  const items: any = [
     {
       key: 'ucan',
       label: (
         <a
           onClick={handleDelegate}
         >
-          UCAN Delegates
+         Connect GitHub
         </a>
       ),
     },
@@ -175,7 +182,7 @@ const App: React.FC = () => {
       key: 'minerId',
       label: (
         <a
-          onClick={handleMinerId}
+          onClick={() => { handleJump('/minerid') }}
         >
           Miner IDs Management
         </a>
@@ -183,11 +190,50 @@ const App: React.FC = () => {
     },
   ];
 
+  if (isFipEditorAddress) {
+    items.push({
+      key: '3',
+      label: 'FIP Editor Management',
+      children: [
+        {
+          key: '3-1',
+          label: (
+            <a
+              onClick={() => { handleJump('/fip-editor/propose') }}
+            >
+              Propose
+            </a>
+          ),
+        },
+        {
+          key: '3-2',
+          label: (
+            <a
+              onClick={() => { handleJump('/fip-editor/approve') }}
+            >
+              Approve
+            </a>
+          ),
+        },
+        {
+          key: '3-3',
+          label: (
+            <a
+              onClick={() => { handleJump('/fip-editor/revoke') }}
+            >
+              Revoke
+            </a>
+          ),
+        },
+      ],
+    })
+  }
+
   return (
-    <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
+    <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
       <div className="layout font-body">
-        <header className='h-[96px] bg-[#273141]'>
-          <div className='w-[1000px] h-[96px] mx-auto flex items-center justify-between'>
+        <header className='h-[96px] bg-[#ffffff]'>
+          <div className='w-[1000px] h-[88px] mx-auto flex items-center justify-between'>
             <div className='flex items-center'>
               <div className='flex-shrink-0'>
                 <Link to='/'>
@@ -197,7 +243,7 @@ const App: React.FC = () => {
               <div className='ml-6 flex items-baseline space-x-20'>
                 <Link
                   to='/'
-                  className='text-white text-2xl font-semibold hover:opacity-80'
+                  className='text-black text-2xl font-semibold hover:opacity-80'
                 >
                   Power Voting
                 </Link>
@@ -218,7 +264,7 @@ const App: React.FC = () => {
                 </button>
               </Dropdown>
               <div className="connect flex items-center">
-                <ConnectButton />
+                <ConnectButton showBalance={false} />
               </div>
             </div>
             <Modal

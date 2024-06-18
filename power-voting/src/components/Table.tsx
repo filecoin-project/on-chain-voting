@@ -18,7 +18,7 @@ import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { FILECOIN_AUTHORIZE_DOC, FILECOIN_DEAUTHORIZE_DOC, GITHUB_AUTHORIZE_DOC, GITHUB_DEAUTHORIZE_DOC } from "../common/consts";
 
-export default function Table ({ title = '', link= {} as { type: string, action: string, href: string }, list = [] as { name: string, comp: ReactNode, width?: number }[], subTitle = '' }) {
+export default function Table({ title = '', link = {} as { type: string, action: string, href: string }, list = [] as { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: string, }[], subTitle = '' }) {
   const navigate = useNavigate();
   const { type, action, href } = link;
 
@@ -29,22 +29,21 @@ export default function Table ({ title = '', link= {} as { type: string, action:
     } else {
       doc = action === 'authorize' ? GITHUB_AUTHORIZE_DOC : GITHUB_DEAUTHORIZE_DOC;
     }
-    navigate(href, { state: {
-      doc
+    navigate(href, {
+      state: {
+        doc
       }
     });
   }
 
   return (
-    <table className='min-w-full bg-[#273141] rounded text-left'>
+    <table className='min-w-full bg-[#FFFFFF] rounded text-left'>
       <thead>
         <tr>
           <th scope='col' colSpan={2}>
-            <div className='font-normal text-white px-8 py-7 text-2xl border-b border-[#313D4F] flex items-center'>
+            <div className='font-normal text-black px-8 py-7 text-2xl border-b border-[#313D4F] flex items-center'>
               <span>{title}</span>
-              {subTitle && (
-                <span className='text-[#8896AA] text-xl px-1'> - {subTitle}</span>
-              )}
+             
               {
                 href && (
                   <div className='flex items-start cursor-pointer' onClick={handleJump}>
@@ -53,15 +52,25 @@ export default function Table ({ title = '', link= {} as { type: string, action:
                 )
               }
             </div>
+            <div className='px-8 whitespace-normal'>
+            {subTitle && (
+                <span className='text-[#4B535B]'>{subTitle}</span>
+              )}
+            </div>
           </th>
         </tr>
       </thead>
-      <tbody className='divide-y divide-[#313D4F]'>
-        {list.map((item: { name: string, comp: ReactNode, width?: number }) => (
-          <tr key={item.name} className='divide-x divide-[#313D4F]'>
-            <td className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} whitespace-nowrap py-9 px-8 text-xl text-[#8896AA]`}>
+      <tbody className='divide-y divide-[#111111]'>
+        {list.filter((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: string }) => !item.hide).map((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: string }) => (
+          <tr key={item.name} className='divide-x divide-[#313D4F]  '>
+            <td className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} whitespace-nowrap py-9 px-8 text-base text-[#313D4F] align-top`}>
               {item.name}
+              {item.desc && <div className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} text-sm whitespace-normal text-[#4B535B] mt-8`}>
+                {item.desc}
+              </div>}
+
             </td>
+
             <td className='py-5 px-4 text-xl text-white'>
               {item.comp}
             </td>

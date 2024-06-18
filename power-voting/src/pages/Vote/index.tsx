@@ -38,6 +38,7 @@ import type {ProposalList, ProposalOption} from "../../common/types";
 import "./index.less";
 import fileCoinAbi from "../../common/abi/power-voting.json";
 import {useCurrentTimezone} from "../../common/store";
+import VoteStatusBtn from "src/components/VoteStatusBtn";
 
 const Vote = () => {
   const { chain, isConnected } = useAccount();
@@ -194,31 +195,6 @@ const Vote = () => {
     setSelectedOptionIndex(index);
   }
 
-  const handleVoteStatusTag = (status: number) => {
-    switch (status) {
-      case WRONG_NET_STATUS:
-        return {
-          name: 'Wrong network',
-          color: 'bg-red-700',
-        };
-      case PENDING_STATUS:
-        return {
-          name: 'Pending',
-          color: 'bg-cyan-700',
-        };
-      case IN_PROGRESS_STATUS:
-        return {
-          name: 'In Progress',
-          color: 'bg-green-700',
-        };
-      default:
-        return {
-          name: '',
-          color: '',
-        };
-    }
-  }
-
   const { isLoading: transactionLoading } =
     useWaitForTransactionReceipt({
       hash,
@@ -252,21 +228,19 @@ const Vote = () => {
           </button>
         </div>
         <div className="px-3 md:px-0 ">
-          <h1 className="mb-6 text-3xl text-white break-words break-all leading-12" style={{overflowWrap: 'break-word'}}>
+          <h1 className="mb-6 text-3xl text-[#313D4F] break-words break-all leading-12" style={{overflowWrap: 'break-word'}}>
             {votingData?.name}
           </h1>
           {
             (votingData?.voteStatus || votingData?.voteStatus === 0) &&
               <div className="flex justify-between mb-6">
                   <div className="flex items-center justify-between w-full mb-1 sm:mb-0">
-                      <button
-                          className={`${handleVoteStatusTag(votingData.voteStatus).color} bg-[#6D28D9] h-[26px] px-[12px] text-white rounded-xl mr-4`}>
-                        {handleVoteStatusTag(votingData.voteStatus).name}
-                      </button>
+                      <VoteStatusBtn status={votingData.voteStatus}/>
+                    
                       <div className="flex items-center justify-center">
                           <img className="w-[20px] h-[20px] rounded-full mr-2" src={img} alt="" />
                           <a
-                              className="text-white"
+                              className="text-[#313D4F]"
                               target="_blank"
                               rel="noopener noreferrer"
                               href={href}
@@ -293,7 +267,7 @@ const Vote = () => {
             votingData?.voteStatus === IN_PROGRESS_STATUS &&
               <div className='mt-5'>
                   <div className="border-[#313D4F] mt-6 border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border border-solid">
-                      <div className="group flex h-[57px] !border-[#313D4F] justify-between items-center border-b px-4 pb-[12px] pt-3 border-solid">
+                      <div className="group flex h-[57px] !border-[#eeeeee] justify-between items-center border-b px-4 pb-[12px] pt-3 border-solid">
                           <h4 className="text-xl">
                               Cast Your Vote
                           </h4>
@@ -304,7 +278,8 @@ const Vote = () => {
                             return (
                               <div className="mb-4 space-y-3 leading-10" key={item.name + index} onClick={() => { handleOptionClick(index) }}>
                                 <div
-                                  className={`w-full h-[45px] border-[#313D4F] ${selectedOptionIndex === index ? 'border-blue-500' : ''} hover:border-blue-500 flex justify-between items-center pl-8 pr-4 md:border border-solid rounded-full cursor-pointer`}>
+                                  className={`w-full h-[45px] border-[#eeeeee] ${selectedOptionIndex === index ? 'border-blue-500' : ''} hover:border-blue-500 flex justify-between items-center pl-8 pr-4 md:border border-solid rounded-full cursor-pointer`}
+                                  >
                                   <div className="text-ellipsis h-[100%] overflow-hidden">{item.name}</div>
                                   {
                                     selectedOptionIndex === index &&
@@ -332,22 +307,22 @@ const Vote = () => {
             <div
               className="group flex h-[57px] justify-between rounded-t-none border-b border-skin-border border-solid px-4 pb-[12px] pt-3 md:rounded-t-lg">
               <h4 className="flex items-center text-xl">
-                <div>Message</div>
+                <div>Details</div>
               </h4>
             </div>
             <div className="p-4 leading-6 sm:leading-8">
               <div className='space-y-1'>
                 <div>
                   <b>Start Time</b>
-                  <span className='float-right text-white'>{votingData?.startTime && dayjs(votingData.startTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
+                  <span className='float-right text-[#313D4F]'>{votingData?.startTime && dayjs(votingData.startTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
                 </div>
                 <div>
                   <b>End Time</b>
-                  <span className='float-right text-white'>{votingData?.expTime && dayjs(votingData.expTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
+                  <span className='float-right text-[#313D4F]'>{votingData?.expTime && dayjs(votingData.expTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
                 </div>
                 <div>
                   <b>Timezone</b>
-                  <span className='float-right text-white'>{timezone}</span>
+                  <span className='float-right text-[#313D4F]'>{timezone}</span>
                 </div>
               </div>
             </div>
