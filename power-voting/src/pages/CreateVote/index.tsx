@@ -367,7 +367,13 @@ const CreateVote = () => {
     {
       name: 'Proposal Description',
       width: 260,
-      desc: "Describe FIP objectives, implementation1\n details, risks, and include GitHub links for transparency. See a template here↗.",
+      desc: <div className="text-red">
+        <span>
+        Describe FIP objectives, implementation details, risks, and include GitHub links for transparency. See a template <a href="" style={{color:"blue"}}>here↗</a>.
+       <br/> You can use Markdown formatting in the text input field.
+        </span>
+       
+      </div>,
       comp:
         <Controller
           name='descriptions'
@@ -482,14 +488,16 @@ const CreateVote = () => {
       </div>
       <form onSubmit={handleSubmit(onSubmit)} >
         <div className='flow-root space-y-8'>
-          <Table title='Create A Proposal' subTitle={"Proposals should be clear, concise, and focused on specific improvements or changes. FIPs must adhere to the Filecoin community's code of conduct and best practices↗."} list={list} />
+          <Table title='Create A Proposal' subTitle={<div className="text-m">
+            Proposals should be clear, concise, and focused on specific improvements or changes. FIPs must adhere to the Filecoin community's <a href="" style={{color:"blue"}}>code of conduct and best practices↗</a>.
+          </div>} list={list} />
 
           <div className="flex justify-center items-center text-center ">
             <Link to="/" >
-              <div className="flex justify-center rounded items-center text-center  bg-[#EEEEEE] w-[101px] h-[40px] text-[#313D4F] mr-2 cursor-pointer" >cancel</div>
+              <div className="flex justify-center rounded items-center text-center  bg-[#EEEEEE] w-[101px] h-[40px] text-[#313D4F] mr-2 cursor-pointer" >Cancel</div>
             </Link>
             <div className='w-full items-center flex justify-end text-center'>
-              <div className="text-[#313D4F] mr-4 cursor-pointer" onClick={saveDraft} >Save draft</div>
+              <div className="text-[#313D4F] mr-4 cursor-pointer" onClick={saveDraft} >Save Draft</div>
               <LoadingButton  className="create-submit" text='Create' loading={loading || writeContractPending || transactionLoading} />
             </div>
           </div>
