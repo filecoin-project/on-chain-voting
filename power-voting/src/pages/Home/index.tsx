@@ -272,10 +272,12 @@ const Home = () => {
           const maxResult = option?.reduce((prev: any, current: any) => {
             return (prev.count > current.count) ? prev : current;
           });
-          if (maxResult.name === VOTE_OPTIONS[0]) {
-            subStatus = PASSED_STATUS
-          } else if (maxResult.name === VOTE_OPTIONS[1]) {
-            subStatus = REJECTED_STATUS
+          if(maxResult.count>0){
+            if (maxResult.name === VOTE_OPTIONS[0]) {
+              subStatus = PASSED_STATUS
+            } else if (maxResult.name === VOTE_OPTIONS[1]) {
+              subStatus = REJECTED_STATUS
+            }
           }
         }
         return {
