@@ -43,7 +43,7 @@ const App: React.FC = () => {
   const element = useRoutes(routes);
 
   const location = useLocation();
-  const isLanding = location.pathname === "/" || element?.props?.match?.route?.path==="*"
+  const isLanding = location.pathname === "/" || element?.props?.match?.route?.path === "*"
   // State variables
   const [expirationTime, setExpirationTime] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
@@ -67,7 +67,10 @@ const App: React.FC = () => {
   // Update current timezone in state
   const setTimezone = useCurrentTimezone((state: any) => state.setTimezone);
 
-
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
   // Reload the page if address changes
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
