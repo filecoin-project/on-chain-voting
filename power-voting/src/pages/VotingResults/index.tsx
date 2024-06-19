@@ -83,10 +83,12 @@ const VotingResults = () => {
         const maxResult = option?.reduce((prev: any, current: any) => {
           return (prev.count > current.count) ? prev : current;
         });
-        if (maxResult.name === VOTE_OPTIONS[0]) {
-          subStatus = PASSED_STATUS
-        } else if (maxResult.name === VOTE_OPTIONS[1]) {
-          subStatus = REJECTED_STATUS
+        if (maxResult.count > 0) {
+          if (maxResult.name === VOTE_OPTIONS[0]) {
+            subStatus = PASSED_STATUS
+          } else if (maxResult.name === VOTE_OPTIONS[1]) {
+            subStatus = REJECTED_STATUS
+          }
         }
       }
       // Fetch voting history data
@@ -168,7 +170,7 @@ const VotingResults = () => {
         <div className='px-3 mb-6 md:px-0'>
           <button>
             <div className='inline-flex items-center gap-1 text-skin-text hover:text-skin-link'>
-              <Link to='/' className='flex items-center'>
+              <Link to='/home' className='flex items-center'>
                 <svg className='mr-1' viewBox="0 0 24 24" width="1.2em" height="1.2em"><path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m11 17l-5-5m0 0l5-5m-5 5h12"></path></svg>
                 Back
               </Link>
@@ -182,18 +184,21 @@ const VotingResults = () => {
           {
             (votingData?.voteStatus || votingData?.voteStatus === 0) &&
             <div className="flex justify-between mb-6">
-              <div className="flex items-center justify-between w-full mb-1 sm:mb-0">
+              <div className="flex items-center w-full mb-1 sm:mb-0">
                 <VoteStatusBtn status={(votingData?.subStatus > 0) ? votingData?.subStatus : votingData?.voteStatus} />
-                <div className="flex items-center justify-center">
-                  <img className="w-[20px] h-[20px] rounded-full mr-2" src={img} alt="" />
-                  <a
-                    className="text-[#313D4F]"
-                    target="_blank"
-                    rel="noreferrer"
-                    href={href}
-                  >
-                    {votingData?.githubName || EllipsisMiddle({ suffixCount: 4, children: votingData?.address })}
-                  </a>
+                <div className="flex items-center justify-center ml-[12px]">
+                  <div className='text-[#4B535B] text-[14px]'>Created by</div>
+                  <div className='ml-[8px] flex items-center justify-center bg-[#F5F5F5] rounded-full h-[32px]'>
+                    <img className="w-[20px] h-[20px] rounded-full mr-[4px]" src={img} alt="" />
+                    <a
+                      className="text-[#313D4F]"
+                      target="_blank"
+                      rel="noreferrer"
+                      href={href}
+                    >
+                      {votingData?.githubName || EllipsisMiddle({ suffixCount: 4, children: votingData?.address })}
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -241,10 +246,10 @@ const VotingResults = () => {
                 </div>
               </div>
               {
-                votingData?.powerBlockHeight && <div>
+                votingData?.powerBlockHeight > 0 && (<div>
                   <b>Block Height</b>
                   <span className='float-right text-[#313D4F]'>{votingData?.powerBlockHeight}</span>
-                </div>
+                </div>)
               }
             </div>
           </div>

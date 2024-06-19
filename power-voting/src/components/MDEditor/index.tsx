@@ -94,7 +94,7 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
         <>
           <div className={`absolute bottom-0 h-[80px] w-full bg-gradient-to-t from-[#1b2331] ${showMore ? 'flex' : 'hidden'}`} />
           <div className={`flex w-full justify-center  ${showMore ? 'absolute -bottom-5' : ''}`}>
-            <button className="border-[#313D4F] hover:border-[#8896AA] border-[1px] border-solid text-white mt-4 self-center rounded-xl py-2 px-4" onClick={handleClickShowMore}>
+            <button className="border-[#eeeeee] hover:border-[#eeeeee] border-[1px] border-solid text-black mt-4 self-center rounded-xl py-2 px-4" onClick={handleClickShowMore}>
               {showMore ? "Show More" : "Show Less"}
             </button>
           </div>

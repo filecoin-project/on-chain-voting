@@ -139,7 +139,9 @@ const CreateVote = () => {
         setValue("descriptions", result.Descriptions)
         setValue("name", result.Name)
         setValue("time", result.Time.split(OPTION_SPLIT_TAG) ?? [])
-        setValue("timezone", result.Timezone)
+        if(result.Timezone){
+          setValue("timezone", result.Timezone)
+        }
         setHasDraft(true)
       }
     } catch (e) {
@@ -162,7 +164,7 @@ const CreateVote = () => {
         cid
       }]);
       setTimeout(() => {
-        navigate("/")
+        navigate("/home")
       }, 1000);
     }
   }, [writeContractSuccess])
@@ -322,7 +324,9 @@ const CreateVote = () => {
     } catch (e) {
       console.log(e)
     }
-    setDraftSave(false)
+    setTimeout(() => {
+      setDraftSave(false)
+    }, 1500)
   }
 
   const { isLoading: transactionLoading } =
@@ -500,7 +504,7 @@ const CreateVote = () => {
       <div className="px-3 mb-6 md:px-0">
         <button>
           <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">
-            <Link to="/" className="flex items-center">
+            <Link to="/home" className="flex items-center">
               <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
                 <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m11 17l-5-5m0 0l5-5m-5 5h12" />
               </svg>
@@ -516,7 +520,7 @@ const CreateVote = () => {
           </div>} list={list} />
 
           <div className="flex justify-center items-center text-center ">
-            <Link to="/" >
+            <Link to="/home" >
               <div className="flex justify-center rounded items-center text-center  bg-[#EEEEEE] w-[101px] h-[40px] text-[#313D4F] mr-2 cursor-pointer" >Cancel</div>
             </Link>
             <div className='w-full items-center flex justify-end text-center'>

@@ -81,7 +81,7 @@ const FipEditorApprove = () => {
           <div className="w-[180px] flex items-center">
             <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${value}`} alt="" />
             <a
-              className="text-white hover:text-white"
+              className="text-black hover:text-black"
               target="_blank"
               rel="noopener"
               href={`${chain?.blockExplorers?.default.url}/address/${value}`}
@@ -111,7 +111,7 @@ const FipEditorApprove = () => {
           <div className="w-[180px] flex items-center">
             <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${value}`} alt="" />
             <a
-              className="text-white hover:text-white"
+              className="text-black hover:text-black"
               target="_blank"
               rel="noopener"
               href={`${chain?.blockExplorers?.default.url}/address/${value}`}
@@ -227,7 +227,7 @@ const FipEditorApprove = () => {
         content: STORING_DATA_MSG,
       });
       setTimeout(() => {
-        navigate("/")
+        navigate("/home")
       }, 1000);
     }
   }, [writeContractSuccess]);
@@ -288,7 +288,7 @@ const FipEditorApprove = () => {
       {contextHolder}
       <button>
         <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">
-          <Link to="/" className="flex items-center">
+          <Link to="/home" className="flex items-center">
             <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
               <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                     d="m11 17l-5-5m0 0l5-5m-5 5h12" />
