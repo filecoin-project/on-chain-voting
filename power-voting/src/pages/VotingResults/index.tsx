@@ -83,7 +83,7 @@ const VotingResults = () => {
         const maxResult = option?.reduce((prev: any, current: any) => {
           return (prev.count > current.count) ? prev : current;
         });
-        if(maxResult.count>0){
+        if (maxResult.count > 0) {
           if (maxResult.name === VOTE_OPTIONS[0]) {
             subStatus = PASSED_STATUS
           } else if (maxResult.name === VOTE_OPTIONS[1]) {
@@ -184,18 +184,21 @@ const VotingResults = () => {
           {
             (votingData?.voteStatus || votingData?.voteStatus === 0) &&
             <div className="flex justify-between mb-6">
-              <div className="flex items-center justify-between w-full mb-1 sm:mb-0">
+              <div className="flex items-center w-full mb-1 sm:mb-0">
                 <VoteStatusBtn status={(votingData?.subStatus > 0) ? votingData?.subStatus : votingData?.voteStatus} />
-                <div className="flex items-center justify-center">
-                  <img className="w-[20px] h-[20px] rounded-full mr-2" src={img} alt="" />
-                  <a
-                    className="text-[#313D4F]"
-                    target="_blank"
-                    rel="noreferrer"
-                    href={href}
-                  >
-                    {votingData?.githubName || EllipsisMiddle({ suffixCount: 4, children: votingData?.address })}
-                  </a>
+                <div className="flex items-center justify-center ml-[12px]">
+                  <div className='text-[#4B535B] text-[14px]'>Created by</div>
+                  <div className='ml-[8px] flex items-center justify-center bg-[#F5F5F5] rounded-full h-[32px]'>
+                    <img className="w-[20px] h-[20px] rounded-full mr-[4px]" src={img} alt="" />
+                    <a
+                      className="text-[#313D4F]"
+                      target="_blank"
+                      rel="noreferrer"
+                      href={href}
+                    >
+                      {votingData?.githubName || EllipsisMiddle({ suffixCount: 4, children: votingData?.address })}
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -243,7 +246,7 @@ const VotingResults = () => {
                 </div>
               </div>
               {
-                votingData?.powerBlockHeight>0 && (<div>
+                votingData?.powerBlockHeight > 0 && (<div>
                   <b>Block Height</b>
                   <span className='float-right text-[#313D4F]'>{votingData?.powerBlockHeight}</span>
                 </div>)
