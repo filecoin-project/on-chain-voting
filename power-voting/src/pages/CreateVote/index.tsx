@@ -139,7 +139,9 @@ const CreateVote = () => {
         setValue("descriptions", result.Descriptions)
         setValue("name", result.Name)
         setValue("time", result.Time.split(OPTION_SPLIT_TAG) ?? [])
-        setValue("timezone", result.Timezone)
+        if(result.Timezone){
+          setValue("timezone", result.Timezone)
+        }
         setHasDraft(true)
       }
     } catch (e) {
