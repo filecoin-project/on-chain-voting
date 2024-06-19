@@ -453,7 +453,7 @@ const UcanDelegate = () => {
         <textarea
           disabled
           value={githubSignature}
-          className='form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F] cursor-not-allowed'
+          className='form-input h-[320px] w-full rounded bg-[#ffffff] border border-[#eeeeee] text-black cursor-not-allowed'
         />
       )
     },
@@ -467,7 +467,7 @@ const UcanDelegate = () => {
             control={control}
             render={() => <input
               className={classNames(
-                'form-input w-full rounded bg-[#212B3C] border border-[#313D4F]',
+                'form-input w-full rounded bg-[#ffffff] border border-[#eeeeee] text-black',
                 errors.url && 'border-red-500 focus:border-red-500'
               )}
               {...register('url', {required: true, validate: validateValue})}

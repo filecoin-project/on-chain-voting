@@ -139,19 +139,21 @@ const App: React.FC = () => {
             }
           }
         });
-      } else {
+      } 
+      else {
+        navigate('/ucanDelegate/add');
         // Process non-GitHub data and navigate to appropriate page
-        const decodeString = atob(data.split('.')[1]);
-        const payload = JSON.parse(decodeString);
-        const { aud, prf } = payload;
-        navigate('/ucanDelegate/delete', { state: {
-            params: {
-              isGithubType,
-              aud,
-              prf
-            }
-          }
-        });
+        // const decodeString = atob(data.split('.')[1]);
+        // const payload = JSON.parse(decodeString);
+        // const { aud, prf } = payload;
+        // navigate('/ucanDelegate/delete', { state: {
+        //     params: {
+        //       isGithubType,
+        //       aud,
+        //       prf
+        //     }
+        //   }
+        // });
       }
     } else {
       // Navigate to add delegate page if no voter information is available
