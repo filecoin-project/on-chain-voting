@@ -151,17 +151,16 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
               voteList?.map((item: any, index: number) => {
 
                 const powers = []
-
-                if (item.totalTokenHolderPower > 0) {
+                if (item.tokenHolderPower > 0) {
                   powers.push("TokenHolder")
                 }
-                if (item.totalSpPower > 0) {
+                if (item.spPower > 0) {
                   powers.push("Sp")
                 }
-                if (item.totalDeveloperPower > 0) {
+                if (item.developerPower > 0) {
                   powers.push("Developer")
                 }
-                if (item.totalClientPower > 0) {
+                if (item.clientPower > 0) {
                   powers.push("Client")
                 }
                 const isApprove = item.optionName === VOTE_OPTIONS[0]
@@ -225,7 +224,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
 
                     <div className="w-[180px] flex truncate px-2 justify-end text-skin-link">
                       <div className="w-[80px] text-c truncate text-skin-link" style={{ color: isApprove ? "green" : "red" }}>
-                       {isApprove? <CheckCircleOutlined style={{ fontSize: 14, marginRight: "4px" }} />: <CloseCircleOutlined style={{ fontSize: 14, marginRight: "4px" }} />}
+                        {isApprove ? <CheckCircleOutlined style={{ fontSize: 14, marginRight: "4px" }} /> : <CloseCircleOutlined style={{ fontSize: 14, marginRight: "4px" }} />}
                         {item.optionName}</div>
                     </div>
                   </div>
