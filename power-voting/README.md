@@ -90,16 +90,11 @@ If you modify the contract code, you need to update the following abi in ‘/src
 
 <img src="img/abi.png" style="zoom:50%;"  alt="" />
 
-#### 5. Update IPFS Storage Email And Wallet Connect Project Id
-
-Create Web3 storage Account by https://web3.storage
+#### 5. Update Wallet Connect Project Id
 
 Create wallet connect project id by https://www.rainbowkit.com/docs/migration-guide#012x-breaking-changes
 
-Replace the following keys in ‘/.env.example’
-
-<img src="img/key.png" alt="" />
-
+Set 'WALLET_CONNECT_ID'  in ‘/.env.example’
 
 #### 6.Build And Package
 
