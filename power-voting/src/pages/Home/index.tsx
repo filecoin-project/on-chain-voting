@@ -387,7 +387,7 @@ const Home = () => {
                 </div>
               </a>
               <div className="truncate text-##4B535B text-sm ml-5">
-              Created {dayjs(item.currentTime * 1000).format('YYYY-MM-D')}
+                Created {dayjs(item.currentTime * 1000).format('YYYY-MM-D')}
               </div>
             </div>
             <VoteStatusBtn status={(item.subStatus > 0) ? item.subStatus : item.proposalStatus} />
@@ -413,11 +413,23 @@ const Home = () => {
               {
                 item.option?.map((option: ProposalOption, index: number) => {
                   const isapprove = option.name == "Approve"
-                  //  const passed= maxOption.name=="Approve"
+                  const passed = maxOption.name == "Approve"
+                  let bgColor = "#F7F7F7"
+                  let txColor = "#273141"
+                  let borderColor = "#F7F7F7"
+                  if (isapprove && passed) {
+                    bgColor = "#E3FFEE"
+                    txColor = "#006227"
+                    borderColor = "#87FFBE"
+                  } else if (!isapprove && !passed) {
+                    bgColor = "#FFF3F3"
+                    txColor = "#AA0101"
+                    borderColor = "#FFDBDB"
+                  }
                   return (
-                    <div className="relative mt-1 w-full" key={option.name + index}>
+                    <div className="h-[35px] relative mt-1 w-full" key={option.name + index}>
                       <div
-                        style={{ color: isapprove ? "#005292" : "#273141" }}
+                        style={{ color: txColor }}
                         className='absolute ml-3 flex items-center leading-[35px]'>
                         {
                           option.count > 0 && option.count === maxOption.count &&
@@ -427,8 +439,9 @@ const Home = () => {
                           </svg>
                         }
                         {option.name}</div>
-                      <div className="absolute right-0 mr-3 leading-[35px] text-[#273141]">{option.count}%</div>
-                      <div className="h-[35px] border-1 border-[#C3E5FF] rounded-md bg-[#E7F4FF]" style={{ width: `${option.count}%` }}></div>
+                      <div className="absolute right-0 mr-3 leading-[35px]" style={{ color: txColor }}>{option.count}%</div>
+                      {option.count > 0 && <div className="h-[35px] border-[1px] border-solid rounded-md bg-[#E3FFEE]" style={{ width: `${option.count}%`, backgroundColor: bgColor, borderColor: borderColor }} />
+                      }
                     </div>
                   )
                 })
@@ -439,7 +452,7 @@ const Home = () => {
             <span className="mr-2">End Time:</span>
             {dayjs(item.expTime * 1000).format('MMM.D, YYYY, h:mm A')} ({timezone})
           </div>
-        </div>
+        </div >
       )
     })
   }

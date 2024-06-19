@@ -76,7 +76,7 @@ export const VOTE_LIST = [
   },
   {
     value: COMPLETED_STATUS,
-    label: 'Completed',
+    label: 'Complete',
     bgColor: "#E7F4FF",
     textColor: "#005292",
     borderColor: "#C3E5FF",

@@ -83,10 +83,12 @@ const VotingResults = () => {
         const maxResult = option?.reduce((prev: any, current: any) => {
           return (prev.count > current.count) ? prev : current;
         });
-        if (maxResult.name === VOTE_OPTIONS[0]) {
-          subStatus = PASSED_STATUS
-        } else if (maxResult.name === VOTE_OPTIONS[1]) {
-          subStatus = REJECTED_STATUS
+        if(maxResult.count>0){
+          if (maxResult.name === VOTE_OPTIONS[0]) {
+            subStatus = PASSED_STATUS
+          } else if (maxResult.name === VOTE_OPTIONS[1]) {
+            subStatus = REJECTED_STATUS
+          }
         }
       }
       // Fetch voting history data
@@ -241,10 +243,10 @@ const VotingResults = () => {
                 </div>
               </div>
               {
-                votingData?.powerBlockHeight && <div>
+                votingData?.powerBlockHeight>0 && (<div>
                   <b>Block Height</b>
                   <span className='float-right text-[#313D4F]'>{votingData?.powerBlockHeight}</span>
-                </div>
+                </div>)
               }
             </div>
           </div>
