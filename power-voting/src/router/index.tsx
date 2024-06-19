@@ -24,10 +24,15 @@ import MinerId from "../pages/MinerId";
 import FipEditorPropose from "../pages/Fip/propose";
 import FipEditorApprove from "../pages/Fip/approve";
 import FipEditorRevoke from "../pages/Fip/revoke";
+import Landing from "src/pages/Landing";
 
 const routes = [
   {
     path: "/",
+    element: <Landing />,
+  },
+  {
+    path: "/home",
     element: <Home />,
   },
   {
@@ -72,7 +77,7 @@ const routes = [
   },
   {
     path: "*",
-    element: <Home />,
+    element: <Landing />,
   }
 ]
 export default routes;
