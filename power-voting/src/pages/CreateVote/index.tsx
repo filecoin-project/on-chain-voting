@@ -322,7 +322,9 @@ const CreateVote = () => {
     } catch (e) {
       console.log(e)
     }
-    setDraftSave(false)
+    setTimeout(() => {
+      setDraftSave(false)
+    }, 1500)
   }
 
   const { isLoading: transactionLoading } =
