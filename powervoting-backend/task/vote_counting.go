@@ -17,6 +17,7 @@ package task
 import (
 	"crypto/rand"
 	"math/big"
+	"powervoting-server/client"
 	"powervoting-server/config"
 	"powervoting-server/constant"
 	"powervoting-server/contract"
@@ -121,6 +122,13 @@ func VotingCount(ethClient model.GoEthClient, db db.DataRepo) error {
 			voteList = append(voteList, list...)
 		}
 		zap.L().Info("voteList: ", zap.Reflect("voteList", voteList))
+
+		num, err := rand.Int(rand.Reader, big.NewInt(61))
+		if err != nil {
+			zap.L().Error("Generate random number error: ", zap.Error(err))
+			return err
+		}
+
 		var votePowerList []model.VotePower
 		// calc total power
 		totalSpPower := new(big.Int)
@@ -130,36 +138,10 @@ func VotingCount(ethClient model.GoEthClient, db db.DataRepo) error {
 		powerMap := make(map[string]model.Power)
 		addressIsCount := make(map[string]bool)
 		for _, vote := range voteList {
-			num, err := rand.Int(rand.Reader, big.NewInt(60))
-			if err != nil {
-				zap.L().Error("Generate random number error: ", zap.Error(err))
-				return err
-			}
-			num.Add(num, big.NewInt(1))
-			power, err := utils.GetPower(vote.Address, num, ethClient)
+			power, err := client.GetAddressPower(ethClient.Id, vote.Address, int32(num.Int64()))
 			if err != nil {
 				zap.L().Error("get power error: ", zap.Error(err))
 				return err
-			}
-			if power.BlockHeight.Uint64() == 0 {
-				voterToPowerStatus, err := utils.GetVoterToPowerStatus(vote.Address, ethClient)
-				if err != nil {
-					zap.L().Error("get voter to power status error: ", zap.Error(err))
-					return err
-				}
-				if voterToPowerStatus.DayId.Int64() != 0 {
-					num, err := rand.Int(rand.Reader, voterToPowerStatus.DayId)
-					if err != nil {
-						zap.L().Error("Generate random number error: ", zap.Error(err))
-						return err
-					}
-					num.Add(num, big.NewInt(1))
-					power, err = utils.GetPower(vote.Address, num, ethClient)
-					if err != nil {
-						zap.L().Error("get power error: ", zap.Error(err))
-						return err
-					}
-				}
 			}
 
 			zap.L().Info("address and power", zap.Reflect("address", vote.Address), zap.Reflect("power", power))
