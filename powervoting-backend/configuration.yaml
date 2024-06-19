@@ -2,6 +2,8 @@ server:
   # service startup port
   port: :10000
 
+snapshot:
+  rpc: localhost:8001
 
 # drand api
 drand:
@@ -24,5 +26,5 @@ network:
     rpc: http://203.160.91.77:27924/rpc/v1
     powerVotingAbi: power-voting.json
     oracleAbi: oracle.json
-    powerVotingContract: 0xFBEB871d4D2cFa413FCa1b2B6993982143a25af6
-    oracleContract: 0xf09681dFAaB2C74D81D2fC7EA66A7F31bDA2bEE7
+    powerVotingContract:
+    oracleContract:
