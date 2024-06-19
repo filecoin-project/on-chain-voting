@@ -18,7 +18,7 @@ import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { FILECOIN_AUTHORIZE_DOC, FILECOIN_DEAUTHORIZE_DOC, GITHUB_AUTHORIZE_DOC, GITHUB_DEAUTHORIZE_DOC } from "../common/consts";
 
-export default function Table({ title = '', link = {} as { type: string, action: string, href: string }, list = [] as { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: string, }[], subTitle = '' }) {
+export default function Table({ title = '', link = {} as { type: string, action: string, href: string }, list = [] as { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode, }[], subTitle = <div/> }) {
   const navigate = useNavigate();
   const { type, action, href } = link;
 
@@ -52,7 +52,7 @@ export default function Table({ title = '', link = {} as { type: string, action:
                 )
               }
             </div>
-            <div className='px-8 whitespace-normal'>
+            <div className='px-8'>
             {subTitle && (
                 <span className='text-[#4B535B]'>{subTitle}</span>
               )}
@@ -61,7 +61,7 @@ export default function Table({ title = '', link = {} as { type: string, action:
         </tr>
       </thead>
       <tbody className='divide-y divide-[#111111]'>
-        {list.filter((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: string }) => !item.hide).map((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: string }) => (
+        {list.filter((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode }) => !item.hide).map((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode }) => (
           <tr key={item.name} className='divide-x divide-[#313D4F]  '>
             <td className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} whitespace-nowrap py-9 px-8 text-base text-[#313D4F] align-top`}>
               {item.name}

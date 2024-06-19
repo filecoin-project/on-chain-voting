@@ -24,10 +24,13 @@ import {
   web3AvatarUrl,
   COMPLETED_STATUS,
   WRONG_NET_STATUS, VOTE_COUNTING_STATUS, proposalResultApi, proposalHistoryApi,
+  VOTE_OPTIONS,
+  PASSED_STATUS,
+  REJECTED_STATUS,
 } from "../../common/consts";
 import VoteList from "../../components/VoteList";
-import type {ProposalOption, ProposalResult, ProposalHistory} from "../../common/types";
-import {useCurrentTimezone} from "../../common/store";
+import type { ProposalOption, ProposalResult, ProposalHistory } from "../../common/types";
+import { useCurrentTimezone } from "../../common/store";
 import VoteStatusBtn from 'src/components/VoteStatusBtn';
 
 const VotingResults = () => {
@@ -43,6 +46,7 @@ const VotingResults = () => {
     const option: ProposalOption[] = [];
     let voteList: any[] = [];
     let voteStatus = null;
+    let subStatus = 0;
     const params = {
       proposalId: Number(id),
       network: chain?.id
@@ -66,6 +70,7 @@ const VotingResults = () => {
       })
       // Determine vote status based on whether votes have been counted
       voteStatus = resultData.length > 0 ? COMPLETED_STATUS : VOTE_COUNTING_STATUS;
+
       // Map result data to populate option array
       resultData.map((_: any, index: number) => {
         const voteItem = resultData.find((vote: ProposalResult) => vote.optionId === index);
@@ -74,6 +79,16 @@ const VotingResults = () => {
           count: voteItem?.votes ? Number(voteItem.votes) : 0
         })
       })
+      if (voteStatus == COMPLETED_STATUS) {//
+        const maxResult = option?.reduce((prev: any, current: any) => {
+          return (prev.count > current.count) ? prev : current;
+        });
+        if (maxResult.name === VOTE_OPTIONS[0]) {
+          subStatus = PASSED_STATUS
+        } else if (maxResult.name === VOTE_OPTIONS[1]) {
+          subStatus = REJECTED_STATUS
+        }
+      }
       // Fetch voting history data
       const { data: { data: historyData } } = await axios.get(proposalHistoryApi, {
         params,
@@ -90,6 +105,10 @@ const VotingResults = () => {
         votePowers: historyData.votePowers
       }));
     }
+    let powerBlockHeight = 0
+    if (voteList?.length) {
+      powerBlockHeight = voteList[0].powerBlockHeight
+    }
     // Set voting data state
     setVotingData({
       ...proposalData,
@@ -97,6 +116,8 @@ const VotingResults = () => {
       cid,
       option,
       voteStatus,
+      subStatus,
+      powerBlockHeight,
       // Sort voteList array by number of votes in descending order
       voteList: voteList?.sort((a: any, b: any) => b.votes - a.votes)
     })
@@ -162,7 +183,7 @@ const VotingResults = () => {
             (votingData?.voteStatus || votingData?.voteStatus === 0) &&
             <div className="flex justify-between mb-6">
               <div className="flex items-center justify-between w-full mb-1 sm:mb-0">
-                <VoteStatusBtn status={(votingData?.subStatus>0)?votingData?.subStatus:votingData?.voteStatus} />
+                <VoteStatusBtn status={(votingData?.subStatus > 0) ? votingData?.subStatus : votingData?.voteStatus} />
                 <div className="flex items-center justify-center">
                   <img className="w-[20px] h-[20px] rounded-full mr-2" src={img} alt="" />
                   <a
@@ -171,7 +192,7 @@ const VotingResults = () => {
                     rel="noreferrer"
                     href={href}
                   >
-                    {votingData?.githubName || EllipsisMiddle({suffixCount: 4, children: votingData?.address})}
+                    {votingData?.githubName || EllipsisMiddle({ suffixCount: 4, children: votingData?.address })}
                   </a>
                 </div>
               </div>
@@ -185,7 +206,7 @@ const VotingResults = () => {
               moreButton
               readOnly={true}
               view={{ menu: false, md: false, html: true, both: false, fullScreen: true, hideMenu: false }}
-              onChange={() => {}}
+              onChange={() => { }}
             />
           </div>
           {
@@ -203,7 +224,7 @@ const VotingResults = () => {
               <div className='flex items-center'>
               </div>
             </div>
-            <div className='h-[1px] bg-[#DFDFDF]'/>
+            <div className='h-[1px] bg-[#DFDFDF]' />
             <div className='p-4 leading-6 sm:leading-8'>
               <div className='space-y-1'>
                 <div>
@@ -219,57 +240,63 @@ const VotingResults = () => {
                   <span className='float-right text-[#313D4F]'>{timezone}</span>
                 </div>
               </div>
+              {
+                votingData?.powerBlockHeight && <div>
+                  <b>Block Height</b>
+                  <span className='float-right text-[#313D4F]'>{votingData?.powerBlockHeight}</span>
+                </div>
+              }
             </div>
           </div>
           {
             votingData?.voteStatus === COMPLETED_STATUS &&
-              <div className='text-base border-solid border-[1px] border-[#DFDFDF] border-y  bg-skin-block-bg md:rounded-xl md:border'>
-            <div className='group flex h-[57px] justify-between px-4 pb-[12px] pt-3 md:rounded-t-lg'>
-            <h4 className='flex items-center text-xl'>
-                          <div>Results</div>
-                      </h4>
-                      <div className='flex items-center' />
-                  </div>
-                  <div className='p-4 leading-6 sm:leading-8'>
-                      <div className='space-y-3'>
-                        {
-                          votingData?.option?.map((item: any, index: number) => {
-                            return (
-                              <div key={item.name + index}>
-                                <div className='flex justify-between mb-1 text-skin-link'>
-                                  <div className='w-[150px] flex items-center overflow-hidden'>
-                                    <span className='mr-1 truncate'>{item.name}</span>
-                                  </div>
-                                  <div className='flex justify-end'>
-                                    <div className='space-x-2'>
-                                      <span>{item.count}%</span>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className='relative h-2 rounded bg-[#EEEEEE]'>
-                                  {
-                                    item.count ?
-                                      <div
-                                        className='absolute top-0 left-0 h-full rounded bg-[#0190FF]'
-                                        style={{
-                                          width: `${item.count}%`
-                                        }}
-                                      /> :
-                                      <div
-                                        className='absolute top-0 left-0 h-full rounded bg-[#EEEEEE]'
-                                        style={{
-                                          width: '100%'
-                                        }}
-                                      />
-                                  }
-                                </div>
-                              </div>
-                            )
-                          })
-                        }
-                      </div>
-                  </div>
+            <div className='text-base border-solid border-[1px] border-[#DFDFDF] border-y  bg-skin-block-bg md:rounded-xl md:border'>
+              <div className='group flex h-[57px] justify-between px-4 pb-[12px] pt-3 md:rounded-t-lg'>
+                <h4 className='flex items-center text-xl'>
+                  <div>Results</div>
+                </h4>
+                <div className='flex items-center' />
               </div>
+              <div className='p-4 leading-6 sm:leading-8'>
+                <div className='space-y-3'>
+                  {
+                    votingData?.option?.map((item: any, index: number) => {
+                      return (
+                        <div key={item.name + index}>
+                          <div className='flex justify-between mb-1 text-skin-link'>
+                            <div className='w-[150px] flex items-center overflow-hidden'>
+                              <span className='mr-1 truncate'>{item.name}</span>
+                            </div>
+                            <div className='flex justify-end'>
+                              <div className='space-x-2'>
+                                <span>{item.count}%</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className='relative h-2 rounded bg-[#EEEEEE]'>
+                            {
+                              item.count ?
+                                <div
+                                  className='absolute top-0 left-0 h-full rounded bg-[#0190FF]'
+                                  style={{
+                                    width: `${item.count}%`
+                                  }}
+                                /> :
+                                <div
+                                  className='absolute top-0 left-0 h-full rounded bg-[#EEEEEE]'
+                                  style={{
+                                    width: '100%'
+                                  }}
+                                />
+                            }
+                          </div>
+                        </div>
+                      )
+                    })
+                  }
+                </div>
+              </div>
+            </div>
           }
         </div>
       </div>

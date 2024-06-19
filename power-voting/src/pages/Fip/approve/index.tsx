@@ -236,19 +236,24 @@ const FipEditorApprove = () => {
     setLoading(true);
     const list: any = [];
     await Promise.all(fipEditorProposalData.map(async (item: any) => {
-      const { result } = item;
-      const url = `https://${result.voterInfoCid}.ipfs.w3s.link/`;
-      const { data } = await axios.get(url);
-      list.push({
-        proposalId: result.proposalId,
-        address: result.fipEditorAddress,
-        info: data,
-        voters: result.voters,
-        ratio: `${result.voters?.length} / ${fipEditors?.length}`,
-        voteList: fipEditors?.map((address: string) => {
-          return { address, status: result.voters?.includes(address) ? 'Approved' : '' }
-        }).sort((a) => (a.status ? -1 : 1))
-      });
+      try{
+        const { result } = item;
+        const url = `https://${result.voterInfoCid}.ipfs.w3s.link/`;
+        const { data } = await axios.get(url);
+        list.push({
+          proposalId: result.proposalId,
+          address: result.fipEditorAddress,
+          info: data,
+          voters: result.voters,
+          ratio: `${result.voters?.length} / ${fipEditors?.length}`,
+          voteList: fipEditors?.map((address: string) => {
+            return { address, status: result.voters?.includes(address) ? 'Approved' : '' }
+          }).sort((a) => (a.status ? -1 : 1))
+        });
+      }catch(e){
+        console.log(e)
+      }
+    
     }));
     setFipProposalList(list);
     setLoading(false);
@@ -292,9 +297,9 @@ const FipEditorApprove = () => {
           </Link>
         </div>
       </button>
-      <div className='min-w-full bg-[#273141] rounded text-left'>
+      <div className='min-w-full bg-[#ffffff] rounded text-left'>
         <div className='flow-root space-y-4'>
-          <div className='font-normal text-white px-8 py-7 text-2xl border-b border-[#313D4F] flex items-center'>
+          <div className='font-normal text-black px-8 py-7 text-2xl border-b border-[#eeeeee] flex items-center'>
             <span>FIP Editor Approve</span>
           </div>
           <div className='px-8 pb-4 !mt-0'>
