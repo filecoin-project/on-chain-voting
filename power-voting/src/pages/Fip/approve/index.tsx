@@ -81,7 +81,7 @@ const FipEditorApprove = () => {
           <div className="w-[180px] flex items-center">
             <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${value}`} alt="" />
             <a
-              className="text-white hover:text-white"
+              className="text-black hover:text-black"
               target="_blank"
               rel="noopener"
               href={`${chain?.blockExplorers?.default.url}/address/${value}`}
@@ -111,7 +111,7 @@ const FipEditorApprove = () => {
           <div className="w-[180px] flex items-center">
             <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${value}`} alt="" />
             <a
-              className="text-white hover:text-white"
+              className="text-black hover:text-black"
               target="_blank"
               rel="noopener"
               href={`${chain?.blockExplorers?.default.url}/address/${value}`}
