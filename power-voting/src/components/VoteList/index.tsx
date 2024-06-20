@@ -28,7 +28,6 @@ interface Props {
 }
 
 const VoteList: React.FC<Props> = ({ voteList, chain }) => {
-
   const columns = [
     {
       title: 'Role',
@@ -145,7 +144,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
       </div>
       {
         voteList?.length > 0 ?
-          <div className="voteList leading-5 sm:leading-6 max-h-[260px] overflow-auto">
+          <div className="voteList leading-5 sm:leading-6 overflow-auto">
             {
               voteList?.map((item: any, index: number) => {
 
@@ -208,6 +207,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
                     <div className="flex min-w-[110px] items-center justify-end whitespace-nowrap text-center text-skin-link xs:w-[130px] xs:min-w-[130px] cursor-pointer">
                       <Popover content={
                         <Table
+                          scroll={{ y: "false", x: "false" }}
                           rowKey={(record: any) => record.key}
                           dataSource={getPowerData(item)}
                           columns={columns}
@@ -215,14 +215,14 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
                           footer={(currentData: any) => renderFooter(currentData, item.votes)}
                         />
                       }>
-                          <span className='text-[14px] text-[#273141]'>{item.votes}% <InfoCircleOutlined style={{ fontSize: 14 }} /></span>
+                        <span className='text-[14px] text-[#273141]'>{item.votes}% <InfoCircleOutlined style={{ fontSize: 14 }} /></span>
                       </Popover>
                     </div>
 
                     <div className="w-[180px] flex truncate px-2 justify-end text-skin-link">
                       <div className="w-[100px] text-c truncate text-skin-link" style={{ color: isApprove ? "green" : "red" }}>
                         {isApprove ? <CheckCircleOutlined style={{ fontSize: 14, marginRight: "4px" }} /> : <CloseCircleOutlined style={{ fontSize: 14, marginRight: "4px" }} />}
-                        {isApprove?"Approved":"Rejected"}</div>
+                        {isApprove ? "Approved" : "Rejected"}</div>
                     </div>
                   </div>
                 )

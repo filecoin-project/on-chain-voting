@@ -266,41 +266,7 @@ const Vote = () => {
               }}
             />
           </div>
-          {
-            votingData?.voteStatus === IN_PROGRESS_STATUS &&
-            <div className='mt-5'>
-              <div className="border-[#313D4F] mt-6 border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border border-solid">
-                <div className="group flex h-[57px] !border-[#eeeeee] justify-between items-center border-b px-4 pb-[12px] pt-3 border-solid">
-                  <h4 className="text-xl">
-                    Cast Your Vote
-                  </h4>
-                </div>
-                <div className="p-4 text-center">
-                  {
-                    options.map((item: ProposalOption, index: number) => {
-                      return (
-                        <div className="mb-4 space-y-3 leading-10" key={item.name + index} onClick={() => { handleOptionClick(index) }}>
-                          <div
-                            className={`w-full h-[45px] border-[#eeeeee] ${selectedOptionIndex === index ? 'border-blue-500' : ''} hover:border-blue-500 flex justify-between items-center pl-8 pr-4 md:border border-solid rounded-full cursor-pointer`}
-                          >
-                            <div className="text-ellipsis h-[100%] overflow-hidden">{item.name}</div>
-                            {
-                              selectedOptionIndex === index &&
-                              <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-md">
-                                <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
-                                  strokeWidth="2" d="m5 13l4 4L19 7" />
-                              </svg>
-                            }
-                          </div>
-                        </div>
-                      )
-                    })
-                  }
-                  <LoadingButton text='Vote' isFull={true} loading={loading || writeContractPending || transactionLoading} handleClick={startVoting} />
-                </div>
-              </div>
-            </div>
-          }
+       
         </div>
       </div>
       <div className="w-full lg:w-4/12 lg:min-w-[321px]">
@@ -331,6 +297,41 @@ const Vote = () => {
             </div>
           </div>
         </div>
+        {
+            votingData?.voteStatus === IN_PROGRESS_STATUS &&
+            <div className='mt-5'>
+              <div className="border-[#313D4F] mt-6 border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border border-solid">
+                <div className="group flex h-[57px] !border-[#eeeeee] justify-between items-center border-b px-4 pb-[12px] pt-3 border-solid">
+                  <h4 className="text-xl">
+                    Cast Your Vote
+                  </h4>
+                </div>
+                <div className="p-4 text-center">
+                  {
+                    options.map((item: ProposalOption, index: number) => {
+                      return (
+                        <div className="mb-4 space-y-3 leading-10" key={item.name + index} onClick={() => { handleOptionClick(index) }}>
+                          <div
+                            className={`w-full h-[45px] border-[#eeeeee] ${selectedOptionIndex === index ? 'border-[#0190FF] bg-[#F3FAFF]' : ''} hover:border-[#0190FF] flex justify-between items-center pl-8 pr-4 md:border border-solid rounded-full cursor-pointer`}
+                          >
+                            <div className="text-ellipsis h-[100%] overflow-hidden">{item.name}</div>
+                            {
+                              selectedOptionIndex === index &&
+                              <svg  viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-md text-[#0190FF]">
+                                <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
+                                  strokeWidth="2" d="m5 13l4 4L19 7" />
+                              </svg>
+                            }
+                          </div>
+                        </div>
+                      )
+                    })
+                  }
+                  <LoadingButton text='Vote' isFull={true} loading={loading || writeContractPending || transactionLoading} handleClick={startVoting} />
+                </div>
+              </div>
+            </div>
+          }
       </div>
     </div>
   )
