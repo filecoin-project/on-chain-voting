@@ -20,7 +20,7 @@ import dayjs from 'dayjs';
 import type { BaseError } from "wagmi";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { useConnectModal, useChainModal } from "@rainbow-me/rainbowkit";
-import {getContractAddress, getWeb3IpfsId} from '../../utils';
+import { getContractAddress, getWeb3IpfsId } from '../../utils';
 import MDEditor from "../../components/MDEditor";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
 import LoadingButton from "../../components/LoadingButton";
@@ -34,10 +34,10 @@ import {
   VOTE_SUCCESS_MSG,
 } from "../../common/consts";
 import { timelockEncrypt, roundAt, mainnetClient, Buffer } from "tlock-js";
-import type {ProposalList, ProposalOption} from "../../common/types";
+import type { ProposalList, ProposalOption } from "../../common/types";
 import "./index.less";
 import fileCoinAbi from "../../common/abi/power-voting.json";
-import {useCurrentTimezone} from "../../common/store";
+import { useCurrentTimezone } from "../../common/store";
 import VoteStatusBtn from "src/components/VoteStatusBtn";
 
 const Vote = () => {
@@ -220,7 +220,7 @@ const Vote = () => {
               <Link to="/home" className="flex items-center">
                 <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
                   <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                        d="m11 17l-5-5m0 0l5-5m-5 5h12"></path>
+                    d="m11 17l-5-5m0 0l5-5m-5 5h12"></path>
                 </svg>
                 Back
               </Link>
@@ -228,28 +228,31 @@ const Vote = () => {
           </button>
         </div>
         <div className="px-3 md:px-0 ">
-          <h1 className="mb-6 text-3xl text-[#313D4F] break-words break-all leading-12" style={{overflowWrap: 'break-word'}}>
+          <h1 className="mb-6 text-3xl text-[#313D4F] break-words break-all leading-12" style={{ overflowWrap: 'break-word' }}>
             {votingData?.name}
           </h1>
           {
             (votingData?.voteStatus || votingData?.voteStatus === 0) &&
-              <div className="flex justify-between mb-6">
-                  <div className="flex items-center justify-between w-full mb-1 sm:mb-0">
-                      <VoteStatusBtn status={votingData.voteStatus}/>
-                    
-                      <div className="flex items-center justify-center">
-                          <img className="w-[20px] h-[20px] rounded-full mr-2" src={img} alt="" />
-                          <a
-                              className="text-[#313D4F]"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              href={href}
-                          >
-                            {votingData?.githubName || EllipsisMiddle({suffixCount: 4, children: votingData?.address})}
-                          </a>
-                      </div>
+            <div className="flex justify-between mb-6">
+              <div className="flex items-center w-full mb-1 sm:mb-0">
+                <VoteStatusBtn status={votingData.voteStatus} />
+
+                <div className="flex items-center justify-center ml-[12px]">
+                  <div className='text-[#4B535B] text-[14px]'>Created by</div>
+                  <div className='ml-[8px] flex items-center justify-center bg-[#F5F5F5] rounded-full h-[32px]'>
+                    <img className="w-[20px] h-[20px] rounded-full mr-[4px]" src={img} alt="" />
+                    <a
+                      className="text-[#313D4F]"
+                      target="_blank"
+                      rel="noreferrer"
+                      href={href}
+                    >
+                      {votingData?.githubName || EllipsisMiddle({ suffixCount: 4, children: votingData?.address })}
+                    </a>
                   </div>
+                </div>
               </div>
+            </div>
           }
           <div className="MDEditor">
             <MDEditor
@@ -265,38 +268,38 @@ const Vote = () => {
           </div>
           {
             votingData?.voteStatus === IN_PROGRESS_STATUS &&
-              <div className='mt-5'>
-                  <div className="border-[#313D4F] mt-6 border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border border-solid">
-                      <div className="group flex h-[57px] !border-[#eeeeee] justify-between items-center border-b px-4 pb-[12px] pt-3 border-solid">
-                          <h4 className="text-xl">
-                              Cast Your Vote
-                          </h4>
-                      </div>
-                      <div className="p-4 text-center">
-                        {
-                          options.map((item: ProposalOption, index: number) => {
-                            return (
-                              <div className="mb-4 space-y-3 leading-10" key={item.name + index} onClick={() => { handleOptionClick(index) }}>
-                                <div
-                                  className={`w-full h-[45px] border-[#eeeeee] ${selectedOptionIndex === index ? 'border-blue-500' : ''} hover:border-blue-500 flex justify-between items-center pl-8 pr-4 md:border border-solid rounded-full cursor-pointer`}
-                                  >
-                                  <div className="text-ellipsis h-[100%] overflow-hidden">{item.name}</div>
-                                  {
-                                    selectedOptionIndex === index &&
-                                      <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-md">
-                                          <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
-                                                strokeWidth="2" d="m5 13l4 4L19 7" />
-                                      </svg>
-                                  }
-                                </div>
-                              </div>
-                            )
-                          })
-                        }
-                          <LoadingButton text='Vote' isFull={true} loading={loading || writeContractPending || transactionLoading} handleClick={startVoting} />
-                      </div>
-                  </div>
+            <div className='mt-5'>
+              <div className="border-[#313D4F] mt-6 border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border border-solid">
+                <div className="group flex h-[57px] !border-[#eeeeee] justify-between items-center border-b px-4 pb-[12px] pt-3 border-solid">
+                  <h4 className="text-xl">
+                    Cast Your Vote
+                  </h4>
+                </div>
+                <div className="p-4 text-center">
+                  {
+                    options.map((item: ProposalOption, index: number) => {
+                      return (
+                        <div className="mb-4 space-y-3 leading-10" key={item.name + index} onClick={() => { handleOptionClick(index) }}>
+                          <div
+                            className={`w-full h-[45px] border-[#eeeeee] ${selectedOptionIndex === index ? 'border-blue-500' : ''} hover:border-blue-500 flex justify-between items-center pl-8 pr-4 md:border border-solid rounded-full cursor-pointer`}
+                          >
+                            <div className="text-ellipsis h-[100%] overflow-hidden">{item.name}</div>
+                            {
+                              selectedOptionIndex === index &&
+                              <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-md">
+                                <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
+                                  strokeWidth="2" d="m5 13l4 4L19 7" />
+                              </svg>
+                            }
+                          </div>
+                        </div>
+                      )
+                    })
+                  }
+                  <LoadingButton text='Vote' isFull={true} loading={loading || writeContractPending || transactionLoading} handleClick={startVoting} />
+                </div>
               </div>
+            </div>
           }
         </div>
       </div>

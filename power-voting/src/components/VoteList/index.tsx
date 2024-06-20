@@ -135,7 +135,6 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
 
     return <div>{totalPercent}</div>;
   }
-
   return (
     <div className="border-y border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border my-12">
       <div className="group flex h-[57px] justify-between rounded-t-none border-b border-skin-border px-6 pb-[12px] pt-3 md:rounded-t-lg">
@@ -204,8 +203,6 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
                           </div>
                         }
                       </div>
-
-
                     </div>
 
                     <div className="flex min-w-[110px] items-center justify-end whitespace-nowrap text-center text-skin-link xs:w-[130px] xs:min-w-[130px] cursor-pointer">
@@ -218,14 +215,14 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
                           footer={(currentData: any) => renderFooter(currentData, item.votes)}
                         />
                       }>
-                        <span>{item.votes}% <InfoCircleOutlined style={{ fontSize: 14 }} /></span>
+                          <span className='text-[14px] text-[#273141]'>{item.votes}% <InfoCircleOutlined style={{ fontSize: 14 }} /></span>
                       </Popover>
                     </div>
 
                     <div className="w-[180px] flex truncate px-2 justify-end text-skin-link">
-                      <div className="w-[80px] text-c truncate text-skin-link" style={{ color: isApprove ? "green" : "red" }}>
+                      <div className="w-[100px] text-c truncate text-skin-link" style={{ color: isApprove ? "green" : "red" }}>
                         {isApprove ? <CheckCircleOutlined style={{ fontSize: 14, marginRight: "4px" }} /> : <CloseCircleOutlined style={{ fontSize: 14, marginRight: "4px" }} />}
-                        {item.optionName}</div>
+                        {isApprove?"Approved":"Rejected"}</div>
                     </div>
                   </div>
                 )
