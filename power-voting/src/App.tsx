@@ -249,17 +249,17 @@ const App: React.FC = () => {
                   placement="bottomLeft"
                   arrow
                 >
-                  <div  className='mr-3 justify-center px-2 h-[40px] text-[#575757] flex items-center border border-solid rounded-xl border-[1px] border-[#eeeeee] bg-[#ffffff] cursor-pointer'>
-                    <button className="ml-2"> FIP Editor Management</button>
+                  <div  className='mr-3 justify-center px-2 h-[40px] text-black flex items-center border border-solid rounded-xl border-[1px] border-[#eeeeee] bg-[#ffffff] cursor-pointer'>
+                    <button className="ml-2 font-semibold"> FIP Editor Management</button>
                   </div>
                 </Dropdown>
               }
-              <div onClick={handleDelegate} className='mr-3 justify-center px-2 h-[40px] text-[#575757] flex items-center border border-solid rounded-xl border-[1px] border-[#eeeeee] bg-[#ffffff] cursor-pointer'>
+              <div onClick={handleDelegate} className='mr-3 justify-center px-2 h-[40px] text-black flex items-center border border-solid rounded-xl border-[1px] border-[#eeeeee] bg-[#ffffff] cursor-pointer'>
                 <img src="/images/github.png" width={"18px"} height={"20px"} />
-                <button className="ml-2"> Connect GitHub</button>
+                <button className="ml-2 font-semibold"> Connect GitHub</button>
               </div>
               <div className="connect flex items-center">
-                <ConnectButton showBalance={false} />
+                <ConnectButton  showBalance={false} />
               </div>
             </div>
             <Modal
