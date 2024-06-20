@@ -207,7 +207,6 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
                     <div className="flex min-w-[110px] items-center justify-end whitespace-nowrap text-center text-skin-link xs:w-[130px] xs:min-w-[130px] cursor-pointer">
                       <Popover content={
                         <Table
-                          scroll={{ y: "false", x: "false" }}
                           rowKey={(record: any) => record.key}
                           dataSource={getPowerData(item)}
                           columns={columns}
