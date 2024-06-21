@@ -201,11 +201,15 @@ func VotingCount(ethClient model.GoEthClient, db db.DataRepo) error {
 					zap.String("tokenPercent", tokenPercent.StringFixed(7)),
 					zap.String("developerPercent", developerPercent.StringFixed(7)))
 
-				votes = spPercent.
-					Add(clientPercent).
-					Add(tokenPercent).
-					Add(developerPercent).
-					Div(decimal.NewFromInt(validOption))
+				if validOption == 0 {
+					votes = decimal.NewFromInt(0)
+				} else {
+					votes = spPercent.
+						Add(clientPercent).
+						Add(tokenPercent).
+						Add(developerPercent).
+						Div(decimal.NewFromInt(validOption))
+				}
 
 				votePower := model.VotePower{
 					HistoryId:               proposal.ProposalId,
