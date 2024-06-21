@@ -278,17 +278,23 @@ const FipEditorRevoke = () => {
     await Promise.all(fipEditorProposalData.map(async (item: any) => {
       try{
         const { result } = item;
-        const url = `https://${result.voterInfoCid}.ipfs.w3s.link/`;
+        const obj = {
+          proposalId: result[0],
+          fipEditorAddress: result[1],
+          voterInfoCid: result[2],
+          voters: result[3],
+        }
+        const url = `https://${obj.voterInfoCid}.ipfs.w3s.link/`;
         const { data } = await axios.get(url);
         const revokeList = fipEditors?.filter((address: string) => address !== result.fipEditorAddress);
         list.push({
-          proposalId: result.proposalId,
-          address: result.fipEditorAddress,
+          proposalId: obj.proposalId,
+          address: obj.fipEditorAddress,
           info: data,
-          voters: result.voters,
-          ratio: `${result.voters?.length} / ${revokeList?.length}`,
+          voters: obj.voters,
+          ratio: `${obj.voters?.length} / ${revokeList?.length}`,
           voteList: revokeList.map((address: string) => {
-            return { address, status: result.voters?.includes(address) ? 'Revoked' : '' }
+            return { address, status: obj.voters?.includes(address) ? 'Revoked' : '' }
           }).sort((a) => (a.status ? -1 : 1))
         });
       }catch(e){
