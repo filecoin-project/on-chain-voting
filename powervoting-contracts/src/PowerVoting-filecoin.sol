@@ -59,7 +59,7 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
     mapping(address => bool) public fipAddressMap;
 
     // fip editor proposal mapping, key: fip editor proposal id, value: fip editor proposal
-    mapping(uint256 => FipEditorProposal) public idToFipEditorProposal;
+    mapping(uint256 => FipEditorProposal) private idToFipEditorProposal;
 
     // proposal id to vote status, outer key: proposal id, inner key: address, value: HasVoted
     mapping(uint256 => HasVoted) private idToHasVoted;
@@ -213,21 +213,12 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
         FipEditorProposal storage proposal = idToFipEditorProposal[id];
 
         // Add the sender to the list of voters for this proposal
-        proposal.voters.push(msg.sender);
+        proposal.voters.add(msg.sender);
         hasVoted.hasVotedAddress[msg.sender] = true;
 
         // Check if all FIP editors have voted
-        if (proposal.voters.length == fipAddressList.length()) {
-            // Add the new FIP editor to the list
-            fipAddressList.add(fipEditorAddress);
-            // Remove the proposal from the approval list
-            approveProposalId.remove(id);
-
-            // Clean up storage
-            delete idToHasVoted[id];
-            delete idToFipEditorProposal[id];
-            fipAddressMap[fipEditorAddress] = true;
-            hasActiveProposal[fipEditorAddress] = false;
+        if (proposal.voters.length() == fipAddressList.length()) {
+            _finalizeProposal(fipEditorAddress, id, true);
         }
     }
 
@@ -259,22 +250,77 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
         FipEditorProposal storage proposal = idToFipEditorProposal[id];
 
         // Add the sender to the list of voters for this proposal
-        proposal.voters.push(msg.sender);
+        proposal.voters.add(msg.sender);
         hasVoted.hasVotedAddress[msg.sender] = true;
 
         // Check if all FIP editors, except the one being revoked, have voted
-        if (proposal.voters.length == fipAddressList.length() - 1) {
-            // Remove the FIP editor from the list
-            fipAddressList.remove(fipEditorAddress);
-            // Remove the proposal ID from the revocation list
-            revokeProposalId.remove(id);
+        if (proposal.voters.length() == fipAddressList.length() - 1) {
+            _finalizeProposal(fipEditorAddress, id, false);
 
-            // Clean up storage
-            delete idToHasVoted[id];
-            delete idToFipEditorProposal[id];
-            fipAddressMap[fipEditorAddress] = false;
-            hasActiveProposal[fipEditorAddress] = false;
+            // Clean up any remaining proposals for this address
+            _cleanupProposals(fipEditorAddress);
         }
+    }
+    
+    /**
+    * @notice Cleans up any remaining proposals for a given FIP editor address.
+    * @param fipEditorAddress The address of the FIP editor whose proposals need to be cleaned up.
+    */
+    function _cleanupProposals(address fipEditorAddress) internal {
+        // Iterate through all approval proposals and remove those related to the given address
+        _cleanupProposalsByType(fipEditorAddress, approveProposalId, true);
+
+        // Iterate through all revocation proposals and remove those related to the given address
+        _cleanupProposalsByType(fipEditorAddress, revokeProposalId, false);
+    }
+
+    /**
+    * @notice Cleans up proposals of a specific type (approval or revocation) related to a given FIP editor address.
+    * @param fipEditorAddress The address of the FIP editor whose proposals need to be cleaned up.
+    * @param proposalSet The set of proposal IDs (either approval or revocation).
+    * @param isApproval True if cleaning up approval proposals, false for revocation proposals.
+    */
+    function _cleanupProposalsByType(address fipEditorAddress, EnumerableSet.UintSet storage proposalSet, bool isApproval) private {
+        uint256[] memory proposalIds = proposalSet.values();
+
+        for (uint256 i = 0; i < proposalIds.length; i++) {
+            uint256 id = proposalIds[i];
+            FipEditorProposal storage proposal = idToFipEditorProposal[id];
+
+            if (proposal.voters.contains(fipEditorAddress)) {
+                proposal.voters.remove(fipEditorAddress);
+                HasVoted storage hasVoted = idToHasVoted[id];
+                hasVoted.hasVotedAddress[fipEditorAddress] = false;
+            }
+            // Finalize the proposal if all FIP editors have voted (for approval) or all except one (for revocation)
+            if ((isApproval && proposal.voters.length() == fipAddressList.length()) ||
+                (!isApproval && proposal.voters.length() == fipAddressList.length() - 1)) {
+                _finalizeProposal(proposal.fipEditorAddress, id, isApproval);
+            }
+        }
+    }
+
+
+    /**
+    * @notice Finalizes the proposal by adding/removing the FIP editor and cleaning up storage.
+    * @param fipEditorAddress The address of the FIP editor.
+    * @param id The ID of the proposal.
+    * @param isApproval True if it's an approval proposal, false for revocation.
+    */
+    function _finalizeProposal(address fipEditorAddress, uint256 id, bool isApproval) private {
+        if (isApproval) {
+            fipAddressList.add(fipEditorAddress);
+            approveProposalId.remove(id);
+            fipAddressMap[fipEditorAddress] = true;
+        } else {
+            fipAddressList.remove(fipEditorAddress);
+            revokeProposalId.remove(id);
+            fipAddressMap[fipEditorAddress] = false;
+        }
+
+        delete idToHasVoted[id];
+        delete idToFipEditorProposal[id];
+        hasActiveProposal[fipEditorAddress] = false;
     }
 
     /**
@@ -290,8 +336,14 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
     * @param id The ID of the proposal.
     * @return The details of the proposal.
     */
-    function getFipEditorProposal(uint256 id) override external view returns (FipEditorProposal memory) {
-        return idToFipEditorProposal[id];
+   function getFipEditorProposal(uint256 id) external view returns (uint256, address, string memory, address[] memory) {
+        FipEditorProposal storage proposal = idToFipEditorProposal[id];
+        return (
+            proposal.proposalId,
+            proposal.fipEditorAddress,
+            proposal.voterInfoCid,
+            proposal.voters.values()
+        );
     }
 
     /**
