@@ -92,6 +92,16 @@ const UcanDelegate = () => {
 
   useEffect(() => {
     if (writeContractSuccess) {
+      
+      // save data to localStorage and set validity period to three minutes
+      const ucanStorageData = JSON.parse(localStorage.getItem('ucanStorage') || '[]');
+      // Calculate expiration time (three minutes from now)
+      const expirationTime = Date.now() + 3 * 60 * 1000;
+      // Push new data (timestamp and address) to the array
+      ucanStorageData.push({ timestamp: expirationTime, address });
+      // Save updated data to localStorage
+      localStorage.setItem('ucanStorage', JSON.stringify(ucanStorageData));
+
       messageApi.open({
         type: 'success',
         content: STORING_DATA_MSG,
@@ -160,14 +170,6 @@ const UcanDelegate = () => {
         cid
       ],
     });
-    // save data to localStorage and set validity period to three minutes
-    const ucanStorageData = JSON.parse(localStorage.getItem('ucanStorage') || '[]');
-    // Calculate expiration time (three minutes from now)
-    const expirationTime = Date.now() + 3 * 60 * 1000;
-    // Push new data (timestamp and address) to the array
-    ucanStorageData.push({ timestamp: expirationTime, address });
-    // Save updated data to localStorage
-    localStorage.setItem('ucanStorage', JSON.stringify(ucanStorageData));
     setLoading(false);
   }
 
