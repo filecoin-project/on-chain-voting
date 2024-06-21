@@ -288,9 +288,9 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
             FipEditorProposal storage proposal = idToFipEditorProposal[id];
 
             if (proposal.voters.contains(fipEditorAddress)) {
-                proposal.voters.remove(fipEditorAddress);
                 HasVoted storage hasVoted = idToHasVoted[id];
                 hasVoted.hasVotedAddress[fipEditorAddress] = false;
+                proposal.voters.remove(fipEditorAddress);
             }
             // Finalize the proposal if all FIP editors have voted (for approval) or all except one (for revocation)
             if ((isApproval && proposal.voters.length() == fipAddressList.length()) ||
