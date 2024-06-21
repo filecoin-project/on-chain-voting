@@ -55,7 +55,7 @@ interface IPowerVoting is IPowerVotingEvent, IPowerVotingError {
     * @param id The ID of the proposal.
     * @return The details of the proposal.
     */
-    function getFipEditorProposal(uint256 id) external returns (FipEditorProposal memory);
+    function getFipEditorProposal(uint256 id) external  returns (uint256, address, string memory, address[] memory);
 
     /**
     * @notice Gets the list of IDs of all approved proposals.
