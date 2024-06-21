@@ -15,6 +15,7 @@
 
 pragma solidity ^0.8.19;
 
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 struct Proposal {
     // proposal cid
@@ -47,6 +48,9 @@ struct VoterInfo {
     string ucanCid;
 }
 
+// Use EnumerableSet library to handle  addresses
+using EnumerableSet for EnumerableSet.AddressSet;
+
 struct FipEditorProposal {
      // Unique identifier for the proposal
     uint256 proposalId;        
@@ -55,7 +59,7 @@ struct FipEditorProposal {
     // CID (Content Identifier) of the voter's information
     string voterInfoCid;        
     // Array containing addresses of voters
-    address[] voters;           
+    EnumerableSet.AddressSet voters;           
 }
 
 struct HasVoted {
