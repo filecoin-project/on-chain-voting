@@ -238,22 +238,27 @@ const FipEditorApprove = () => {
     await Promise.all(fipEditorProposalData.map(async (item: any) => {
       try{
         const { result } = item;
-        const url = `https://${result.voterInfoCid}.ipfs.w3s.link/`;
+        const obj = {
+          proposalId: result[0],
+          fipEditorAddress: result[1],
+          voterInfoCid: result[2],
+          voters: result[3],
+        }
+        const url = `https://${obj.voterInfoCid}.ipfs.w3s.link/`;
         const { data } = await axios.get(url);
         list.push({
-          proposalId: result.proposalId,
-          address: result.fipEditorAddress,
+          proposalId: obj.proposalId,
+          address: obj.fipEditorAddress,
           info: data,
-          voters: result.voters,
-          ratio: `${result.voters?.length} / ${fipEditors?.length}`,
+          voters: obj.voters,
+          ratio: `${obj.voters?.length} / ${fipEditors?.length}`,
           voteList: fipEditors?.map((address: string) => {
-            return { address, status: result.voters?.includes(address) ? 'Approved' : '' }
+            return { address, status: obj.voters?.includes(address) ? 'Approved' : '' }
           }).sort((a) => (a.status ? -1 : 1))
         });
       }catch(e){
         console.log(e)
       }
-    
     }));
     setFipProposalList(list);
     setLoading(false);

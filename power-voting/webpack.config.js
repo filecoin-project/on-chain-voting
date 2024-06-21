@@ -27,7 +27,7 @@ module.exports = {
   },
   devServer: {
     static: path.join(__dirname, 'public'),
-    port: 3001,
+    port: 4001,
     open: true,
     historyApiFallback: true,
     proxy: {

@@ -153,10 +153,11 @@ export const getWeb3IpfsId = async (params: object | string) => {
   const file = new Blob([json]);
   const formData = new FormData();
   formData.append('file', file);
-  const resp = await axios.post(uploadApi,formData,{
-    headers: {
-      'Content-Type': 'multipart/form-data'},
+  const resp = await axios.post(uploadApi,formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
     },
   );
-  return resp.data["data"]["root"]["/"]
+  return resp.data["data"]["root"]["/"];
 }
