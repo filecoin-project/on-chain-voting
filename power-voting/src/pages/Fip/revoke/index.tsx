@@ -19,6 +19,7 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import axios from "axios";
 import {useAccount, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
 import type { BaseError} from "wagmi";
+import "./index.less"
 import {
   CAN_NOT_REVOKE_YOURSELF_MSG,
   HAVE_REVOKED_MSG,
@@ -131,8 +132,8 @@ const FipEditorRevoke = () => {
       ellipsis: { showTitle: false },
       render: (value: string) => {
         return (
-          value ? <Tooltip placement="topLeft" title={value}>
-            {value}
+          value ? <Tooltip  overlayClassName="custom-tooltip" color="#ffffff" placement="topLeft" title={value}>
+           {value}
           </Tooltip> : '-'
         )
       }
