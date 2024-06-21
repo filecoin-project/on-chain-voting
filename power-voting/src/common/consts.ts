@@ -267,7 +267,7 @@ eyJhbGciOiJzZWNwMjU2azEiLCJ0eXBlIjoiSldUIiwidmVyc2lvbiI6IjAuMC4xIn0.eyJpc3MiOiJ0
 
 # II. Cancel authorization
 
-## 1 Create a UCAN signature deauthorized by Filecoin account to Eth account
+## 1. Create a UCAN signature deauthorized by Filecoin account to Eth account
 
 <span style="color:red;">Attention：field act  should be set to del.</span>
 

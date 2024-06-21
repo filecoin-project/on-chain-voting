@@ -139,7 +139,7 @@ const CreateVote = () => {
         setValue("descriptions", result.Descriptions)
         setValue("name", result.Name)
         setValue("time", result.Time.split(OPTION_SPLIT_TAG) ?? [])
-        if(result.Timezone){
+        if (result.Timezone) {
           setValue("timezone", result.Timezone)
         }
         setHasDraft(true)
@@ -326,7 +326,7 @@ const CreateVote = () => {
     }
     setTimeout(() => {
       setDraftSave(false)
-    }, 1500)
+    }, 3000)
   }
 
   const { isLoading: transactionLoading } =
@@ -524,7 +524,11 @@ const CreateVote = () => {
               <div className="flex justify-center rounded items-center text-center  bg-[#EEEEEE] w-[101px] h-[40px] text-[#313D4F] mr-2 cursor-pointer" >Cancel</div>
             </Link>
             <div className='w-full items-center flex justify-end text-center'>
-              <div className="text-[#313D4F] mr-4 cursor-pointer" onClick={saveDraft} >Save Draft</div>
+              <Link to={""}>
+                <div className="text-[#313D4F] mr-4 cursor-pointer" onClick={saveDraft} >
+                  Save Draft
+                </div>
+              </Link>
               <LoadingButton className="create-submit" text='Create' loading={loading || writeContractPending || transactionLoading} />
             </div>
           </div>
