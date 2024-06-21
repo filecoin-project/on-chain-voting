@@ -254,14 +254,14 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
         hasVoted.hasVotedAddress[msg.sender] = true;
 
         // Check if all FIP editors, except the one being revoked, have voted
-        if (proposal.voters.length() == fipAddressList.length() - 1) {
+        if (proposal.voters.length() == fipAddressList.length() - 1 && fipAddressList.length() > 2) {
             _finalizeProposal(fipEditorAddress, id, false);
 
             // Clean up any remaining proposals for this address
             _cleanupProposals(fipEditorAddress);
         }
     }
-    
+
     /**
     * @notice Cleans up any remaining proposals for a given FIP editor address.
     * @param fipEditorAddress The address of the FIP editor whose proposals need to be cleaned up.
@@ -294,7 +294,7 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
             }
             // Finalize the proposal if all FIP editors have voted (for approval) or all except one (for revocation)
             if ((isApproval && proposal.voters.length() == fipAddressList.length()) ||
-                (!isApproval && proposal.voters.length() == fipAddressList.length() - 1)) {
+                (!isApproval && proposal.voters.length() == fipAddressList.length() - 1) && fipAddressList.length() > 2) {
                 _finalizeProposal(proposal.fipEditorAddress, id, isApproval);
             }
         }
