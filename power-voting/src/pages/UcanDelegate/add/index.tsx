@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, {useState, useEffect, useRef} from "react";
-import {Link, useNavigate} from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Table from '../../../components/Table';
 import { message } from 'antd';
-import {useForm, Controller} from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import classNames from 'classnames';
-import {RadioGroup} from '@headlessui/react';
-import type { BaseError} from "wagmi";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSignMessage} from "wagmi";
-import {useConnectModal} from "@rainbow-me/rainbowkit";
+import { RadioGroup } from '@headlessui/react';
+import type { BaseError } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSignMessage } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
   UCAN_JWT_HEADER,
   UCAN_TYPE_FILECOIN,
@@ -31,22 +31,21 @@ import {
   UCAN_GITHUB_STEP_2,
   OPERATION_CANCELED_MSG,
   STORING_DATA_MSG,
-  UCAN_TYPE_GITHUB,
 } from '../../../common/consts';
-import {stringToBase64Url, validateValue, getWeb3IpfsId, getContractAddress} from '../../../utils';
+import { stringToBase64Url, validateValue, getWeb3IpfsId, getContractAddress } from '../../../utils';
 import './index.less';
 import LoadingButton from "../../../components/LoadingButton";
 import fileCoinAbi from "../../../common/abi/power-voting.json";
 
 const UcanDelegate = () => {
-  const {chain, isConnected, address} = useAccount();
+  const { chain, isConnected, address } = useAccount();
   const { signMessageAsync } = useSignMessage();
-  const {openConnectModal} = useConnectModal();
+  const { openConnectModal } = useConnectModal();
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
   const [messageApi, contextHolder] = message.useMessage();
 
-  const [ucanType, setUcanType] = useState(UCAN_TYPE_GITHUB);
+  const [ucanType, setUcanType] = useState(UCAN_TYPE_FILECOIN);
   const [githubSignature, setGithubSignature] = useState('');
   const [githubStep, setGithubStep] = useState(UCAN_GITHUB_STEP_1);
   const [formValue] = useState({
@@ -63,7 +62,7 @@ const UcanDelegate = () => {
     handleSubmit,
     control,
     reset,
-    formState: {errors}
+    formState: { errors }
   } = useForm({
     defaultValues: {
       ...formValue,
@@ -188,7 +187,7 @@ const UcanDelegate = () => {
     const base64Params = stringToBase64Url(JSON.stringify(ucanParams));
     let signature = '';
     try {
-      signature = await signMessageAsync({ message:  `${base64Header}.${base64Params}`})
+      signature = await signMessageAsync({ message: `${base64Header}.${base64Params}` })
     } catch (e) {
       messageApi.open({
         type: 'error',
@@ -215,7 +214,7 @@ const UcanDelegate = () => {
         const signatureParams = {
           iss: address,
           aud,
-          prf:'',
+          prf: '',
           act: 'add',
         }
         // Create a new Web3Provider using the current Ethereum provider
@@ -226,7 +225,7 @@ const UcanDelegate = () => {
         let signature = '';
         try {
           // Sign the concatenated header and params
-          signature = await signMessageAsync({ message:  `${base64Header}.${base64Params}`})
+          signature = await signMessageAsync({ message: `${base64Header}.${base64Params}` })
         } catch (e) {
           messageApi.open({
             type: 'error',
@@ -271,32 +270,32 @@ const UcanDelegate = () => {
               value={item.value}
               className='relative flex items-center cursor-pointer p-4 focus:outline-none'
             >
-              {({active, checked}) => (
+              {({ active, checked }) => (
                 <>
-                        <span
-                          className={classNames(
-                            checked
-                              ? 'bg-[#45B753] border-transparent'
-                              : 'bg-[#212B3B] border-[#38485C]',
-                            active ? 'ring-2 ring-offset-2 ring-[#45B753]' : '',
-                            'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
-                          )}
-                          aria-hidden='true'
-                        >
-                          {(active || checked) && (
-                            <span className='rounded-full bg-white w-1.5 h-1.5'/>
-                          )}
-                        </span>
+                  <span
+                    className={classNames(
+                      checked
+                        ? 'bg-[#45B753] border-transparent'
+                        : 'bg-[#eeeeee] border-transparent]',
+                      active ? 'ring-2 ring-offset-2 ring-[#ffffff]' : '',
+                      'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
+                    )}
+                    aria-hidden='true'
+                  >
+                    {(active || checked) && (
+                      <span className='rounded-full bg-white w-1.5 h-1.5' />
+                    )}
+                  </span>
                   <span className='ml-3'>
-                          <RadioGroup.Label
-                            as='span'
-                            className={
-                              checked ? 'text-white' : 'text-[#8896AA]'
-                            }
-                          >
-                            {item.label}
-                          </RadioGroup.Label>
-                        </span>
+                    <RadioGroup.Label
+                      as='span'
+                      className={
+                        checked ? 'text-[#4B535B]' : 'text-[#8896AA]'
+                      }
+                    >
+                      {item.label}
+                    </RadioGroup.Label>
+                  </span>
                 </>
               )}
             </RadioGroup.Option>
@@ -312,7 +311,7 @@ const UcanDelegate = () => {
           disabled
           value={address}
           placeholder='Your Filecoin address.'
-          className='form-input w-[520px] rounded bg-[#212B3C] border border-[#313D4F] cursor-not-allowed'
+          className='form-input w-[520px] rounded bg-[#ffffff] border border-[#eeeeee] text-[#4B535B] cursor-not-allowed'
         />
       )
     },
@@ -326,10 +325,10 @@ const UcanDelegate = () => {
             control={control}
             render={() => <input
               className={classNames(
-                'form-input w-[520px] rounded bg-[#212B3C] border border-[#313D4F]',
+                'form-input w-[520px] rounded bg-[#ffffff] border border-[#eeeeee] text-[#4B535B]',
                 errors.aud && 'border-red-500 focus:border-red-500'
               )}
-              {...register('aud', {required: true, validate: validateValue})}
+              {...register('aud', { required: true, validate: validateValue })}
             />}
           />
           {errors.aud && (
@@ -349,10 +348,10 @@ const UcanDelegate = () => {
             render={() => <textarea
               placeholder='The full UCAN content (include header, payload and signature) signed by your Filecoin private key.'
               className={classNames(
-                'form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]',
+                'form-input h-[320px] w-full rounded bg-[#ffffff] border border-[#eeeeee] text-[#4B535B]',
                 errors.prf && 'border-red-500 focus:border-red-500'
               )}
-              {...register('prf', {required: true, validate: validateValue})}
+              {...register('prf', { required: true, validate: validateValue })}
             />}
           />
           {errors.prf && (
@@ -364,51 +363,51 @@ const UcanDelegate = () => {
   ];
 
   const githubSignatureList = [
-    // {
-    //   name: 'UCAN Type',
-    //   width: 100,
-    //   hide: false,
-    //   comp: (
-    //     <RadioGroup className='flex' value={ucanType} onChange={handleUcanTypeChange}>
-    //       {[...UCAN_TYPE_FILECOIN_OPTIONS, ...UCAN_TYPE_GITHUB_OPTIONS].map(item => (
-    //         <RadioGroup.Option
-    //           key={item.label}
-    //           value={item.value}
-    //           className='relative flex items-center cursor-pointer p-4 focus:outline-none'
-    //         >
-    //           {({active, checked}) => (
-    //             <>
-    //                     <span
-    //                       className={classNames(
-    //                         checked
-    //                           ? 'bg-[#45B753] border-transparent'
-    //                           : 'bg-[#212B3B] border-[#38485C]',
-    //                         active ? 'ring-2 ring-offset-2 ring-[#45B753]' : '',
-    //                         'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
-    //                       )}
-    //                       aria-hidden='true'
-    //                     >
-    //                       {(active || checked) && (
-    //                         <span className='rounded-full bg-white w-1.5 h-1.5'/>
-    //                       )}
-    //                     </span>
-    //               <span className='ml-3'>
-    //                       <RadioGroup.Label
-    //                         as='span'
-    //                         className={
-    //                           checked ? 'text-white' : 'text-[#8896AA]'
-    //                         }
-    //                       >
-    //                         {item.label}
-    //                       </RadioGroup.Label>
-    //                     </span>
-    //             </>
-    //           )}
-    //         </RadioGroup.Option>
-    //       ))}
-    //     </RadioGroup>
-    //   )
-    // },
+    {
+      name: 'UCAN Type',
+      width: 100,
+      hide: false,
+      comp: (
+        <RadioGroup className='flex' value={ucanType} onChange={handleUcanTypeChange}>
+          {[...UCAN_TYPE_FILECOIN_OPTIONS, ...UCAN_TYPE_GITHUB_OPTIONS].map(item => (
+            <RadioGroup.Option
+              key={item.label}
+              value={item.value}
+              className='relative flex items-center cursor-pointer p-4 focus:outline-none'
+            >
+              {({ active, checked }) => (
+                <>
+                  <span
+                    className={classNames(
+                      checked
+                        ? 'bg-[#45B753] border-transparent'
+                        : 'bg-[#eeeeee] border-transparent]',
+                      active ? 'ring-2 ring-offset-2 ring-[#ffffff]' : '',
+                      'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
+                    )}
+                    aria-hidden='true'
+                  >
+                    {(active || checked) && (
+                      <span className='rounded-full bg-white w-1.5 h-1.5' />
+                    )}
+                  </span>
+                  <span className='ml-3'>
+                    <RadioGroup.Label
+                      as='span'
+                      className={
+                        checked ? 'text-[#4B535B]' : 'text-[#8896AA]'
+                      }
+                    >
+                      {item.label}
+                    </RadioGroup.Label>
+                  </span>
+                </>
+              )}
+            </RadioGroup.Option>
+          ))}
+        </RadioGroup>
+      )
+    },
     {
       name: 'Issuer',
       width: 100,
@@ -434,7 +433,7 @@ const UcanDelegate = () => {
                 'form-input w-[520px] rounded bg-[#FFFFFF] border border-[#EEEEEE] text-[#4B535B]',
                 errors.aud && 'border-red-500 focus:border-red-500'
               )}
-              {...register('aud', {required: true, validate: validateValue})}
+              {...register('aud', { required: true, validate: validateValue })}
             />}
           />
           {errors.aud && (
@@ -470,7 +469,7 @@ const UcanDelegate = () => {
                 'form-input w-full rounded bg-[#ffffff] border border-[#eeeeee] text-black',
                 errors.url && 'border-red-500 focus:border-red-500'
               )}
-              {...register('url', {required: true, validate: validateValue})}
+              {...register('url', { required: true, validate: validateValue })}
             />}
           />
           {errors.url && (
@@ -496,7 +495,7 @@ const UcanDelegate = () => {
           />
 
           <div className='text-center'>
-            <LoadingButton text='Authorize' loading={loading|| writeContractPending || transactionLoading} />
+            <LoadingButton text='Authorize' loading={loading || writeContractPending || transactionLoading} />
           </div>
         </div>
       </form>
@@ -580,7 +579,7 @@ const UcanDelegate = () => {
             <Link to="/home" className="flex items-center">
               <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
                 <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                      d="m11 17l-5-5m0 0l5-5m-5 5h12"></path>
+                  d="m11 17l-5-5m0 0l5-5m-5 5h12"></path>
               </svg>
               Back
             </Link>

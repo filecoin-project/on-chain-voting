@@ -42,7 +42,7 @@ const App: React.FC = () => {
   // Render routes based on URL
   const element = useRoutes(routes);
 
-  const isLanding = false// location.pathname === "/" || element?.props?.match?.route?.path === "*"
+  const isLanding = false;//location.pathname === "/" || element?.props?.match?.route?.path === "*"
   // State variables
   const [expirationTime, setExpirationTime] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
@@ -146,19 +146,18 @@ const App: React.FC = () => {
         });
       }
       else {
-        navigate('/ucanDelegate/add');
         // Process non-GitHub data and navigate to appropriate page
-        // const decodeString = atob(data.split('.')[1]);
-        // const payload = JSON.parse(decodeString);
-        // const { aud, prf } = payload;
-        // navigate('/ucanDelegate/delete', { state: {
-        //     params: {
-        //       isGithubType,
-        //       aud,
-        //       prf
-        //     }
-        //   }
-        // });
+        const decodeString = atob(data.split('.')[1]);
+        const payload = JSON.parse(decodeString);
+        const { aud, prf } = payload;
+        navigate('/ucanDelegate/delete', { state: {
+            params: {
+              isGithubType,
+              aud,
+              prf
+            }
+          }
+        });
       }
     } else {
       // Navigate to add delegate page if no voter information is available
@@ -174,44 +173,73 @@ const App: React.FC = () => {
     navigate(route);
   }
 
-  const items: any =   [
+  const items: any = [
     {
-      key: '3-1',
+      key: 'ucan',
       label: (
         <a
-          onClick={() => { handleJump('/fip-editor/propose') }}
+          onClick={handleDelegate}
         >
-          Propose
+          UCAN Delegates
         </a>
       ),
     },
     {
-      key: '3-2',
+      key: 'minerId',
       label: (
         <a
-          onClick={() => { handleJump('/fip-editor/approve') }}
+          onClick={() => { handleJump('/minerid') }}
         >
-          Approve
-        </a>
-      ),
-    },
-    {
-      key: '3-3',
-      label: (
-        <a
-          onClick={() => { handleJump('/fip-editor/revoke') }}
-        >
-          Revoke
+          Miner IDs Management
         </a>
       ),
     },
   ];
 
+  if (isFipEditorAddress) {
+    items.push({
+      key: '3',
+      label: 'FIP Editor Management',
+      children: [
+        {
+          key: '3-1',
+          label: (
+            <a
+              onClick={() => { handleJump('/fip-editor/propose') }}
+            >
+              Propose
+            </a>
+          ),
+        },
+        {
+          key: '3-2',
+          label: (
+            <a
+              onClick={() => { handleJump('/fip-editor/approve') }}
+            >
+              Approve
+            </a>
+          ),
+        },
+        {
+          key: '3-3',
+          label: (
+            <a
+              onClick={() => { handleJump('/fip-editor/revoke') }}
+            >
+              Revoke
+            </a>
+          ),
+        },
+      ],
+    })
+  }
+
   return (
     <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
       <div className="layout font-body">
         {!isLanding && <header className='h-[96px] bg-[#ffffff]'>
-          <div className='w-full h-[88px] px-20 flex items-center justify-between'>
+          <div className='w-[1000px] h-[88px] mx-auto flex items-center justify-between'>
             <div className='flex items-center'>
               <div className='flex-shrink-0'>
                 <Link to='/'>
@@ -228,7 +256,7 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className='flex items-center'>
-              {/* <Dropdown
+              <Dropdown
                 menu={{
                   items,
                 }}
@@ -240,26 +268,9 @@ const App: React.FC = () => {
                 >
                   Tools
                 </button>
-              </Dropdown> */}
-              {!!isFipEditorAddress &&
-                <Dropdown
-                  menu={{
-                    items,
-                  }}
-                  placement="bottomLeft"
-                  arrow
-                >
-                  <div  className='mr-3 justify-center px-2 h-[40px] text-black flex items-center border border-solid rounded-xl border-[1px] border-[#eeeeee] bg-[#ffffff] cursor-pointer'>
-                    <button className="ml-2 font-semibold"> FIP Editor Management</button>
-                  </div>
-                </Dropdown>
-              }
-              <div onClick={handleDelegate} className='mr-3 justify-center px-2 h-[40px] text-black flex items-center border border-solid rounded-xl border-[1px] border-[#eeeeee] bg-[#ffffff] cursor-pointer'>
-                <img src="/images/github.png" width={"18px"} height={"20px"} />
-                <button className="ml-2 font-semibold"> Connect GitHub</button>
-              </div>
+              </Dropdown>
               <div className="connect flex items-center">
-                <ConnectButton  showBalance={false} />
+                <ConnectButton showBalance={false} />
               </div>
             </div>
             <Modal
