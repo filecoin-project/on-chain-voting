@@ -266,18 +266,17 @@ const Home = () => {
             count: proposalItem?.votes ? Number(proposalItem.votes) : 0,
           };
         });
+        
 
         let subStatus = 0
         if (proposalStatus == COMPLETED_STATUS) {
-          const maxResult = option?.reduce((prev: any, current: any) => {
-            return (prev.count > current.count) ? prev : current;
-          });
-          if (maxResult.count > 0) {
-            if (maxResult.name === VOTE_OPTIONS[0]) {
-              subStatus = PASSED_STATUS
-            } else if (maxResult.name === VOTE_OPTIONS[1]) {
-              subStatus = REJECTED_STATUS
-            }
+          const passedOption = option?.find((v: any) => { return v.name === VOTE_OPTIONS[0] })
+          const rejectOption = option?.find((v: any) => {return v.name === VOTE_OPTIONS[1] })
+          console.log(passedOption,rejectOption)
+          if (passedOption?.count > rejectOption?.count) {
+            subStatus = PASSED_STATUS
+          } else {
+            subStatus = REJECTED_STATUS
           }
         }
         return {
