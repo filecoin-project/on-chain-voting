@@ -286,7 +286,7 @@ const FipEditorRevoke = () => {
         }
         const url = `https://${obj.voterInfoCid}.ipfs.w3s.link/`;
         const { data } = await axios.get(url);
-        const revokeList = fipEditors?.filter((address: string) => address !== result.fipEditorAddress);
+        const revokeList = fipEditors?.filter((address: string) => address !== obj.fipEditorAddress);
         list.push({
           proposalId: obj.proposalId,
           address: obj.fipEditorAddress,
