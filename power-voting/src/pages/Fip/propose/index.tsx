@@ -195,9 +195,9 @@ const FipEditorPropose = () => {
                         <span
                           className={classNames(
                             checked
-                              ? 'bg-[#45B753] border-transparent'
-                              : 'bg-[#212B3B] border-[#38485C]',
-                            active ? 'ring-2 ring-offset-2 ring-[#45B753]' : '',
+                            ? 'bg-[#45B753] border-transparent'
+                        : 'bg-[#eeeeee] border-transparent]',
+                      active ? 'ring-2 ring-offset-2 ring-[#ffffff]' : '',
                             'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
                           )}
                           aria-hidden='true'
@@ -230,9 +230,9 @@ const FipEditorPropose = () => {
                         <span
                           className={classNames(
                             checked
-                              ? 'bg-[#45B753] border-transparent'
-                              : 'bg-[#212B3B] border-[#38485C]',
-                            active ? 'ring-2 ring-offset-2 ring-[#45B753]' : '',
+                            ? 'bg-[#45B753] border-transparent'
+                            : 'bg-[#eeeeee] border-transparent]',
+                          active ? 'ring-2 ring-offset-2 ring-[#ffffff]' : '',
                             'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
                           )}
                           aria-hidden='true'

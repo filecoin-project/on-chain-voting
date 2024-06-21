@@ -14,6 +14,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
+import { RadioGroup } from '@headlessui/react';
 import { message } from 'antd';
 import Table from '../../../components/Table';
 import { useForm, Controller } from 'react-hook-form';
@@ -26,6 +27,8 @@ import {
   UCAN_GITHUB_STEP_2,
   UCAN_JWT_HEADER,
   STORING_DATA_MSG, OPERATION_CANCELED_MSG,
+  UCAN_TYPE_FILECOIN_OPTIONS,
+  UCAN_TYPE_GITHUB_OPTIONS,
 } from '../../../common/consts';
 import './index.less';
 import { stringToBase64Url, validateValue, getWeb3IpfsId, getContractAddress } from "../../../utils";
@@ -117,19 +120,19 @@ const UcanDelegate = () => {
   }, [error]);
 
   const onSubmit = (values: any, githubStep?: number) => {
-    switch (githubStep) {
-      case UCAN_GITHUB_STEP_1:
-        createSignature();
-        break;
-      case UCAN_GITHUB_STEP_2:
-        deAuthorizeGithubUcan(values);
-        break;
+
+    if (params?.isGithubType) {
+      switch (githubStep) {
+        case UCAN_GITHUB_STEP_1:
+          createSignature();
+          break;
+        case UCAN_GITHUB_STEP_2:
+          deAuthorizeGithubUcan(values);
+          break;
+      }
+    } else {
+      deAuthorizeFilecoinUcan(values);
     }
-    // if (params?.isGithubType) {
-     
-    // } else {
-    //   deAuthorizeFilecoinUcan(values);
-    // }
   }
 
   const setUcan = async (ucan: string) => {
@@ -149,45 +152,45 @@ const UcanDelegate = () => {
    * deAuthorize FileCoin UCAN
    * @param values
    */
-  // const deAuthorizeFilecoinUcan = async (values: any) => {
-  //   setLoading(true);
-  //   const { aud } = params;
-  //   const { prf } = values;
-  //   // Check if 'aud' or 'prf' is missing
-  //   if (!aud || !prf) {
-  //     return;
-  //   }
+  const deAuthorizeFilecoinUcan = async (values: any) => {
+    setLoading(true);
+    const { aud } = params;
+    const { prf } = values;
+    // Check if 'aud' or 'prf' is missing
+    if (!aud || !prf) {
+      return;
+    }
 
-  //   // Define UCAN parameters
-  //   const ucanParams = {
-  //     iss: address,
-  //     aud,
-  //     prf,
-  //     act: 'del',
-  //   }
+    // Define UCAN parameters
+    const ucanParams = {
+      iss: address,
+      aud,
+      prf,
+      act: 'del',
+    }
 
-  //   // Convert UCAN JWT header to base64
-  //   const base64Header = stringToBase64Url(JSON.stringify(UCAN_JWT_HEADER));
-  //   // Convert UCAN parameters to base64
-  //   const base64Params = stringToBase64Url(JSON.stringify(ucanParams));
-  //   let signature = '';
-  //   try {
-  //     // Sign the message using the signer
-  //     signature = await signMessageAsync({ message: `${base64Header}.${base64Params}` })
-  //   } catch (e) {
-  //     messageApi.open({
-  //       type: 'error',
-  //       content: OPERATION_CANCELED_MSG,
-  //     });
-  //     setLoading(false);
-  //     return;
-  //   }
-  //   // Convert signature to base64
-  //   const base64Signature = stringToBase64Url(signature);
-  //   // Concatenate base64-encoded header, parameters, and signature to form the UCAN
-  //   const ucan = `${base64Header}.${base64Params}.${base64Signature}`;
-  //   setUcan(ucan);
-  // }
+    // Convert UCAN JWT header to base64
+    const base64Header = stringToBase64Url(JSON.stringify(UCAN_JWT_HEADER));
+    // Convert UCAN parameters to base64
+    const base64Params = stringToBase64Url(JSON.stringify(ucanParams));
+    let signature = '';
+    try {
+      // Sign the message using the signer
+      signature = await signMessageAsync({ message: `${base64Header}.${base64Params}` })
+    } catch (e) {
+      messageApi.open({
+        type: 'error',
+        content: OPERATION_CANCELED_MSG,
+      });
+      setLoading(false);
+      return;
+    }
+    // Convert signature to base64
+    const base64Signature = stringToBase64Url(signature);
+    // Concatenate base64-encoded header, parameters, and signature to form the UCAN
+    const ucan = `${base64Header}.${base64Params}.${base64Signature}`;
+    setUcan(ucan);
+  }
 
   const createSignature = async () => {
     setLoading(true);
@@ -244,125 +247,125 @@ const UcanDelegate = () => {
     setUcan(url);
   }
 
-  // const filecoinAuthorizeList = [
-  //   {
-  //     name: 'UCAN Type',
-  //     width: 100,
-  //     hide: false,
-  //     comp: (
-  //       <RadioGroup className='flex'>
-  //         {UCAN_TYPE_FILECOIN_OPTIONS.map(item => (
-  //           <RadioGroup.Option
-  //             key={item.label}
-  //             value={item.value}
-  //             className='relative flex items-center cursor-pointer p-4 focus:outline-none'
-  //           >
-  //             {() => (
-  //               <>
-  //                 <span
-  //                   className='bg-[#45B753] border-transparent mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
-  //                   aria-hidden='true'
-  //                 >
-  //                   <span className='rounded-full bg-white w-1.5 h-1.5' />
-  //                 </span>
-  //                 <span className='ml-3'>
-  //                   <RadioGroup.Label
-  //                     as='span'
-  //                     className='text-white'
-  //                   >
-  //                     {item.label}
-  //                   </RadioGroup.Label>
-  //                 </span>
-  //               </>
-  //             )}
-  //           </RadioGroup.Option>
-  //         ))}
-  //       </RadioGroup>
-  //     )
-  //   },
-  //   {
-  //     name: 'Issuer',
-  //     width: 100,
-  //     comp: (
-  //       <input
-  //         disabled
-  //         value={address}
-  //         className='form-input w-[520px] rounded bg-[#212B3C] border border-[#313D4F] cursor-not-allowed'
-  //       />
-  //     )
-  //   },
-  //   {
-  //     name: 'Audience',
-  //     width: 100,
-  //     comp: (
-  //       <input
-  //         disabled
-  //         className='form-input w-[520px] rounded bg-[#212B3C] border border-[#313D4F] cursor-not-allowed'
-  //         value={params?.aud || ''}
-  //       />
-  //     )
-  //   },
-  //   {
-  //     name: 'Proof',
-  //     width: 100,
-  //     comp: (
-  //       <>
-  //         <Controller
-  //           name="prf"
-  //           control={control}
-  //           render={() => <textarea
-  //             placeholder='The full UCAN content (include header, payload and signature) signed by your Filecoin private key.'
-  //             className={classNames(
-  //               'form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]',
-  //               errors.prf && 'border-red-500 focus:border-red-500'
-  //             )}
-  //             {...register('prf', { required: true, validate: validateValue })}
-  //           />}
-  //         />
-  //         {errors.prf && (
-  //           <p className='text-red-500 mt-1'>Proof is required</p>
-  //         )}
-  //       </>
-  //     )
-  //   },
-  // ];
+  const filecoinAuthorizeList = [
+    {
+      name: 'UCAN Type',
+      width: 100,
+      hide: false,
+      comp: (
+        <RadioGroup className='flex'>
+          {UCAN_TYPE_FILECOIN_OPTIONS.map(item => (
+            <RadioGroup.Option
+              key={item.label}
+              value={item.value}
+              className='relative flex items-center cursor-pointer p-4 focus:outline-none'
+            >
+              {() => (
+                <>
+                  <span
+                    className='bg-[#45B753] border-transparent mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
+                    aria-hidden='true'
+                  >
+                    <span className='rounded-full bg-white w-1.5 h-1.5' />
+                  </span>
+                  <span className='ml-3'>
+                    <RadioGroup.Label
+                      as='span'
+                      className='text-[#4B535B]'
+                    >
+                      {item.label}
+                    </RadioGroup.Label>
+                  </span>
+                </>
+              )}
+            </RadioGroup.Option>
+          ))}
+        </RadioGroup>
+      )
+    },
+    {
+      name: 'Issuer',
+      width: 100,
+      comp: (
+        <input
+          disabled
+          value={address}
+          className='form-input w-[520px] rounded bg-[#ffffff] border border-[#eeeeee] text-[#4B535B] cursor-not-allowed'
+        />
+      )
+    },
+    {
+      name: 'Audience',
+      width: 100,
+      comp: (
+        <input
+          disabled
+          className='form-input w-[520px] rounded bg-[#ffffff] border border-[#eeeeee] text-[#4B535B] cursor-not-allowed'
+          value={params?.aud || ''}
+        />
+      )
+    },
+    {
+      name: 'Proof',
+      width: 100,
+      comp: (
+        <>
+          <Controller
+            name="prf"
+            control={control}
+            render={() => <textarea
+              placeholder='The full UCAN content (include header, payload and signature) signed by your Filecoin private key.'
+              className={classNames(
+                'form-input h-[320px] w-full rounded bg-[#ffffff] border border-[#eeeeee] text-[#4B535B]',
+                errors.prf && 'border-red-500 focus:border-red-500'
+              )}
+              {...register('prf', { required: true, validate: validateValue })}
+            />}
+          />
+          {errors.prf && (
+            <p className='text-red-500 mt-1'>Proof is required</p>
+          )}
+        </>
+      )
+    },
+  ];
 
   const githubSignatureList = [
-    // {
-    //   name: 'UCAN Type',
-    //   width: 100,
-    //   hide: false,
-    //   comp: (
-    //     <RadioGroup>
-    //       {UCAN_TYPE_GITHUB_OPTIONS.map(item => (
-    //         <RadioGroup.Option
-    //           key={item.label}
-    //           value={item.value}
-    //           className='relative flex items-center cursor-pointer p-4 focus:outline-none'
-    //         >
-    //           {() => (
-    //             <>
-    //               <span
-    //                 className='bg-[#45B753] border-transparent mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
-    //                 aria-hidden='true'
-    //               >
-    //                 <span className='rounded-full bg-white w-1.5 h-1.5' />
-    //               </span>
-    //               <span className='ml-3'>
-    //                 <RadioGroup.Label
-    //                   as='span'
-    //                   className='text-white'
-    //                 >
-    //                   {item.label}
-    //                 </RadioGroup.Label>
-    //               </span>
-    //             </>
-    //           )}
-    //         </RadioGroup.Option>
-    //       ))}
-    //     </RadioGroup>
-    //   )
-    // },
+    {
+      name: 'UCAN Type',
+      width: 100,
+      hide: false,
+      comp: (
+        <RadioGroup>
+          {UCAN_TYPE_GITHUB_OPTIONS.map(item => (
+            <RadioGroup.Option
+              key={item.label}
+              value={item.value}
+              className='relative flex items-center cursor-pointer p-4 focus:outline-none'
+            >
+              {() => (
+                <>
+                  <span
+                    className='bg-[#45B753] border-transparent mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
+                    aria-hidden='true'
+                  >
+                    <span className='rounded-full bg-white w-1.5 h-1.5' />
+                  </span>
+                  <span className='ml-3'>
+                    <RadioGroup.Label
+                      as='span'
+                      className='text-[#4B535B]'
+                    >
+                      {item.label}
+                    </RadioGroup.Label>
+                  </span>
+                </>
+              )}
+            </RadioGroup.Option>
+          ))}
+        </RadioGroup>
+      )
+    },
     {
       name: 'Issuer',
       width: 100,
@@ -380,7 +383,7 @@ const UcanDelegate = () => {
       comp: (
         <input
           disabled
-          className='form-input w-[520px] rounded bg-[#ffffff] border border-[#eeeeee] text-black cursor-not-allowed'
+          className='form-input w-[520px] rounded bg-[#ffffff] border border-[#eeeeee] text-[#4B535B] cursor-not-allowed'
           value={params?.aud || ''}
         />
       )
@@ -423,27 +426,27 @@ const UcanDelegate = () => {
     },
   ];
 
-  // const renderFilecoinDeauthorize = () => {
-  //   return (
-  //     <form onSubmit={handleSubmit(value => { onSubmit(value) })}>
-  //       <div className='flow-root space-y-8'>
-  //         <Table
-  //           title='UCAN Delegates (Deauthorize)'
-  //           link={{
-  //             type: 'filecoin',
-  //             action: 'deAuthorize',
-  //             href: '/ucanDelegate/help'
-  //           }}
-  //           list={filecoinAuthorizeList}
-  //         />
+  const renderFilecoinDeauthorize = () => {
+    return (
+      <form onSubmit={handleSubmit(value => { onSubmit(value) })}>
+        <div className='flow-root space-y-8'>
+          <Table
+            title='UCAN Delegates (Deauthorize)'
+            link={{
+              type: 'filecoin',
+              action: 'deAuthorize',
+              href: '/ucanDelegate/help'
+            }}
+            list={filecoinAuthorizeList}
+          />
 
-  //         <div className='text-center'>
-  //           <LoadingButton className='!bg-red-500 !hover:bg-red-700' text='Deauthorize' loading={loading || writeContractPending || transactionLoading} />
-  //         </div>
-  //       </div>
-  //     </form>
-  //   )
-  // }
+          <div className='text-center'>
+            <LoadingButton className='!bg-red-500 !hover:bg-red-700' text='Deauthorize' loading={loading || writeContractPending || transactionLoading} />
+          </div>
+        </div>
+      </form>
+    )
+  }
 
   const renderGithubSignature = () => {
     return (
@@ -487,18 +490,18 @@ const UcanDelegate = () => {
   }
 
   const renderForm = () => {
-    switch (githubStep) {
-      case UCAN_GITHUB_STEP_1:
-        return renderGithubSignature();
-      case UCAN_GITHUB_STEP_2:
-        return renderGithubDeauthorize()
+
+    if (params?.isGithubType) {
+      switch (githubStep) {
+        case UCAN_GITHUB_STEP_1:
+          return renderGithubSignature();
+        case UCAN_GITHUB_STEP_2:
+          return renderGithubDeauthorize()
+      }
+      return renderFilecoinDeauthorize();
+    } else {
+      return renderFilecoinDeauthorize();
     }
-    // if (params?.isGithubType) {
-     
-    //   return renderFilecoinDeauthorize();
-    // } else {
-    //   return renderFilecoinDeauthorize();
-    // }
   }
 
   return (

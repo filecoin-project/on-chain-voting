@@ -29,7 +29,6 @@ import EllipsisMiddle from "../../../components/EllipsisMiddle";
 import {useFipEditors, useApproveProposalId, useFipEditorProposalDataSet, useCheckFipEditorAddress} from "../../../common/hooks";
 import fileCoinAbi from "../../../common/abi/power-voting.json";
 import {getContractAddress} from "../../../utils";
-
 const FipEditorApprove = () => {
   const {isConnected, address, chain} = useAccount();
   const chainId = chain?.id || 0;
@@ -123,7 +122,7 @@ const FipEditorApprove = () => {
       }
     },
     {
-      title: 'Info',
+      title: <div><div>Info</div></div>,
       dataIndex: 'info',
       key: 'info',
       ellipsis: { showTitle: false },

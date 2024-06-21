@@ -125,7 +125,7 @@ const FipEditorRevoke = () => {
       }
     },
     {
-      title: 'Info',
+      title: <div><div>Info</div></div>,
       dataIndex: 'info',
       key: 'info',
       ellipsis: { showTitle: false },
