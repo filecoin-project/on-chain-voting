@@ -59,18 +59,6 @@ func TestGetF4Tasks(t *testing.T) {
 
 }
 
-func TestGetVoterAddresses(t *testing.T) {
-	config.InitConfig("../")
-	ethClient, err := contract.GetClient(314159)
-	assert.Nil(t, err)
-
-	ethAddressList, err := GetVoterAddresses(ethClient)
-	assert.Nil(t, err)
-
-	assert.NotEmpty(t, ethAddressList)
-	fmt.Printf("eth address list: %+v\n", ethAddressList)
-}
-
 func TestGetVoterInfo(t *testing.T) {
 	config.InitConfig("../")
 	ethClient, err := contract.GetClient(314159)

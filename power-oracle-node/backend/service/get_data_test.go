@@ -17,37 +17,10 @@ package service
 import (
 	"backend/config"
 	"backend/contract"
-	"backend/utils"
-	"fmt"
 	"testing"
 
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestGetWalletBalance(t *testing.T) {
-	var err error
-	config.InitConfig("../")
-	contract.GoEthClient, err = contract.GetClient(314159)
-	if err != nil {
-		t.Error(err)
-	}
-	contract.LotusRpcClient = utils.NewClient(contract.GoEthClient.Rpc)
-
-	res, err := GetWalletBalance("t1wa4gvyeek4oh5zg375oo6lwhcmdwgxws5rgslyy", contract.LotusRpcClient)
-	assert.Nil(t, err)
-
-	expected, err := decimal.NewFromString("49999999118307566058")
-	assert.Nil(t, err)
-
-	assert.Equal(t, res, expected.BigInt())
-
-	// test if addr not exist
-	_, err = GetWalletBalance("", contract.LotusRpcClient)
-	assert.NotNil(t, err)
-
-	fmt.Println(res)
-}
 
 func TestGetUcanIpfs(t *testing.T) {
 	var err error

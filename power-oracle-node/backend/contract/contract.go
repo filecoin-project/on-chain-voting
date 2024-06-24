@@ -24,7 +24,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ybbus/jsonrpc/v3"
 	"go.uber.org/zap"
 	"math/big"
 	"os"
@@ -35,8 +34,7 @@ var (
 	lock        sync.Mutex
 	instanceMap map[int64]models.GoEthClient
 
-	LotusRpcClient jsonrpc.RPCClient
-	GoEthClient    models.GoEthClient
+	GoEthClient models.GoEthClient
 )
 
 func init() {
@@ -129,68 +127,13 @@ func getGoEthClient(clientConfig models.ClientConfig) (models.GoEthClient, error
 
 // TaskCallbackContract interacts with the Oracle smart contract by executing a callback function.
 // It prepares and sends a transaction to the Ethereum network to update task information.
-func TaskCallbackContract(voterInfo models.VoterInfo, taskId big.Int, power models.Power, ethClient models.GoEthClient) error {
+func TaskCallbackContract(voterInfo models.VoterInfo, taskId big.Int, ethClient models.GoEthClient) error {
 	lock.Lock()
 	defer lock.Unlock()
 
 	var data []byte
 	var err error
-	data, err = ethClient.Abi.Pack("taskCallback", voterInfo, &taskId, power)
-	if err != nil {
-		zap.L().Error("contract abi pack error", zap.Error(err))
-		return err
-	}
-
-	nonce, err := ethClient.Client.PendingNonceAt(context.Background(), ethClient.WalletAddress)
-	if err != nil {
-		zap.L().Error("pending nonce at abi  pack error", zap.Error(err))
-		return err
-	}
-
-	gasPrice, err := ethClient.Client.SuggestGasPrice(context.Background())
-	if err != nil {
-		zap.L().Error("client suggest gas price  error", zap.Error(err))
-		return err
-	}
-	zap.L().Info("nonce", zap.Uint64("nonce", nonce))
-	zap.L().Info("gas price", zap.String("gas price", gasPrice.String()))
-
-	tx := types.NewTx(&types.DynamicFeeTx{
-		ChainID:   ethClient.ChainID,
-		Nonce:     nonce,
-		GasTipCap: gasPrice,
-		GasFeeCap: gasPrice,
-		Gas:       ethClient.GasLimit,
-		To:        &ethClient.ContractAddress,
-		Value:     ethClient.Amount,
-		Data:      data,
-	})
-
-	signedTx, err := types.SignTx(tx, types.LatestSignerForChainID(ethClient.ChainID), ethClient.PrivateKey)
-	if err != nil {
-		zap.L().Error("types  sign tx  error", zap.Error(err))
-		return err
-	}
-
-	err = ethClient.Client.SendTransaction(context.Background(), signedTx)
-	if err != nil {
-		zap.L().Error("client  send transaction  error", zap.Error(err))
-		return err
-	}
-
-	zap.L().Info(fmt.Sprintf("net work: %s, transaction id: %s", ethClient.Name, signedTx.Hash().Hex()))
-
-	return nil
-}
-
-// SavePower sends a transaction to the Oracle smart contract to save power information associated with an address.
-func SavePower(address common.Address, power models.Power, ethClient models.GoEthClient) error {
-	lock.Lock()
-	defer lock.Unlock()
-
-	var data []byte
-	var err error
-	data, err = ethClient.Abi.Pack("savePower", address, power)
+	data, err = ethClient.Abi.Pack("taskCallback", voterInfo, &taskId)
 	if err != nil {
 		zap.L().Error("contract abi pack error", zap.Error(err))
 		return err

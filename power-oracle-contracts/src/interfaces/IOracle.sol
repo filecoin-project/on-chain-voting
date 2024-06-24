@@ -83,16 +83,8 @@ interface IOracle is IOracleError {
      * @notice Callback function for updating task information.
      * @param voterInfoParam Voter information containing the Ethereum address and other details.
      * @param taskId The ID of the task being updated.
-     * @param power Power information associated with the task.
      */
-    function taskCallback(VoterInfo calldata voterInfoParam, uint256 taskId, Power calldata power) external;
-
-    /**
-     * @notice Retrieves the power information for a specific voter and day.
-     * @param voterAddress Address of the voter.
-     * @param id ID of the day for which power information is requested.
-     */
-    function getPower(address voterAddress, uint256 id) external returns(Power memory);
+    function taskCallback(VoterInfo calldata voterInfoParam, uint256 taskId) external;
 
     /**
      * @notice Updates the node allow list by adding or removing a node.
@@ -118,12 +110,5 @@ interface IOracle is IOracleError {
      * @param voter The address of the voter.
      */
     function getVoterInfo(address voter) external view returns(VoterInfo memory);
-
-    /**
-     * @notice Saves the power information associated with a voter.
-     * @param voterAddress The address of the voter.
-     * @param powerParam The power information to be saved.
-     */
-    function savePower(address voterAddress, Power calldata powerParam) external;
 
 }
