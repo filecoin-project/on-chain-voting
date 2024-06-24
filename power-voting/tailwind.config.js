@@ -5,7 +5,13 @@ module.exports = {
     fontFamily: {
       'body': ['Calibre', '-apple-system', 'BlinkMacSystemFont', 'Helvetica', 'Arial', 'sans-serif', 'Apple Color Emoji'],
     },
-    extend: {},
+    extend: {
+      colors: {
+        skin: {
+          'block-bg': '#ffffff', // set bg color
+        },
+      },
+    },
     listStyleType: {
       'none': 'none'
     },

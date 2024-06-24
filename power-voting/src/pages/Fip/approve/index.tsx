@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, {useState, useEffect, useRef} from "react";
-import {Link, useNavigate} from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { message, Popover, Table, Tooltip, Popconfirm, Button, Row, Pagination } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import axios from "axios";
-import {useAccount, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
-import type { BaseError} from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import type { BaseError } from "wagmi";
+import "./index.less"
 import {
   HAVE_APPROVED_MSG,
   STORING_DATA_MSG,
@@ -26,11 +27,11 @@ import {
 } from "../../../common/consts";
 import Loading from "../../../components/Loading";
 import EllipsisMiddle from "../../../components/EllipsisMiddle";
-import {useFipEditors, useApproveProposalId, useFipEditorProposalDataSet, useCheckFipEditorAddress} from "../../../common/hooks";
+import { useFipEditors, useApproveProposalId, useFipEditorProposalDataSet, useCheckFipEditorAddress } from "../../../common/hooks";
 import fileCoinAbi from "../../../common/abi/power-voting.json";
-import {getContractAddress} from "../../../utils";
+import { getContractAddress } from "../../../utils";
 const FipEditorApprove = () => {
-  const {isConnected, address, chain} = useAccount();
+  const { isConnected, address, chain } = useAccount();
   const chainId = chain?.id || 0;
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
@@ -128,7 +129,7 @@ const FipEditorApprove = () => {
       ellipsis: { showTitle: false },
       render: (value: string) => {
         return (
-          value ? <Tooltip placement="topLeft" title={value}>
+          value ? <Tooltip overlayClassName="custom-tooltip" color="#ffffff" placement="topLeft" title={value}>
             {value}
           </Tooltip> : '-'
         )
@@ -217,7 +218,7 @@ const FipEditorApprove = () => {
     if (isConnected && !loading && !getApproveProposalLoading && !getFipEditorProposalIdLoading) {
       initState();
     }
-  }, [chain,  page, address]);
+  }, [chain, page, address]);
 
   useEffect(() => {
     if (writeContractSuccess) {
@@ -235,7 +236,7 @@ const FipEditorApprove = () => {
     setLoading(true);
     const list: any = [];
     await Promise.all(fipEditorProposalData.map(async (item: any) => {
-      try{
+      try {
         const { result } = item;
         const obj = {
           proposalId: result[0],
@@ -255,7 +256,7 @@ const FipEditorApprove = () => {
             return { address, status: obj.voters?.includes(address) ? 'Approved' : '' }
           }).sort((a) => (a.status ? -1 : 1))
         });
-      }catch(e){
+      } catch (e) {
         console.log(e)
       }
     }));
@@ -295,7 +296,7 @@ const FipEditorApprove = () => {
           <Link to="/home" className="flex items-center">
             <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
               <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                    d="m11 17l-5-5m0 0l5-5m-5 5h12" />
+                d="m11 17l-5-5m0 0l5-5m-5 5h12" />
             </svg>
             Back
           </Link>
@@ -316,15 +317,15 @@ const FipEditorApprove = () => {
             />
             {
               !!approveProposalId?.length && <Row justify='end'>
-                    <Pagination
-                        simple
-                        showSizeChanger={false}
-                        current={page}
-                        pageSize={pageSize}
-                        total={approveProposalId.length}
-                        onChange={handlePageChange}
-                    />
-                </Row>
+                <Pagination
+                  simple
+                  showSizeChanger={false}
+                  current={page}
+                  pageSize={pageSize}
+                  total={approveProposalId.length}
+                  onChange={handlePageChange}
+                />
+              </Row>
             }
           </div>
         </div>

@@ -356,7 +356,6 @@ const CreateVote = () => {
         const length = refList.length ?? 0
         const currentIndex = refList.findIndex(ref => ref === document.activeElement);
         inputRefs.current[(currentIndex + 1) % length]?.focus();
-        console.log(currentIndex)
         event.preventDefault();
       }
     };
