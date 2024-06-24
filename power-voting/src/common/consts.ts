@@ -498,7 +498,7 @@ export const DUPLICATED_MINER_ID_MSG = 'Your miner ID is duplicated!';
 export const NOT_FIP_EDITOR_MSG = 'Please select a FIP Editor to create proposals!';
 export const NO_FIP_EDITOR_APPROVE_ADDRESS_MSG = 'Please input an address!';
 export const NO_FIP_EDITOR_REVOKE_ADDRESS_MSG = 'Please select an address!';
-export const NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG = 'There must be more than two FIP editors to ';
+export const NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG = 'There must be more than two FIP editors to revoke';
 export const FIP_ALREADY_EXECUTE_MSG="Address has an active proposal "
 export const FIP_APPROVE_SELF_MSG="Cannot propose to self"
 
