@@ -8,7 +8,7 @@ module.exports = {
     extend: {
       colors: {
         skin: {
-          'block-bg': '#ffffff', // 设置自定义背景颜色
+          'block-bg': '#ffffff', // set bg color
         },
       },
     },
