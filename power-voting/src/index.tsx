@@ -31,7 +31,7 @@ import App from "./App";
 const queryClient = new QueryClient();
 
 const filecoinCalibrationChain = {
-  id: 314_159,
+  id: 314159,
   name: 'Filecoin Calibration',
   nativeCurrency: {
     decimals: 18,
@@ -44,7 +44,7 @@ const filecoinCalibrationChain = {
   blockExplorers: {
     default: {
       name: 'filfox',
-      url: 'https://calibration.filfox.info/zh',
+      url: 'https://calibration.filfox.info/en',
     },
   },
   testnet: true,
