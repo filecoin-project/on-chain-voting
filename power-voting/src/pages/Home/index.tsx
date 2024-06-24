@@ -52,7 +52,6 @@ const Home = () => {
   const navigate = useNavigate();
   const { chain, address, isConnected } = useAccount();
   const chainId = chain?.id || 0;
-  console.log("home", chainId)
 
   const { openConnectModal } = useConnectModal();
 
@@ -272,7 +271,6 @@ const Home = () => {
         if (proposalStatus == COMPLETED_STATUS) {
           const passedOption = option?.find((v: any) => { return v.name === VOTE_OPTIONS[0] })
           const rejectOption = option?.find((v: any) => {return v.name === VOTE_OPTIONS[1] })
-          console.log(passedOption,rejectOption)
           if (passedOption?.count > rejectOption?.count) {
             subStatus = PASSED_STATUS
           } else {
