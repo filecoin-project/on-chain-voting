@@ -12,28 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, {useState, useEffect, useRef} from "react";
-import {message} from "antd";
-import {Link, useNavigate} from "react-router-dom";
-import {RadioGroup} from '@headlessui/react';
+import React, { useState, useEffect, useRef } from "react";
+import { message } from "antd";
+import { Link, useNavigate } from "react-router-dom";
+import { RadioGroup } from '@headlessui/react';
 import classNames from 'classnames';
 import Table from '../../../components/Table';
 import LoadingButton from '../../../components/LoadingButton';
-import {useAccount, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import type { BaseError } from "wagmi";
-import {useCheckFipEditorAddress, useFipEditors} from "../../../common/hooks"
+import { useCheckFipEditorAddress, useFipEditors } from "../../../common/hooks"
 import fileCoinAbi from "../../../common/abi/power-voting.json";
-import {getContractAddress, getWeb3IpfsId} from "../../../utils";
+import { getContractAddress, getWeb3IpfsId } from "../../../utils";
 import {
   FIP_EDITOR_APPROVE_TYPE,
   FIP_EDITOR_REVOKE_TYPE,
+  NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG,
   NO_FIP_EDITOR_APPROVE_ADDRESS_MSG,
   NO_FIP_EDITOR_REVOKE_ADDRESS_MSG,
   STORING_DATA_MSG,
 } from "../../../common/consts";
 
 const FipEditorPropose = () => {
-  const {isConnected, address, chain} = useAccount();
+  const { isConnected, address, chain } = useAccount();
   const chainId = chain?.id || 0;
 
   const navigate = useNavigate();
@@ -48,6 +49,9 @@ const FipEditorPropose = () => {
 
   const { isFipEditorAddress, checkFipEditorAddressSuccess } = useCheckFipEditorAddress(chainId, address);
   const { fipEditors } = useFipEditors(chainId);
+
+  //get approve list
+
 
   const {
     data: hash,
@@ -110,6 +114,8 @@ const FipEditorPropose = () => {
    * Set miner ID
    */
   const onSubmit = async () => {
+
+
     // Check if required fields are filled based on proposal type
     if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && !fipAddress) {
       messageApi.open({
@@ -125,6 +131,15 @@ const FipEditorPropose = () => {
         type: 'warning',
         // Prompt user to fill required fields
         content: NO_FIP_EDITOR_REVOKE_ADDRESS_MSG,
+      });
+      return;
+    }
+
+    if (fipProposalType === FIP_EDITOR_REVOKE_TYPE && fipEditors.length <= 2) {
+      messageApi.open({
+        type: 'warning',
+        // must more than 2
+        content: NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG,
       });
       return;
     }
@@ -190,32 +205,32 @@ const FipEditorPropose = () => {
                       value={FIP_EDITOR_APPROVE_TYPE}
                       className='relative flex items-center cursor-pointer p-4 focus:outline-none data-[disabled]:cursor-not-allowed'
                     >
-                      {({active, checked}) => (
+                      {({ active, checked }) => (
                         <>
-                        <span
-                          className={classNames(
-                            checked
-                            ? 'bg-[#45B753] border-transparent'
-                        : 'bg-[#eeeeee] border-transparent]',
-                      active ? 'ring-2 ring-offset-2 ring-[#ffffff]' : '',
-                            'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
-                          )}
-                          aria-hidden='true'
-                        >
-                          {(active || checked) && (
-                            <span className='rounded-full bg-white w-1.5 h-1.5'/>
-                          )}
-                        </span>
-                          <span className='ml-3'>
-                          <RadioGroup.Label
-                            as='span'
-                            className={
-                              checked ? 'text-black' : 'text-[#8896AA]'
-                            }
+                          <span
+                            className={classNames(
+                              checked
+                                ? 'bg-[#45B753] border-transparent'
+                                : 'bg-[#eeeeee] border-transparent]',
+                              active ? 'ring-2 ring-offset-2 ring-[#ffffff]' : '',
+                              'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
+                            )}
+                            aria-hidden='true'
                           >
-                            Approve
-                          </RadioGroup.Label>
-                        </span>
+                            {(active || checked) && (
+                              <span className='rounded-full bg-white w-1.5 h-1.5' />
+                            )}
+                          </span>
+                          <span className='ml-3'>
+                            <RadioGroup.Label
+                              as='span'
+                              className={
+                                checked ? 'text-black' : 'text-[#8896AA]'
+                              }
+                            >
+                              Approve
+                            </RadioGroup.Label>
+                          </span>
                         </>
                       )}
                     </RadioGroup.Option>
@@ -225,32 +240,32 @@ const FipEditorPropose = () => {
                       value={FIP_EDITOR_REVOKE_TYPE}
                       className='relative flex items-center cursor-pointer p-4 focus:outline-none data-[disabled]:cursor-not-allowed'
                     >
-                      {({active, checked}) => (
+                      {({ active, checked }) => (
                         <>
-                        <span
-                          className={classNames(
-                            checked
-                            ? 'bg-[#45B753] border-transparent'
-                            : 'bg-[#eeeeee] border-transparent]',
-                          active ? 'ring-2 ring-offset-2 ring-[#ffffff]' : '',
-                            'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
-                          )}
-                          aria-hidden='true'
-                        >
-                          {(active || checked) && (
-                            <span className='rounded-full bg-white w-1.5 h-1.5'/>
-                          )}
-                        </span>
-                          <span className='ml-3'>
-                          <RadioGroup.Label
-                            as='span'
-                            className={
-                              checked ? 'text-black' : 'text-[#8896AA]'
-                            }
+                          <span
+                            className={classNames(
+                              checked
+                                ? 'bg-[#45B753] border-transparent'
+                                : 'bg-[#eeeeee] border-transparent]',
+                              active ? 'ring-2 ring-offset-2 ring-[#ffffff]' : '',
+                              'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
+                            )}
+                            aria-hidden='true'
                           >
-                            Revoke
-                          </RadioGroup.Label>
-                        </span>
+                            {(active || checked) && (
+                              <span className='rounded-full bg-white w-1.5 h-1.5' />
+                            )}
+                          </span>
+                          <span className='ml-3'>
+                            <RadioGroup.Label
+                              as='span'
+                              className={
+                                checked ? 'text-black' : 'text-[#8896AA]'
+                              }
+                            >
+                              Revoke
+                            </RadioGroup.Label>
+                          </span>
                         </>
                       )}
                     </RadioGroup.Option>
@@ -282,7 +297,7 @@ const FipEditorPropose = () => {
                     <option style={{ display: 'none' }}></option>
                     {fipEditors?.map((fipEditor: string) => (
                       <option
-                        disabled={ address === fipEditor }
+                        disabled={address === fipEditor}
                         value={fipEditor}
                         key={fipEditor}
                       >
