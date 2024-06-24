@@ -11,14 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 @md-bgcolor-pre: #F6F6F6;
-@md-title-icon-font-color: #273141;
-@md-title-icon-font-color-hover: #273141;
-@md-title-collor: #273141;
-@md-text-color: #8896AA;
-@md-code-bg: #51607940;
-@md-code-color: #c6c3c3;
 @md-border-color: #313D4F;
 
 .MDEditor {
@@ -38,11 +31,60 @@
 }
 
 .rcmd {
-  border: 1px solid @md-border-color;
-  background: @md-bgcolor-pre;
+    // border: 1px solid @md-border-color;
+    // background: @md-bgcolor-pre;
+
+  .rc-md-navigation {
+    // background: @md-bgcolor;
+    // border-bottom-color: @md-border-color;
+
+    .button-wrap {
+      .button {
+        // color: @md-title-icon-font-color;
+
+      }
+
+      .button:hover {
+        // color: @md-title-icon-font-color-hover;
+      }
+
+      .button-type-header {
+
+        .list-item:hover {
+          background: #8e8d8d;
+        }
+      }
+
+      .button-type-table {
+        .list-item {
+          background: #505050;
+        }
+
+        .list-item:hover {
+          background: #8e8d8d;
+        }
+
+        .active {
+          background: #8e8d8d;
+        }
+      }
+    }
+
+    .drop-wrap {
+    //   background: @md-bgcolor;
+    //   border-color: @md-border-color;
+    }
+  }
+
 
 
   .editor-container {
+    .sec-md {
+      .input {
+   
+      }
+    }
+
     .sec-wrap {
       overflow: visible !important;
 
@@ -77,10 +119,21 @@
       font-size: 18px;
     }
 
+    a,
+    code {
+    }
 
     a:hover {
       opacity: .8;
       ;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
     }
 
     p,
@@ -89,7 +142,18 @@
       line-height: 28px;
     }
 
+    table {
+
+      thead>tr {
+      }
+
+      th,
+      td {
+      }
+    }
+
     code {
+    //   background: @md-code-bg;
       padding: 2px 4px;
       border-radius: 4px;
     }
@@ -137,12 +201,12 @@
   height: 10px;
 }
 
-// .scrollD ::-webkit-scrollbar-thumb {
-//   background-color: #5d5c5c;
-//   border-radius: 1px;
-// }
-
-
-.scrollD ::-webkit-scrollbar-track {
-  background: none;
+.scrollD ::-webkit-scrollbar-thumb {
+  background-color: #5d5c5c;
+  border-radius: 1px;
 }
+
+
+// .scrollD ::-webkit-scrollbar-track {
+//   background: none;
+// }
