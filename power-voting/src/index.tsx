@@ -44,7 +44,7 @@ const filecoinCalibrationChain = {
   blockExplorers: {
     default: {
       name: 'filfox',
-      url: 'https://filfox.info/en',
+      url: 'https://calibration.filfox.info/zh',
     },
   },
   testnet: true,
