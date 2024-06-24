@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React,{ useState, useEffect, useRef } from "react";
-import {useRoutes, useNavigate, Link} from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useRoutes, useNavigate, Link, useLocation } from "react-router-dom";
 import axios from "axios";
 import {
   ConnectButton,
@@ -27,21 +27,22 @@ import routes from "./router";
 import Footer from './components/Footer';
 import "./common/styles/reset.less";
 import "tailwindcss/tailwind.css";
-import {STORING_DATA_MSG} from "./common/consts";
-import {useVoterInfo, useCurrentTimezone} from "./common/store";
-import {useCheckFipEditorAddress, useVoterInfoSet} from "./common/hooks";
+import { STORING_DATA_MSG } from "./common/consts";
+import { useVoterInfo, useCurrentTimezone } from "./common/store";
+import { useCheckFipEditorAddress, useVoterInfoSet } from "./common/hooks";
 
 const App: React.FC = () => {
   // Destructure values from custom hooks
-  const { chain, address, isConnected} = useAccount();
+  const { chain, address, isConnected } = useAccount();
   const chainId = chain?.id || 0;
   const prevAddressRef = useRef(address);
-  const {openConnectModal} = useConnectModal();
+  const { openConnectModal } = useConnectModal();
   const navigate = useNavigate();
 
   // Render routes based on URL
   const element = useRoutes(routes);
 
+  const isLanding = false;//location.pathname === "/" || element?.props?.match?.route?.path === "*"
   // State variables
   const [expirationTime, setExpirationTime] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
@@ -65,7 +66,10 @@ const App: React.FC = () => {
   // Update current timezone in state
   const setTimezone = useCurrentTimezone((state: any) => state.setTimezone);
 
-
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
   // Reload the page if address changes
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
@@ -116,6 +120,11 @@ const App: React.FC = () => {
       return;
     }
 
+
+    if (!voterInfo) {
+      navigate('/ucanDelegate/add');
+      return
+    }
     // Determine if the user has a GitHub account
     const isGithubType = !!voterInfo[0];
     if (voterInfo[2]) {
@@ -126,7 +135,8 @@ const App: React.FC = () => {
         const regex = /\/([^/]+)\/([^/]+)\/git\/blobs\/(\w+)/;
         const result = data.match(regex);
         const aud = result[1];
-        navigate('/ucanDelegate/delete', { state: {
+        navigate('/ucanDelegate/delete', {
+          state: {
             params: {
               isGithubType,
               aud,
@@ -134,7 +144,8 @@ const App: React.FC = () => {
             }
           }
         });
-      } else {
+      }
+      else {
         // Process non-GitHub data and navigate to appropriate page
         const decodeString = atob(data.split('.')[1]);
         const payload = JSON.parse(decodeString);
@@ -225,20 +236,20 @@ const App: React.FC = () => {
   }
 
   return (
-    <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
+    <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
       <div className="layout font-body">
-        <header className='h-[96px] bg-[#273141]'>
-          <div className='w-[1000px] h-[96px] mx-auto flex items-center justify-between'>
+        {!isLanding && <header className='h-[96px] bg-[#ffffff]'>
+          <div className='w-[1000px] h-[88px] mx-auto flex items-center justify-between'>
             <div className='flex items-center'>
               <div className='flex-shrink-0'>
                 <Link to='/'>
-                  <img className="logo" src="/images/logo.png" alt=""/>
+                  <img className="logo" src="/images/logo.png" alt="" />
                 </Link>
               </div>
               <div className='ml-6 flex items-baseline space-x-20'>
                 <Link
                   to='/'
-                  className='text-white text-2xl font-semibold hover:opacity-80'
+                  className='text-black text-2xl font-semibold hover:opacity-80'
                 >
                   Power Voting
                 </Link>
@@ -259,7 +270,7 @@ const App: React.FC = () => {
                 </button>
               </Dropdown>
               <div className="connect flex items-center">
-                <ConnectButton />
+                <ConnectButton showBalance={false} />
               </div>
             </div>
             <Modal
@@ -288,13 +299,13 @@ const App: React.FC = () => {
               </p>
             </Modal>
           </div>
-        </header>
+        </header>}
         <div className='content w-[1000px] mx-auto pt-10 pb-10'>
           {
             element
           }
         </div>
-        <Footer/>
+        <Footer />
         <FloatButton.BackTop style={{ bottom: 100 }} />
       </div>
     </ConfigProvider>

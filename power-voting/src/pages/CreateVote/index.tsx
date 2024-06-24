@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, {useState, useEffect, useRef} from "react";
-import {message, DatePicker} from "antd";
+import React, { useState, useEffect, useRef } from "react";
+import { message, DatePicker } from "antd";
 import axios from 'axios';
 import dayjs from "dayjs";
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import {useNavigate, Link} from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Table from '../../components/Table';
-import {useForm, Controller} from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import classNames from 'classnames';
-import type { BaseError} from "wagmi";
-import {useAccount, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
-import {useConnectModal} from "@rainbow-me/rainbowkit";
+import type { BaseError } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import Editor from '../../components/MDEditor';
 import {
   DEFAULT_TIMEZONE,
@@ -32,15 +32,20 @@ import {
   NOT_FIP_EDITOR_MSG,
   VOTE_OPTIONS,
   WRONG_START_TIME_MSG,
-  STORING_DATA_MSG, githubApi, worldTimeApi
+  STORING_DATA_MSG, githubApi, worldTimeApi,
+  proposalDraftGetApi,
+  proposalDraftAddApi,
+  SAVE_DRAFT_SUCCESS,
+  SAVE_DRAFT_FAIL
 } from '../../common/consts';
-import {useStoringCid, useVoterInfo} from "../../common/store";
+import { useStoringCid, useVoterInfo } from "../../common/store";
 import timezoneOption from '../../../public/json/timezons.json';
 import { validateValue, getContractAddress, getWeb3IpfsId } from '../../utils';
 import './index.less';
 import LoadingButton from "../../components/LoadingButton";
 import fileCoinAbi from "../../common/abi/power-voting.json";
 import { useCheckFipEditorAddress } from "../../common/hooks";
+import { ProposalDraft } from "src/common/types";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -48,10 +53,10 @@ dayjs.extend(timezone);
 const { RangePicker } = DatePicker;
 
 const CreateVote = () => {
-  const {isConnected, address, chain} = useAccount();
+  const { isConnected, address, chain } = useAccount();
   const chainId = chain?.id || 0;
 
-  const {openConnectModal} = useConnectModal();
+  const { openConnectModal } = useConnectModal();
   const prevAddressRef = useRef(address);
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -62,16 +67,18 @@ const CreateVote = () => {
     register,
     handleSubmit,
     control,
-    formState: {errors}
+    setValue,
+    getValues,
+    formState: { errors }
   } = useForm({
     defaultValues: {
       timezone: DEFAULT_TIMEZONE,
-      time: '',
+      time: [''],
       name: '',
       descriptions: '',
       option: [
-        {value: ''},
-        {value: ''}
+        { value: '' },
+        { value: '' }
       ]
     }
   });
@@ -91,7 +98,8 @@ const CreateVote = () => {
 
   const [cid, setCid] = useState('');
   const [loading, setLoading] = useState<boolean>(writeContractPending);
-
+  const [isDraftSave, setDraftSave] = useState(false)
+  const [hasDraft, setHasDraft] = useState(false)
   useEffect(() => {
     if (!isConnected) {
       navigate("/home");
@@ -116,6 +124,35 @@ const CreateVote = () => {
     reset();
   }, [error]);
 
+  const OPTION_SPLIT_TAG = "&%"
+  const loadDraft = async () => {
+    try {
+      const resp = await axios.get(proposalDraftGetApi, {
+        params: {
+          chainId: chainId,
+          address: address
+
+        }
+      })
+      if (resp.data != null && resp.data.data?.length) {
+        const result = (resp.data.data as ProposalDraft[])[0]
+        setValue("descriptions", result.Descriptions)
+        setValue("name", result.Name)
+        setValue("time", result.Time.split(OPTION_SPLIT_TAG) ?? [])
+        if (result.Timezone) {
+          setValue("timezone", result.Timezone)
+        }
+        setHasDraft(true)
+      }
+    } catch (e) {
+      console.log(e)
+    }
+
+  }
+  useEffect(() => {
+    loadDraft()
+  }, [])
+
   useEffect(() => {
     if (writeContractSuccess) {
       messageApi.open({
@@ -127,7 +164,7 @@ const CreateVote = () => {
         cid
       }]);
       setTimeout(() => {
-        navigate("/")
+        navigate("/home")
       }, 1000);
     }
   }, [writeContractSuccess])
@@ -223,7 +260,73 @@ const CreateVote = () => {
     } else {
       openConnectModal && openConnectModal();
     }
+    //clear draft
+    if (hasDraft) {
+      clearDraft()
+    }
     setLoading(false);
+  }
+  const clearDraft = async () => {
+    try {
+      const data = {
+        Timezone: "",
+        Time: "",
+        Name: "",
+        Descriptions: "",
+        Option: "",
+        Address: address,
+        ChainId: chainId,
+      }
+      await axios.post(proposalDraftAddApi, data)
+      setHasDraft(false)
+    } catch (e) {
+      console.log(e)
+    }
+  }
+
+  const saveDraft = async () => {
+    if (loading || writeContractPending || transactionLoading) {
+      return
+    }
+    if (isDraftSave) {
+      return
+    }
+    const values = getValues()
+    if (!values.descriptions.length
+      && !values.name
+      && !values.time
+    ) {
+      return
+    }
+    setDraftSave(true)
+    const data = {
+      Timezone: values.timezone,
+      Time: (values.time ?? []).join(OPTION_SPLIT_TAG),
+      Name: values.name,
+      Descriptions: values.descriptions,
+      Option: "",
+      Address: address,
+      ChainId: chainId,
+    }
+    try {
+      const res = await axios.post(proposalDraftAddApi, data)
+      if (res.data != null && res.data.data == true) {
+        messageApi.open({
+          type: "success",
+          content: SAVE_DRAFT_SUCCESS,
+        });
+      } else {
+        messageApi.open({
+          type: "error",
+          content: SAVE_DRAFT_FAIL,
+        });
+      }
+    } catch (e) {
+      console.log(e)
+    }
+    setTimeout(() => {
+      setDraftSave(false)
+    }, 3000)
   }
 
   const { isLoading: transactionLoading } =
@@ -231,6 +334,38 @@ const CreateVote = () => {
       hash,
     })
 
+  const inputRefs = useRef<(HTMLElement | null)[]>([]);
+
+  useEffect(() => {
+    let index = 0
+    document.querySelectorAll('input').forEach(element => {
+      inputRefs.current[index++] = element
+    })
+    //input => editor
+    inputRefs.current.splice(1, 1, document.querySelector("textarea"))
+
+    //timezone
+    inputRefs.current[index++] = document.querySelector(".form-select")
+
+    //creat btn
+    inputRefs.current[index++] = document.querySelector(".create-submit")
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Tab') {
+        const refList = inputRefs.current
+        const length = refList.length ?? 0
+        const currentIndex = refList.findIndex(ref => ref === document.activeElement);
+        inputRefs.current[(currentIndex + 1) % length]?.focus();
+        console.log(currentIndex)
+        event.preventDefault();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [])
+  //VOTE_OPTIONS
   const list = [
     {
       name: 'Proposal Title',
@@ -239,13 +374,15 @@ const CreateVote = () => {
           <Controller
             name="name"
             control={control}
+
             render={() => <input
               className={classNames(
-                'form-input w-full rounded !bg-[#212B3C] border border-[#313D4F]',
+                'form-input w-full rounded !bg-[#ffffff] border-1 border-[#EEEEEE] text-black',
                 errors.name && 'border-red-500 focus:border-red-500'
               )}
               placeholder='Proposal Title'
-              {...register('name', {required: true, validate: validateValue})}
+
+              {...register('name', { required: true, validate: validateValue })}
             />}
           />
           {errors.name && (
@@ -256,6 +393,14 @@ const CreateVote = () => {
     },
     {
       name: 'Proposal Description',
+      width: 260,
+      desc: <div className="text-red">
+        <span>
+          Describe FIP objectives, implementation details, risks, and include GitHub links for transparency. See a template <a href="" style={{ color: "blue" }}>here↗</a>.
+          <br /> You can use Markdown formatting in the text input field.
+        </span>
+
+      </div>,
       comp:
         <Controller
           name='descriptions'
@@ -264,10 +409,11 @@ const CreateVote = () => {
             required: true,
             validate: validateValue
           }}
-          render={({field: {onChange, value}}) => {
+          render={({ field: { onChange, value } }) => {
             return (
               <>
-                <Editor style={{height: 500}} value={value} onChange={onChange}/>
+                <Editor
+                  style={{ height: 500 }} value={value} onChange={onChange} />
                 {errors.descriptions && (
                   <p className='text-red-500 mt-2'>Proposal Description is required</p>
                 )}
@@ -285,20 +431,22 @@ const CreateVote = () => {
               name='time'
               control={control}
               rules={{ required: true }}
-              render={({field: {onChange}}) => {
+              render={({ field: { onChange, value } }) => {
+                const date = (value ?? []).filter(it => it !== "").map(it => dayjs(it))
                 return (
                   <>
                     <RangePicker
                       showTime
                       format="YYYY-MM-DD HH:mm"
                       placeholder={['Start Time', 'End Time']}
-                      allowClear={false}
+                      allowClear={true}
+                      value={[date[0], date[1]]}
                       onChange={onChange}
                       className={classNames(
-                        'form-input rounded w-[450px] !bg-[#212B3C] border border-[#313D4F]',
+                        'form-input rounded w-[450px] !bg-[#ffffff] border border-[#eeeeee] text-black',
                         errors.time && 'border-red-500 focus:border-red-500'
                       )}
-                      style={{color: 'red'}}
+                      style={{ color: 'red' }}
                     />
                     {errors.time && (
                       <p className='text-red-500 mt-2'>Proposal Time is required</p>
@@ -322,14 +470,14 @@ const CreateVote = () => {
               rules={{
                 required: true,
               }}
-              render={({field: {onChange, value}}) => {
+              render={({ field: { onChange, value } }) => {
                 return (
                   <>
                     <select
                       onChange={onChange}
                       value={value}
                       className={classNames(
-                        'form-select rounded bg-[#212B3C] border border-[#313D4F]',
+                        'form-select rounded bg-[#ffffff] border border-[#eeeeee] text-black',
                         errors.timezone && 'border-red-500 focus:border-red-500'
                       )}
                     >
@@ -347,7 +495,7 @@ const CreateVote = () => {
           </div>
         </div>
       )
-    },
+    }
   ];
 
   return (
@@ -356,7 +504,7 @@ const CreateVote = () => {
       <div className="px-3 mb-6 md:px-0">
         <button>
           <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">
-            <Link to="/" className="flex items-center">
+            <Link to="/home" className="flex items-center">
               <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
                 <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m11 17l-5-5m0 0l5-5m-5 5h12" />
               </svg>
@@ -365,12 +513,24 @@ const CreateVote = () => {
           </div>
         </button>
       </div>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)} >
         <div className='flow-root space-y-8'>
-          <Table title='Create A Proposal' list={list}/>
+          <Table title='Create A Proposal' subTitle={<div className="text-m">
+            Proposals should be clear, concise, and focused on specific improvements or changes. FIPs must adhere to the Filecoin community's <a href="" style={{ color: "blue" }}>code of conduct and best practices↗</a>.
+          </div>} list={list} />
 
-          <div className='text-center'>
-            <LoadingButton text='Create' loading={loading || writeContractPending || transactionLoading} />
+          <div className="flex justify-center items-center text-center ">
+            <Link to="/home" >
+              <div className="flex justify-center rounded items-center text-center  bg-[#EEEEEE] w-[101px] h-[40px] text-[#313D4F] mr-2 cursor-pointer" >Cancel</div>
+            </Link>
+            <div className='w-full items-center flex justify-end text-center'>
+              <Link to={""}>
+                <div className="text-[#313D4F] mr-4 cursor-pointer" onClick={saveDraft} >
+                  Save Draft
+                </div>
+              </Link>
+              <LoadingButton className="create-submit" text='Create' loading={loading || writeContractPending || transactionLoading} />
+            </div>
           </div>
         </div>
       </form>

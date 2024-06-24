@@ -22,7 +22,11 @@ export const walletConnectProjectId = process.env.WALLET_CONNECT_ID || '';
 export const web3StorageEmail: any = process.env.WEB3_STORAGE_EMAIL || '';
 export const githubApi = 'https://api.github.com/users';
 export const proposalResultApi = '/api/proposal/result';
+export const uploadApi = '/api/w3storage/upload';
 export const proposalHistoryApi = '/api/proposal/history';
+export const proposalDraftAddApi = '/api/proposal/draft/add';
+export const proposalDraftGetApi = '/api/proposal/draft/get';
+
 export const worldTimeApi = 'https://worldtimeapi.org/api/timezone/Etc/UTC';
 export const IN_PROGRESS_STATUS = 0;
 export const COMPLETED_STATUS = 1;
@@ -31,32 +35,77 @@ export const VOTE_COUNTING_STATUS = 3;
 export const VOTE_ALL_STATUS = 4;
 export const WRONG_NET_STATUS = 5;
 export const STORING_STATUS = 6;
+export const PASSED_STATUS = 7;
+export const REJECTED_STATUS = 8;
+
 export const VOTE_OPTIONS = ['Approve', 'Reject'];
 export const VOTE_LIST = [
   {
+    value: WRONG_NET_STATUS,
+    label: 'Wrong Network',
+    bgColor: "#FFF3F3",
+    textColor: "#AA0101",
+    borderColor: "#FFDBDB",
+    dotColor: "#FF0000"
+
+  },
+  {
     value: PENDING_STATUS,
-    color: '#0E7490',
-    label: 'Pending'
+    label: 'Pending',
+    bgColor: "#FFF1CE",
+    textColor: "#7C4300",
+    borderColor: "#FFDD87",
+    dotColor: "#FFC327"
+
   },
   {
     value: IN_PROGRESS_STATUS,
-    color: '#15803D',
-    label: 'In Progress'
+    label: 'In Progress',
+    bgColor: "#FFF1CE",
+    textColor: "#7C4300",
+    borderColor: "#FFDD87",
+    dotColor: "#FFC327"
   },
   {
     value: VOTE_COUNTING_STATUS,
-    color: '#A16207',
-    label: 'Vote Counting'
+    label: 'Vote Counting',
+    bgColor: "#FFF1CE",
+    textColor: "#7C4300",
+    borderColor: "#FFDD87",
+    dotColor: "#FFC327"
   },
   {
     value: COMPLETED_STATUS,
-    color: '#6D28D9',
-    label: 'Completed'
+    label: 'Complete',
+    bgColor: "#E7F4FF",
+    textColor: "#005292",
+    borderColor: "#C3E5FF",
+    dotColor: "#0190FF",
+
   },
   {
     value: STORING_STATUS,
-    color: '#047857',
-    label: 'Storing'
+    label: 'Storing',
+    bgColor: "#FFF1CE",
+    textColor: "#7C4300",
+    borderColor: "#FFDD87",
+    dotColor: "#FFC327"
+  },
+  {
+    value: PASSED_STATUS,
+    label: 'Passed',
+    bgColor: "#E3FFEE",
+    textColor: "#006227",
+    borderColor: "#87FFBE",
+    dotColor: "#00C951"
+  },
+  {
+    value: REJECTED_STATUS,
+    label: 'Rejected',
+    bgColor: "#FFF3F3",
+    textColor: "#AA0101",
+    borderColor: "#FFDBDB",
+    dotColor: "#FF0000"
   },
 ]
 export const VOTE_FILTER_LIST = [
@@ -77,7 +126,7 @@ export const VOTE_FILTER_LIST = [
     value: VOTE_COUNTING_STATUS
   },
   {
-    label: "Completed",
+    label: "Complete",
     value: COMPLETED_STATUS
   }
 ];
@@ -218,7 +267,7 @@ eyJhbGciOiJzZWNwMjU2azEiLCJ0eXBlIjoiSldUIiwidmVyc2lvbiI6IjAuMC4xIn0.eyJpc3MiOiJ0
 
 # II. Cancel authorization
 
-## 1 Create a UCAN signature deauthorized by Filecoin account to Eth account
+## 1. Create a UCAN signature deauthorized by Filecoin account to Eth account
 
 <span style="color:red;">Attention：field act  should be set to del.</span>
 
@@ -436,19 +485,21 @@ export const UCAN_JWT_HEADER = {
   type: 'JWT',
   version: '0.0.1'
 };
-export const OPERATION_CANCELED_MSG= 'Operation Canceled';
-export const STORING_DATA_MSG= 'Storing data on chain!';
+export const OPERATION_CANCELED_MSG = 'Operation Canceled';
+export const STORING_DATA_MSG = 'Storing data on chain!';
 export const STORING_SUCCESS_MSG = 'Data stored on chain successfully!';
 export const STORING_FAILED_MSG = 'Data stored on chain failed!';
-export const VOTE_SUCCESS_MSG= 'Vote successful!';
-export const CHOOSE_VOTE_MSG= 'Please choose a option to vote!';
-export const WRONG_START_TIME_MSG= 'Start time can\'t be less than current time!';
-export const WRONG_EXPIRATION_TIME_MSG= 'Expiration time can\'t be less than current time!';
-export const WRONG_MINER_ID_MSG= 'Please check your miner ID!';
-export const DUPLICATED_MINER_ID_MSG= 'Your miner ID is duplicated!';
-export const NOT_FIP_EDITOR_MSG= 'Please select a FIP Editor to create proposals!';
-export const NO_FIP_EDITOR_APPROVE_ADDRESS_MSG= 'Please input an address!';
-export const NO_FIP_EDITOR_REVOKE_ADDRESS_MSG= 'Please select an address!';
-export const HAVE_APPROVED_MSG= 'You have already approved!';
-export const HAVE_REVOKED_MSG= 'You have already revoked!';
-export const CAN_NOT_REVOKE_YOURSELF_MSG= 'You can\'t revoke yourself!';
+export const VOTE_SUCCESS_MSG = 'Vote successful!';
+export const CHOOSE_VOTE_MSG = 'Please choose a option to vote!';
+export const WRONG_START_TIME_MSG = 'Start time can\'t be less than current time!';
+export const WRONG_EXPIRATION_TIME_MSG = 'Expiration time can\'t be less than current time!';
+export const WRONG_MINER_ID_MSG = 'Please check your miner ID!';
+export const DUPLICATED_MINER_ID_MSG = 'Your miner ID is duplicated!';
+export const NOT_FIP_EDITOR_MSG = 'Please select a FIP Editor to create proposals!';
+export const NO_FIP_EDITOR_APPROVE_ADDRESS_MSG = 'Please input an address!';
+export const NO_FIP_EDITOR_REVOKE_ADDRESS_MSG = 'Please select an address!';
+export const HAVE_APPROVED_MSG = 'You have already approved!';
+export const HAVE_REVOKED_MSG = 'You have already revoked!';
+export const CAN_NOT_REVOKE_YOURSELF_MSG = 'You can\'t revoke yourself!';
+export const SAVE_DRAFT_SUCCESS = "Save Success"
+export const SAVE_DRAFT_FAIL = "Save FAIL"

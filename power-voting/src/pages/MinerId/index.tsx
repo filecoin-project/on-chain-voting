@@ -89,7 +89,7 @@ const MinerId = () => {
         content: STORING_DATA_MSG,
       });
       setTimeout(() => {
-        navigate("/");
+        navigate("/home");
       }, 3000);
     }
   }, [writeContractSuccess])
@@ -222,7 +222,7 @@ const MinerId = () => {
       {contextHolder}
       <button>
         <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">
-          <Link to="/" className="flex items-center">
+          <Link to="/home" className="flex items-center">
             <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
               <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                     d="m11 17l-5-5m0 0l5-5m-5 5h12" />
@@ -242,7 +242,7 @@ const MinerId = () => {
                 <textarea
                   defaultValue={minerIds}
                   placeholder='Input miner ID (For multiple miner IDs, use commas to separate them.)'
-                  className='form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]'
+                  className='form-input h-[320px] w-full rounded bg-[#ffffff] border border-[#EEEEEE] text-black'
                   onBlur={e => { handleMinerChange(e.target.value) }}
                 />
               )

@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-@md-bgcolor: #273141;
-@md-title-icon-font-color: #ccc;
-@md-title-icon-font-color-hover: #fff;
-@md-title-collor: #fff;
+@md-bgcolor-pre: #F6F6F6;
+@md-title-icon-font-color: #273141;
+@md-title-icon-font-color-hover: #273141;
+@md-title-collor: #273141;
 @md-text-color: #8896AA;
 @md-code-bg: #51607940;
 @md-code-color: #c6c3c3;
@@ -39,60 +39,10 @@
 
 .rcmd {
   border: 1px solid @md-border-color;
-  background: @md-bgcolor;
-
-  .rc-md-navigation {
-    background: @md-bgcolor;
-    border-bottom-color: @md-border-color;
-
-    .button-wrap {
-      .button {
-        color: @md-title-icon-font-color;
-
-      }
-
-      .button:hover {
-        color: @md-title-icon-font-color-hover;
-      }
-
-      .button-type-header {
-
-        .list-item:hover {
-          background: #8e8d8d;
-        }
-      }
-
-      .button-type-table {
-        .list-item {
-          background: #505050;
-        }
-
-        .list-item:hover {
-          background: #8e8d8d;
-        }
-
-        .active {
-          background: #8e8d8d;
-        }
-      }
-    }
-
-    .drop-wrap {
-      background: @md-bgcolor;
-      border-color: @md-border-color;
-    }
-  }
-
+  background: @md-bgcolor-pre;
 
 
   .editor-container {
-    .sec-md {
-      .input {
-        background: @md-bgcolor;
-        color: #fff;
-      }
-    }
-
     .sec-wrap {
       overflow: visible !important;
 
@@ -127,60 +77,28 @@
       font-size: 18px;
     }
 
-    a,
-    code {
-      color: #fff;
-    }
 
     a:hover {
       opacity: .8;
       ;
     }
 
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
-      color: @md-title-collor;
-    }
-
     p,
     li {
-      color: @md-text-color;
       font-size: 18px;
       line-height: 28px;
     }
 
-    table {
-      border-color: @md-border-color;
-      color: @md-text-color;
-
-      thead>tr {
-        color: #c6c6c6;
-      }
-
-      th,
-      td {
-        background-color: transparent;
-        border-color: @md-border-color;
-      }
-    }
-
     code {
-      background: @md-code-bg;
       padding: 2px 4px;
       border-radius: 4px;
     }
 
     pre {
-      background-color: @md-code-bg;
       border-radius: 8px;
       margin-bottom: 8px;
 
       code {
-        color: @md-title-collor;
         padding: 0;
         border: none;
         background: none;
@@ -189,7 +107,7 @@
     }
 
     blockquote {
-      border-left: 6px solid @md-code-bg;
+      border-left: 6px solid;
       background: none repeat scroll 0 0 transparent;
       opacity: .8;
       padding: 4px 8px 4px 24px;
@@ -219,12 +137,12 @@
   height: 10px;
 }
 
-.scrollD ::-webkit-scrollbar-thumb {
-  background-color: #5d5c5c;
-  border-radius: 5px;
-}
+// .scrollD ::-webkit-scrollbar-thumb {
+//   background-color: #5d5c5c;
+//   border-radius: 1px;
+// }
 
 
 .scrollD ::-webkit-scrollbar-track {
-  background-color: #454343;
+  background: none;
 }

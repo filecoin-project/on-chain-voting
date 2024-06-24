@@ -83,7 +83,7 @@ const FipEditorRevoke = () => {
           <div className="w-[180px] flex items-center">
             <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${value}`} alt="" />
             <a
-              className="text-white hover:text-white"
+              className="text-black hover:text-black"
               target="_blank"
               rel="noopener"
               href={`${chain?.blockExplorers?.default.url}/address/${value}`}
@@ -113,7 +113,7 @@ const FipEditorRevoke = () => {
           <div className="w-[180px] flex items-center">
             <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${value}`} alt="" />
             <a
-              className="text-white hover:text-white"
+              className="text-black hover:text-black"
               target="_blank"
               rel="noopener"
               href={`${chain?.blockExplorers?.default.url}/address/${value}`}
@@ -125,7 +125,7 @@ const FipEditorRevoke = () => {
       }
     },
     {
-      title: 'Info',
+      title: <div><div>Info</div></div>,
       dataIndex: 'info',
       key: 'info',
       ellipsis: { showTitle: false },
@@ -165,7 +165,7 @@ const FipEditorRevoke = () => {
       align: 'center' as const,
       width: 120,
       render: (_: any, record: any) =>
-        <a className='hover:text-white flex justify-center' onClick={() => handleRevoke(record)}>
+        <a className='hover:text-black flex justify-center' onClick={() => handleRevoke(record)}>
           <Popconfirm
             title="Revoke FIP editor"
             description="Are you sure to revoke?"
@@ -267,7 +267,7 @@ const FipEditorRevoke = () => {
         content: STORING_DATA_MSG,
       });
       setTimeout(() => {
-        navigate("/")
+        navigate("/home")
       }, 1000);
     }
   }, [writeContractSuccess])
@@ -276,20 +276,31 @@ const FipEditorRevoke = () => {
     setLoading(true);
     const list: any = [];
     await Promise.all(fipEditorProposalData.map(async (item: any) => {
-      const { result } = item;
-      const url = `https://${result.voterInfoCid}.ipfs.w3s.link/`;
-      const { data } = await axios.get(url);
-      const revokeList = fipEditors?.filter((address: string) => address !== result.fipEditorAddress);
-      list.push({
-        proposalId: result.proposalId,
-        address: result.fipEditorAddress,
-        info: data,
-        voters: result.voters,
-        ratio: `${result.voters?.length} / ${revokeList?.length}`,
-        voteList: revokeList.map((address: string) => {
-          return { address, status: result.voters?.includes(address) ? 'Revoked' : '' }
-        }).sort((a) => (a.status ? -1 : 1))
-      });
+      try{
+        const { result } = item;
+        const obj = {
+          proposalId: result[0],
+          fipEditorAddress: result[1],
+          voterInfoCid: result[2],
+          voters: result[3],
+        }
+        const url = `https://${obj.voterInfoCid}.ipfs.w3s.link/`;
+        const { data } = await axios.get(url);
+        const revokeList = fipEditors?.filter((address: string) => address !== obj.fipEditorAddress);
+        list.push({
+          proposalId: obj.proposalId,
+          address: obj.fipEditorAddress,
+          info: data,
+          voters: obj.voters,
+          ratio: `${obj.voters?.length} / ${revokeList?.length}`,
+          voteList: revokeList.map((address: string) => {
+            return { address, status: obj.voters?.includes(address) ? 'Revoked' : '' }
+          }).sort((a) => (a.status ? -1 : 1))
+        });
+      }catch(e){
+        console.log(e)
+      }
+      
     }));
     // Remove current address
     setFipProposalList(list);
@@ -301,7 +312,7 @@ const FipEditorRevoke = () => {
       {contextHolder}
       <button>
         <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">
-          <Link to="/" className="flex items-center">
+          <Link to="/home" className="flex items-center">
             <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
               <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                     d="m11 17l-5-5m0 0l5-5m-5 5h12" />
@@ -310,9 +321,9 @@ const FipEditorRevoke = () => {
           </Link>
         </div>
       </button>
-      <div className='min-w-full bg-[#273141] rounded text-left'>
+      <div className='min-w-full bg-[#ffffff] rounded text-left'>
         <div className='flow-root space-y-4'>
-          <div className='font-normal text-white px-8 py-7 text-2xl border-b border-[#313D4F] flex items-center'>
+          <div className='font-normal text-black px-8 py-7 text-2xl border-b border-[#eeeeee] flex items-center'>
             <span>FIP Editor Revoke</span>
           </div>
           <div className='px-8 pb-4 !mt-0'>

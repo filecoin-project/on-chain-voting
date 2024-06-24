@@ -81,7 +81,7 @@ const FipEditorPropose = () => {
         content: STORING_DATA_MSG,
       });
       setTimeout(() => {
-        navigate("/")
+        navigate("/home")
       }, 1000);
     }
   }, [writeContractSuccess]);
@@ -167,7 +167,7 @@ const FipEditorPropose = () => {
       <div className="px-3 mb-6 md:px-0">
         <button>
           <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">
-            <Link to="/" className="flex items-center">
+            <Link to="/home" className="flex items-center">
               <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
                 <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                       d="m11 17l-5-5m0 0l5-5m-5 5h12" />
@@ -195,9 +195,9 @@ const FipEditorPropose = () => {
                         <span
                           className={classNames(
                             checked
-                              ? 'bg-[#45B753] border-transparent'
-                              : 'bg-[#212B3B] border-[#38485C]',
-                            active ? 'ring-2 ring-offset-2 ring-[#45B753]' : '',
+                            ? 'bg-[#45B753] border-transparent'
+                        : 'bg-[#eeeeee] border-transparent]',
+                      active ? 'ring-2 ring-offset-2 ring-[#ffffff]' : '',
                             'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
                           )}
                           aria-hidden='true'
@@ -210,7 +210,7 @@ const FipEditorPropose = () => {
                           <RadioGroup.Label
                             as='span'
                             className={
-                              checked ? 'text-white' : 'text-[#8896AA]'
+                              checked ? 'text-black' : 'text-[#8896AA]'
                             }
                           >
                             Approve
@@ -230,9 +230,9 @@ const FipEditorPropose = () => {
                         <span
                           className={classNames(
                             checked
-                              ? 'bg-[#45B753] border-transparent'
-                              : 'bg-[#212B3B] border-[#38485C]',
-                            active ? 'ring-2 ring-offset-2 ring-[#45B753]' : '',
+                            ? 'bg-[#45B753] border-transparent'
+                            : 'bg-[#eeeeee] border-transparent]',
+                          active ? 'ring-2 ring-offset-2 ring-[#ffffff]' : '',
                             'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
                           )}
                           aria-hidden='true'
@@ -245,7 +245,7 @@ const FipEditorPropose = () => {
                           <RadioGroup.Label
                             as='span'
                             className={
-                              checked ? 'text-white' : 'text-[#8896AA]'
+                              checked ? 'text-black' : 'text-[#8896AA]'
                             }
                           >
                             Revoke
@@ -263,7 +263,7 @@ const FipEditorPropose = () => {
                 comp: (
                   <input
                     placeholder='Input editor address'
-                    className='form-input w-[520px] rounded bg-[#212B3C] border border-[#313D4F]'
+                    className='form-input w-[520px] rounded bg-[#ffffff] border border-[#eeeeee] text-black'
                     onChange={(e) => { handleChange('fipAddress', e.target.value) }}
                   />
                 )
@@ -276,7 +276,7 @@ const FipEditorPropose = () => {
                     onChange={(e: any) => { setSelectedAddress(e.target.value) }}
                     value={selectedAddress}
                     className={classNames(
-                      'form-select w-[520px] rounded bg-[#212B3C] border border-[#313D4F]'
+                      'form-select w-[520px] rounded bg-[#ffffff] border border-[#eeeeee] text-black'
                     )}
                   >
                     <option style={{ display: 'none' }}></option>
@@ -300,7 +300,7 @@ const FipEditorPropose = () => {
                     value={fipInfo}
                     maxLength={300}
                     placeholder='Input propose info'
-                    className='form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]'
+                    className='form-input h-[320px] w-full rounded bg-[#ffffff] border border-[#eeeeee] text-black'
                     onChange={(e) => { handleChange('fipInfo', e.target.value) }}
                   />
                 )

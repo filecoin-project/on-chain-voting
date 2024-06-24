@@ -15,7 +15,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import {
-  darkTheme,
+  lightTheme,
   RainbowKitProvider,
   getDefaultConfig,
 } from "@rainbow-me/rainbowkit";
@@ -43,8 +43,8 @@ const filecoinCalibrationChain = {
   },
   blockExplorers: {
     default: {
-      name: 'Filscan',
-      url: 'https://calibration.filscan.io',
+      name: 'filfox',
+      url: 'https://filfox.info/en',
     },
   },
   testnet: true,
@@ -72,7 +72,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
           locale="en-US"
-          theme={darkTheme({
+          theme={lightTheme({
             accentColor: "#7b3fe4",
             accentColorForeground: "white",
           })}

@@ -78,13 +78,14 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
 
   const mdEditor: any = React.useRef(null);
   const handleEditorChange = () => mdEditor.current?.getMdValue();
-
+  const [currentValue,setCurrentValue]=useState(value)
   const [showMore, setShowMore] = useState(false);
   const handleClickShowMore = () => {
     setShowMore(prev => !prev);
   };
-
+ 
   useEffect(() => {
+    setCurrentValue(value)
     setShowMore(moreButton && value.length > 800)
   }, [moreButton, value]);
   const renderMoreButton = () => {
@@ -93,7 +94,7 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
         <>
           <div className={`absolute bottom-0 h-[80px] w-full bg-gradient-to-t from-[#1b2331] ${showMore ? 'flex' : 'hidden'}`} />
           <div className={`flex w-full justify-center  ${showMore ? 'absolute -bottom-5' : ''}`}>
-            <button className="border-[#313D4F] hover:border-[#8896AA] border-[1px] border-solid text-white mt-4 self-center rounded-xl py-2 px-4" onClick={handleClickShowMore}>
+            <button className="border-[#eeeeee] hover:border-[#eeeeee] border-[1px] border-solid text-black mt-4 self-center rounded-xl py-2 px-4" onClick={handleClickShowMore}>
               {showMore ? "Show More" : "Show Less"}
             </button>
           </div>
@@ -101,7 +102,6 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
       );
     }
   };
-
   return (
     readOnly ?
       <div className='relative'>
@@ -126,9 +126,13 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
       <MdEditor
         className={`MDEditor rcmd scrollD ${className}`}
         ref={mdEditor}
+        value={currentValue}
         style={style}
         renderHTML={text => mdParser.render(text)}
-        onChange={() => { onChange(handleEditorChange()) }}
+        onChange={(v) => {
+          setCurrentValue(v.text)
+          onChange(handleEditorChange())
+        }}
       />
   )
 }
