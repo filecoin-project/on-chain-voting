@@ -21,10 +21,12 @@ import Table from '../../../components/Table';
 import LoadingButton from '../../../components/LoadingButton';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import type { BaseError } from "wagmi";
-import { useCheckFipEditorAddress, useFipEditors } from "../../../common/hooks"
+import { useApproveProposalId, useCheckFipEditorAddress, useFipEditorProposalDataSet, useFipEditors, useRevokeProposalId } from "../../../common/hooks"
 import fileCoinAbi from "../../../common/abi/power-voting.json";
 import { getContractAddress, getWeb3IpfsId } from "../../../utils";
 import {
+  FIP_ALREADY_EXECUTE_MSG,
+  FIP_APPROVE_SELF_MSG,
   FIP_EDITOR_APPROVE_TYPE,
   FIP_EDITOR_REVOKE_TYPE,
   NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG,
@@ -50,8 +52,24 @@ const FipEditorPropose = () => {
   const { isFipEditorAddress, checkFipEditorAddressSuccess } = useCheckFipEditorAddress(chainId, address);
   const { fipEditors } = useFipEditors(chainId);
 
-  //get approve list
 
+  //load revoke proposa
+  const { revokeProposalId } = useRevokeProposalId(chainId);
+  const revokeResult = useFipEditorProposalDataSet({
+    chainId,
+    idList: revokeProposalId,
+    page: 1,
+    pageSize: revokeProposalId?.length ?? 0,
+  });
+
+  //load approve
+  const { approveProposalId } = useApproveProposalId(chainId);
+  const approveResult = useFipEditorProposalDataSet({
+    chainId,
+    idList: approveProposalId,
+    page: 1,
+    pageSize: approveProposalId?.length ?? 0,
+  });
 
   const {
     data: hash,
@@ -114,8 +132,6 @@ const FipEditorPropose = () => {
    * Set miner ID
    */
   const onSubmit = async () => {
-
-
     // Check if required fields are filled based on proposal type
     if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && !fipAddress) {
       messageApi.open({
@@ -140,6 +156,36 @@ const FipEditorPropose = () => {
         type: 'warning',
         // must more than 2
         content: NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG,
+      });
+      return;
+    }
+
+
+    if (fipProposalType === FIP_EDITOR_REVOKE_TYPE && revokeResult.getFipEditorProposalIdSuccess) {
+      const find = revokeResult.fipEditorProposalData?.find((v: any) => v.result?.fipEditorAddress === selectedAddress)
+      if (find) {
+        messageApi.open({
+          type: 'warning',
+          content: FIP_ALREADY_EXECUTE_MSG,
+        });
+        return;
+      }
+    }
+    if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && approveResult.getFipEditorProposalIdSuccess) {
+      const find = approveResult.fipEditorProposalData?.find((v: any) => v.result?.fipEditorAddress === fipAddress)
+      if (find) {
+        messageApi.open({
+          type: 'warning',
+          content: FIP_ALREADY_EXECUTE_MSG,
+        });
+        return;
+      }
+    }
+
+    if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && fipAddress === address){
+      messageApi.open({
+        type: 'warning',
+        content: FIP_APPROVE_SELF_MSG,
       });
       return;
     }
@@ -185,7 +231,7 @@ const FipEditorPropose = () => {
             <Link to="/home" className="flex items-center">
               <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
                 <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                      d="m11 17l-5-5m0 0l5-5m-5 5h12" />
+                  d="m11 17l-5-5m0 0l5-5m-5 5h12" />
               </svg>
               Back
             </Link>
