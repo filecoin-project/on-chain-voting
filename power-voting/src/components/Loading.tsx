@@ -17,7 +17,7 @@ import { Spin, Row } from 'antd';
 
 const Loading  = () => {
   return (
-    <Row style={{ minHeight: '400px' }} justify='center' align='middle'>
+    <Row style={{ minHeight: '300px' }} justify='center' align='middle'>
       <Spin />
     </Row>
   )

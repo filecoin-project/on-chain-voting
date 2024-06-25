@@ -52,7 +52,6 @@ const Home = () => {
   const navigate = useNavigate();
   const { chain, address, isConnected } = useAccount();
   const chainId = chain?.id || 0;
-  console.log("home", chainId)
 
   const { openConnectModal } = useConnectModal();
 
@@ -272,7 +271,6 @@ const Home = () => {
         if (proposalStatus == COMPLETED_STATUS) {
           const passedOption = option?.find((v: any) => { return v.name === VOTE_OPTIONS[0] })
           const rejectOption = option?.find((v: any) => {return v.name === VOTE_OPTIONS[1] })
-          console.log(passedOption,rejectOption)
           if (passedOption?.count > rejectOption?.count) {
             subStatus = PASSED_STATUS
           } else {
@@ -337,13 +335,12 @@ const Home = () => {
    * @param list
    */
   const renderList = (list: ProposalList[]) => {
-    console.log(chain);
     if (proposalStatus !== VOTE_ALL_STATUS) {
       list = list.filter(item => item.proposalStatus === proposalStatus);
     }
     if (!list.length) {
       return (
-        <div className='empty'>
+        <div className='empty mt-20'>
           <Empty
             description={
               <span className='text-black'>No Data</span>
@@ -468,7 +465,7 @@ const Home = () => {
     // Display empty when data is empty
     if (!proposalData.length) {
       return (
-        <div className='empty'>
+        <div className='empty mt-20'>
           <Empty
             description={
               <span className='text-black'>No Data</span>

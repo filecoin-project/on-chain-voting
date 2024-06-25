@@ -14,12 +14,12 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { message, Popover, Table, Tooltip, Popconfirm, Button, Row, Pagination } from 'antd';
+import { message, Popover, Table, Tooltip, Popconfirm, Button, Row, Pagination } from "antd";
 import { InfoCircleOutlined } from '@ant-design/icons';
 import axios from "axios";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import type { BaseError } from "wagmi";
-import "./index.less"
+import "./index.less";
 import {
   HAVE_APPROVED_MSG,
   STORING_DATA_MSG,
