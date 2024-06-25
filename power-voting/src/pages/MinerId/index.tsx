@@ -104,6 +104,7 @@ const MinerId = () => {
    */
   const handleMinerChange = (ids: string) => {
     const arr = ids ? ids.split(',') : [];
+
     setMinerIds(arr);
 
     const { value } = removeMinerIdPrefix(arr);
@@ -176,6 +177,7 @@ const MinerId = () => {
     const { value, hasError } = removeMinerIdPrefix(minerIds);
     // Remove prefix from miner IDs and check for errors
     if (hasError) {
+      console.log(hasError)
       messageApi.open({
         type: 'warning',
         content: WRONG_MINER_ID_MSG,
