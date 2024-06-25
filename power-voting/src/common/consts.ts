@@ -501,7 +501,7 @@ export const NO_FIP_EDITOR_REVOKE_ADDRESS_MSG = 'Please select an address!';
 export const NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG = 'There must be more than two FIP editors to revoke';
 export const FIP_ALREADY_EXECUTE_MSG="Address has an active proposal "
 export const FIP_APPROVE_SELF_MSG="Cannot propose to self"
-
+export const FIP_APPROVE_ALREADY_MSG="Address is already a FIP editor"
 export const HAVE_APPROVED_MSG = 'You have already approved!';
 export const HAVE_REVOKED_MSG = 'You have already revoked!';
 export const CAN_NOT_REVOKE_YOURSELF_MSG = 'You can\'t revoke yourself!';
