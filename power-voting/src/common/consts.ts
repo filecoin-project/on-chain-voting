@@ -191,7 +191,7 @@ eyJhbGciOiJzZWNwMjU2azEiLCJ0eXBlIjoiSldUIiwidmVyc2lvbiI6IjAuMC4xIn0.eyJpc3MiOiJ0
 
 ### 1.1 Create a UCAN signature authorized by Filecoin account to Eth account
 
-Follow the process below to create a UCAN signature with act as add.
+[Follow the process below to create a UCAN signature with act as add.](#i-how-to-use-ucan-signature)
 
 <span style="color:red;">Attention: Field **act** should be set to **add**</span>
 
@@ -218,7 +218,7 @@ var (
 
 3. Select **Filecoin** for UCAN Type. 
 
-4. Enter  **Filecoin address** that requires authorization against field Aud. The Filecoin address is the one that its private key is entered in [1.1 Create a UCAN signature authorized by Filecoin account to Eth account](#11创建Filecoin账户对Eth账户授权的UCAN签名)
+4. Enter  **Filecoin address** that requires authorization against field Aud. The Filecoin address is the one that its private key is entered in [1.1 Create a UCAN signature authorized by Filecoin account to Eth account](#11-create-a-ucan-signature-authorized-by-filecoin-account-to-eth-account)
 
 5. Enter **UCAN signature** created in 1.1 Create a UCAN signature authorized by Filecoin account to Eth account against filed Proof.
 
@@ -271,7 +271,7 @@ eyJhbGciOiJzZWNwMjU2azEiLCJ0eXBlIjoiSldUIiwidmVyc2lvbiI6IjAuMC4xIn0.eyJpc3MiOiJ0
 
 <span style="color:red;">Attention：field act  should be set to del.</span>
 
-Follow the process below to create a UCAN signature with act as del.
+[Follow the process below to create a UCAN signature with act as del.](#i-how-to-use-ucan-signature)
 
 The parameters need to be changed as follows:
 
@@ -498,7 +498,7 @@ export const DUPLICATED_MINER_ID_MSG = 'Your miner ID is duplicated!';
 export const NOT_FIP_EDITOR_MSG = 'Please select a FIP Editor to create proposals!';
 export const NO_FIP_EDITOR_APPROVE_ADDRESS_MSG = 'Please input an address!';
 export const NO_FIP_EDITOR_REVOKE_ADDRESS_MSG = 'Please select an address!';
-export const NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG = 'There must be more than two FIP editors to ';
+export const NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG = 'There must be more than two FIP editors to revoke';
 export const FIP_ALREADY_EXECUTE_MSG="Address has an active proposal "
 export const FIP_APPROVE_SELF_MSG="Cannot propose to self"
 
