@@ -41,7 +41,17 @@ import anchor from 'markdown-it-anchor';
 import 'katex/dist/katex.css';
 import 'react-markdown-editor-lite/lib/index.css';
 import './index.less';
-
+const slugify = (text: string) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+};
 const mdParser = markdownIt({
   html: true,
   linkify: true,
@@ -56,7 +66,8 @@ const mdParser = markdownIt({
   .use(abbreviation)
   .use(insert)
   .use(mark)
-  .use(anchor,{
+  .use(anchor, {
+    slugify: slugify,
     permalink: false,
     permalinkClass: 'anchor',
     permalinkSymbol: '#',
