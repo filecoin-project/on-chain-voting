@@ -191,7 +191,6 @@ const MinerId = () => {
       if (!minerIds.length) {
         allSuccessful = true
       }
-      return
       if (!allSuccessful) {
         messageApi.open({
           type: 'error',
