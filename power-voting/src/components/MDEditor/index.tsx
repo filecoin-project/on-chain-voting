@@ -36,6 +36,8 @@ import insert from 'markdown-it-ins';
 import mark from 'markdown-it-mark';
 // @ts-ignore
 import tasklists from 'markdown-it-task-lists';
+// @ts-ignore
+import anchor from 'markdown-it-anchor';
 import 'katex/dist/katex.css';
 import 'react-markdown-editor-lite/lib/index.css';
 import './index.less';
@@ -54,6 +56,13 @@ const mdParser = markdownIt({
   .use(abbreviation)
   .use(insert)
   .use(mark)
+  .use(anchor,{
+    permalink: false,
+    permalinkClass: 'anchor',
+    permalinkSymbol: '#',
+    permalinkBefore: true,
+    level: [1, 2, 3]
+  })
   .use(tasklists);
 
 interface Props {
@@ -78,15 +87,37 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
 
   const mdEditor: any = React.useRef(null);
   const handleEditorChange = () => mdEditor.current?.getMdValue();
-  const [currentValue,setCurrentValue]=useState(value)
+  const [currentValue, setCurrentValue] = useState(value)
   const [showMore, setShowMore] = useState(false);
   const handleClickShowMore = () => {
     setShowMore(prev => !prev);
   };
- 
+
+  const handleInternalLinks = () => {
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = anchor.getAttribute('href')?.substring(1);
+        if (targetId) {
+          console.log(targetId)
+          const targetElement = document.getElementById(targetId);
+          if (targetElement) {
+            window.scrollTo({
+              top: targetElement.offsetTop,
+              behavior: 'smooth',
+            });
+          }
+        }
+      });
+    });
+  }
   useEffect(() => {
+    const timeId = setTimeout(() => {
+      handleInternalLinks();
+    }, 100);
     setCurrentValue(value)
     setShowMore(moreButton && value.length > 800)
+    return () => clearTimeout(timeId);
   }, [moreButton, value]);
   const renderMoreButton = () => {
     if (value.length > 800) {
