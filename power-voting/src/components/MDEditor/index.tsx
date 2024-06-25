@@ -45,12 +45,12 @@ const slugify = (text: string) => {
   return text
     .toString()
     .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w-]+/g, '')
-    .replace(/--+/g, '-')
-    .replace(/^-+/, '')
-    .replace(/-+$/, '');
+    .trim() //Trim leading and trailing whitespace
+    .replace(/\s+/g, '-')     // Replace spaces with hyphens
+    .replace(/[^\w-]+/g, '') //Remove any characters that are not word characters or hyphens
+    .replace(/--+/g, '-') // Replace multiple consecutive hyphens with a single hyphen
+    .replace(/^-+/, '') //Remove leading hyphens
+    .replace(/-+$/, ''); // Remove trailing hyphens
 };
 const mdParser = markdownIt({
   html: true,
