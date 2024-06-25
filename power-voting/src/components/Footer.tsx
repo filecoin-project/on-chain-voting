@@ -22,48 +22,48 @@ const Footer = () => {
   //     icon: '/images/protocol.svg',
   //   },
   // ];
-  const resources=[
+  const resources = [
     {
-      href:"",
-      text:"FAQs ↗"
+      href: "",
+      text: "FAQs ↗"
     },
     {
-      href:"",
-      text:"Documentation ↗"
+      href: "",
+      text: "Documentation ↗"
     },
     {
-      href:"",
-      text:"Resources ↗"
+      href: "",
+      text: "Resources ↗"
     }
   ]
 
-  const contact=[
+  const contact = [
     {
-      href:"https://github.com/black-domain/power-voting",
-      text:"GitHub ↗"
+      href: "https://github.com/black-domain/power-voting",
+      text: "GitHub ↗"
     },
     {
-      href:"https://discord.gg/S8NHC7fV26",
-      text:"Discord ↗"
+      href: "https://discord.gg/S8NHC7fV26",
+      text: "Discord ↗"
     },
     {
-      href:"",
-      text:"Slack ↗"
+      href: "",
+      text: "Slack ↗"
     }
   ]
-  const legal=[
+  const legal = [
     {
-      href:"",
-      text:"Privacy & Terms ↗"
+      href: "",
+      text: "Privacy & Terms ↗"
     },
     {
-      href:"",
-      text:"Code of Conduct ↗"
+      href: "",
+      text: "Code of Conduct ↗"
     }
     ,
     {
-      href:"",
-      text:" "
+      href: "",
+      text: " "
     }
   ]
 
@@ -73,8 +73,8 @@ const Footer = () => {
         <p className='text-[12px] font-normal text-[#ffffff]'>Powered by</p>
 
         <div className="flex mt-[35px]">
-          <img src="/images/logo_1.png" alt="" className='w-[144px] h-[31px] mr-8' />
-          <img src="/images/logo_2.png" alt="" className='w-[120px] mr-8' />
+          <a href="https://www.storswift.com"><img src="/images/logo_1.png" alt="" className='w-[144px] h-[31px] mr-8' /></a>
+          <a href="https://fil.org/"><img src="/images/logo_2.png" alt="" className='w-[120px] mr-8' /></a>
         </div>
 
         <div style={{
@@ -82,8 +82,8 @@ const Footer = () => {
           fontWeight: "bold",
           color: "#7F8FA3",
           maxWidth: "32rem",
-          marginTop:"32px"
-        }}> 
+          marginTop: "32px"
+        }}>
           <p className='text-[12px] font-normal'>All Right Reserved © 2024</p>
         </div>
       </div>
