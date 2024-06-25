@@ -340,7 +340,7 @@ const Home = () => {
     }
     if (!list.length) {
       return (
-        <div className='empty'>
+        <div className='empty mt-20'>
           <Empty
             description={
               <span className='text-black'>No Data</span>
@@ -465,7 +465,7 @@ const Home = () => {
     // Display empty when data is empty
     if (!proposalData.length) {
       return (
-        <div className='empty'>
+        <div className='empty mt-20'>
           <Empty
             description={
               <span className='text-black'>No Data</span>

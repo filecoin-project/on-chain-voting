@@ -162,7 +162,7 @@ const FipEditorPropose = () => {
 
 
     if (fipProposalType === FIP_EDITOR_REVOKE_TYPE && revokeResult.getFipEditorProposalIdSuccess) {
-      const find = revokeResult.fipEditorProposalData?.find((v: any) => v.result?.fipEditorAddress === selectedAddress)
+      const find = revokeResult.fipEditorProposalData?.find((v: any) => v.result[1] === selectedAddress)
       if (find) {
         messageApi.open({
           type: 'warning',
@@ -172,7 +172,7 @@ const FipEditorPropose = () => {
       }
     }
     if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && approveResult.getFipEditorProposalIdSuccess) {
-      const find = approveResult.fipEditorProposalData?.find((v: any) => v.result?.fipEditorAddress === fipAddress)
+      const find = approveResult.fipEditorProposalData?.find((v: any) => v.result[1] === fipAddress)
       if (find) {
         messageApi.open({
           type: 'warning',
