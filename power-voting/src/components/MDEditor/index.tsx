@@ -110,7 +110,6 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
         e.preventDefault();
         const targetId = anchor.getAttribute('href')?.substring(1);
         if (targetId) {
-          console.log(targetId)
           const targetElement = document.getElementById(targetId);
           if (targetElement) {
             window.scrollTo({
