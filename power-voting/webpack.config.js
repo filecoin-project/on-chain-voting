@@ -38,13 +38,6 @@ module.exports = {
           '^/api': '/api'
         }
       },
-      '/rpc/v1': {
-        target: 'http://192.168.11.139:1235',
-        changeOrigin: true,
-        pathRewrite: {
-          '^/rpc/v1': '/rpc/v1'
-        }
-      },
     }
   },
   stats: {
