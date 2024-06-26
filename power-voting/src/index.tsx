@@ -23,7 +23,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { metaMaskWallet } from '@rainbow-me/rainbowkit/wallets';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider, http } from "wagmi";
-import { filecoin, filecoinCalibration } from 'wagmi/chains';
+import { filecoin } from 'wagmi/chains';
 import { walletConnectProjectId } from './common/consts';
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
