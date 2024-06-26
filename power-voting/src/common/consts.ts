@@ -506,4 +506,5 @@ export const HAVE_APPROVED_MSG = 'You have already approved!';
 export const HAVE_REVOKED_MSG = 'You have already revoked!';
 export const CAN_NOT_REVOKE_YOURSELF_MSG = 'You can\'t revoke yourself!';
 export const SAVE_DRAFT_SUCCESS = "Save Success"
-export const SAVE_DRAFT_FAIL = "Save FAIL"
+export const SAVE_DRAFT_FAIL = "Save Fail"
+export const UPLOAD_DATA_FAIL_MSG="Save Data Fail"

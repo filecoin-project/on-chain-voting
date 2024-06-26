@@ -36,7 +36,8 @@ import {
   proposalDraftGetApi,
   proposalDraftAddApi,
   SAVE_DRAFT_SUCCESS,
-  SAVE_DRAFT_FAIL
+  SAVE_DRAFT_FAIL,
+  UPLOAD_DATA_FAIL_MSG
 } from '../../common/consts';
 import { useStoringCid, useVoterInfo } from "../../common/store";
 import timezoneOption from '../../../public/json/timezons.json';
@@ -234,6 +235,16 @@ const CreateVote = () => {
     };
 
     const cid = await getWeb3IpfsId(_values);
+
+    if (!cid?.length) {
+      messageApi.open({
+        type: 'warning',
+        content: UPLOAD_DATA_FAIL_MSG,
+      });
+      setLoading(false);
+      return
+    }
+
     setCid(cid);
 
     if (isConnected) {
@@ -391,7 +402,7 @@ const CreateVote = () => {
       )
     },
     {
-      name: 'Proposal Description',
+      name: 'Description',
       width: 260,
       desc: <div className="text-red">
         <span>

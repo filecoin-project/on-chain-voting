@@ -32,6 +32,7 @@ import {
   PENDING_STATUS,
   worldTimeApi,
   VOTE_SUCCESS_MSG,
+  UPLOAD_DATA_FAIL_MSG,
 } from "../../common/consts";
 import { timelockEncrypt, roundAt, mainnetClient, Buffer } from "tlock-js";
 import type { ProposalList, ProposalOption } from "../../common/types";
@@ -172,6 +173,16 @@ const Vote = () => {
       const encryptValue = await handleEncrypt([[`${selectedOptionIndex}`, `100`]]);
       // Get the IPFS ID for the encrypted value
       const optionId = await getWeb3IpfsId(encryptValue);
+      
+      if(!cid?.length){
+        setLoading(false);
+        messageApi.open({
+          type: 'warning',
+          content: UPLOAD_DATA_FAIL_MSG,
+        });
+        return;
+      }
+  
       // Check if user is connected to the network
       if (isConnected) {
         writeContract({

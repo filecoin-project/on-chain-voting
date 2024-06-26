@@ -149,15 +149,19 @@ export const getContractAddress = (chainId: number, type: string) => {
  * @param params for the data
  */
 export const getWeb3IpfsId = async (params: object | string) => {
-  const json = JSON.stringify(params);
-  const file = new Blob([json]);
-  const formData = new FormData();
-  formData.append('file', file);
-  const resp = await axios.post(uploadApi,formData, {
+  try {
+    const json = JSON.stringify(params);
+    const file = new Blob([json]);
+    const formData = new FormData();
+    formData.append('file', file);
+    const resp = await axios.post(uploadApi, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       },
     },
-  );
-  return resp.data["data"]["root"]["/"];
+    );
+    return resp.data["data"]["root"]["/"];
+  } catch (e) {
+    return ""
+  }
 }

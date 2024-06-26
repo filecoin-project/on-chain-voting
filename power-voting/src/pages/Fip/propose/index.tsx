@@ -34,6 +34,7 @@ import {
   NO_FIP_EDITOR_APPROVE_ADDRESS_MSG,
   NO_FIP_EDITOR_REVOKE_ADDRESS_MSG,
   STORING_DATA_MSG,
+  UPLOAD_DATA_FAIL_MSG,
 } from "../../../common/consts";
 
 const FipEditorPropose = () => {
@@ -207,6 +208,16 @@ const FipEditorPropose = () => {
 
     // Get the IPFS CID for the proposal information
     const cid = await getWeb3IpfsId(fipInfo);
+
+
+    if(!cid?.length){
+      setLoading(false);
+      messageApi.open({
+        type: 'warning',
+        content: UPLOAD_DATA_FAIL_MSG,
+      });
+      return;
+    }
 
     // Construct the arguments and call the writeContract function to create the proposal
     const proposalArgs = [

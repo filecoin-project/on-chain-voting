@@ -31,6 +31,7 @@ import {
   UCAN_GITHUB_STEP_2,
   OPERATION_CANCELED_MSG,
   STORING_DATA_MSG,
+  UPLOAD_DATA_FAIL_MSG,
 } from '../../../common/consts';
 import { stringToBase64Url, validateValue, getWeb3IpfsId, getContractAddress } from '../../../utils';
 import './index.less';
@@ -162,6 +163,15 @@ const UcanDelegate = () => {
   const setUcan = async (ucan: string) => {
     // Get the IPFS ID for the provided UCAN
     const cid = await getWeb3IpfsId(ucan);
+    if(!cid?.length){
+      setLoading(false);
+      messageApi.open({
+        type: 'warning',
+        content: UPLOAD_DATA_FAIL_MSG,
+      });
+      return;
+    }
+
     writeContract({
       abi: fileCoinAbi,
       address: getContractAddress(chain?.id || 0, 'powerVoting'),
