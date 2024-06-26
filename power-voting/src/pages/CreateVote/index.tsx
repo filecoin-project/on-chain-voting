@@ -403,11 +403,11 @@ const CreateVote = () => {
     },
     {
       name: 'Description',
-      width: 260,
+      width: 280,
       desc: <div className="text-red">
-        <span>
+        <span className="text-sm">
           Describe FIP objectives, implementation details, risks, and include GitHub links for transparency. See a template <a target="_blank"
-            rel="noopener" href="" style={{ color: "blue" }}>here↗</a>.
+            rel="noopener" href="" className="text-sm" style={{ color: "blue" }}>here↗</a>.
           <br /> You can use Markdown formatting in the text input field.
         </span>
 
@@ -526,7 +526,7 @@ const CreateVote = () => {
       </div>
       <form onSubmit={handleSubmit(onSubmit)} >
         <div className='flow-root space-y-8'>
-          <Table title='Create A Proposal' subTitle={<div className="text-m">
+          <Table title='Create A Proposal' subTitle={<div className="text-base font-normal">
             Proposals should be clear, concise, and focused on specific improvements or changes. FIPs must adhere to the Filecoin community's <a target="_blank"
               rel="noopener" href="" style={{ color: "blue" }}>code of conduct and best practices↗</a>.
           </div>} list={list} />

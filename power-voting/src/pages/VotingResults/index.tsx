@@ -32,6 +32,7 @@ import VoteList from "../../components/VoteList";
 import type { ProposalOption, ProposalResult, ProposalHistory } from "../../common/types";
 import { useCurrentTimezone } from "../../common/store";
 import VoteStatusBtn from 'src/components/VoteStatusBtn';
+import Loading from 'src/components/Loading';
 
 const VotingResults = () => {
   const { chain, isConnected } = useAccount();
@@ -41,6 +42,7 @@ const VotingResults = () => {
   const { state } = useLocation() || null;
   const [votingData, setVotingData] = useState(state);
   const timezone = useCurrentTimezone((state: any) => state.timezone);
+  const [loading, setLoading] = useState(true);
 
   const initState = async () => {
     const option: ProposalOption[] = [];
@@ -120,6 +122,7 @@ const VotingResults = () => {
       // Sort voteList array by number of votes in descending order
       voteList: voteList?.sort((a: any, b: any) => b.votes - a.votes)
     })
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -160,7 +163,11 @@ const VotingResults = () => {
     href = `${chain?.blockExplorers?.default.url}/address/${votingData?.address}`;
     img = `${web3AvatarUrl}:${votingData?.address}`
   }
-
+  if (loading) {
+    return (
+      <Loading />
+    );
+  }
   return (
     <div className='flex voting-result'>
       <div className='relative w-full pr-4 lg:w-8/12'>
