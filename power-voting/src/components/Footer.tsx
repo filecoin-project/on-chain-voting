@@ -73,8 +73,10 @@ const Footer = () => {
         <p className='text-[12px] font-normal text-[#ffffff]'>Powered by</p>
 
         <div className="flex mt-[35px]">
-          <a target='_blank' href="https://www.storswift.com"><img src="/images/logo_1.png" alt="" className='w-[144px] h-[31px] mr-8' /></a>
-          <a target='_blank' href="https://fil.org/"><img src="/images/logo_2.png" alt="" className='w-[120px] mr-8' /></a>
+          <a target="_blank"
+            rel="noopener" href="https://www.storswift.com"><img src="/images/logo_1.png" alt="" className='w-[144px] h-[31px] mr-8' /></a>
+          <a target="_blank"
+            rel="noopener" href="https://fil.org/"><img src="/images/logo_2.png" alt="" className='w-[120px] mr-8' /></a>
         </div>
 
         <div style={{
