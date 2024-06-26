@@ -182,7 +182,7 @@ const VotingResults = () => {
           </button>
         </div>
         <div className='px-3 md:px-0'>
-          <h1 className='mb-6 text-3xl font-semibold text-[#313D4F] break-words break-all leading-12'>
+          <h1 className='mb-6 text-2xl font-semibold text-[#313D4F] break-words break-all leading-12'>
             {votingData?.name}
           </h1>
           {
@@ -227,7 +227,7 @@ const VotingResults = () => {
         <div className='mt-4 space-y-4 lg:mt-0'>
           <div className='text-base border-solid border-[1px] border-[#DFDFDF] border-y  bg-skin-block-bg md:rounded-xl md:border'>
             <div className='group flex h-[57px] justify-between px-4 pb-[12px] pt-3 md:rounded-t-lg'>
-              <h4 className='flex items-center text-xl'>
+              <h4 className='flex items-center font-medium text-[#313D4F]'>
                 <div>Details</div>
               </h4>
               <div className='flex items-center'>
@@ -235,37 +235,39 @@ const VotingResults = () => {
             </div>
             <div className='h-[1px] bg-[#DFDFDF]' />
             <div className='p-4 leading-6 sm:leading-8'>
-              <div className='space-y-1'>
-                <div>
-                  <b>Start Time</b>
-                  <span className='float-right text-[#313D4F]'>{votingData?.startTime && dayjs(votingData.startTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
+              <div className='space-y-1 text-sm font-medium'>
+                <div className='flex justify-between'>
+                  <div>Start Time</div>
+                  <span className='text-[#313D4F] text-sm font-normal'>{votingData?.startTime && dayjs(votingData.startTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
                 </div>
-                <div>
-                  <b>End Time</b>
-                  <span className='float-right text-[#313D4F]'>{votingData?.expTime && dayjs(votingData.expTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
+                <div className='flex justify-between'>
+                  <div>End Time</div>
+                  <span className='text-[#313D4F] text-sm font-normal'>{votingData?.expTime && dayjs(votingData.expTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
                 </div>
-                <div>
-                  <b>Timezone</b>
-                  <span className='float-right text-[#313D4F]'>{timezone}</span>
+                <div className='flex justify-between'>
+                  <div>Timezone</div>
+                  <span className='text-[#313D4F] text-sm font-normal'>{timezone}</span>
                 </div>
+                {
+                  votingData?.powerBlockHeight > 0 && (<div className='flex justify-between'>
+                    <div className='text-sm font-medium'>Block Height</div>
+                    <span className='text-[#313D4F] font-normal'>{votingData?.powerBlockHeight}</span>
+                  </div>)
+                }
               </div>
-              {
-                votingData?.powerBlockHeight > 0 && (<div>
-                  <b>Block Height</b>
-                  <span className='float-right text-[#313D4F]'>{votingData?.powerBlockHeight}</span>
-                </div>)
-              }
+
             </div>
           </div>
           {
             votingData?.voteStatus === COMPLETED_STATUS &&
             <div className='text-base border-solid border-[1px] border-[#DFDFDF] border-y  bg-skin-block-bg md:rounded-xl md:border'>
               <div className='group flex h-[57px] justify-between px-4 pb-[12px] pt-3 md:rounded-t-lg'>
-                <h4 className='flex items-center text-xl'>
+                <h4 className='flex items-center font-medium'>
                   <div>Results</div>
                 </h4>
                 <div className='flex items-center' />
               </div>
+              <div className='h-[1px] bg-[#DFDFDF]' />
               <div className='p-4 leading-6 sm:leading-8'>
                 <div className='space-y-3'>
                   {
@@ -274,10 +276,10 @@ const VotingResults = () => {
                         <div key={item.name + index}>
                           <div className='flex justify-between mb-1 text-skin-link'>
                             <div className='w-[150px] flex items-center overflow-hidden'>
-                              <span className='mr-1 truncate'>{item.name}</span>
+                              <span className='mr-1 truncate text-sm'>{item.name}</span>
                             </div>
                             <div className='flex justify-end'>
-                              <div className='space-x-2'>
+                              <div className='space-x-2 text-sm font-medium'>
                                 <span>{item.count}%</span>
                               </div>
                             </div>

@@ -173,8 +173,8 @@ const Vote = () => {
       const encryptValue = await handleEncrypt([[`${selectedOptionIndex}`, `100`]]);
       // Get the IPFS ID for the encrypted value
       const optionId = await getWeb3IpfsId(encryptValue);
-      
-      if(!cid?.length){
+
+      if (!cid?.length) {
         setLoading(false);
         messageApi.open({
           type: 'warning',
@@ -182,7 +182,7 @@ const Vote = () => {
         });
         return;
       }
-  
+
       // Check if user is connected to the network
       if (isConnected) {
         writeContract({
@@ -239,7 +239,7 @@ const Vote = () => {
           </button>
         </div>
         <div className="px-3 md:px-0 ">
-          <h1 className="mb-6 text-3xl text-[#313D4F] break-words break-all leading-12" style={{ overflowWrap: 'break-word' }}>
+          <h1 className="mb-6 text-2xl text-[#313D4F] break-words break-all leading-12" style={{ overflowWrap: 'break-word' }}>
             {votingData?.name}
           </h1>
           {
@@ -277,7 +277,7 @@ const Vote = () => {
               }}
             />
           </div>
-       
+
         </div>
       </div>
       <div className="w-full lg:w-4/12 lg:min-w-[321px]">
@@ -286,63 +286,63 @@ const Vote = () => {
             className="text-base border-solid border-y border-skin-border bg-skin-block-bg md:rounded-xl md:border">
             <div
               className="group flex h-[57px] justify-between rounded-t-none border-b border-skin-border border-solid px-4 pb-[12px] pt-3 md:rounded-t-lg">
-              <h4 className="flex items-center text-xl">
+              <h4 className="flex items-center font-medium">
                 <div>Details</div>
               </h4>
             </div>
             <div className="p-4 leading-6 sm:leading-8">
               <div className='space-y-1'>
-                <div>
-                  <b>Start Time</b>
-                  <span className='float-right text-[#313D4F]'>{votingData?.startTime && dayjs(votingData.startTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
+                <div className='flex justify-between'>
+                  <div>Start Time</div>
+                  <span className='text-[#313D4F] text-sm font-normal'>{votingData?.startTime && dayjs(votingData.startTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
                 </div>
-                <div>
-                  <b>End Time</b>
-                  <span className='float-right text-[#313D4F]'>{votingData?.expTime && dayjs(votingData.expTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
+                <div className='flex justify-between'>
+                  <div>End Time</div>
+                  <span className='text-[#313D4F] text-sm font-normal'>{votingData?.expTime && dayjs(votingData.expTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
                 </div>
-                <div>
-                  <b>Timezone</b>
-                  <span className='float-right text-[#313D4F]'>{timezone}</span>
+                <div className='flex justify-between'>
+                  <div>Timezone</div>
+                  <span className='text-[#313D4F] text-sm font-normal'>{timezone}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
         {
-            votingData?.voteStatus === IN_PROGRESS_STATUS &&
-            <div className='mt-5'>
-              <div className="border-[#313D4F] mt-6 border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border border-solid">
-                <div className="group flex h-[57px] !border-[#eeeeee] justify-between items-center border-b px-4 pb-[12px] pt-3 border-solid">
-                  <h4 className="text-xl">
-                    Cast Your Vote
-                  </h4>
-                </div>
-                <div className="p-4 text-center">
-                  {
-                    options.map((item: ProposalOption, index: number) => {
-                      return (
-                        <div className="mb-4 space-y-3 leading-10" key={item.name + index} onClick={() => { handleOptionClick(index) }}>
-                          <div
-                            className={`w-full h-[45px] border-[#eeeeee] ${selectedOptionIndex === index ? 'border-[#0190FF] bg-[#F3FAFF]' : ''} hover:border-[#0190FF] flex justify-between items-center pl-8 pr-4 md:border border-solid rounded-full cursor-pointer`}
-                          >
-                            <div className="text-ellipsis h-[100%] overflow-hidden">{item.name}</div>
-                            {
-                              selectedOptionIndex === index &&
-                              <svg  viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-md text-[#0190FF]">
-                                <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
-                                  strokeWidth="2" d="m5 13l4 4L19 7" />
-                              </svg>
-                            }
-                          </div>
+          votingData?.voteStatus === IN_PROGRESS_STATUS &&
+          <div className='mt-5'>
+            <div className="border-[#313D4F] mt-6 border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border border-solid">
+              <div className="group flex h-[57px] !border-[#eeeeee] justify-between items-center border-b px-4 pb-[12px] pt-3 border-solid">
+                <h4 className="text-xl">
+                  Cast Your Vote
+                </h4>
+              </div>
+              <div className="p-4 text-center">
+                {
+                  options.map((item: ProposalOption, index: number) => {
+                    return (
+                      <div className="mb-4 space-y-3 leading-10" key={item.name + index} onClick={() => { handleOptionClick(index) }}>
+                        <div
+                          className={`w-full h-[45px] border-[#eeeeee] ${selectedOptionIndex === index ? 'border-[#0190FF] bg-[#F3FAFF]' : ''} hover:border-[#0190FF] flex justify-between items-center pl-8 pr-4 md:border border-solid rounded-full cursor-pointer`}
+                        >
+                          <div className="text-ellipsis h-[100%] overflow-hidden">{item.name}</div>
+                          {
+                            selectedOptionIndex === index &&
+                            <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-md text-[#0190FF]">
+                              <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
+                                strokeWidth="2" d="m5 13l4 4L19 7" />
+                            </svg>
+                          }
                         </div>
-                      )
-                    })
-                  }
-                  <LoadingButton text='Vote' isFull={true} loading={loading || writeContractPending || transactionLoading} handleClick={startVoting} />
-                </div>
+                      </div>
+                    )
+                  })
+                }
+                <LoadingButton text='Vote' isFull={true} loading={loading || writeContractPending || transactionLoading} handleClick={startVoting} />
               </div>
             </div>
-          }
+          </div>
+        }
       </div>
     </div>
   )
