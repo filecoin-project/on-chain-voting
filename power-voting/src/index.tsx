@@ -31,7 +31,7 @@ import App from "./App";
 const queryClient = new QueryClient();
 
 const filecoinCalibrationChain = {
-  id: 314_159,
+  id: 314159,
   name: 'Filecoin Calibration',
   nativeCurrency: {
     decimals: 18,
@@ -39,7 +39,7 @@ const filecoinCalibrationChain = {
     symbol: 'tFIL',
   },
   rpcUrls: {
-    default: { http: ['/rpc/v1'] },
+    default: { http: ['https://api.calibration.node.glif.io/rpc/v1'] },
   },
   blockExplorers: {
     default: {
