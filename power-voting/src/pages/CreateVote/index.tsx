@@ -395,7 +395,8 @@ const CreateVote = () => {
       width: 260,
       desc: <div className="text-red">
         <span>
-          Describe FIP objectives, implementation details, risks, and include GitHub links for transparency. See a template <a href="" style={{ color: "blue" }}>here↗</a>.
+          Describe FIP objectives, implementation details, risks, and include GitHub links for transparency. See a template <a target="_blank"
+            rel="noopener" href="" style={{ color: "blue" }}>here↗</a>.
           <br /> You can use Markdown formatting in the text input field.
         </span>
 
@@ -515,7 +516,8 @@ const CreateVote = () => {
       <form onSubmit={handleSubmit(onSubmit)} >
         <div className='flow-root space-y-8'>
           <Table title='Create A Proposal' subTitle={<div className="text-m">
-            Proposals should be clear, concise, and focused on specific improvements or changes. FIPs must adhere to the Filecoin community's <a href="" style={{ color: "blue" }}>code of conduct and best practices↗</a>.
+            Proposals should be clear, concise, and focused on specific improvements or changes. FIPs must adhere to the Filecoin community's <a target="_blank"
+              rel="noopener" href="" style={{ color: "blue" }}>code of conduct and best practices↗</a>.
           </div>} list={list} />
 
           <div className="flex justify-center items-center text-center ">
