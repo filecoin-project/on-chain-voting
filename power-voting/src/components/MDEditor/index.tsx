@@ -38,6 +38,9 @@ import mark from 'markdown-it-mark';
 import tasklists from 'markdown-it-task-lists';
 // @ts-ignore
 import anchor from 'markdown-it-anchor';
+// @ts-ignore
+import linkAttributes  from 'markdown-it-link-attributes'; 
+
 import 'katex/dist/katex.css';
 import 'react-markdown-editor-lite/lib/index.css';
 import './index.less';
@@ -66,6 +69,13 @@ const mdParser = markdownIt({
   .use(abbreviation)
   .use(insert)
   .use(mark)
+  .use(linkAttributes, {
+    pattern: /^https?:\/\//, 
+    attrs: {
+      target: '_blank',     
+      rel: 'noopener' 
+    }
+  })
   .use(anchor, {
     slugify: slugify,
     permalink: false,

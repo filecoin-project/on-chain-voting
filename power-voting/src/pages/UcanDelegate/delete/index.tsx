@@ -29,6 +29,7 @@ import {
   STORING_DATA_MSG, OPERATION_CANCELED_MSG,
   UCAN_TYPE_FILECOIN_OPTIONS,
   UCAN_TYPE_GITHUB_OPTIONS,
+  UPLOAD_DATA_FAIL_MSG,
 } from '../../../common/consts';
 import './index.less';
 import { stringToBase64Url, validateValue, getWeb3IpfsId, getContractAddress } from "../../../utils";
@@ -137,6 +138,15 @@ const UcanDelegate = () => {
 
   const setUcan = async (ucan: string) => {
     const cid = await getWeb3IpfsId(ucan);
+    if(!cid?.length){
+      setLoading(false);
+      messageApi.open({
+        type: 'warning',
+        content: UPLOAD_DATA_FAIL_MSG,
+      });
+      return;
+    }
+
     writeContract({
       abi: fileCoinAbi,
       address: getContractAddress(chain?.id || 0, 'powerVoting'),

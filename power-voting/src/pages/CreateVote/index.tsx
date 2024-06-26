@@ -36,7 +36,8 @@ import {
   proposalDraftGetApi,
   proposalDraftAddApi,
   SAVE_DRAFT_SUCCESS,
-  SAVE_DRAFT_FAIL
+  SAVE_DRAFT_FAIL,
+  UPLOAD_DATA_FAIL_MSG
 } from '../../common/consts';
 import { useStoringCid, useVoterInfo } from "../../common/store";
 import timezoneOption from '../../../public/json/timezons.json';
@@ -234,6 +235,16 @@ const CreateVote = () => {
     };
 
     const cid = await getWeb3IpfsId(_values);
+
+    if (!cid?.length) {
+      messageApi.open({
+        type: 'warning',
+        content: UPLOAD_DATA_FAIL_MSG,
+      });
+      setLoading(false);
+      return
+    }
+
     setCid(cid);
 
     if (isConnected) {
@@ -391,11 +402,12 @@ const CreateVote = () => {
       )
     },
     {
-      name: 'Proposal Description',
-      width: 260,
+      name: 'Description',
+      width: 280,
       desc: <div className="text-red">
-        <span>
-          Describe FIP objectives, implementation details, risks, and include GitHub links for transparency. See a template <a href="" style={{ color: "blue" }}>here↗</a>.
+        <span className="text-sm">
+          Describe FIP objectives, implementation details, risks, and include GitHub links for transparency. See a template <a target="_blank"
+            rel="noopener" href="" className="text-sm" style={{ color: "blue" }}>here↗</a>.
           <br /> You can use Markdown formatting in the text input field.
         </span>
 
@@ -514,8 +526,9 @@ const CreateVote = () => {
       </div>
       <form onSubmit={handleSubmit(onSubmit)} >
         <div className='flow-root space-y-8'>
-          <Table title='Create A Proposal' subTitle={<div className="text-m">
-            Proposals should be clear, concise, and focused on specific improvements or changes. FIPs must adhere to the Filecoin community's <a href="" style={{ color: "blue" }}>code of conduct and best practices↗</a>.
+          <Table title='Create A Proposal' subTitle={<div className="text-base font-normal">
+            Proposals should be clear, concise, and focused on specific improvements or changes. FIPs must adhere to the Filecoin community's <a target="_blank"
+              rel="noopener" href="" style={{ color: "blue" }}>code of conduct and best practices↗</a>.
           </div>} list={list} />
 
           <div className="flex justify-center items-center text-center ">
