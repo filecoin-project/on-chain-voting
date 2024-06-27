@@ -19,7 +19,7 @@ import dayjs from "dayjs";
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { useNavigate, Link } from "react-router-dom";
-import Table from '../../components/Table';
+import Table from '../../components/CreateTable';
 import { useForm, Controller } from 'react-hook-form';
 import classNames from 'classnames';
 import type { BaseError } from "wagmi";
