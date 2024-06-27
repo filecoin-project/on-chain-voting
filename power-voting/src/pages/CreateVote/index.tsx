@@ -37,7 +37,8 @@ import {
   proposalDraftAddApi,
   SAVE_DRAFT_SUCCESS,
   SAVE_DRAFT_FAIL,
-  UPLOAD_DATA_FAIL_MSG
+  UPLOAD_DATA_FAIL_MSG,
+  SAVE_DRAFT_TOO_LARGE
 } from '../../common/consts';
 import { useStoringCid, useVoterInfo } from "../../common/store";
 import timezoneOption from '../../../public/json/timezons.json';
@@ -311,6 +312,14 @@ const CreateVote = () => {
     ) {
       return
     }
+
+    if(values.descriptions.length>=2000){
+      messageApi.open({
+        type: "warning",
+        content: SAVE_DRAFT_TOO_LARGE,
+      });
+      return
+    }
     setDraftSave(true)
     const data = {
       Timezone: values.timezone,
@@ -377,9 +386,9 @@ const CreateVote = () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [])
-  const disabledDate = (current:any) => {
-    return current && current < dayjs().startOf('day');
-  };
+  // const disabledDate = (current:any) => {
+  //   return current && current < dayjs().startOf('day');
+  // };
   //VOTE_OPTIONS
   const list = [
     {
@@ -410,7 +419,7 @@ const CreateVote = () => {
       name: 'Description',
       width: 280,
       desc: <div className="text-red">
-        <span className="text-sm">
+        <span className="text-sm" style={{fontFamily:"SuisseIntl"}}>
           Describe FIP objectives, implementation details, risks, and include GitHub links for transparency. See a template <a target="_blank"
             rel="noopener" href="" className="text-sm" style={{ color: "blue" }}>here↗</a>.
           <br /> You can use Markdown formatting in the text input field.
@@ -453,7 +462,7 @@ const CreateVote = () => {
                   <>
                     <RangePicker
                       showTime
-                      disabledDate={disabledDate}
+                      // disabledDate={disabledDate}
                       format="YYYY-MM-DD HH:mm"
                       placeholder={['Start Time', 'End Time']}
                       allowClear={true}
