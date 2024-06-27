@@ -75,6 +75,7 @@ export default function Table({ title = '', link = {} as { type: string, action:
           </tr>
         ))}
       </tbody>
+      <tr className='h-[12px]'/>
     </table>
   )
 }
