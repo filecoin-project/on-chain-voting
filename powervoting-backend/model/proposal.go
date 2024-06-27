@@ -64,7 +64,7 @@ type ProposalDraft struct {
 	Timezone     string `json:"Timezone"`                               // Timezone
 	Time         string `json:"Time"`                                   // Time
 	Name         string `json:"Name"`                                   // Name
-	Descriptions string `json:"Descriptions" gorm:"type:varchar(2000)"` // Descriptions
+	Descriptions string `json:"Descriptions" gorm:"type:varchar(2048)"` // Descriptions
 	Option       string `json:"Option"`                                 // Options
 	Address      string `json:"Address"`                                // Address
 	ChainId      int64  `json:"ChainId"`                                // Chain ID
