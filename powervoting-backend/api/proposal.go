@@ -25,7 +25,6 @@ import (
 	"powervoting-server/db"
 	"powervoting-server/model"
 	"powervoting-server/response"
-	"reflect"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -140,7 +139,6 @@ func AddDraft(c *gin.Context) {
 			return
 		}
 	} else {
-		printStruct(draft)
 		result := db.Engine.Model(model.ProposalDraft{}).Where("chain_id", draft.ChainId).Where("address", draft.Address).Select("Timezone", "Time", "Name", "Descriptions", "Option").Updates(&draft)
 		if result.Error != nil {
 			zap.L().Error("update draft error: ", zap.Error(result.Error))
@@ -166,18 +164,7 @@ func GetDraft(c *gin.Context) {
 	}
 	response.SuccessWithData(result, c)
 }
-func printStruct(s interface{}) {
-	// 获取结构体类型信息
-	val := reflect.ValueOf(s)
-	typ := val.Type()
 
-	// 遍历结构体的字段
-	for i := 0; i < val.NumField(); i++ {
-		field := val.Field(i)
-		fieldName := typ.Field(i).Name
-		fmt.Printf("%s: %v\n", fieldName, field.Interface())
-	}
-}
 func deleteDraft(c *gin.Context) {
 	// chainId := c.Query("chainId")
 	// address := c.Query("address")
