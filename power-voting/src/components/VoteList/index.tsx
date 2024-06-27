@@ -138,7 +138,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
     <div className="border-y border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border my-12">
       <div className="group flex h-[57px] justify-between rounded-t-none border-b border-skin-border px-6 pb-[12px] pt-3 md:rounded-t-lg">
         <h4 className="flex items-center">
-          <div className="font-semibold">Votes</div>
+          <div className="font-medium">Votes</div>
         </h4>
         <div className="flex items-center" />
       </div>
@@ -149,10 +149,10 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
               voteList?.map((item: any, index: number) => {
 
                 const powers = []
-                if (item.tokenHolderPower > 0) {
+                if (item.tokenHolderPower > 0 ) {
                   powers.push("TokenHolder")
                 }
-                if (item.spPower > 0) {
+                if (item.spPower > 0 ) {
                   powers.push("Sp")
                 }
                 if (item.developerPower > 0) {
@@ -164,64 +164,52 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
                 const isApprove = item.optionName === VOTE_OPTIONS[0]
                 return (
                   <div className={`flex items-center gap-3 border-t px-4 py-[14px] ${index === 0 && '!border-0'}`} key={item.address + index}>
-                    <div className="w-[300px] flex items-center">
+                    <div className="flex items-center">
                       <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${item.address}`} alt="" />
                       <a
-                        className="text-[#313D4F]"
+                        className="text-[#313D4F] text-sm font-medium"
                         target="_blank"
                         rel="noopener noreferrer"
                         href={`${chain?.blockExplorers?.default.url}/address/${item?.address}`}
                       >
                         {EllipsisMiddle({ suffixCount: 4, children: item?.address })}
                       </a>
-                      <div >
+                      <div className='ml-[5px]'>
                         {powers.length > 0 && <div className='flex'>
                           {
-                            powers.slice(0, 2).map((v, index) => {
+                            powers.slice(0, 4).map((v, index) => {
                               return <div
                                 key={index}
                                 style={{ marginLeft: "4px", borderColor: "#C3E5FF", backgroundColor: "#E7F4FF", color: "#005292" }}
-                                className={`flex items-center justify-center border-solid h-[32px] px-[12px] rounded-full`}>
+                                className={`font-medium text-xs flex items-center justify-center border-solid h-[22px] px-[8px] rounded-full`}>
                                 {v}
                               </div>
                             })
                           }
                         </div>}
-                        {
-                          powers.length > 2 && <div className='flex mt-[5px]'>
-                            {
-                              powers.slice(2).map((v, index) => {
-                                return <div
-                                  key={index}
-                                  style={{ marginLeft: "4px", borderColor: "#C3E5FF", backgroundColor: "#E7F4FF", color: "#005292" }}
-                                  className={`flex items-center justify-center border-solid h-[32px] px-[12px] rounded-full`}>
-                                  {v}
-                                </div>
-                              })
-                            }
-                          </div>
-                        }
                       </div>
                     </div>
 
-                    <div className="flex min-w-[110px] items-center justify-end whitespace-nowrap text-center text-skin-link xs:w-[130px] xs:min-w-[130px] cursor-pointer">
-                      <Popover content={
-                        <Table
-                          rowKey={(record: any) => record.key}
-                          dataSource={getPowerData(item)}
-                          columns={columns}
-                          pagination={false}
-                          footer={(currentData: any) => renderFooter(currentData, item.votes)}
-                        />
-                      }>
-                        <span className='text-[14px] text-[#273141]'>{item.votes}% <InfoCircleOutlined style={{ fontSize: 14 }} /></span>
-                      </Popover>
-                    </div>
+                    <div className='absolute right-[10px] flex items-center'>
+                      <div className="mr-[5px] flex min-w-[110px] items-center justify-end whitespace-nowrap text-center text-skin-link xs:w-[130px] xs:min-w-[130px] cursor-pointer">
+                        <Popover content={
+                          <Table
+                            rowKey={(record: any) => record.key}
+                            dataSource={getPowerData(item)}
+                            columns={columns}
+                            pagination={false}
+                            footer={(currentData: any) => renderFooter(currentData, item.votes)}
+                          />
+                        }>
+                          <span className='text-[14px] text-[#273141] text-sm'>{item.votes}% <InfoCircleOutlined style={{ fontSize: 14 }} /></span>
+                        </Popover>
+                      </div>
 
-                    <div className="w-[180px] flex truncate px-2 justify-end text-skin-link">
-                      <div className="w-[100px] text-c truncate text-skin-link" style={{ color: isApprove ? "green" : "red" }}>
-                        {isApprove ? <CheckCircleOutlined style={{ fontSize: 14, marginRight: "4px" }} /> : <CloseCircleOutlined style={{ fontSize: 14, marginRight: "4px" }} />}
-                        {isApprove ? "Approved" : "Rejected"}</div>
+                      <div className="flex truncate px-2 text-skin-link ">
+                        <div className="pr-[20px] text-right w-[100px] text-c truncate text-skin-link text-xs font-medium" style={{ color: isApprove ? "green" : "red" }}>
+                          {isApprove ? <CheckCircleOutlined style={{ fontSize: 14, marginRight: "4px" }} /> : <CloseCircleOutlined style={{ fontSize: 14, marginRight: "4px" }} />}
+                          {isApprove ? "Approved" : "Rejected"}</div>
+                      </div>
                     </div>
                   </div>
                 )

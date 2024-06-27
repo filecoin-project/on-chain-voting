@@ -376,14 +376,14 @@ const Home = () => {
                 rel="noopener noreferrer"
                 href={href}
               >
-                <div className="bg-[#F5F5F5] rounded-full  flex p-[5px]">
+                <div className="bg-[#F5F5F5] rounded-full  flex p-[5px] justify-center items-center">
                   <img className="w-[20px] h-[20px] rounded-full mr-2" src={img} alt="" />
-                  <div className="truncate text-#313D4F">
+                  <div className="truncate text-[#313D4F] mr-[5px]">
                     {item.githubName || EllipsisMiddle({ suffixCount: 4, children: item.address })}
                   </div>
                 </div>
               </a>
-              <div className="truncate text-##4B535B text-sm ml-5">
+              <div className="truncate text-[#4B535B] text-sm ml-5">
                 Created {dayjs(item.currentTime * 1000).format('YYYY-MM-D')}
               </div>
             </div>
@@ -399,7 +399,7 @@ const Home = () => {
               {item.name}
             </h3>
           </div>
-          <div className="mb-2 line-clamp-2 break-words text-lg cursor-pointer" onClick={() => {
+          <div className="mb-2 line-clamp-2 break-words text-normal text-lg cursor-pointer" onClick={() => {
             handleJump(item)
           }}>
             {markdownToText(item.descriptions)}
@@ -427,7 +427,7 @@ const Home = () => {
                     <div className="h-[35px] relative mt-1 w-full" key={option.name + index}>
                       <div
                         style={{ color: txColor }}
-                        className='absolute ml-3 flex items-center leading-[35px]'>
+                        className='absolute ml-3 flex items-center leading-[35px] font-semibold'>
                         {
                           option.count > 0 && option.count === maxOption.count &&
                           <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-sm">
@@ -436,7 +436,7 @@ const Home = () => {
                           </svg>
                         }
                         {option.name}</div>
-                      <div className="absolute right-0 mr-3 leading-[35px]" style={{ color: txColor }}>{option.count}%</div>
+                      <div className="font-semibold absolute right-0 mr-3 leading-[35px]" style={{ color: txColor }}>{option.count}%</div>
                       {option.count > 0 && <div className="h-[35px] border-[1px] border-solid rounded-md bg-[#E3FFEE]" style={{ width: `${option.count}%`, backgroundColor: bgColor, borderColor: borderColor }} />
                       }
                     </div>

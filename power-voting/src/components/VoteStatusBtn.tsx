@@ -21,7 +21,7 @@ export default function VoteStatusBtn({ status = 0 }) {
     return (
         <div
             style={{ borderColor: proposal?.bgColor, backgroundColor: proposal?.bgColor, color: proposal?.textColor }}
-            className={`flex items-center justify-center border-solid h-[32px] px-[12px] rounded-full`}>
+            className={`flex items-center justify-center border-solid h-[32px] px-[12px] rounded-full font-medium text-base`}>
             <div className='rounded-full w-[10px] h-[10px] mr-[5px]' style={{ backgroundColor: proposal?.dotColor }} />
             {proposal?.label}
         </div>

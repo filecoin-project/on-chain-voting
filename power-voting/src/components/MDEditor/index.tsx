@@ -38,6 +38,9 @@ import mark from 'markdown-it-mark';
 import tasklists from 'markdown-it-task-lists';
 // @ts-ignore
 import anchor from 'markdown-it-anchor';
+// @ts-ignore
+import linkAttributes  from 'markdown-it-link-attributes'; 
+
 import 'katex/dist/katex.css';
 import 'react-markdown-editor-lite/lib/index.css';
 import './index.less';
@@ -66,6 +69,13 @@ const mdParser = markdownIt({
   .use(abbreviation)
   .use(insert)
   .use(mark)
+  .use(linkAttributes, {
+    pattern: /^https?:\/\//, 
+    attrs: {
+      target: '_blank',     
+      rel: 'noopener' 
+    }
+  })
   .use(anchor, {
     slugify: slugify,
     permalink: false,
@@ -133,9 +143,9 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
     if (value.length > 800) {
       return (
         <>
-          <div className={`absolute bottom-0 h-[80px] w-full bg-gradient-to-t from-[#1b2331] ${showMore ? 'flex' : 'hidden'}`} />
-          <div className={`flex w-full justify-center  ${showMore ? 'absolute -bottom-5' : ''}`}>
-            <button className="border-[#eeeeee] hover:border-[#eeeeee] border-[1px] border-solid text-black mt-4 self-center rounded-xl py-2 px-4" onClick={handleClickShowMore}>
+          <div className={`absolute bottom-0 h-[200px] w-full bg-gradient-to-t from-[#F6F6F6] ${showMore ? 'flex' : 'hidden'}`} />
+          <div className={`flex w-full justify-center  ${showMore ? 'absolute -bottom-[50px]' : ''}`}>
+            <button className="focus:outline-none border-[#DFDFDF] hover:border-[#DFDFDF] border-[1px] border-solid text-[#575757] mt-4 self-center rounded-xl py-2 px-4 font-semibold" onClick={handleClickShowMore}>
               {showMore ? "Show More" : "Show Less"}
             </button>
           </div>

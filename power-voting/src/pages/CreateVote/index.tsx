@@ -36,7 +36,9 @@ import {
   proposalDraftGetApi,
   proposalDraftAddApi,
   SAVE_DRAFT_SUCCESS,
-  SAVE_DRAFT_FAIL
+  SAVE_DRAFT_FAIL,
+  UPLOAD_DATA_FAIL_MSG,
+  SAVE_DRAFT_TOO_LARGE
 } from '../../common/consts';
 import { useStoringCid, useVoterInfo } from "../../common/store";
 import timezoneOption from '../../../public/json/timezons.json';
@@ -73,7 +75,7 @@ const CreateVote = () => {
   } = useForm({
     defaultValues: {
       timezone: DEFAULT_TIMEZONE,
-      time: [''],
+      time: [] as string[],
       name: '',
       descriptions: '',
       option: [
@@ -138,7 +140,9 @@ const CreateVote = () => {
         const result = (resp.data.data as ProposalDraft[])[0]
         setValue("descriptions", result.Descriptions)
         setValue("name", result.Name)
-        setValue("time", result.Time.split(OPTION_SPLIT_TAG) ?? [])
+        if(result.Time.length){
+          setValue("time", result.Time.split(OPTION_SPLIT_TAG) ?? [])
+        }
         if (result.Timezone) {
           setValue("timezone", result.Timezone)
         }
@@ -234,6 +238,16 @@ const CreateVote = () => {
     };
 
     const cid = await getWeb3IpfsId(_values);
+
+    if (!cid?.length) {
+      messageApi.open({
+        type: 'warning',
+        content: UPLOAD_DATA_FAIL_MSG,
+      });
+      setLoading(false);
+      return
+    }
+
     setCid(cid);
 
     if (isConnected) {
@@ -296,6 +310,14 @@ const CreateVote = () => {
       && !values.name
       && !values.time
     ) {
+      return
+    }
+
+    if(values.descriptions.length>=2000){
+      messageApi.open({
+        type: "warning",
+        content: SAVE_DRAFT_TOO_LARGE,
+      });
       return
     }
     setDraftSave(true)
@@ -364,6 +386,9 @@ const CreateVote = () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [])
+  // const disabledDate = (current:any) => {
+  //   return current && current < dayjs().startOf('day');
+  // };
   //VOTE_OPTIONS
   const list = [
     {
@@ -391,11 +416,12 @@ const CreateVote = () => {
       )
     },
     {
-      name: 'Proposal Description',
-      width: 260,
+      name: 'Description',
+      width: 280,
       desc: <div className="text-red">
-        <span>
-          Describe FIP objectives, implementation details, risks, and include GitHub links for transparency. See a template <a href="" style={{ color: "blue" }}>here↗</a>.
+        <span className="text-sm" style={{fontFamily:"SuisseIntl"}}>
+          Describe FIP objectives, implementation details, risks, and include GitHub links for transparency. See a template <a target="_blank"
+            rel="noopener" href="" className="text-sm" style={{ color: "blue" }}>here↗</a>.
           <br /> You can use Markdown formatting in the text input field.
         </span>
 
@@ -436,6 +462,7 @@ const CreateVote = () => {
                   <>
                     <RangePicker
                       showTime
+                      // disabledDate={disabledDate}
                       format="YYYY-MM-DD HH:mm"
                       placeholder={['Start Time', 'End Time']}
                       allowClear={true}
@@ -514,8 +541,9 @@ const CreateVote = () => {
       </div>
       <form onSubmit={handleSubmit(onSubmit)} >
         <div className='flow-root space-y-8'>
-          <Table title='Create A Proposal' subTitle={<div className="text-m">
-            Proposals should be clear, concise, and focused on specific improvements or changes. FIPs must adhere to the Filecoin community's <a href="" style={{ color: "blue" }}>code of conduct and best practices↗</a>.
+          <Table title='Create A Proposal' subTitle={<div className="text-base font-normal">
+            Proposals should be clear, concise, and focused on specific improvements or changes. FIPs must adhere to the Filecoin community's <a target="_blank"
+              rel="noopener" href="" style={{ color: "blue" }}>code of conduct and best practices↗</a>.
           </div>} list={list} />
 
           <div className="flex justify-center items-center text-center ">
@@ -528,7 +556,7 @@ const CreateVote = () => {
                   Save Draft
                 </div>
               </Link>
-              <LoadingButton className="create-submit" text='Create' loading={loading || writeContractPending || transactionLoading} />
+              <LoadingButton className="create-submit" text='Create Proposal' loading={loading || writeContractPending || transactionLoading} />
             </div>
           </div>
         </div>

@@ -43,7 +43,6 @@ export default function Table({ title = '', link = {} as { type: string, action:
           <th scope='col' colSpan={2}>
             <div className='font-normal text-black px-8 py-7 text-2xl border-b border-[#313D4F] flex items-center'>
               <span>{title}</span>
-             
               {
                 href && (
                   <div className='flex items-start cursor-pointer' onClick={handleJump}>
@@ -54,7 +53,7 @@ export default function Table({ title = '', link = {} as { type: string, action:
             </div>
             <div className='px-8'>
             {subTitle && (
-                <span className='text-[#4B535B]'>{subTitle}</span>
+                <div  className='text-[#4B535B]'>{subTitle}</div>
               )}
             </div>
           </th>
@@ -63,12 +62,11 @@ export default function Table({ title = '', link = {} as { type: string, action:
       <tbody className='divide-y divide-[#111111]'>
         {list.filter((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode }) => !item.hide).map((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode }) => (
           <tr key={item.name} className='divide-x divide-[#313D4F]  '>
-            <td className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} whitespace-nowrap py-9 px-8 text-base text-[#313D4F] align-top`}>
-              {item.name}
-              {item.desc && <div className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} text-sm whitespace-normal text-[#4B535B] mt-8`}>
+            <td className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} align-top py-9 px-8 `}>
+              <div className='whitespace-nowrap text-base font-medium text-[#313D4F] '>{item.name}</div>
+              {item.desc && <div className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} text-sm font-sm whitespace-normal text-[#4B535B] mt-8`}>
                 {item.desc}
               </div>}
-
             </td>
 
             <td className='py-5 px-4 text-xl text-white'>

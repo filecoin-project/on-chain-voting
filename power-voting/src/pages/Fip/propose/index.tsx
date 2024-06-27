@@ -26,6 +26,7 @@ import fileCoinAbi from "../../../common/abi/power-voting.json";
 import { getContractAddress, getWeb3IpfsId } from "../../../utils";
 import {
   FIP_ALREADY_EXECUTE_MSG,
+  FIP_APPROVE_ALREADY_MSG,
   FIP_APPROVE_SELF_MSG,
   FIP_EDITOR_APPROVE_TYPE,
   FIP_EDITOR_REVOKE_TYPE,
@@ -33,6 +34,7 @@ import {
   NO_FIP_EDITOR_APPROVE_ADDRESS_MSG,
   NO_FIP_EDITOR_REVOKE_ADDRESS_MSG,
   STORING_DATA_MSG,
+  UPLOAD_DATA_FAIL_MSG,
 } from "../../../common/consts";
 
 const FipEditorPropose = () => {
@@ -161,6 +163,7 @@ const FipEditorPropose = () => {
     }
 
 
+
     if (fipProposalType === FIP_EDITOR_REVOKE_TYPE && revokeResult.getFipEditorProposalIdSuccess) {
       const find = revokeResult.fipEditorProposalData?.find((v: any) => v.result[1] === selectedAddress)
       if (find) {
@@ -182,7 +185,7 @@ const FipEditorPropose = () => {
       }
     }
 
-    if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && fipAddress === address){
+    if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && fipAddress === address) {
       messageApi.open({
         type: 'warning',
         content: FIP_APPROVE_SELF_MSG,
@@ -190,11 +193,31 @@ const FipEditorPropose = () => {
       return;
     }
 
+    //fipEditors
+    if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && fipEditors.includes(fipAddress)) {
+      messageApi.open({
+        type: 'warning',
+        content: FIP_APPROVE_ALREADY_MSG,
+      });
+      return;
+    }
+
+
     // Set loading state to true while submitting proposal
     setLoading(true);
 
     // Get the IPFS CID for the proposal information
     const cid = await getWeb3IpfsId(fipInfo);
+
+
+    if(!cid?.length){
+      setLoading(false);
+      messageApi.open({
+        type: 'warning',
+        content: UPLOAD_DATA_FAIL_MSG,
+      });
+      return;
+    }
 
     // Construct the arguments and call the writeContract function to create the proposal
     const proposalArgs = [
