@@ -40,8 +40,8 @@ export default function Table({ title = '', link = {} as { type: string, action:
     <table className='min-w-full bg-[#FFFFFF] rounded text-left'>
       <thead>
         <tr>
-          <th scope='col' colSpan={2}>
-            <div className='font-normal text-black px-8 py-7 text-2xl border-b border-[#313D4F] flex items-center'>
+          <th scope='col' colSpan={2} className='mb-[12px]'>
+            <div className='font-normal text-black px-[24px] pt-[24px] pb-[12px] text-2xl border-b border-[#313D4F] flex items-center'>
               <span>{title}</span>
               {
                 href && (
@@ -51,7 +51,7 @@ export default function Table({ title = '', link = {} as { type: string, action:
                 )
               }
             </div>
-            <div className='px-8'>
+            <div className='px-[24px] pb-[30px]'>
             {subTitle && (
                 <div  className='text-[#4B535B]'>{subTitle}</div>
               )}
@@ -61,15 +61,15 @@ export default function Table({ title = '', link = {} as { type: string, action:
       </thead>
       <tbody className='divide-y divide-[#111111]'>
         {list.filter((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode }) => !item.hide).map((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode }) => (
-          <tr key={item.name} className='divide-x divide-[#313D4F]  '>
-            <td className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} align-top py-9 px-8 `}>
+          <tr key={item.name} className='divide-x divide-[#313D4F] '>
+            <td className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} align-top py-[12px] pl-[24px] pr-[45px] `}>
               <div className='whitespace-nowrap text-base font-medium text-[#313D4F] '>{item.name}</div>
               {item.desc && <div className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} text-sm font-sm whitespace-normal text-[#4B535B] mt-8`}>
                 {item.desc}
               </div>}
             </td>
 
-            <td className='py-5 px-4 text-xl text-white'>
+            <td className='py-[12px] pr-[24px] text-xl text-white'>
               {item.comp}
             </td>
           </tr>

@@ -313,7 +313,7 @@ const CreateVote = () => {
       return
     }
 
-    if(values.descriptions.length>=2000){
+    if(values.descriptions.length>=2048){
       messageApi.open({
         type: "warning",
         content: SAVE_DRAFT_TOO_LARGE,
@@ -419,7 +419,7 @@ const CreateVote = () => {
       name: 'Description',
       width: 280,
       desc: <div className="text-red">
-        <span className="text-sm" style={{fontFamily:"SuisseIntl"}}>
+        <span className="text-sm">
           Describe FIP objectives, implementation details, risks, and include GitHub links for transparency. See a template <a target="_blank"
             rel="noopener" href="" className="text-sm" style={{ color: "blue" }}>here↗</a>.
           <br /> You can use Markdown formatting in the text input field.
@@ -552,7 +552,7 @@ const CreateVote = () => {
             </Link>
             <div className='w-full items-center flex justify-end text-center'>
               <Link to={""}>
-                <div className="text-[#313D4F] mr-4 cursor-pointer" onClick={saveDraft} >
+                <div className="text-[#313D4F] mr-[32px] font-semibold cursor-pointer" onClick={saveDraft} >
                   Save Draft
                 </div>
               </Link>
