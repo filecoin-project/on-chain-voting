@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package snapshot;
+
+option go_package = "./proto;snapshot";
+
+service Snapshot {
+  rpc GetAddressPower(AddressPowerRequest) returns (AddressPowerResponse) {}
+  rpc SyncDateHeight(SyncDateHeightRequest) returns (SyncDateHeightResponse) {}
+  rpc SyncAddrPower(SyncAddrPowerRequest) returns (SyncAddrPowerResponse) {}
+  rpc SyncAllAddrPower(SyncAllAddrPowerRequest) returns (SyncAllAddrPowerResponse){}
+  rpc SyncAllDeveloperWeight(SyncAllDeveloperWeightRequest) returns (SyncAllDeveloperWeightResponse) {}
+  rpc SyncDeveloperWeight(SyncDeveloperWeightRequest) returns (SyncDeveloperWeightResponse) {}
+}
+
+message  SyncAllAddrPowerRequest {
+  int64  netId = 1;
+}
+
+message AddressPowerRequest {
+  int64  netId = 1;
+  string address = 2;
+  int32  random_num = 3;
+}
+
+message SyncDateHeightRequest {
+  int64  netId = 1;
+}
+
+message SyncAddrPowerRequest {
+  int64  netId = 1;
+  string address = 2;
+}
+
+message AddressPowerResponse {
+  string address = 1;
+  string sp_power = 2;
+  string client_power = 3;
+  string token_holder_power = 4;
+  string developer_power = 5;
+  int64 block_height = 6;
+  string date_str = 7;
+}
+
+message SyncAllAddrPowerResponse{
+
+}
+
+message SyncDateHeightResponse {
+
+}
+
+message SyncAddrPowerResponse {
+}
+
+message SyncAllDeveloperWeightRequest{
+
+}
+
+message SyncAllDeveloperWeightResponse{
+
+}
+
+message SyncDeveloperWeightRequest{
+  string date_str = 1;
+}
+
+message SyncDeveloperWeightResponse{
+
+}

@@ -1,0 +1,32 @@
+server:
+  # service startup port
+  port: :
+
+redis:
+  uri:
+  user:
+  password:
+  db:
+
+nats:
+  uri:
+
+network:
+  - id: 314159
+    name: FileCoin-Calibration
+    idPrefix: t0
+    queryRpc:
+      -
+      -
+    contractRpc:
+    oracleContract:
+    oracleAbi: oracle.json
+
+github:
+  # github token
+  token:
+  -
+  -
+  -
+  # graphql api
+  graphql: https://api.github.com/graphql
