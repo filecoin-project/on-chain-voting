@@ -18,7 +18,7 @@ import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { FILECOIN_AUTHORIZE_DOC, FILECOIN_DEAUTHORIZE_DOC, GITHUB_AUTHORIZE_DOC, GITHUB_DEAUTHORIZE_DOC } from "../common/consts";
 
-export default function Table({ title = '', link = {} as { type: string, action: string, href: string }, list = [] as { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode, }[], subTitle = <div/> }) {
+export default function Table({ title = '', link = {} as { type: string, action: string, href: string }, list = [] as { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode, }[], subTitle = <div /> }) {
   const navigate = useNavigate();
   const { type, action, href } = link;
 
@@ -52,8 +52,8 @@ export default function Table({ title = '', link = {} as { type: string, action:
               }
             </div>
             <div className='px-[24px] pb-[30px]'>
-            {subTitle && (
-                <div  className='text-[#4B535B]'>{subTitle}</div>
+              {subTitle && (
+                <div className='text-[#4B535B]'>{subTitle}</div>
               )}
             </div>
           </th>
@@ -74,8 +74,9 @@ export default function Table({ title = '', link = {} as { type: string, action:
             </td>
           </tr>
         ))}
+        <tr className='h-[12px]' />
       </tbody>
-      <tr className='h-[12px]'/>
+
     </table>
   )
 }
