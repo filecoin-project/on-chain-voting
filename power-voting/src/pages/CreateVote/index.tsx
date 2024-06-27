@@ -74,7 +74,7 @@ const CreateVote = () => {
   } = useForm({
     defaultValues: {
       timezone: DEFAULT_TIMEZONE,
-      time: [''],
+      time: [] as string[],
       name: '',
       descriptions: '',
       option: [
@@ -139,7 +139,9 @@ const CreateVote = () => {
         const result = (resp.data.data as ProposalDraft[])[0]
         setValue("descriptions", result.Descriptions)
         setValue("name", result.Name)
-        setValue("time", result.Time.split(OPTION_SPLIT_TAG) ?? [])
+        if(result.Time.length){
+          setValue("time", result.Time.split(OPTION_SPLIT_TAG) ?? [])
+        }
         if (result.Timezone) {
           setValue("timezone", result.Timezone)
         }
