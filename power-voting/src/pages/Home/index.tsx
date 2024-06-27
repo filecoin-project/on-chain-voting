@@ -436,7 +436,7 @@ const Home = () => {
                           </svg>
                         }
                         {option.name}</div>
-                      <div className="absolute right-0 mr-3 leading-[35px]" style={{ color: txColor }}>{option.count}%</div>
+                      <div className="font-semibold absolute right-0 mr-3 leading-[35px]" style={{ color: txColor }}>{option.count}%</div>
                       {option.count > 0 && <div className="h-[35px] border-[1px] border-solid rounded-md bg-[#E3FFEE]" style={{ width: `${option.count}%`, backgroundColor: bgColor, borderColor: borderColor }} />
                       }
                     </div>

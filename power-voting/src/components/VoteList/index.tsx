@@ -190,7 +190,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
                       </div>
                     </div>
 
-                    <div className='absolute right-[10px] flex items-center '>
+                    <div className='absolute right-[10px] flex items-center'>
                       <div className="mr-[5px] flex min-w-[110px] items-center justify-end whitespace-nowrap text-center text-skin-link xs:w-[130px] xs:min-w-[130px] cursor-pointer">
                         <Popover content={
                           <Table
@@ -205,8 +205,8 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
                         </Popover>
                       </div>
 
-                      <div className="flex truncate px-2 justify-end text-skin-link">
-                        <div className="w-[100px] text-c truncate text-skin-link text-xs font-medium" style={{ color: isApprove ? "green" : "red" }}>
+                      <div className="flex truncate px-2 text-skin-link ">
+                        <div className="pr-[20px] text-right w-[100px] text-c truncate text-skin-link text-xs font-medium" style={{ color: isApprove ? "green" : "red" }}>
                           {isApprove ? <CheckCircleOutlined style={{ fontSize: 14, marginRight: "4px" }} /> : <CloseCircleOutlined style={{ fontSize: 14, marginRight: "4px" }} />}
                           {isApprove ? "Approved" : "Rejected"}</div>
                       </div>
