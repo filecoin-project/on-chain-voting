@@ -291,7 +291,7 @@ const Vote = () => {
               </h4>
             </div>
             <div className="p-4 leading-6 sm:leading-8">
-              <div className='space-y-1'>
+              <div className='space-y-1 text-sm font-medium'>
                 <div className='flex justify-between'>
                   <div>Start Time</div>
                   <span className='text-[#313D4F] text-sm font-normal'>{votingData?.startTime && dayjs(votingData.startTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
@@ -313,7 +313,7 @@ const Vote = () => {
           <div className='mt-5'>
             <div className="border-[#313D4F] mt-6 border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border border-solid">
               <div className="group flex h-[57px] !border-[#eeeeee] justify-between items-center border-b px-4 pb-[12px] pt-3 border-solid">
-                <h4 className="text-xl">
+                <h4 className="font-medium">
                   Cast Your Vote
                 </h4>
               </div>
