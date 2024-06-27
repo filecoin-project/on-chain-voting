@@ -541,7 +541,7 @@ const CreateVote = () => {
                   Save Draft
                 </div>
               </Link>
-              <LoadingButton className="create-submit" text='Create' loading={loading || writeContractPending || transactionLoading} />
+              <LoadingButton className="create-submit" text='Create Proposal' loading={loading || writeContractPending || transactionLoading} />
             </div>
           </div>
         </div>
