@@ -377,6 +377,9 @@ const CreateVote = () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [])
+  const disabledDate = (current:any) => {
+    return current && current < dayjs().startOf('day');
+  };
   //VOTE_OPTIONS
   const list = [
     {
@@ -450,6 +453,7 @@ const CreateVote = () => {
                   <>
                     <RangePicker
                       showTime
+                      disabledDate={disabledDate}
                       format="YYYY-MM-DD HH:mm"
                       placeholder={['Start Time', 'End Time']}
                       allowClear={true}
