@@ -163,7 +163,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
                 }
                 const isApprove = item.optionName === VOTE_OPTIONS[0]
                 return (
-                  <div className={`flex items-center gap-3 border-t px-4 py-[14px] ${index === 0 && '!border-0'}`} key={item.address + index}>
+                  <div className={`flex items-center gap-3 border-t px-4 py-[40px] ${index === 0 && '!border-0'}`} key={item.address + index}>
                     <div className="flex items-center">
                       <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${item.address}`} alt="" />
                       <a
