@@ -3,7 +3,7 @@ module.exports = {
   content: ['./src/**/*.{jsx,tsx, ts}'],
   theme: {
     fontFamily: {
-      'body': ['Calibre', '-apple-system', 'BlinkMacSystemFont', 'Helvetica', 'Arial', 'sans-serif', 'Apple Color Emoji'],
+      'body': ['SuisseIntl','Calibre', '-apple-system', 'BlinkMacSystemFont', 'Helvetica', 'Arial', 'sans-serif', 'Apple Color Emoji'],
     },
     fontSize: {
       'xs': '0.75rem',  // 12px
