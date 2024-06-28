@@ -267,7 +267,7 @@ const FipEditorPropose = () => {
               {
                 name: 'Propose Type',
                 comp: (
-                  <RadioGroup className='flex' value={fipProposalType} onChange={handleProposeTypeChange}>
+                  <RadioGroup className='flex h-[30px] mt-[-5px]' value={fipProposalType} onChange={handleProposeTypeChange}>
                     <RadioGroup.Option
                       key='approve'
                       disabled={isLoading}

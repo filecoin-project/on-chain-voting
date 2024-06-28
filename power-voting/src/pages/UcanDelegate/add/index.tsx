@@ -275,7 +275,7 @@ const UcanDelegate = () => {
       width: 100,
       hide: false,
       comp: (
-        <RadioGroup className='flex' value={ucanType} onChange={handleUcanTypeChange}>
+        <RadioGroup className='flex h-[30px] mt-[-5px]' value={ucanType} onChange={handleUcanTypeChange}>
           {[...UCAN_TYPE_FILECOIN_OPTIONS, ...UCAN_TYPE_GITHUB_OPTIONS].map(item => (
             <RadioGroup.Option
               key={item.label}
@@ -380,7 +380,7 @@ const UcanDelegate = () => {
       width: 100,
       hide: false,
       comp: (
-        <RadioGroup className='flex' value={ucanType} onChange={handleUcanTypeChange}>
+        <RadioGroup className='flex h-[30px] mt-[-5px]' value={ucanType} onChange={handleUcanTypeChange}>
           {[...UCAN_TYPE_FILECOIN_OPTIONS, ...UCAN_TYPE_GITHUB_OPTIONS].map(item => (
             <RadioGroup.Option
               key={item.label}
