@@ -25,13 +25,14 @@ type Config struct {
 
 // Network  configuration for a blockchain network.
 type Network struct {
-	Id             int64    // Identifier for the network.
-	Name           string   // Name of the network.
-	IdPrefix       string   // Address prefix.
-	QueryRpc       []string // Query RPC endpoint for the network.
-	ContractRpc    string   // Contract RPC endpoint for the network.
-	OracleAbi      string   // Path to the ABI file.
-	OracleContract string   // Address of the smart contract.
+	Id                int64    // Identifier for the network.
+	Name              string   // Name of the network.
+	IdPrefix          string   // Address prefix.
+	QueryRpc          []string // Query RPC endpoint for the network.
+	ContractRpc       string   // Contract RPC endpoint for the network.
+	OracleAbi         string   // Path to the ABI file.
+	OracleContract    string   // Address of the smart contract.
+	OracleStartHeight int64    // Start height
 }
 
 // GitHub represents the configuration for GitHub integration.
