@@ -12,14 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package constant
+package models
 
-const (
-	RedisDateHeight          = "%d_DATA_HEIGHT"
-	RedisAddrSyncedDate      = "%d_SYNCED_DATE"
-	RedisAddrPower           = "%d_POWER_%s"
-	RedisDeveloperPower      = "DEV_POWER"
-	RedisDict                = "%d_DICT"
-	RedisCreateDelegateEvent = "%d_CREATE_DELEGATE_EVENT_%s"
-	RedisDeleteDelegateEvent = "%d_DELETE_DELEGATE_EVENT_%s"
-)
+import "github.com/ethereum/go-ethereum/common"
+
+// CreateDelegateEvent Define the event structure
+type CreateDelegateEvent struct {
+	VoterAddress common.Address
+	ActorIds     []uint64
+	Github       string
+	BlockHeight  int
+}
+
+type DeleteDelegateEvent struct {
+	VoterAddress common.Address
+	ActorIds     []uint64
+	MinerIds     []uint64
+	Github       string
+	BlockHeight  int
+}
