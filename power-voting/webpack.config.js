@@ -77,6 +77,14 @@ module.exports = {
           "less-loader"
         ]
       },
+      {
+        test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/,
+        loader: 'file-loader',
+        options: {
+          name: '[name].[ext]',
+          outputPath: 'fonts/',
+        },
+      },
     ],
   },
   plugins: [
@@ -91,6 +99,10 @@ module.exports = {
         {
           from: 'public/images',
           to: 'images'
+        },
+        {
+          from: 'public/fonts',
+          to: 'fonts'
         }
       ]
     }),
