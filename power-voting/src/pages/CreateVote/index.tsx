@@ -401,7 +401,7 @@ const CreateVote = () => {
 
             render={() => <input
               className={classNames(
-                'form-input w-full rounded !bg-[#ffffff] border-1 border-[#EEEEEE] text-black',
+                'form-input w-full rounded !bg-[#ffffff] border-1 border-[#EEEEEE] text-[#4B535B]',
                 errors.name && 'border-red-500 focus:border-red-500'
               )}
               placeholder='Proposal Title'
@@ -469,10 +469,9 @@ const CreateVote = () => {
                       value={[date[0], date[1]]}
                       onChange={onChange}
                       className={classNames(
-                        'form-input rounded w-[450px] !bg-[#ffffff] border border-[#eeeeee] text-black',
+                        'form-input rounded w-[450px] !bg-[#ffffff] border border-[#eeeeee]',
                         errors.time && 'border-red-500 focus:border-red-500'
                       )}
-                      style={{ color: 'red' }}
                     />
                     {errors.time && (
                       <p className='text-red-500 mt-2'>Proposal Time is required</p>
@@ -503,7 +502,7 @@ const CreateVote = () => {
                       onChange={onChange}
                       value={value}
                       className={classNames(
-                        'form-select rounded bg-[#ffffff] border border-[#eeeeee] text-black',
+                        'form-select rounded bg-[#ffffff] border border-[#eeeeee] text-[#4B535B]',
                         errors.timezone && 'border-red-500 focus:border-red-500'
                       )}
                     >
