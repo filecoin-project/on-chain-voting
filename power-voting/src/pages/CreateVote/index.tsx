@@ -502,7 +502,7 @@ const CreateVote = () => {
                       onChange={onChange}
                       value={value}
                       className={classNames(
-                        'form-select rounded bg-[#ffffff] border border-[#eeeeee] text-[#4B535B]',
+                        'form-select w-[450px] rounded bg-[#ffffff] border border-[#eeeeee] text-[#4B535B]',
                         errors.timezone && 'border-red-500 focus:border-red-500'
                       )}
                     >
