@@ -401,7 +401,7 @@ const CreateVote = () => {
 
             render={() => <input
               className={classNames(
-                'form-input w-full rounded !bg-[#ffffff] border-1 border-[#EEEEEE] text-black',
+                'form-input w-full rounded !bg-[#ffffff] border-1 border-[#EEEEEE] text-[#4B535B]',
                 errors.name && 'border-red-500 focus:border-red-500'
               )}
               placeholder='Proposal Title'
@@ -421,7 +421,7 @@ const CreateVote = () => {
       desc: <div className="text-red">
         <span className="text-sm">
           Describe FIP objectives, implementation details, risks, and include GitHub links for transparency. See a template <a target="_blank"
-            rel="noopener" href="" className="text-sm" style={{ color: "blue" }}>here↗</a>.
+            rel="noopener" href="" className="text-sm" style={{ color: "#005292" }}>here↗</a>.
           <br /> You can use Markdown formatting in the text input field.
         </span>
 
@@ -469,10 +469,9 @@ const CreateVote = () => {
                       value={[date[0], date[1]]}
                       onChange={onChange}
                       className={classNames(
-                        'form-input rounded w-[450px] !bg-[#ffffff] border border-[#eeeeee] text-black',
+                        'form-input rounded w-[450px] !bg-[#ffffff] border border-[#eeeeee]',
                         errors.time && 'border-red-500 focus:border-red-500'
                       )}
-                      style={{ color: 'red' }}
                     />
                     {errors.time && (
                       <p className='text-red-500 mt-2'>Proposal Time is required</p>
@@ -503,7 +502,7 @@ const CreateVote = () => {
                       onChange={onChange}
                       value={value}
                       className={classNames(
-                        'form-select rounded bg-[#ffffff] border border-[#eeeeee] text-black',
+                        'form-select rounded bg-[#ffffff] border border-[#eeeeee] text-[#4B535B]',
                         errors.timezone && 'border-red-500 focus:border-red-500'
                       )}
                     >
@@ -541,9 +540,9 @@ const CreateVote = () => {
       </div>
       <form onSubmit={handleSubmit(onSubmit)} >
         <div className='flow-root space-y-8'>
-          <Table title='Create A Proposal' subTitle={<div className="text-base font-normal">
+          <Table title='Create Proposal' subTitle={<div className="text-base font-normal">
             Proposals should be clear, concise, and focused on specific improvements or changes. FIPs must adhere to the Filecoin community's <a target="_blank"
-              rel="noopener" href="" style={{ color: "blue" }}>code of conduct and best practices↗</a>.
+              rel="noopener" href="" style={{ color: "#005292" }}>code of conduct and best practices↗</a>.
           </div>} list={list} />
 
           <div className="flex justify-center items-center text-center ">
