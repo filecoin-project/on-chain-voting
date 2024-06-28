@@ -266,6 +266,7 @@ const FipEditorPropose = () => {
             list={[
               {
                 name: 'Propose Type',
+                width: 100,
                 comp: (
                   <RadioGroup className='flex h-[30px] mt-[-5px]' value={fipProposalType} onChange={handleProposeTypeChange}>
                     <RadioGroup.Option
@@ -343,6 +344,7 @@ const FipEditorPropose = () => {
               },
               {
                 name: 'Editor Address',
+                width: 100,
                 hide: fipProposalType === FIP_EDITOR_REVOKE_TYPE,
                 comp: (
                   <input
@@ -354,6 +356,7 @@ const FipEditorPropose = () => {
               },
               {
                 name: 'FIP Editor Address',
+                width: 100,
                 hide: fipProposalType === FIP_EDITOR_APPROVE_TYPE,
                 comp: (
                   <select

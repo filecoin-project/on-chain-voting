@@ -346,7 +346,7 @@ const UcanDelegate = () => {
       width: 100,
       hide: false,
       comp: (
-        <RadioGroup>
+        <RadioGroup className="flex h-[30px] mt-[-5px">
           {UCAN_TYPE_GITHUB_OPTIONS.map(item => (
             <RadioGroup.Option
               key={item.label}
