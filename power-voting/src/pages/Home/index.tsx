@@ -132,9 +132,9 @@ const Home = () => {
         setShouldRefetch(true);
         refetch().then(() => {
           // Reset shouldRefetch after refetching
+          getProposalList(page);
           setShouldRefetch(false);
         });
-        getProposalList(page);
       }, 3000);
     }
   }, [isFetched]);
