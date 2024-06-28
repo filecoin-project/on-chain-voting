@@ -12,43 +12,45 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, { useState, useEffect, useRef } from "react";
-import { message, DatePicker } from "antd";
-import axios from 'axios';
-import dayjs from "dayjs";
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
-import { useNavigate, Link } from "react-router-dom";
-import Table from '../../components/CreateTable';
-import { useForm, Controller } from 'react-hook-form';
-import classNames from 'classnames';
-import type { BaseError } from "wagmi";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import Editor from '../../components/MDEditor';
+import { DatePicker, message } from "antd";
+import axios from 'axios';
+import classNames from 'classnames';
+import dayjs from "dayjs";
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
+import React, { useEffect, useRef, useState } from "react";
+import { Controller, useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import { Link, useNavigate } from "react-router-dom";
+import { ProposalDraft } from "src/common/types";
+import type { BaseError } from "wagmi";
+import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import timezoneOption from '../../../public/json/timezons.json';
+import fileCoinAbi from "../../common/abi/power-voting.json";
 import {
   DEFAULT_TIMEZONE,
-  WRONG_EXPIRATION_TIME_MSG,
   NOT_FIP_EDITOR_MSG,
-  VOTE_OPTIONS,
-  WRONG_START_TIME_MSG,
-  STORING_DATA_MSG, githubApi, worldTimeApi,
-  proposalDraftGetApi,
-  proposalDraftAddApi,
-  SAVE_DRAFT_SUCCESS,
   SAVE_DRAFT_FAIL,
+  SAVE_DRAFT_SUCCESS,
+  SAVE_DRAFT_TOO_LARGE,
+  STORING_DATA_MSG,
   UPLOAD_DATA_FAIL_MSG,
-  SAVE_DRAFT_TOO_LARGE
+  VOTE_OPTIONS,
+  WRONG_EXPIRATION_TIME_MSG,
+  WRONG_START_TIME_MSG,
+  githubApi,
+  proposalDraftAddApi,
+  proposalDraftGetApi,
+  worldTimeApi
 } from '../../common/consts';
-import { useStoringCid, useVoterInfo } from "../../common/store";
-import timezoneOption from '../../../public/json/timezons.json';
-import { validateValue, getContractAddress, getWeb3IpfsId } from '../../utils';
-import './index.less';
-import LoadingButton from "../../components/LoadingButton";
-import fileCoinAbi from "../../common/abi/power-voting.json";
 import { useCheckFipEditorAddress } from "../../common/hooks";
-import { ProposalDraft } from "src/common/types";
-
+import { useStoringCid, useVoterInfo } from "../../common/store";
+import Table from '../../components/CreateTable';
+import LoadingButton from "../../components/LoadingButton";
+import Editor from '../../components/MDEditor';
+import { getContractAddress, getWeb3IpfsId, validateValue } from '../../utils';
+import './index.less';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -57,7 +59,7 @@ const { RangePicker } = DatePicker;
 const CreateVote = () => {
   const { isConnected, address, chain } = useAccount();
   const chainId = chain?.id || 0;
-
+  const { t } = useTranslation();
   const { openConnectModal } = useConnectModal();
   const prevAddressRef = useRef(address);
   const [messageApi, contextHolder] = message.useMessage();
@@ -161,7 +163,7 @@ const CreateVote = () => {
     if (writeContractSuccess) {
       messageApi.open({
         type: 'success',
-        content: STORING_DATA_MSG,
+        content: t(STORING_DATA_MSG),
       });
       addStoringCid([{
         hash,
@@ -190,7 +192,7 @@ const CreateVote = () => {
     if (currentTime > startTimestamp) {
       messageApi.open({
         type: 'warning',
-        content: WRONG_START_TIME_MSG,
+        content: t(WRONG_START_TIME_MSG),
       });
       setLoading(false);
       return false;
@@ -200,7 +202,7 @@ const CreateVote = () => {
     if (currentTime > expTimestamp) {
       messageApi.open({
         type: 'warning',
-        content: WRONG_EXPIRATION_TIME_MSG,
+        content: t(WRONG_EXPIRATION_TIME_MSG),
       });
       setLoading(false);
       return false;
@@ -242,7 +244,7 @@ const CreateVote = () => {
     if (!cid?.length) {
       messageApi.open({
         type: 'warning',
-        content: UPLOAD_DATA_FAIL_MSG,
+        content: t(UPLOAD_DATA_FAIL_MSG),
       });
       setLoading(false);
       return
@@ -268,7 +270,7 @@ const CreateVote = () => {
       } else {
         messageApi.open({
           type: 'warning',
-          content: NOT_FIP_EDITOR_MSG,
+          content: t(NOT_FIP_EDITOR_MSG),
         });
       }
     } else {
@@ -316,7 +318,7 @@ const CreateVote = () => {
     if(values.descriptions.length>=2048){
       messageApi.open({
         type: "warning",
-        content: SAVE_DRAFT_TOO_LARGE,
+        content: t(SAVE_DRAFT_TOO_LARGE),
       });
       return
     }
@@ -335,12 +337,12 @@ const CreateVote = () => {
       if (res.data != null && res.data.data == true) {
         messageApi.open({
           type: "success",
-          content: SAVE_DRAFT_SUCCESS,
+          content: t(SAVE_DRAFT_SUCCESS),
         });
       } else {
         messageApi.open({
           type: "error",
-          content: SAVE_DRAFT_FAIL,
+          content: t(SAVE_DRAFT_FAIL),
         });
       }
     } catch (e) {
@@ -392,7 +394,7 @@ const CreateVote = () => {
   //VOTE_OPTIONS
   const list = [
     {
-      name: 'Proposal Title',
+      name: t('content.proposalTitle'),
       comp: (
         <>
           <Controller
@@ -404,25 +406,25 @@ const CreateVote = () => {
                 'form-input w-full rounded !bg-[#ffffff] border-1 border-[#EEEEEE] text-black',
                 errors.name && 'border-red-500 focus:border-red-500'
               )}
-              placeholder='Proposal Title'
+              placeholder={t('content.proposalTitle')}
 
               {...register('name', { required: true, validate: validateValue })}
             />}
           />
           {errors.name && (
-            <p className='text-red-500 mt-1'>Proposal Title is required</p>
+            <p className='text-red-500 mt-1'>{t('content.proposalTitleRequired')}</p>
           )}
         </>
       )
     },
     {
-      name: 'Description',
+      name: t('content.description'),
       width: 280,
       desc: <div className="text-red">
         <span className="text-sm">
-          Describe FIP objectives, implementation details, risks, and include GitHub links for transparency. See a template <a target="_blank"
-            rel="noopener" href="" className="text-sm" style={{ color: "blue" }}>here↗</a>.
-          <br /> You can use Markdown formatting in the text input field.
+          {t('content.describeFIPObjectives')} <a target="_blank"
+            rel="noopener" href="" className="text-sm" style={{ color: "blue" }}>{t('content.here')}↗</a>.
+          <br /> {t('content.markdownFormattingInField')}.
         </span>
 
       </div>,
@@ -440,7 +442,7 @@ const CreateVote = () => {
                 <Editor
                   style={{ height: 500 }} value={value} onChange={onChange} />
                 {errors.descriptions && (
-                  <p className='text-red-500 mt-2'>Proposal Description is required</p>
+                  <p className='text-red-500 mt-2'>{t('content.proposalDescriptionRequired')}</p>
                 )}
               </>
             )
@@ -448,7 +450,7 @@ const CreateVote = () => {
         />
     },
     {
-      name: 'Voting Time',
+      name: t('content.votingTime'),
       comp: (
         <div className='flex items-center'>
           <div className='mr-2.5'>
@@ -464,7 +466,7 @@ const CreateVote = () => {
                       showTime
                       // disabledDate={disabledDate}
                       format="YYYY-MM-DD HH:mm"
-                      placeholder={['Start Time', 'End Time']}
+                      placeholder={[t('content.startTime'), t('content.endTime')]}
                       allowClear={true}
                       value={[date[0], date[1]]}
                       onChange={onChange}
@@ -475,7 +477,7 @@ const CreateVote = () => {
                       style={{ color: 'red' }}
                     />
                     {errors.time && (
-                      <p className='text-red-500 mt-2'>Proposal Time is required</p>
+                      <p className='text-red-500 mt-2'>{t('content.proposalTimeRequired')}</p>
                     )}
                   </>
                 )
@@ -486,7 +488,7 @@ const CreateVote = () => {
       )
     },
     {
-      name: 'Timezone',
+      name: t('content.timezone'),
       comp: (
         <div className='flex items-center'>
           <div className='mr-2.5'>
@@ -512,7 +514,7 @@ const CreateVote = () => {
                       ))}
                     </select>
                     {errors.timezone && (
-                      <p className='text-red-500 mt-2'>Proposal Expiration TimeZone is required</p>
+                      <p className='text-red-500 mt-2'>{t('content.proposalTimeZoneRequired')}</p>
                     )}
                   </>
                 )
@@ -534,29 +536,29 @@ const CreateVote = () => {
               <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
                 <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m11 17l-5-5m0 0l5-5m-5 5h12" />
               </svg>
-              Back
+              {t('content.back')}
             </Link>
           </div>
         </button>
       </div>
       <form onSubmit={handleSubmit(onSubmit)} >
         <div className='flow-root space-y-8'>
-          <Table title='Create A Proposal' subTitle={<div className="text-base font-normal">
-            Proposals should be clear, concise, and focused on specific improvements or changes. FIPs must adhere to the Filecoin community's <a target="_blank"
-              rel="noopener" href="" style={{ color: "blue" }}>code of conduct and best practices↗</a>.
+          <Table title={t('content.createProposal')} subTitle={<div className="text-base font-normal">
+            {t('content.proposalsClear')} <a target="_blank"
+              rel="noopener" href="" style={{ color: "blue" }}>{t('content.codePractices')}↗</a>.
           </div>} list={list} />
 
           <div className="flex justify-center items-center text-center ">
             <Link to="/home" >
-              <div className="flex justify-center rounded items-center text-center  bg-[#EEEEEE] w-[101px] h-[40px] text-[#313D4F] mr-2 cursor-pointer" >Cancel</div>
+              <div className="flex justify-center rounded items-center text-center  bg-[#EEEEEE] w-[101px] h-[40px] text-[#313D4F] mr-2 cursor-pointer" >{t('content.cancel')}</div>
             </Link>
             <div className='w-full items-center flex justify-end text-center'>
               <Link to={""}>
                 <div className="text-[#313D4F] mr-[32px] font-semibold cursor-pointer" onClick={saveDraft} >
-                  Save Draft
+                  {t('content.saveDraft')}
                 </div>
               </Link>
-              <LoadingButton className="create-submit" text='Create Proposal' loading={loading || writeContractPending || transactionLoading} />
+              <LoadingButton className="create-submit" text={t('content.createProposals')} loading={loading || writeContractPending || transactionLoading} />
             </div>
           </div>
         </div>

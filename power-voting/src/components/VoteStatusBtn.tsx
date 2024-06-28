@@ -15,9 +15,11 @@
 import React from 'react';
 import { VOTE_LIST } from 'src/common/consts';
 import { ProposalFilter } from 'src/common/types';
+import { useTranslation } from 'react-i18next';
 
 export default function VoteStatusBtn({ status = 0 }) {
-    const proposal = VOTE_LIST?.find((proposal: ProposalFilter) => proposal.value === status);
+    const { t } = useTranslation();
+    const proposal = (VOTE_LIST.map((item)=>{return {...item,label:t(item.label)}}))?.find((proposal: ProposalFilter) => proposal.value === status);
     return (
         <div
             style={{ borderColor: proposal?.bgColor, backgroundColor: proposal?.bgColor, color: proposal?.textColor }}
