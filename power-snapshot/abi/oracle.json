@@ -135,76 +135,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "voterAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "taskId",
-        "type": "uint256"
-      }
-    ],
-    "name": "removeVoter",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "renounceOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "voterAddress",
-        "type": "address"
-      },
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "developerPower",
-            "type": "uint256"
-          },
-          {
-            "internalType": "bytes[]",
-            "name": "spPower",
-            "type": "bytes[]"
-          },
-          {
-            "internalType": "bytes[]",
-            "name": "clientPower",
-            "type": "bytes[]"
-          },
-          {
-            "internalType": "uint256",
-            "name": "tokenHolderPower",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "blockHeight",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct IOracle.Power",
-        "name": "powerParam",
-        "type": "tuple"
-      }
-    ],
-    "name": "savePower",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "string",
         "name": "",
         "type": "string"
@@ -216,83 +146,6 @@
   {
     "inputs": [
       {
-        "components": [
-          {
-            "internalType": "uint64[]",
-            "name": "actorIds",
-            "type": "uint64[]"
-          },
-          {
-            "internalType": "uint64[]",
-            "name": "minerIds",
-            "type": "uint64[]"
-          },
-          {
-            "internalType": "string",
-            "name": "githubAccount",
-            "type": "string"
-          },
-          {
-            "internalType": "address",
-            "name": "ethAddress",
-            "type": "address"
-          },
-          {
-            "internalType": "string",
-            "name": "ucanCid",
-            "type": "string"
-          }
-        ],
-        "internalType": "struct IOracle.VoterInfo",
-        "name": "voterInfoParam",
-        "type": "tuple"
-      },
-      {
-        "internalType": "uint256",
-        "name": "taskId",
-        "type": "uint256"
-      },
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "developerPower",
-            "type": "uint256"
-          },
-          {
-            "internalType": "bytes[]",
-            "name": "spPower",
-            "type": "bytes[]"
-          },
-          {
-            "internalType": "bytes[]",
-            "name": "clientPower",
-            "type": "bytes[]"
-          },
-          {
-            "internalType": "uint256",
-            "name": "tokenHolderPower",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "blockHeight",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct IOracle.Power",
-        "name": "powerParam",
-        "type": "tuple"
-      }
-    ],
-    "name": "taskCallback",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "string",
         "name": "",
         "type": "string"
@@ -300,68 +153,6 @@
     ],
     "name": "TaskCallback",
     "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
-    "name": "transferOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "nodeAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "bool",
-        "name": "allow",
-        "type": "bool"
-      }
-    ],
-    "name": "updateNodeAllowList",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "powerVotingAddress",
-        "type": "address"
-      }
-    ],
-    "name": "updatePowerVotingContract",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "newImplementation",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "data",
-        "type": "bytes"
-      }
-    ],
-    "name": "upgradeToAndCall",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
   },
   {
     "inputs": [],
@@ -389,6 +180,62 @@
     ],
     "name": "ZeroAddressError",
     "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "voterAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint64[]",
+        "name": "actorIds",
+        "type": "uint64[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "github",
+        "type": "string"
+      }
+    ],
+    "name": "CreateDelegate",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "voterAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint64[]",
+        "name": "actorIds",
+        "type": "uint64[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint64[]",
+        "name": "minerIds",
+        "type": "uint64[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "github",
+        "type": "string"
+      }
+    ],
+    "name": "DeleteDelegate",
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -442,6 +289,139 @@
     "type": "event"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "voterAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "taskId",
+        "type": "uint256"
+      }
+    ],
+    "name": "removeVoter",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint64[]",
+            "name": "actorIds",
+            "type": "uint64[]"
+          },
+          {
+            "internalType": "uint64[]",
+            "name": "minerIds",
+            "type": "uint64[]"
+          },
+          {
+            "internalType": "string",
+            "name": "githubAccount",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "ethAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "ucanCid",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct IOracle.VoterInfo",
+        "name": "voterInfoParam",
+        "type": "tuple"
+      },
+      {
+        "internalType": "uint256",
+        "name": "taskId",
+        "type": "uint256"
+      }
+    ],
+    "name": "taskCallback",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "voterAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint64[]",
+        "name": "minerIds",
+        "type": "uint64[]"
+      }
+    ],
+    "name": "UpdateMinerId",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "nodeAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "allow",
+        "type": "bool"
+      }
+    ],
+    "name": "updateNodeAllowList",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "powerVotingAddress",
+        "type": "address"
+      }
+    ],
+    "name": "updatePowerVotingContract",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
@@ -453,6 +433,24 @@
     ],
     "name": "Upgraded",
     "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newImplementation",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
+    ],
+    "name": "upgradeToAndCall",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
   },
   {
     "inputs": [
@@ -500,57 +498,6 @@
         "internalType": "uint256[]",
         "name": "",
         "type": "uint256[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "voterAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      }
-    ],
-    "name": "getPower",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "developerPower",
-            "type": "uint256"
-          },
-          {
-            "internalType": "bytes[]",
-            "name": "spPower",
-            "type": "bytes[]"
-          },
-          {
-            "internalType": "bytes[]",
-            "name": "clientPower",
-            "type": "bytes[]"
-          },
-          {
-            "internalType": "uint256",
-            "name": "tokenHolderPower",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "blockHeight",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct IOracle.Power",
-        "name": "",
-        "type": "tuple"
       }
     ],
     "stateMutability": "view",
@@ -629,13 +576,19 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "MAX_HISTORY",
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "name": "githubAccountList",
     "outputs": [
       {
-        "internalType": "uint64",
+        "internalType": "bool",
         "name": "",
-        "type": "uint64"
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -788,40 +741,6 @@
         "internalType": "address",
         "name": "",
         "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "voterTohistoryPower",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "developerPower",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "tokenHolderPower",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "blockHeight",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
       }
     ],
     "name": "voterToInfo",
@@ -864,30 +783,6 @@
         "internalType": "uint64",
         "name": "",
         "type": "uint64"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "voterToPowerStatus",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "dayId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "hasFullRound",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",

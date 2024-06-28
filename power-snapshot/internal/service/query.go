@@ -150,23 +150,38 @@ func (q *QueryService) GetAddressPower(ctx context.Context, netId int64, address
 		}
 	}
 
-	if len(power.GithubAccount) != 0 {
-		devWeight, err := q.queryRepo.GetDeveloperWeights(ctx, dayStr)
-		if err != nil {
-			zap.L().Error("error getting developer weight", zap.Error(err))
-			return nil, err
-		}
-		// if this day's history have not synced, return 0 and log error
-		if devWeight == nil {
-			zap.L().Error("no developer weight synced from github",
-				zap.String("date", dayStr),
-				zap.String("address", address),
-				zap.String("account", power.GithubAccount))
-		}
+	createDelegateEvent, deleteDelegateEvent, err := q.syncSrv.syncRepo.GetDelegateEvent(ctx, netId, power.Address, power.BlockHeight)
+	if err != nil {
+		zap.L().Error("error getting delegate event ", zap.Error(err))
+		return nil, err
+	}
 
-		if w, ok := devWeight[power.GithubAccount]; ok {
-			power.DeveloperPower = big.NewInt(w)
-		}
+	if createDelegateEvent.Github == "" {
+		power.DeveloperPower = big.NewInt(0)
+		return power, nil
+	}
+
+	if createDelegateEvent.BlockHeight < deleteDelegateEvent.BlockHeight {
+		power.DeveloperPower = big.NewInt(0)
+		return power, nil
+	}
+
+	devWeight, err := q.queryRepo.GetDeveloperWeights(ctx, dayStr)
+	if err != nil {
+		zap.L().Error("error getting developer weight", zap.Error(err))
+		return nil, err
+	}
+
+	// if this day's history have not synced, return 0 and log error
+	if devWeight == nil {
+		zap.L().Error("no developer weight synced from github",
+			zap.String("date", dayStr),
+			zap.String("address", address),
+			zap.String("account", power.GithubAccount))
+	}
+
+	if w, ok := devWeight[createDelegateEvent.Github]; ok {
+		power.DeveloperPower = big.NewInt(w)
 	}
 
 	return power, nil
