@@ -111,4 +111,27 @@ interface IOracle is IOracleError {
      */
     function getVoterInfo(address voter) external view returns(VoterInfo memory);
 
+    /**
+       * @notice Event emitted when a delegate is created.
+     * @param voterAddress The address of the voter who is delegating.
+     * @param actorIds An array of actor IDs associated with the delegate.
+     * @param github The GitHub username of the delegate.
+     */
+    event CreateDelegate(address voterAddress,uint64[] actorIds,string github);
+
+    /**
+     * @notice Event emitted when a delegate is deleted.
+     * @param voterAddress The address of the voter who is removing the delegate.
+     * @param actorIds An array of actor IDs that are being removed.
+     * @param minerIds An array of miner IDs associated with the delegate.
+     * @param github The GitHub username of the delegate.
+     */
+    event DeleteDelegate(address voterAddress,uint64[] actorIds,uint64[] minerIds,string github);
+
+    /**
+     * @notice Event emitted when a miner ID is updated for a delegate.
+     * @param voterAddress The address of the voter who is updating the miner ID.
+     * @param minerIds An array of new miner IDs associated with the delegate.
+     */
+    event UpdateMinerId(address voterAddress,uint64[] minerIds);
 }
