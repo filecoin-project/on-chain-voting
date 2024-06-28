@@ -37,46 +37,48 @@ export default function Table({ title = '', link = {} as { type: string, action:
   }
 
   return (
-    <table className='min-w-full bg-[#FFFFFF] rounded text-left'>
-      <thead>
-        <tr>
-          <th scope='col' colSpan={2} className='mb-[12px]'>
-            <div className='font-normal text-black px-[24px] pt-[24px] pb-[12px] text-2xl border-b border-[#313D4F] flex items-center'>
-              <span>{title}</span>
-              {
-                href && (
-                  <div className='flex items-start cursor-pointer' onClick={handleJump}>
-                    <QuestionCircleOutlined className='text-[#8896AA] text-[16px] ml-2' />
-                  </div>
-                )
-              }
-            </div>
-            <div className='px-[24px] pb-[30px]'>
-              {subTitle && (
-                <div className='text-[#4B535B]'>{subTitle}</div>
-              )}
-            </div>
-          </th>
-        </tr>
-      </thead>
-      <tbody className='divide-y divide-[#111111]'>
-        {list.filter((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode }) => !item.hide).map((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode }) => (
-          <tr key={item.name} className='divide-x divide-[#313D4F] '>
-            <td className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} align-top py-[12px] pl-[24px] pr-[45px] `}>
-              <div className='whitespace-nowrap text-base font-medium text-[#313D4F] '>{item.name}</div>
-              {item.desc && <div className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} text-sm font-sm whitespace-normal text-[#4B535B] mt-8`}>
-                {item.desc}
-              </div>}
-            </td>
-
-            <td className='py-[12px] pr-[24px] text-xl text-white'>
-              {item.comp}
-            </td>
+    <div className='rounded-xl border-[1px] border-solid border-[#DFDFDF] overflow-hidden' >
+      <table className='min-w-full bg-[#FFFFFF]  text-left'>
+        <thead>
+          <tr>
+            <th scope='col' colSpan={2} className='mb-[12px]'>
+              <div className='font-normal text-black px-[24px] pt-[24px] pb-[12px] text-2xl border-b border-[#313D4F] flex items-center'>
+                <span>{title}</span>
+                {
+                  href && (
+                    <div className='flex items-start cursor-pointer' onClick={handleJump}>
+                      <QuestionCircleOutlined className='text-[#8896AA] text-[16px] ml-2' />
+                    </div>
+                  )
+                }
+              </div>
+              <div className='px-[24px] pb-[30px]'>
+                {subTitle && (
+                  <div className='text-[#4B535B]'>{subTitle}</div>
+                )}
+              </div>
+            </th>
           </tr>
-        ))}
-        <tr className='h-[12px]' />
-      </tbody>
+        </thead>
+        <tbody className='divide-y divide-[#111111]'>
+          {list.filter((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode }) => !item.hide).map((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode }) => (
+            <tr key={item.name} className='divide-x divide-[#313D4F] '>
+              <td className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} align-top py-[12px] pl-[24px] pr-[45px] `}>
+                <div className='whitespace-nowrap text-base font-medium text-[#313D4F] '>{item.name}</div>
+                {item.desc && <div className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} text-sm font-sm whitespace-normal text-[#4B535B] mt-8`}>
+                  {item.desc}
+                </div>}
+              </td>
 
-    </table>
+              <td className='py-[12px] pr-[24px] text-xl text-white'>
+                {item.comp}
+              </td>
+            </tr>
+          ))}
+          <tr className='h-[12px]' />
+        </tbody>
+
+      </table>
+    </div>
   )
 }
