@@ -42,7 +42,7 @@ export default function Table({ title = '', link = {} as { type: string, action:
         <thead>
           <tr>
             <th scope='col' colSpan={2} className='mb-[12px]'>
-              <div className='font-normal text-black px-[24px] pt-[24px] pb-[12px] text-2xl border-b border-[#313D4F] flex items-center'>
+              <div className='font-medium text-black px-[24px] pt-[24px] pb-[12px] text-2xl border-b border-[#313D4F] flex items-center'>
                 <span>{title}</span>
                 {
                   href && (

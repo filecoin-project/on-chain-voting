@@ -540,7 +540,7 @@ const CreateVote = () => {
       </div>
       <form onSubmit={handleSubmit(onSubmit)} >
         <div className='flow-root space-y-8'>
-          <Table title='Create A Proposal' subTitle={<div className="text-base font-normal">
+          <Table title='Create Proposal' subTitle={<div className="text-base font-normal">
             Proposals should be clear, concise, and focused on specific improvements or changes. FIPs must adhere to the Filecoin community's <a target="_blank"
               rel="noopener" href="" style={{ color: "blue" }}>code of conduct and best practices↗</a>.
           </div>} list={list} />
