@@ -83,16 +83,8 @@ interface IOracle is IOracleError {
      * @notice Callback function for updating task information.
      * @param voterInfoParam Voter information containing the Ethereum address and other details.
      * @param taskId The ID of the task being updated.
-     * @param power Power information associated with the task.
      */
-    function taskCallback(VoterInfo calldata voterInfoParam, uint256 taskId, Power calldata power) external;
-
-    /**
-     * @notice Retrieves the power information for a specific voter and day.
-     * @param voterAddress Address of the voter.
-     * @param id ID of the day for which power information is requested.
-     */
-    function getPower(address voterAddress, uint256 id) external returns(Power memory);
+    function taskCallback(VoterInfo calldata voterInfoParam, uint256 taskId) external;
 
     /**
      * @notice Updates the node allow list by adding or removing a node.
@@ -120,10 +112,26 @@ interface IOracle is IOracleError {
     function getVoterInfo(address voter) external view returns(VoterInfo memory);
 
     /**
-     * @notice Saves the power information associated with a voter.
-     * @param voterAddress The address of the voter.
-     * @param powerParam The power information to be saved.
+       * @notice Event emitted when a delegate is created.
+     * @param voterAddress The address of the voter who is delegating.
+     * @param actorIds An array of actor IDs associated with the delegate.
+     * @param github The GitHub username of the delegate.
      */
-    function savePower(address voterAddress, Power calldata powerParam) external;
+    event CreateDelegate(address voterAddress,uint64[] actorIds,string github);
 
+    /**
+     * @notice Event emitted when a delegate is deleted.
+     * @param voterAddress The address of the voter who is removing the delegate.
+     * @param actorIds An array of actor IDs that are being removed.
+     * @param minerIds An array of miner IDs associated with the delegate.
+     * @param github The GitHub username of the delegate.
+     */
+    event DeleteDelegate(address voterAddress,uint64[] actorIds,uint64[] minerIds,string github);
+
+    /**
+     * @notice Event emitted when a miner ID is updated for a delegate.
+     * @param voterAddress The address of the voter who is updating the miner ID.
+     * @param minerIds An array of new miner IDs associated with the delegate.
+     */
+    event UpdateMinerId(address voterAddress,uint64[] minerIds);
 }
