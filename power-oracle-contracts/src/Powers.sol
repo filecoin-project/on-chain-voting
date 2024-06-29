@@ -15,38 +15,14 @@
 
 pragma solidity ^0.8.19;
 
-import { PowerAPI } from "filecoin-solidity-api/contracts/v0.8/PowerAPI.sol";
-import { PowerTypes } from "filecoin-solidity-api/contracts/v0.8/types/PowerTypes.sol";
+
 import { CommonTypes } from "filecoin-solidity-api/contracts/v0.8/types/CommonTypes.sol";
-import { FilAddresses } from "filecoin-solidity-api/contracts/v0.8/utils/FilAddresses.sol";
-import { DataCapAPI } from "filecoin-solidity-api/contracts/v0.8/DataCapAPI.sol";
 import { MinerAPI } from "filecoin-solidity-api/contracts/v0.8/MinerAPI.sol";
 import { MinerTypes } from "filecoin-solidity-api/contracts/v0.8/types/MinerTypes.sol";
 import {PrecompilesAPI} from "filecoin-solidity-api/contracts/v0.8/PrecompilesAPI.sol";
 
 
 library Powers {
-    /**
-     * @notice Retrieves storage provider information for a specified miner.
-     * @param minerID ID of the target miner.
-     * @return The raw bytecode representation of the storage provider.
-     */
-    function getSp(uint64 minerID) external view returns(bytes memory) {
-        (,PowerTypes.MinerRawPowerReturn memory sp )= PowerAPI.minerRawPower(minerID);
-        return sp.raw_byte_power.val;
-    }
-
-    /**
-     * @notice Retrieves client balance information for a specified actor.
-     * @param actorID ID of the target actor.
-     * @return The bytecode representation of the client balance.
-     */
-    function getClient(uint64 actorID) external view returns(bytes memory) {
-        CommonTypes.FilAddress memory result = FilAddresses.fromActorID(actorID);
-        (,CommonTypes.BigInt memory clientBalance) = DataCapAPI.balance(result);
-        return clientBalance.val;
-    }
-
     /**
      * @notice Retrieves owner information for a specified miner.
      * @param minerID ID of the target miner.
