@@ -16,10 +16,11 @@ package model
 
 // Config represents the configuration structure for the PowerVoting application.
 type Config struct {
-	Server  Server    // Server configuration
-	Mysql   Mysql     // MySQL database configuration
-	Drand   Drand     // Drand network configuration
-	Network []Network // List of network configurations
+	Server   Server    // Server configuration
+	Mysql    Mysql     // MySQL database configuration
+	Drand    Drand     // Drand network configuration
+	Snapshot Snapshot  // Snapshot configuration
+	Network  []Network // List of network configurations
 }
 
 // Server represents the server configuration.
@@ -49,4 +50,8 @@ type Network struct {
 	OracleAbi           string // ABI for Oracle contract
 	PowerVotingContract string // Contract address for PowerVoting
 	OracleContract      string // Contract address for Oracle
+}
+
+type Snapshot struct {
+	Rpc string // Port number for the server
 }

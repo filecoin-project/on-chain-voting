@@ -28,40 +28,42 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     using Powers for uint64;
     using Powers for address;
 
-    // max day, 60, Save once every day, with a maximum storage period of 60 days.
-    uint64 constant public MAX_HISTORY = 60;
-
     // task id
     uint256 private  _taskId;
-    // history power id
-    int8 private  _historyPowerId;
+
     // PowerVoting contract address
     address public powerVotingContract;
 
-    // oracle node allowlist
+    // oracle node allow list
     mapping(address => bool) public nodeAllowList;
+
     // address status map, key: voter address value: block height
     mapping(address => uint256) public voterAddressToBlockHeight;
+
     // task list
     EnumerableSet.UintSet taskIdList;
+
     // f4 task list
     EnumerableSet.UintSet f4TaskIdList;
+
     // task id to ucan cid
     mapping(uint256 => string) public taskIdToUcanCid;
+
     // task id to address
     mapping(uint256 => address) public f4TaskIdToAddress;
+
     // voter list
     EnumerableSet.AddressSet voterList;
+
     // voter info map
     mapping(address => VoterInfo) public voterToInfo;
+
     // voter to miner id list
     mapping(address => uint64[]) public voterToMinerIds;
-    // voter to history power
-    mapping(address => mapping(uint256 => Power)) public voterToHistoryPower;
-    // voter to id
-    mapping(address => PowerStatus) public voterToPowerStatus;
+
     // actor id list
     mapping(uint64 => bool) public actorIdList;
+
     // github account list
     mapping(string => bool) public githubAccountList;
 
@@ -169,10 +171,8 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
      * @notice Callback function for updating task information.
      * @param voterInfoParam Voter information containing the Ethereum address and other details.
      * @param taskId The ID of the task being updated.
-     * @param powerParam Power information associated with the task.
      */
-    function taskCallback(VoterInfo calldata voterInfoParam, uint256 taskId, Power calldata powerParam) external onlyInAllowList override {
-
+    function taskCallback(VoterInfo calldata voterInfoParam, uint256 taskId) external onlyInAllowList override {
         address voterAddress = voterInfoParam.ethAddress;
         if (voterAddressToBlockHeight[voterAddress] == block.number) {
             revert StatusError("Has already been updated by other nodes.");
@@ -215,10 +215,6 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
         // update miner id
         _updateMinerId(voterAddress);
 
-        Power memory power = _calcPower(voterAddress, powerParam);
-        uint256 id = _getDayId(voterAddress);
-        voterToHistoryPower[voterAddress][id] = power;
-
         // add to voter list for schedule task
         voterList.add(voterAddress);
         voterAddressToBlockHeight[voterAddress] = block.number;
@@ -245,26 +241,10 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
         githubAccountList[voterInfo.githubAccount]=false;
         VoterInfo memory newVoterInfo = VoterInfo(new uint64[](0),new uint64[](0),"",address(0),"");
         voterToInfo[voterAddress] = newVoterInfo;
-        PowerStatus storage powerStatus = voterToPowerStatus[voterAddress];
-        powerStatus.dayId = 0;
-        powerStatus.hasFullRound = 0;
+        voterAddressToBlockHeight[voterAddress] = 0;
         voterList.remove(voterAddress);
         delete taskIdToUcanCid[taskId];
         taskIdList.remove(taskId);
-    }
-
-    /**
-     * @notice Retrieves the power information for a specific voter and day.
-     * @param voterAddress Address of the voter.
-     * @param id ID of the day for which power information is requested.
-     * @return Power structure containing the power information.
-     */
-    function getPower(address voterAddress, uint256 id) external view override returns(Power memory){
-        PowerStatus storage powerStatus = voterToPowerStatus[voterAddress];
-        if (powerStatus.hasFullRound == 0 && id > powerStatus.dayId) {
-            return Power(0,new bytes[](0),new bytes[](0),0,0);
-        }
-        return voterToHistoryPower[voterAddress][id];
     }
 
     /**
@@ -291,67 +271,6 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
      */
     function getVoterInfo(address voter) external override view returns(VoterInfo memory){
         return voterToInfo[voter];
-    }
-
-    /**
-     * @notice Saves the power information associated with a voter.
-     * @param voterAddress The address of the voter.
-     * @param powerParam The power information to be saved.
-     */
-    function savePower(address voterAddress, Power calldata powerParam) external onlyInAllowList nonZeroAddress(voterAddress) override {
-        if (voterAddressToBlockHeight[voterAddress] == block.number) {
-            revert StatusError("Has already been updated by other nodes.");
-        }
-        Power memory power = _calcPower(voterAddress, powerParam);
-        uint256 id = _getDayId(voterAddress);
-        voterToHistoryPower[voterAddress][id] = power;
-        voterAddressToBlockHeight[voterAddress] = block.number;
-    }
-
-    /**
-     * @notice Increments the day ID for the specified voter and returns the updated day ID.
-     * @param voter The address of the voter.
-     * @return The updated day ID.
-     */
-    function _getDayId(address voter) private returns(uint256){
-        PowerStatus storage powerStatus = voterToPowerStatus[voter];
-        ++powerStatus.dayId;
-        uint256 id = powerStatus.dayId % MAX_HISTORY;
-        if (id == 0) {
-            id = MAX_HISTORY;
-            powerStatus.dayId = 0;
-            powerStatus.hasFullRound = 0;
-        }
-        return id;
-    }
-
-    /**
-     * @notice Calculates the power for the specified voter address.
-     * @param voterAddress The address of the voter.
-     * @param power The Power struct containing the power information.
-     * @return The updated Power struct.
-     */
-    function _calcPower(address voterAddress, Power memory power) private returns(Power memory){
-        VoterInfo storage voterInfo = voterToInfo[voterAddress];
-        uint64[] memory actorList = voterInfo.actorIds;
-        uint256 actorIdsLength = actorList.length;
-        _filterAndSetMinerIds(voterAddress, voterInfo, voterInfo.minerIds, voterInfo.minerIds.length, actorIdsLength);
-        bytes[] memory clientPowerList = new bytes[](actorIdsLength);
-        for (uint256 i = 0; i < actorIdsLength; i++) {
-            bytes memory clientPower = actorList[i].getClient();
-            clientPowerList[i] = clientPower;
-        }
-        uint64[] memory minerList = voterInfo.minerIds;
-        uint256 minerListLength = minerList.length;
-        bytes[] memory spPowerList = new bytes[](minerListLength);
-        for (uint256 i = 0; i < minerListLength; i++) {
-            bytes memory spPower = minerList[i].getSp();
-            spPowerList[i] = spPower;
-        }
-        power.clientPower = clientPowerList;
-        power.spPower = spPowerList;
-        power.blockHeight = block.number;
-        return power;
     }
 
     /**

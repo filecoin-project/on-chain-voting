@@ -17,7 +17,6 @@ package utils
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"math/big"
 	"powervoting-server/model"
 	"strconv"
@@ -26,64 +25,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"go.uber.org/zap"
 )
-
-// GetPower retrieves the voting power of a given address from the blockchain using the provided Ethereum client.
-// It packs the method call parameters, calls the smart contract, and unpacks the result to obtain the power information.
-// The function returns the power information as a model.Power struct or an error if the operation fails.
-func GetPower(address string, num *big.Int, client model.GoEthClient) (model.Power, error) {
-	data, err := client.OracleAbi.Pack("getPower", common.HexToAddress(address), num)
-	if err != nil {
-		zap.L().Error("Pack method and param error: ", zap.Error(err))
-		return model.Power{}, err
-	}
-	zap.L().Info(fmt.Sprintf("Get power random number: %d\n", num))
-
-	msg := ethereum.CallMsg{
-		To:   &client.OracleContract,
-		Data: data,
-	}
-	result, err := client.Client.CallContract(context.Background(), msg, nil)
-	if err != nil {
-		zap.L().Error("Call contract error: ", zap.Error(err))
-		return model.Power{}, err
-	}
-	unpack, err := client.OracleAbi.Unpack("getPower", result)
-	if err != nil {
-		zap.L().Error("Unpack return data to interface error: ", zap.Error(err))
-		return model.Power{}, err
-	}
-	powerInterface := unpack[0]
-	marshal, err := json.Marshal(powerInterface)
-	if err != nil {
-		zap.L().Error("marshal error: ", zap.Error(err))
-		return model.Power{}, err
-	}
-	var contractPower model.ContractPower
-	err = json.Unmarshal(marshal, &contractPower)
-	if err != nil {
-		zap.L().Error("unmarshal error: ", zap.Error(err))
-		return model.Power{}, err
-	}
-	var power model.Power
-	power.TokenHolderPower = contractPower.TokenHolderPower
-	power.DeveloperPower = contractPower.DeveloperPower
-	power.BlockHeight = contractPower.BlockHeight
-	totalClientPower := new(big.Int)
-	for _, clientPower := range contractPower.ClientPower {
-		power := new(big.Int)
-		power.SetBytes(clientPower)
-		totalClientPower.Add(totalClientPower, power)
-	}
-	power.ClientPower = totalClientPower
-	totalSpPower := new(big.Int)
-	for _, spPower := range contractPower.SpPower {
-		power := new(big.Int)
-		power.SetBytes(spPower)
-		totalSpPower.Add(totalSpPower, power)
-	}
-	power.SpPower = totalSpPower
-	return power, nil
-}
 
 // GetTimestamp retrieves the current timestamp from the Ethereum blockchain using the provided Ethereum client.
 // It fetches the latest block number and then retrieves the block information to obtain the timestamp.

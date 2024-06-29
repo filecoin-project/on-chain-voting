@@ -44,7 +44,6 @@ func ContractCallBack(ethClient models.GoEthClient, lotusRpcClient jsonrpc.RPCCl
 	for _, taskId := range taskList {
 		go ProcessingContractCallBackTaskId(taskId, ethClient, lotusRpcClient)
 	}
-
 }
 
 // ProcessingContractCallBackTaskId processes a specific task identified by its ID.
@@ -143,7 +142,7 @@ func ActionIsAdd(iss, aud, ucanCid string, isGitHub bool, taskId *big.Int, ethCl
 
 	if isGitHub {
 		if len(voterInfo.ActorIds) < 2 {
-			return GitHubAccount(iss, aud, ucanCid, taskId, ethClient, lotusRpcClient)
+			return GitHubAccount(iss, aud, ucanCid, taskId, ethClient)
 		}
 
 	} else {
@@ -156,7 +155,7 @@ func ActionIsAdd(iss, aud, ucanCid string, isGitHub bool, taskId *big.Int, ethCl
 }
 
 // GitHubAccount handles the 'add' action for a GitHub account.
-func GitHubAccount(iss, aud, ucanCid string, taskId *big.Int, ethClient models.GoEthClient, lotusRpcClient jsonrpc.RPCClient) error {
+func GitHubAccount(iss, aud, ucanCid string, taskId *big.Int, ethClient models.GoEthClient) error {
 	ethToId, err := utils.GetActorIdFromEthAddress(iss, ethClient)
 	if err != nil {
 		zap.L().Error("failed to convert ethereum address to filecoin address", zap.Error(err))
@@ -177,21 +176,7 @@ func GitHubAccount(iss, aud, ucanCid string, taskId *big.Int, ethClient models.G
 		GithubAccount: aud,
 	}
 
-	totalWeights := GetDeveloperWeights()
-	weight := totalWeights[aud]
-	ethAddressWalletBalance, err := GetWalletBalance(ethToId, lotusRpcClient)
-	if err != nil {
-		zap.L().Error("failed to get balance", zap.Error(err))
-		return err
-	}
-
-	power := models.Power{
-		DeveloperPower:   big.NewInt(int64(weight)),
-		TokenHolderPower: ethAddressWalletBalance,
-		BlockHeight:      big.NewInt(0),
-	}
-
-	if err := contract.TaskCallbackContract(voterInfo, *taskId, power, ethClient); err != nil {
+	if err := contract.TaskCallbackContract(voterInfo, *taskId, ethClient); err != nil {
 		zap.L().Error("failed to execute task call back contract", zap.Error(err))
 		return err
 	}
@@ -232,28 +217,7 @@ func FileCoinAccount(iss, aud, ucanCid string, taskId *big.Int, ethClient models
 		EthAddress: common.HexToAddress(iss),
 	}
 
-	power := models.Power{
-		DeveloperPower:   big.NewInt(0),
-		TokenHolderPower: big.NewInt(0),
-		BlockHeight:      big.NewInt(0),
-	}
-
-	filecoinAddressWalletBalance, err := GetWalletBalance(filecoinId, lotusRpcClient)
-	if err != nil {
-		zap.L().Error("failed to get balance", zap.Error(err))
-
-		return err
-	}
-
-	ethAddressWalletBalance, err := GetWalletBalance(ethToId, lotusRpcClient)
-	if err != nil {
-		zap.L().Error("failed to get balance", zap.Error(err))
-		return err
-	}
-
-	power.TokenHolderPower.Add(ethAddressWalletBalance, filecoinAddressWalletBalance)
-
-	if err := contract.TaskCallbackContract(voterInfo, *taskId, power, ethClient); err != nil {
+	if err := contract.TaskCallbackContract(voterInfo, *taskId, ethClient); err != nil {
 		zap.L().Error("failed to execute task call back contract", zap.Error(err))
 		return err
 	}
