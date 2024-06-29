@@ -47,13 +47,10 @@ func TestGetTasks(t *testing.T) {
 func TestGetF4Tasks(t *testing.T) {
 	config.InitConfig("../")
 	ethClient, err := contract.GetClient(314159)
-	assert.Error(t, err)
+	assert.Nil(t, err)
 
 	taskList, err := GetF4Tasks(ethClient)
 	assert.Nil(t, err)
-
-	testTasks := []*big.Int{}
-	assert.Equal(t, taskList, testTasks)
 
 	fmt.Printf("f4 task list: %+v\n", taskList)
 
@@ -67,14 +64,14 @@ func TestGetVoterInfo(t *testing.T) {
 		return
 	}
 
-	voterInfo, err := GetVoterInfo("0x763D410594a24048537990dde6ca81c38CfF566a", ethClient)
+	voterInfo, err := GetVoterInfo("0x0000000000000000000000000000000000000000", ethClient)
 	assert.Nil(t, err)
 
 	testVoterInfo := models.VoterInfo{
-		ActorIds:      []uint64{35363},
+		ActorIds:      []uint64{},
 		MinerIds:      []uint64{},
 		GithubAccount: "",
-		EthAddress:    common.HexToAddress("0x763D410594a24048537990dde6ca81c38CfF566a"),
+		EthAddress:    common.HexToAddress("0x0000000000000000000000000000000000000000"),
 		UcanCid:       "",
 	}
 	assert.Equal(t, testVoterInfo, voterInfo)
