@@ -12,27 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, {useState, useEffect, useRef} from "react";
-import {Link, useNavigate} from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { message } from 'antd';
 import Table from '../../components/Table';
 import LoadingButton from '../../components/LoadingButton';
-import type { BaseError} from "wagmi";
-import {useAccount, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
-import {filecoinCalibration} from "wagmi/chains";
+import type { BaseError } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { filecoinCalibration } from "wagmi/chains";
 import {
   DUPLICATED_MINER_ID_MSG,
   STORING_DATA_MSG,
   WRONG_MINER_ID_MSG
 } from "../../common/consts";
 import Loading from "../../components/Loading";
-import {getContractAddress, hasDuplicates} from "../../utils";
+import { getContractAddress, hasDuplicates } from "../../utils";
 import fileCoinAbi from "../../common/abi/power-voting.json";
 import oraclePowerAbi from "../../common/abi/oracle-powers.json";
 import { useMinerIdSet, useOwnerDataSet } from "../../common/hooks";
 
 const MinerId = () => {
-  const {chain, isConnected, address} = useAccount();
+  const { chain, isConnected, address } = useAccount();
   const chainId = chain?.id || 0;
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
@@ -89,7 +89,7 @@ const MinerId = () => {
         content: STORING_DATA_MSG,
       });
       setTimeout(() => {
-        navigate("/");
+        navigate("/home");
       }, 3000);
     }
   }, [writeContractSuccess])
@@ -104,8 +104,8 @@ const MinerId = () => {
    */
   const handleMinerChange = (ids: string) => {
     const arr = ids ? ids.split(',') : [];
-    setMinerIds(arr);
 
+    setMinerIds(arr);
     const { value } = removeMinerIdPrefix(arr);
     const contracts = value.map((item: number) => {
       return {
@@ -176,6 +176,7 @@ const MinerId = () => {
     const { value, hasError } = removeMinerIdPrefix(minerIds);
     // Remove prefix from miner IDs and check for errors
     if (hasError) {
+      console.log(hasError)
       messageApi.open({
         type: 'warning',
         content: WRONG_MINER_ID_MSG,
@@ -185,10 +186,13 @@ const MinerId = () => {
     }
     try {
       // Check if all requests were successful
-      const allSuccessful = ownerData?.every((res: any) => {
+      let allSuccessful = ownerData?.every((res: any) => {
         return res.status === 'success';
       });
-
+      //if empty ,ignore check
+      if (!minerIds.length) {
+        allSuccessful = true
+      }
       if (!allSuccessful) {
         messageApi.open({
           type: 'error',
@@ -221,11 +225,11 @@ const MinerId = () => {
     getMinerIdsLoading ? <Loading /> : <div className="px-3 mb-6 md:px-0">
       {contextHolder}
       <button>
-        <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">
-          <Link to="/" className="flex items-center">
+        <div className="inline-flex items-center mb-8 gap-1 text-skin-text hover:text-skin-link">
+          <Link to="/home" className="flex items-center">
             <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
               <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                    d="m11 17l-5-5m0 0l5-5m-5 5h12" />
+                d="m11 17l-5-5m0 0l5-5m-5 5h12" />
             </svg>
             Back
           </Link>
@@ -242,7 +246,7 @@ const MinerId = () => {
                 <textarea
                   defaultValue={minerIds}
                   placeholder='Input miner ID (For multiple miner IDs, use commas to separate them.)'
-                  className='form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]'
+                  className='form-input h-[320px] w-full rounded bg-[#ffffff] border border-[#EEEEEE] text-black'
                   onBlur={e => { handleMinerChange(e.target.value) }}
                 />
               )

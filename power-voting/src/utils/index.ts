@@ -18,9 +18,9 @@ import {
   oraclePowerCalibrationContractAddress,
   powerVotingCalibrationContractAddress,
   powerVotingMainNetContractAddress,
-  web3StorageEmail
+  uploadApi
 } from "../common/consts";
-import { create } from '@web3-storage/w3up-client';
+import axios from 'axios';
 
 export const stringToBase64Url = (str: string) => {
   const base64 = btoa(str);
@@ -149,21 +149,19 @@ export const getContractAddress = (chainId: number, type: string) => {
  * @param params for the data
  */
 export const getWeb3IpfsId = async (params: object | string) => {
-  const client = await create();
-  // first time setup!
-  if (!Object.keys(client.accounts()).length) {
-    // waits for you to click the link in your email to verify your identity
-    const account = await client.login(web3StorageEmail);
-    // create a space for your uploads
-    const space = await client.createSpace('power-voting');
-    // save the space to the store, and set as "current"
-    await space.save();
-    // associate this space with your account
-    await account.provision(space.did());
+  try {
+    const json = JSON.stringify(params);
+    const file = new Blob([json]);
+    const formData = new FormData();
+    formData.append('file', file);
+    const resp = await axios.post(uploadApi, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+    },
+    );
+    return resp.data["data"]["root"]["/"];
+  } catch (e) {
+    return ""
   }
-
-  const json = JSON.stringify(params);
-  const data = new Blob([json]);
-  const cid = await client.uploadFile(data);
-  return cid.toString();
 }

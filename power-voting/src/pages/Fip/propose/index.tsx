@@ -12,28 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, {useState, useEffect, useRef} from "react";
-import {message} from "antd";
-import {Link, useNavigate} from "react-router-dom";
-import {RadioGroup} from '@headlessui/react';
+import React, { useState, useEffect, useRef } from "react";
+import { message } from "antd";
+import { Link, useNavigate } from "react-router-dom";
+import { RadioGroup } from '@headlessui/react';
 import classNames from 'classnames';
 import Table from '../../../components/Table';
 import LoadingButton from '../../../components/LoadingButton';
-import {useAccount, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import type { BaseError } from "wagmi";
-import {useCheckFipEditorAddress, useFipEditors} from "../../../common/hooks"
+import { useApproveProposalId, useCheckFipEditorAddress, useFipEditorProposalDataSet, useFipEditors, useRevokeProposalId } from "../../../common/hooks"
 import fileCoinAbi from "../../../common/abi/power-voting.json";
-import {getContractAddress, getWeb3IpfsId} from "../../../utils";
+import { getContractAddress, getWeb3IpfsId } from "../../../utils";
 import {
+  FIP_ALREADY_EXECUTE_MSG,
+  FIP_APPROVE_ALREADY_MSG,
+  FIP_APPROVE_SELF_MSG,
   FIP_EDITOR_APPROVE_TYPE,
   FIP_EDITOR_REVOKE_TYPE,
+  NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG,
   NO_FIP_EDITOR_APPROVE_ADDRESS_MSG,
   NO_FIP_EDITOR_REVOKE_ADDRESS_MSG,
   STORING_DATA_MSG,
+  UPLOAD_DATA_FAIL_MSG,
 } from "../../../common/consts";
 
 const FipEditorPropose = () => {
-  const {isConnected, address, chain} = useAccount();
+  const { isConnected, address, chain } = useAccount();
   const chainId = chain?.id || 0;
 
   const navigate = useNavigate();
@@ -48,6 +53,25 @@ const FipEditorPropose = () => {
 
   const { isFipEditorAddress, checkFipEditorAddressSuccess } = useCheckFipEditorAddress(chainId, address);
   const { fipEditors } = useFipEditors(chainId);
+
+
+  //load revoke proposa
+  const { revokeProposalId } = useRevokeProposalId(chainId);
+  const revokeResult = useFipEditorProposalDataSet({
+    chainId,
+    idList: revokeProposalId,
+    page: 1,
+    pageSize: revokeProposalId?.length ?? 0,
+  });
+
+  //load approve
+  const { approveProposalId } = useApproveProposalId(chainId);
+  const approveResult = useFipEditorProposalDataSet({
+    chainId,
+    idList: approveProposalId,
+    page: 1,
+    pageSize: approveProposalId?.length ?? 0,
+  });
 
   const {
     data: hash,
@@ -81,7 +105,7 @@ const FipEditorPropose = () => {
         content: STORING_DATA_MSG,
       });
       setTimeout(() => {
-        navigate("/")
+        navigate("/home")
       }, 1000);
     }
   }, [writeContractSuccess]);
@@ -129,11 +153,71 @@ const FipEditorPropose = () => {
       return;
     }
 
+    if (fipProposalType === FIP_EDITOR_REVOKE_TYPE && fipEditors.length <= 2) {
+      messageApi.open({
+        type: 'warning',
+        // must more than 2
+        content: NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG,
+      });
+      return;
+    }
+
+
+
+    if (fipProposalType === FIP_EDITOR_REVOKE_TYPE && revokeResult.getFipEditorProposalIdSuccess) {
+      const find = revokeResult.fipEditorProposalData?.find((v: any) => v.result[1] === selectedAddress)
+      if (find) {
+        messageApi.open({
+          type: 'warning',
+          content: FIP_ALREADY_EXECUTE_MSG,
+        });
+        return;
+      }
+    }
+    if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && approveResult.getFipEditorProposalIdSuccess) {
+      const find = approveResult.fipEditorProposalData?.find((v: any) => v.result[1] === fipAddress)
+      if (find) {
+        messageApi.open({
+          type: 'warning',
+          content: FIP_ALREADY_EXECUTE_MSG,
+        });
+        return;
+      }
+    }
+
+    if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && fipAddress === address) {
+      messageApi.open({
+        type: 'warning',
+        content: FIP_APPROVE_SELF_MSG,
+      });
+      return;
+    }
+
+    //fipEditors
+    if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && fipEditors.includes(fipAddress)) {
+      messageApi.open({
+        type: 'warning',
+        content: FIP_APPROVE_ALREADY_MSG,
+      });
+      return;
+    }
+
+
     // Set loading state to true while submitting proposal
     setLoading(true);
 
     // Get the IPFS CID for the proposal information
     const cid = await getWeb3IpfsId(fipInfo);
+
+
+    if(!cid?.length){
+      setLoading(false);
+      messageApi.open({
+        type: 'warning',
+        content: UPLOAD_DATA_FAIL_MSG,
+      });
+      return;
+    }
 
     // Construct the arguments and call the writeContract function to create the proposal
     const proposalArgs = [
@@ -166,11 +250,11 @@ const FipEditorPropose = () => {
       {contextHolder}
       <div className="px-3 mb-6 md:px-0">
         <button>
-          <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">
-            <Link to="/" className="flex items-center">
+          <div className="inline-flex items-center gap-1 mb-8 text-skin-text hover:text-skin-link">
+            <Link to="/home" className="flex items-center">
               <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
                 <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                      d="m11 17l-5-5m0 0l5-5m-5 5h12" />
+                  d="m11 17l-5-5m0 0l5-5m-5 5h12" />
               </svg>
               Back
             </Link>
@@ -182,40 +266,41 @@ const FipEditorPropose = () => {
             list={[
               {
                 name: 'Propose Type',
+                width: 100,
                 comp: (
-                  <RadioGroup className='flex' value={fipProposalType} onChange={handleProposeTypeChange}>
+                  <RadioGroup className='flex h-[30px] mt-[-5px]' value={fipProposalType} onChange={handleProposeTypeChange}>
                     <RadioGroup.Option
                       key='approve'
                       disabled={isLoading}
                       value={FIP_EDITOR_APPROVE_TYPE}
                       className='relative flex items-center cursor-pointer p-4 focus:outline-none data-[disabled]:cursor-not-allowed'
                     >
-                      {({active, checked}) => (
+                      {({ active, checked }) => (
                         <>
-                        <span
-                          className={classNames(
-                            checked
-                              ? 'bg-[#45B753] border-transparent'
-                              : 'bg-[#212B3B] border-[#38485C]',
-                            active ? 'ring-2 ring-offset-2 ring-[#45B753]' : '',
-                            'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
-                          )}
-                          aria-hidden='true'
-                        >
-                          {(active || checked) && (
-                            <span className='rounded-full bg-white w-1.5 h-1.5'/>
-                          )}
-                        </span>
-                          <span className='ml-3'>
-                          <RadioGroup.Label
-                            as='span'
-                            className={
-                              checked ? 'text-white' : 'text-[#8896AA]'
-                            }
+                          <span
+                            className={classNames(
+                              checked
+                                ? 'bg-[#45B753] border-transparent'
+                                : 'bg-[#eeeeee] border-transparent]',
+                              active ? 'ring-2 ring-offset-2 ring-[#ffffff]' : '',
+                              'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
+                            )}
+                            aria-hidden='true'
                           >
-                            Approve
-                          </RadioGroup.Label>
-                        </span>
+                            {(active || checked) && (
+                              <span className='rounded-full bg-white w-1.5 h-1.5' />
+                            )}
+                          </span>
+                          <span className='ml-3'>
+                            <RadioGroup.Label
+                              as='span'
+                              className={
+                                checked ? 'text-black' : 'text-[#8896AA]'
+                              }
+                            >
+                              Approve
+                            </RadioGroup.Label>
+                          </span>
                         </>
                       )}
                     </RadioGroup.Option>
@@ -225,32 +310,32 @@ const FipEditorPropose = () => {
                       value={FIP_EDITOR_REVOKE_TYPE}
                       className='relative flex items-center cursor-pointer p-4 focus:outline-none data-[disabled]:cursor-not-allowed'
                     >
-                      {({active, checked}) => (
+                      {({ active, checked }) => (
                         <>
-                        <span
-                          className={classNames(
-                            checked
-                              ? 'bg-[#45B753] border-transparent'
-                              : 'bg-[#212B3B] border-[#38485C]',
-                            active ? 'ring-2 ring-offset-2 ring-[#45B753]' : '',
-                            'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
-                          )}
-                          aria-hidden='true'
-                        >
-                          {(active || checked) && (
-                            <span className='rounded-full bg-white w-1.5 h-1.5'/>
-                          )}
-                        </span>
-                          <span className='ml-3'>
-                          <RadioGroup.Label
-                            as='span'
-                            className={
-                              checked ? 'text-white' : 'text-[#8896AA]'
-                            }
+                          <span
+                            className={classNames(
+                              checked
+                                ? 'bg-[#45B753] border-transparent'
+                                : 'bg-[#eeeeee] border-transparent]',
+                              active ? 'ring-2 ring-offset-2 ring-[#ffffff]' : '',
+                              'mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
+                            )}
+                            aria-hidden='true'
                           >
-                            Revoke
-                          </RadioGroup.Label>
-                        </span>
+                            {(active || checked) && (
+                              <span className='rounded-full bg-white w-1.5 h-1.5' />
+                            )}
+                          </span>
+                          <span className='ml-3'>
+                            <RadioGroup.Label
+                              as='span'
+                              className={
+                                checked ? 'text-black' : 'text-[#8896AA]'
+                              }
+                            >
+                              Revoke
+                            </RadioGroup.Label>
+                          </span>
                         </>
                       )}
                     </RadioGroup.Option>
@@ -259,30 +344,32 @@ const FipEditorPropose = () => {
               },
               {
                 name: 'Editor Address',
+                width: 100,
                 hide: fipProposalType === FIP_EDITOR_REVOKE_TYPE,
                 comp: (
                   <input
                     placeholder='Input editor address'
-                    className='form-input w-[520px] rounded bg-[#212B3C] border border-[#313D4F]'
+                    className='form-input w-[520px] rounded bg-[#ffffff] border border-[#eeeeee] text-black'
                     onChange={(e) => { handleChange('fipAddress', e.target.value) }}
                   />
                 )
               },
               {
                 name: 'FIP Editor Address',
+                width: 100,
                 hide: fipProposalType === FIP_EDITOR_APPROVE_TYPE,
                 comp: (
                   <select
                     onChange={(e: any) => { setSelectedAddress(e.target.value) }}
                     value={selectedAddress}
                     className={classNames(
-                      'form-select w-[520px] rounded bg-[#212B3C] border border-[#313D4F]'
+                      'form-select w-[520px] rounded bg-[#ffffff] border border-[#eeeeee] text-black'
                     )}
                   >
                     <option style={{ display: 'none' }}></option>
                     {fipEditors?.map((fipEditor: string) => (
                       <option
-                        disabled={ address === fipEditor }
+                        disabled={address === fipEditor}
                         value={fipEditor}
                         key={fipEditor}
                       >
@@ -300,7 +387,7 @@ const FipEditorPropose = () => {
                     value={fipInfo}
                     maxLength={300}
                     placeholder='Input propose info'
-                    className='form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]'
+                    className='form-input h-[320px] w-full rounded bg-[#ffffff] border border-[#eeeeee] text-black'
                     onChange={(e) => { handleChange('fipInfo', e.target.value) }}
                   />
                 )

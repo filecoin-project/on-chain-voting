@@ -18,7 +18,7 @@ import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { FILECOIN_AUTHORIZE_DOC, FILECOIN_DEAUTHORIZE_DOC, GITHUB_AUTHORIZE_DOC, GITHUB_DEAUTHORIZE_DOC } from "../common/consts";
 
-export default function Table({ title = '', link = {} as { type: string, action: string, href: string }, list = [] as { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode, }[], subTitle = null }) {
+export default function Table({ title = '', link = {} as { type: string, action: string, href: string }, list = [] as { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode, }[], subTitle = <div /> }) {
   const navigate = useNavigate();
   const { type, action, href } = link;
 
@@ -52,18 +52,18 @@ export default function Table({ title = '', link = {} as { type: string, action:
                   )
                 }
               </div>
-              {subTitle && <div className='px-[24px] pb-[30px]'>
+              <div className='px-[24px] pb-[30px]'>
                 {subTitle && (
                   <div className='text-[#4B535B]'>{subTitle}</div>
                 )}
-              </div>}
+              </div>
             </th>
           </tr>
         </thead>
         <tbody className='divide-y divide-[#111111]'>
           {list.filter((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode }) => !item.hide).map((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode }) => (
             <tr key={item.name} className='divide-x divide-[#313D4F] '>
-              <td className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} align-top pt-[12px] pb-[12px] pl-[24px] pr-[45px] `}>
+              <td className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} align-top py-[12px] pl-[24px] pr-[45px] `}>
                 <div className='whitespace-nowrap text-base font-medium text-[#313D4F] '>{item.name}</div>
                 {item.desc && <div className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} text-sm font-sm whitespace-normal text-[#4B535B] mt-8`}>
                   {item.desc}

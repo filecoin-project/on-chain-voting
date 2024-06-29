@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import { Row, Empty, Pagination, message } from "antd";
-import type { BaseError} from "wagmi";
-import {useAccount, useWaitForTransactionReceipt } from "wagmi";
-import {useConnectModal} from "@rainbow-me/rainbowkit";
-import {useNavigate} from "react-router-dom";
+import type { BaseError } from "wagmi";
+import { useAccount, useWaitForTransactionReceipt } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -25,31 +25,35 @@ import timezone from 'dayjs/plugin/timezone';
 import {
   VOTE_ALL_STATUS,
   VOTE_FILTER_LIST,
-  VOTE_LIST,
   IN_PROGRESS_STATUS,
   VOTE_COUNTING_STATUS,
   COMPLETED_STATUS,
   web3AvatarUrl,
   PENDING_STATUS,
   proposalResultApi,
-  worldTimeApi, STORING_STATUS, STORING_DATA_MSG, STORING_SUCCESS_MSG, STORING_FAILED_MSG
+  worldTimeApi, STORING_STATUS, STORING_DATA_MSG, STORING_SUCCESS_MSG, STORING_FAILED_MSG,
+  VOTE_OPTIONS,
+  PASSED_STATUS,
+  REJECTED_STATUS
 } from '../../common/consts';
 import ListFilter from "../../components/ListFilter";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
-import type {ProposalData, ProposalFilter, ProposalList, ProposalOption, ProposalResult} from '../../common/types';
+import type { ProposalData, ProposalList, ProposalOption, ProposalResult } from '../../common/types';
 import Loading from "../../components/Loading";
-import {markdownToText} from "../../utils";
-import {useCurrentTimezone, useStoringCid} from "../../common/store";
-import {useLatestId, useCheckFipEditorAddress, useProposalDataSet} from "../../common/hooks";
+import { markdownToText } from "../../utils";
+import { useCurrentTimezone, useStoringCid } from "../../common/store";
+import { useLatestId, useCheckFipEditorAddress, useProposalDataSet } from "../../common/hooks";
+import VoteStatusBtn from "src/components/VoteStatusBtn";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const Home = () => {
   const navigate = useNavigate();
-  const {chain, address, isConnected} = useAccount();
+  const { chain, address, isConnected } = useAccount();
   const chainId = chain?.id || 0;
-  const {openConnectModal} = useConnectModal();
+
+  const { openConnectModal } = useConnectModal();
 
   const [filterList, setFilterList] = useState([
     {
@@ -79,7 +83,7 @@ const Home = () => {
     page,
     pageSize,
   });
-  const { isFetched, isSuccess, isError} = useWaitForTransactionReceipt({
+  const { isFetched, isSuccess, isError } = useWaitForTransactionReceipt({
     hash: storingCid[0]?.hash
   });
 
@@ -127,6 +131,7 @@ const Home = () => {
       setTimeout(() => {
         setShouldRefetch(true);
         refetch().then(() => {
+          console.log(latestId);
           // Reset shouldRefetch after refetching
           setShouldRefetch(false);
         });
@@ -148,13 +153,15 @@ const Home = () => {
     setTotal(total);
     try {
       // Fetch and process proposal data
-      const list = await Promise.all(proposalData.map(async(data, index) => {
+      const list = await Promise.all(proposalData.map(async (data, index) => {
         const { result } = data as any;
         const proposalId = total - offset - index;
         const params = {
           proposalId,
           network: chainId
         };
+
+
         // Fetch proposal results data from the API
         const { data: { data: resultData } } = await axios.get(proposalResultApi, { params });
         // Map proposal results data to a more structured format
@@ -167,9 +174,11 @@ const Home = () => {
           id: proposalId,
           cid: result[0],
           creator: result[2],
+          createTime: 0,
           startTime: Number(result[3]),
           expTime: Number(result[4]),
           proposalType: Number(result[1]),
+
           proposalResults
         };
       }));
@@ -229,7 +238,7 @@ const Home = () => {
       const responses = await Promise.all(ipfsUrls.map((url: string) => axios.get(url)));
       const { data } = await axios.get(worldTimeApi);
       const results: ProposalList[] = responses.map((res, i: number) => {
-        const  proposal = proposals[i];
+        const proposal = proposals[i];
         const now = data?.unixtime;
         let proposalStatus = 0;
         // Set proposal status
@@ -240,6 +249,7 @@ const Home = () => {
             if (proposal.proposalResults.length === 0) {
               proposalStatus = VOTE_COUNTING_STATUS
             } else {
+
               proposalStatus = COMPLETED_STATUS
             }
           } else {
@@ -256,12 +266,25 @@ const Home = () => {
             count: proposalItem?.votes ? Number(proposalItem.votes) : 0,
           };
         });
+        
+
+        let subStatus = 0
+        if (proposalStatus == COMPLETED_STATUS) {
+          const passedOption = option?.find((v: any) => { return v.name === VOTE_OPTIONS[0] })
+          const rejectOption = option?.find((v: any) => {return v.name === VOTE_OPTIONS[1] })
+          if (passedOption?.count > rejectOption?.count) {
+            subStatus = PASSED_STATUS
+          } else {
+            subStatus = REJECTED_STATUS
+          }
+        }
         return {
           ...res.data,
           id: proposal.id,
           cid: proposal.cid,
           option,
           proposalStatus,
+          subStatus
         };
       });
       return results;
@@ -283,7 +306,7 @@ const Home = () => {
    * @param item
    */
   const handleJump = (item: ProposalList) => {
-    if  (item.proposalStatus === STORING_STATUS) {
+    if (item.proposalStatus === STORING_STATUS) {
       messageApi.open({
         type: 'warning',
         content: STORING_DATA_MSG,
@@ -291,7 +314,7 @@ const Home = () => {
       return;
     }
     const router = `/${[PENDING_STATUS, IN_PROGRESS_STATUS].includes(item.proposalStatus) ? "vote" : "votingResults"}/${item.id}/${item.cid}`;
-    navigate(router, {state: item});
+    navigate(router, { state: item });
   }
 
   const handleCreate = () => {
@@ -318,17 +341,16 @@ const Home = () => {
     }
     if (!list.length) {
       return (
-        <div className='empty'>
+        <div className='empty mt-20'>
           <Empty
             description={
-              <span className='text-white'>No Data</span>
+              <span className='text-black'>No Data</span>
             }
           />
         </div>
       );
     }
     return list.map((item: ProposalList, index: number) => {
-      const proposal = VOTE_LIST?.find((proposal: ProposalFilter) => proposal.value === item.proposalStatus);
       const maxOption = item.option?.reduce((prev, current) => {
         return (prev.count > current.count) ? prev : current;
       });
@@ -344,67 +366,91 @@ const Home = () => {
       return (
         <div
           key={item.cid + index}
-          className="rounded-xl border border-[#313D4F] bg-[#273141] px-[30px] py-[12px] mb-8"
+          className="rounded-xl border-[1px] border-solid border-[#DFDFDF] bg-[#FFFFFF] px-[30px] py-[12px] mb-[16px]"
         >
           <div className="flex justify-between mb-3">
-            <a
-              target='_blank'
-              rel="noopener noreferrer"
-              href={href}
+            <div
               className="flex justify-center items-center"
             >
-              <img className="w-[20px] h-[20px] rounded-full mr-2" src={img} alt="" />
-              <div className="truncate text-white">
-                {item.githubName || EllipsisMiddle({suffixCount: 4, children:  item.address})}
+              <a
+                target='_blank'
+                rel="noopener noreferrer"
+                href={href}
+              >
+                <div className="bg-[#F5F5F5] rounded-full  flex p-[5px] justify-center items-center">
+                  <img className="w-[20px] h-[20px] rounded-full mr-2" src={img} alt="" />
+                  <div className="truncate text-[#313D4F] mr-[5px]">
+                    {item.githubName || EllipsisMiddle({ suffixCount: 4, children: item.address })}
+                  </div>
+                </div>
+              </a>
+              <div className="truncate text-[#4B535B] text-sm ml-5">
+                Created {dayjs(item.currentTime * 1000).format('YYYY-MM-D')}
               </div>
-            </a>
-            <div
-              className={`h-[26px] px-[12px] text-white rounded-xl`} style={{ background: proposal?.color }}>
-              { proposal?.label }
             </div>
+            <VoteStatusBtn status={(item.subStatus > 0) ? item.subStatus : item.proposalStatus} />
+
+
           </div>
           <div className="relative mb-4 line-clamp-2 break-words break-all text-lg pr-[80px] leading-7 cursor-pointer"
-               onClick={() => {
-                 handleJump(item);
-               }}>
-            <h3 className="inline pr-2 text-2xl font-semibold text-white">
+            onClick={() => {
+              handleJump(item);
+            }}>
+            <h3 className="inline pr-2 text-2xl font-semibold text-[#313D4F]">
               {item.name}
             </h3>
           </div>
-          <div className="mb-2 line-clamp-2 break-words text-lg cursor-pointer" onClick={() => {
+          <div className="mb-2 line-clamp-2 break-words text-normal text-lg cursor-pointer" onClick={() => {
             handleJump(item)
           }}>
             {markdownToText(item.descriptions)}
           </div>
           {
             maxOption.count > 0 &&
-              <div>
-                {
-                  item.option?.map((option: ProposalOption, index: number) => {
-                    return (
-                      <div className="relative mt-1 w-full" key={option.name + index}>
-                        <div className="absolute ml-3 flex items-center leading-[43px] text-white">
-                          {
-                            option.count > 0 && option.count ===  maxOption.count &&
-                              <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-sm">
-                                  <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
-                                        strokeWidth="2" d="m5 13l4 4L19 7" />
-                              </svg>
-                          }
-                          {option.name}</div>
-                        <div className="absolute right-0 mr-3 leading-[40px] text-white">{option.count}%</div>
-                        <div className="h-[40px] rounded-md bg-[#1b2331]" style={{width: `${option.count}%`}}></div>
-                      </div>
-                    )
-                  })
-                }
-              </div>
+            <div>
+              {
+                item.option?.map((option: ProposalOption, index: number) => {
+                  const isapprove = option.name == "Approve"
+                  const passed = maxOption.name == "Approve"
+                  let bgColor = "#F7F7F7"
+                  let txColor = "#273141"
+                  let borderColor = "#F7F7F7"
+                  if (isapprove && passed) {
+                    bgColor = "#E3FFEE"
+                    txColor = "#006227"
+                    borderColor = "#87FFBE"
+                  } else if (!isapprove && !passed) {
+                    bgColor = "#FFF3F3"
+                    txColor = "#AA0101"
+                    borderColor = "#FFDBDB"
+                  }
+                  return (
+                    <div className="h-[35px] relative mt-1 w-full" key={option.name + index}>
+                      <div
+                        style={{ color: txColor }}
+                        className='absolute ml-3 flex items-center leading-[35px] font-semibold'>
+                        {
+                          option.count > 0 && option.count === maxOption.count &&
+                          <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-sm">
+                            <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
+                              strokeWidth="2" d="m5 13l4 4L19 7" />
+                          </svg>
+                        }
+                        {option.name}</div>
+                      <div className="font-semibold absolute right-0 mr-3 leading-[35px]" style={{ color: txColor }}>{option.count}%</div>
+                      {option.count > 0 && <div className="h-[35px] border-[1px] border-solid rounded-md bg-[#E3FFEE]" style={{ width: `${option.count}%`, backgroundColor: bgColor, borderColor: borderColor }} />
+                      }
+                    </div>
+                  )
+                })
+              }
+            </div>
           }
-          <div className="text-[#8B949E] text-sm mt-4">
+          <div className="text-[#4B535B] text-sm mt-4">
             <span className="mr-2">End Time:</span>
             {dayjs(item.expTime * 1000).format('MMM.D, YYYY, h:mm A')} ({timezone})
           </div>
-        </div>
+        </div >
       )
     })
   }
@@ -420,10 +466,10 @@ const Home = () => {
     // Display empty when data is empty
     if (!proposalData.length) {
       return (
-        <div className='empty'>
+        <div className='empty mt-20'>
           <Empty
             description={
-              <span className='text-white'>No Data</span>
+              <span className='text-black'>No Data</span>
             }
           />
         </div>
@@ -452,7 +498,7 @@ const Home = () => {
   return (
     <div className="home_container main">
       {contextHolder}
-      <div className="flex justify-between items-center rounded-xl border border-[#313D4F] bg-[#273141] mb-8 px-[30px]">
+      <div className="flex justify-between items-center rounded-xl border-[1px] border-solid border-[#DFDFDF] bg-[#ffffff] mb-[32px] px-[12px]">
         <div className="flex justify-between">
           <ListFilter
             name="Status"
@@ -463,12 +509,12 @@ const Home = () => {
         </div>
         {
           !!isFipEditorAddress &&
-            <button
-                className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-4 rounded-xl"
-                onClick={handleCreate}
-            >
-                Create A Proposal
-            </button>
+          <button
+            className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-4 rounded-xl"
+            onClick={handleCreate}
+          >
+            Create A Proposal
+          </button>
         }
       </div>
       {

@@ -36,10 +36,25 @@ import insert from 'markdown-it-ins';
 import mark from 'markdown-it-mark';
 // @ts-ignore
 import tasklists from 'markdown-it-task-lists';
+// @ts-ignore
+import anchor from 'markdown-it-anchor';
+// @ts-ignore
+import linkAttributes  from 'markdown-it-link-attributes'; 
+
 import 'katex/dist/katex.css';
 import 'react-markdown-editor-lite/lib/index.css';
 import './index.less';
-
+const slugify = (text: string) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim() //Trim leading and trailing whitespace
+    .replace(/\s+/g, '-')     // Replace spaces with hyphens
+    .replace(/[^\w-]+/g, '') //Remove any characters that are not word characters or hyphens
+    .replace(/--+/g, '-') // Replace multiple consecutive hyphens with a single hyphen
+    .replace(/^-+/, '') //Remove leading hyphens
+    .replace(/-+$/, ''); // Remove trailing hyphens
+};
 const mdParser = markdownIt({
   html: true,
   linkify: true,
@@ -54,6 +69,21 @@ const mdParser = markdownIt({
   .use(abbreviation)
   .use(insert)
   .use(mark)
+  .use(linkAttributes, {
+    pattern: /^https?:\/\//, 
+    attrs: {
+      target: '_blank',     
+      rel: 'noopener' 
+    }
+  })
+  .use(anchor, {
+    slugify: slugify,
+    permalink: false,
+    permalinkClass: 'anchor',
+    permalinkSymbol: '#',
+    permalinkBefore: true,
+    level: [1, 2, 3]
+  })
   .use(tasklists);
 
 interface Props {
@@ -78,22 +108,44 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
 
   const mdEditor: any = React.useRef(null);
   const handleEditorChange = () => mdEditor.current?.getMdValue();
-
+  const [currentValue, setCurrentValue] = useState(value)
   const [showMore, setShowMore] = useState(false);
   const handleClickShowMore = () => {
     setShowMore(prev => !prev);
   };
 
+  const handleInternalLinks = () => {
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = anchor.getAttribute('href')?.substring(1);
+        if (targetId) {
+          const targetElement = document.getElementById(targetId);
+          if (targetElement) {
+            window.scrollTo({
+              top: targetElement.offsetTop,
+              behavior: 'smooth',
+            });
+          }
+        }
+      });
+    });
+  }
   useEffect(() => {
+    const timeId = setTimeout(() => {
+      handleInternalLinks();
+    }, 100);
+    setCurrentValue(value)
     setShowMore(moreButton && value.length > 800)
+    return () => clearTimeout(timeId);
   }, [moreButton, value]);
   const renderMoreButton = () => {
     if (value.length > 800) {
       return (
         <>
-          <div className={`absolute bottom-0 h-[80px] w-full bg-gradient-to-t from-[#1b2331] ${showMore ? 'flex' : 'hidden'}`} />
-          <div className={`flex w-full justify-center  ${showMore ? 'absolute -bottom-5' : ''}`}>
-            <button className="border-[#313D4F] hover:border-[#8896AA] border-[1px] border-solid text-white mt-4 self-center rounded-xl py-2 px-4" onClick={handleClickShowMore}>
+          <div className={`absolute bottom-0 h-[200px] w-full bg-gradient-to-t from-[#F6F6F6] ${showMore ? 'flex' : 'hidden'}`} />
+          <div className={`flex w-full justify-center  ${showMore ? 'absolute -bottom-[50px]' : ''}`}>
+            <button className="focus:outline-none border-[#DFDFDF] hover:border-[#DFDFDF] border-[1px] border-solid text-[#575757] mt-4 self-center rounded-xl py-2 px-4 font-semibold" onClick={handleClickShowMore}>
               {showMore ? "Show More" : "Show Less"}
             </button>
           </div>
@@ -101,12 +153,11 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
       );
     }
   };
-
   return (
     readOnly ?
       <div className='relative'>
         <MdEditor
-          className={`rcmd scrollD  ${className} ${moreButton && showMore ? 'mb-10' : ''}`}
+          className={`rcmd scrollD  ${className} ${moreButton && showMore ? 'mb-20' : ''}`}
           value={value}
           readOnly={readOnly}
           style={{ ...style, maxHeight: moreButton && showMore ? '70vh' : 'fit-content' }}
@@ -126,9 +177,13 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
       <MdEditor
         className={`MDEditor rcmd scrollD ${className}`}
         ref={mdEditor}
+        value={currentValue}
         style={style}
         renderHTML={text => mdParser.render(text)}
-        onChange={() => { onChange(handleEditorChange()) }}
+        onChange={(v) => {
+          setCurrentValue(v.text)
+          onChange(handleEditorChange())
+        }}
       />
   )
 }

@@ -12,40 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, {useState, useEffect, useRef} from "react";
-import {useLocation, useNavigate, Link} from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useLocation, useNavigate, Link } from "react-router-dom";
+import { RadioGroup } from '@headlessui/react';
 import { message } from 'antd';
 import Table from '../../../components/Table';
-import {useForm, Controller} from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import classNames from 'classnames';
-import {RadioGroup} from '@headlessui/react';
-import type { BaseError} from "wagmi";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSignMessage} from "wagmi";
-import {useConnectModal} from "@rainbow-me/rainbowkit";
+import type { BaseError } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSignMessage } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
   UCAN_GITHUB_STEP_1,
   UCAN_GITHUB_STEP_2,
-  UCAN_TYPE_GITHUB_OPTIONS,
   UCAN_JWT_HEADER,
-  UCAN_TYPE_FILECOIN_OPTIONS,
   STORING_DATA_MSG, OPERATION_CANCELED_MSG,
+  UCAN_TYPE_FILECOIN_OPTIONS,
+  UCAN_TYPE_GITHUB_OPTIONS,
+  UPLOAD_DATA_FAIL_MSG,
 } from '../../../common/consts';
 import './index.less';
-import {stringToBase64Url, validateValue, getWeb3IpfsId, getContractAddress} from "../../../utils";
+import { stringToBase64Url, validateValue, getWeb3IpfsId, getContractAddress } from "../../../utils";
 import LoadingButton from "../../../components/LoadingButton";
 import fileCoinAbi from "../../../common/abi/power-voting.json";
 
 const UcanDelegate = () => {
-  const {chain, isConnected, address} = useAccount();
+  const { chain, isConnected, address } = useAccount();
   const { signMessageAsync } = useSignMessage();
-  const {openConnectModal} = useConnectModal();
+  const { openConnectModal } = useConnectModal();
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
   const [messageApi, contextHolder] = message.useMessage();
 
   const location = useLocation();
   const params = location.state?.params;
-
+  
   const [githubSignature, setGithubSignature] = useState('');
   const [githubStep, setGithubStep] = useState(UCAN_GITHUB_STEP_1);
   const [formValue] = useState({
@@ -61,7 +62,7 @@ const UcanDelegate = () => {
     register,
     handleSubmit,
     control,
-    formState: {errors}
+    formState: { errors }
   } = useForm({
     defaultValues: {
       ...formValue,
@@ -104,7 +105,7 @@ const UcanDelegate = () => {
         content: STORING_DATA_MSG,
       });
       setTimeout(() => {
-        navigate("/");
+        navigate("/home");
       }, 3000);
     }
   }, [writeContractSuccess])
@@ -120,6 +121,7 @@ const UcanDelegate = () => {
   }, [error]);
 
   const onSubmit = (values: any, githubStep?: number) => {
+
     if (params?.isGithubType) {
       switch (githubStep) {
         case UCAN_GITHUB_STEP_1:
@@ -136,6 +138,15 @@ const UcanDelegate = () => {
 
   const setUcan = async (ucan: string) => {
     const cid = await getWeb3IpfsId(ucan);
+    if(!cid?.length){
+      setLoading(false);
+      messageApi.open({
+        type: 'warning',
+        content: UPLOAD_DATA_FAIL_MSG,
+      });
+      return;
+    }
+
     writeContract({
       abi: fileCoinAbi,
       address: getContractAddress(chain?.id || 0, 'powerVoting'),
@@ -151,7 +162,7 @@ const UcanDelegate = () => {
    * deAuthorize FileCoin UCAN
    * @param values
    */
-  const deAuthorizeFilecoinUcan = async (values:  any) => {
+  const deAuthorizeFilecoinUcan = async (values: any) => {
     setLoading(true);
     const { aud } = params;
     const { prf } = values;
@@ -175,7 +186,7 @@ const UcanDelegate = () => {
     let signature = '';
     try {
       // Sign the message using the signer
-      signature = await signMessageAsync({ message:  `${base64Header}.${base64Params}`})
+      signature = await signMessageAsync({ message: `${base64Header}.${base64Params}` })
     } catch (e) {
       messageApi.open({
         type: 'error',
@@ -203,7 +214,7 @@ const UcanDelegate = () => {
         const signatureParams = {
           iss: address,
           aud,
-          prf:'',
+          prf: '',
           act: 'del',
         }
 
@@ -213,7 +224,7 @@ const UcanDelegate = () => {
         let signature = '';
         try {
           // Sign the concatenated header and params
-          signature = await signMessageAsync({ message:  `${base64Header}.${base64Params}`})
+          signature = await signMessageAsync({ message: `${base64Header}.${base64Params}` })
         } catch (e) {
           messageApi.open({
             type: 'error',
@@ -252,7 +263,7 @@ const UcanDelegate = () => {
       width: 100,
       hide: false,
       comp: (
-        <RadioGroup className='flex'>
+        <RadioGroup className='flex h-[30px] mt-[-5px]'>
           {UCAN_TYPE_FILECOIN_OPTIONS.map(item => (
             <RadioGroup.Option
               key={item.label}
@@ -261,20 +272,20 @@ const UcanDelegate = () => {
             >
               {() => (
                 <>
-                        <span
-                          className='bg-[#45B753] border-transparent mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
-                          aria-hidden='true'
-                        >
-                           <span className='rounded-full bg-white w-1.5 h-1.5'/>
-                        </span>
+                  <span
+                    className='bg-[#45B753] border-transparent mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
+                    aria-hidden='true'
+                  >
+                    <span className='rounded-full bg-white w-1.5 h-1.5' />
+                  </span>
                   <span className='ml-3'>
-                          <RadioGroup.Label
-                            as='span'
-                            className='text-white'
-                          >
-                            {item.label}
-                          </RadioGroup.Label>
-                        </span>
+                    <RadioGroup.Label
+                      as='span'
+                      className='text-[#4B535B]'
+                    >
+                      {item.label}
+                    </RadioGroup.Label>
+                  </span>
                 </>
               )}
             </RadioGroup.Option>
@@ -289,7 +300,7 @@ const UcanDelegate = () => {
         <input
           disabled
           value={address}
-          className='form-input w-[520px] rounded bg-[#212B3C] border border-[#313D4F] cursor-not-allowed'
+          className='form-input w-[520px] rounded bg-[#ffffff] border border-[#eeeeee] text-[#4B535B] cursor-not-allowed'
         />
       )
     },
@@ -299,7 +310,7 @@ const UcanDelegate = () => {
       comp: (
         <input
           disabled
-          className='form-input w-[520px] rounded bg-[#212B3C] border border-[#313D4F] cursor-not-allowed'
+          className='form-input w-[520px] rounded bg-[#ffffff] border border-[#eeeeee] text-[#4B535B] cursor-not-allowed'
           value={params?.aud || ''}
         />
       )
@@ -315,10 +326,10 @@ const UcanDelegate = () => {
             render={() => <textarea
               placeholder='The full UCAN content (include header, payload and signature) signed by your Filecoin private key.'
               className={classNames(
-                'form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F]',
+                'form-input h-[320px] w-full rounded bg-[#ffffff] border border-[#eeeeee] text-[#4B535B]',
                 errors.prf && 'border-red-500 focus:border-red-500'
               )}
-              {...register('prf', {required: true, validate: validateValue})}
+              {...register('prf', { required: true, validate: validateValue })}
             />}
           />
           {errors.prf && (
@@ -335,7 +346,7 @@ const UcanDelegate = () => {
       width: 100,
       hide: false,
       comp: (
-        <RadioGroup>
+        <RadioGroup className="flex h-[30px] mt-[-5px">
           {UCAN_TYPE_GITHUB_OPTIONS.map(item => (
             <RadioGroup.Option
               key={item.label}
@@ -344,20 +355,20 @@ const UcanDelegate = () => {
             >
               {() => (
                 <>
-                        <span
-                          className='bg-[#45B753] border-transparent mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
-                          aria-hidden='true'
-                        >
-                           <span className='rounded-full bg-white w-1.5 h-1.5'/>
-                        </span>
+                  <span
+                    className='bg-[#45B753] border-transparent mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-full border flex items-center justify-center'
+                    aria-hidden='true'
+                  >
+                    <span className='rounded-full bg-white w-1.5 h-1.5' />
+                  </span>
                   <span className='ml-3'>
-                          <RadioGroup.Label
-                            as='span'
-                            className='text-white'
-                          >
-                            {item.label}
-                          </RadioGroup.Label>
-                        </span>
+                    <RadioGroup.Label
+                      as='span'
+                      className='text-[#4B535B]'
+                    >
+                      {item.label}
+                    </RadioGroup.Label>
+                  </span>
                 </>
               )}
             </RadioGroup.Option>
@@ -372,7 +383,7 @@ const UcanDelegate = () => {
         <input
           disabled
           value={address}
-          className='form-input w-[520px] rounded bg-[#212B3C] border border-[#313D4F] cursor-not-allowed'
+          className='form-input w-[520px] text-black  rounded bg-[#ffffff] border border-[#eeeeee] cursor-not-allowed'
         />
       )
     },
@@ -382,7 +393,7 @@ const UcanDelegate = () => {
       comp: (
         <input
           disabled
-          className='form-input w-[520px] rounded bg-[#212B3C] border border-[#313D4F] cursor-not-allowed'
+          className='form-input w-[520px] rounded bg-[#ffffff] border border-[#eeeeee] text-[#4B535B] cursor-not-allowed'
           value={params?.aud || ''}
         />
       )
@@ -397,7 +408,7 @@ const UcanDelegate = () => {
         <textarea
           disabled
           value={githubSignature}
-          className='form-input h-[320px] w-full rounded bg-[#212B3C] border border-[#313D4F] cursor-not-allowed'
+          className='form-input h-[320px] w-full rounded text-black bg-[#ffffff] border border-[#eeeeee] cursor-not-allowed'
         />
       )
     },
@@ -411,10 +422,10 @@ const UcanDelegate = () => {
             control={control}
             render={() => <input
               className={classNames(
-                'form-input w-full rounded bg-[#212B3C] border border-[#313D4F]',
+                'form-input w-full rounded bg-[#ffffff] border border-[#eeeeee] text-black',
                 errors.url && 'border-red-500 focus:border-red-500'
               )}
-              {...register('url', {required: true, validate: validateValue})}
+              {...register('url', { required: true, validate: validateValue })}
             />}
           />
           {errors.url && (
@@ -440,7 +451,7 @@ const UcanDelegate = () => {
           />
 
           <div className='text-center'>
-            <LoadingButton className='!bg-red-500 !hover:bg-red-700' text='Deauthorize' loading={loading|| writeContractPending || transactionLoading} />
+            <LoadingButton className='!bg-red-500 !hover:bg-red-700' text='Deauthorize' loading={loading || writeContractPending || transactionLoading} />
           </div>
         </div>
       </form>
@@ -462,7 +473,7 @@ const UcanDelegate = () => {
           />
 
           <div className='text-center'>
-            <LoadingButton text='Sign' loading={loading|| writeContractPending || transactionLoading} />
+            <LoadingButton text='Sign' loading={loading || writeContractPending || transactionLoading} />
           </div>
         </div>
       </form>
@@ -473,7 +484,7 @@ const UcanDelegate = () => {
     return (
       <form onSubmit={handleSubmit(value => { onSubmit(value, UCAN_GITHUB_STEP_2) })}>
         <div className='flow-root space-y-8'>
-          <Table title='UCAN Delegates (Deauthorize)' list={githubAuthorizeList}/>
+          <Table title='UCAN Delegates (Deauthorize)' list={githubAuthorizeList} />
 
           <div className='text-center'>
             <button
@@ -481,7 +492,7 @@ const UcanDelegate = () => {
               type='button' onClick={() => { setGithubStep(UCAN_GITHUB_STEP_1) }}>
               Previous
             </button>
-            <LoadingButton className='!bg-red-500 !hover:bg-red-700' text='Deauthorize' loading={loading|| writeContractPending || transactionLoading} />
+            <LoadingButton className='!bg-red-500 !hover:bg-red-700' text='Deauthorize' loading={loading || writeContractPending || transactionLoading} />
           </div>
         </div>
       </form>
@@ -489,6 +500,7 @@ const UcanDelegate = () => {
   }
 
   const renderForm = () => {
+
     if (params?.isGithubType) {
       switch (githubStep) {
         case UCAN_GITHUB_STEP_1:
@@ -507,11 +519,11 @@ const UcanDelegate = () => {
       {contextHolder}
       <div className="px-3 mb-6 md:px-0">
         <button>
-          <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">
-            <Link to="/" className="flex items-center">
+          <div className="inline-flex items-center gap-1 mb-8  text-skin-text hover:text-skin-link">
+            <Link to="/home" className="flex items-center">
               <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
                 <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                      d="m11 17l-5-5m0 0l5-5m-5 5h12" />
+                  d="m11 17l-5-5m0 0l5-5m-5 5h12" />
               </svg>
               Back
             </Link>

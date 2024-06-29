@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, {useState, useEffect, useRef} from "react";
-import {Link, useNavigate} from "react-router-dom";
-import { message, Popover, Table, Tooltip, Popconfirm, Button, Row, Pagination } from 'antd';
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { message, Popover, Table, Tooltip, Popconfirm, Button, Row, Pagination } from "antd";
 import { InfoCircleOutlined } from '@ant-design/icons';
 import axios from "axios";
-import {useAccount, useWriteContract, useWaitForTransactionReceipt} from "wagmi";
-import type { BaseError} from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import type { BaseError } from "wagmi";
+import "./index.less";
 import {
   HAVE_APPROVED_MSG,
   STORING_DATA_MSG,
@@ -26,12 +27,11 @@ import {
 } from "../../../common/consts";
 import Loading from "../../../components/Loading";
 import EllipsisMiddle from "../../../components/EllipsisMiddle";
-import {useFipEditors, useApproveProposalId, useFipEditorProposalDataSet, useCheckFipEditorAddress} from "../../../common/hooks";
+import { useFipEditors, useApproveProposalId, useFipEditorProposalDataSet, useCheckFipEditorAddress } from "../../../common/hooks";
 import fileCoinAbi from "../../../common/abi/power-voting.json";
-import {getContractAddress} from "../../../utils";
-
+import { getContractAddress } from "../../../utils";
 const FipEditorApprove = () => {
-  const {isConnected, address, chain} = useAccount();
+  const { isConnected, address, chain } = useAccount();
   const chainId = chain?.id || 0;
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
@@ -81,7 +81,7 @@ const FipEditorApprove = () => {
           <div className="w-[180px] flex items-center">
             <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${value}`} alt="" />
             <a
-              className="text-white hover:text-white"
+              className="text-black hover:text-black"
               target="_blank"
               rel="noopener"
               href={`${chain?.blockExplorers?.default.url}/address/${value}`}
@@ -111,7 +111,7 @@ const FipEditorApprove = () => {
           <div className="w-[180px] flex items-center">
             <img className="w-[20px] h-[20px] rounded-full mr-2" src={`${web3AvatarUrl}:${value}`} alt="" />
             <a
-              className="text-white hover:text-white"
+              className="text-black hover:text-black"
               target="_blank"
               rel="noopener"
               href={`${chain?.blockExplorers?.default.url}/address/${value}`}
@@ -123,13 +123,13 @@ const FipEditorApprove = () => {
       }
     },
     {
-      title: 'Info',
+      title: <div><div>Info</div></div>,
       dataIndex: 'info',
       key: 'info',
       ellipsis: { showTitle: false },
       render: (value: string) => {
         return (
-          value ? <Tooltip placement="topLeft" title={value}>
+          value ? <Tooltip overlayClassName="custom-tooltip" color="#ffffff" placement="topLeft" title={value}>
             {value}
           </Tooltip> : '-'
         )
@@ -218,7 +218,7 @@ const FipEditorApprove = () => {
     if (isConnected && !loading && !getApproveProposalLoading && !getFipEditorProposalIdLoading) {
       initState();
     }
-  }, [chain,  page, address]);
+  }, [chain, page, address]);
 
   useEffect(() => {
     if (writeContractSuccess) {
@@ -227,7 +227,7 @@ const FipEditorApprove = () => {
         content: STORING_DATA_MSG,
       });
       setTimeout(() => {
-        navigate("/")
+        navigate("/home")
       }, 1000);
     }
   }, [writeContractSuccess]);
@@ -236,19 +236,29 @@ const FipEditorApprove = () => {
     setLoading(true);
     const list: any = [];
     await Promise.all(fipEditorProposalData.map(async (item: any) => {
-      const { result } = item;
-      const url = `https://${result.voterInfoCid}.ipfs.w3s.link/`;
-      const { data } = await axios.get(url);
-      list.push({
-        proposalId: result.proposalId,
-        address: result.fipEditorAddress,
-        info: data,
-        voters: result.voters,
-        ratio: `${result.voters?.length} / ${fipEditors?.length}`,
-        voteList: fipEditors?.map((address: string) => {
-          return { address, status: result.voters?.includes(address) ? 'Approved' : '' }
-        }).sort((a) => (a.status ? -1 : 1))
-      });
+      try {
+        const { result } = item;
+        const obj = {
+          proposalId: result[0],
+          fipEditorAddress: result[1],
+          voterInfoCid: result[2],
+          voters: result[3],
+        }
+        const url = `https://${obj.voterInfoCid}.ipfs.w3s.link/`;
+        const { data } = await axios.get(url);
+        list.push({
+          proposalId: obj.proposalId,
+          address: obj.fipEditorAddress,
+          info: data,
+          voters: obj.voters,
+          ratio: `${obj.voters?.length} / ${fipEditors?.length}`,
+          voteList: fipEditors?.map((address: string) => {
+            return { address, status: obj.voters?.includes(address) ? 'Approved' : '' }
+          }).sort((a) => (a.status ? -1 : 1))
+        });
+      } catch (e) {
+        console.log(e)
+      }
     }));
     setFipProposalList(list);
     setLoading(false);
@@ -282,19 +292,19 @@ const FipEditorApprove = () => {
     loading ? <Loading /> : <div className="px-3 mb-6 md:px-0">
       {contextHolder}
       <button>
-        <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">
-          <Link to="/" className="flex items-center">
+        <div className="inline-flex items-center mb-8 gap-1 text-skin-text hover:text-skin-link">
+          <Link to="/home" className="flex items-center">
             <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
               <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                    d="m11 17l-5-5m0 0l5-5m-5 5h12" />
+                d="m11 17l-5-5m0 0l5-5m-5 5h12" />
             </svg>
             Back
           </Link>
         </div>
       </button>
-      <div className='min-w-full bg-[#273141] rounded text-left'>
+      <div className='min-w-full bg-[#ffffff] text-left rounded-xl border-[1px] border-solid border-[#DFDFDF] overflow-hidden'>
         <div className='flow-root space-y-4'>
-          <div className='font-normal text-white px-8 py-7 text-2xl border-b border-[#313D4F] flex items-center'>
+          <div className='font-normal text-black px-8 py-7 text-2xl border-b border-[#eeeeee] flex items-center'>
             <span>FIP Editor Approve</span>
           </div>
           <div className='px-8 pb-4 !mt-0'>
@@ -307,15 +317,15 @@ const FipEditorApprove = () => {
             />
             {
               !!approveProposalId?.length && <Row justify='end'>
-                    <Pagination
-                        simple
-                        showSizeChanger={false}
-                        current={page}
-                        pageSize={pageSize}
-                        total={approveProposalId.length}
-                        onChange={handlePageChange}
-                    />
-                </Row>
+                <Pagination
+                  simple
+                  showSizeChanger={false}
+                  current={page}
+                  pageSize={pageSize}
+                  total={approveProposalId.length}
+                  onChange={handlePageChange}
+                />
+              </Row>
             }
           </div>
         </div>

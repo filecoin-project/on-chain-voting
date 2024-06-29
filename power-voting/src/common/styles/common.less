@@ -1,5 +1,4 @@
 .empty {
-	min-height: 400px;
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -12,22 +11,24 @@
 }
 
 ::-webkit-scrollbar-thumb {
-	background-color: #5d5c5c;
+	background-color: #eeeeee;
 	border-radius: 5px;
 }
 
 
 ::-webkit-scrollbar-track {
-	background-color: #454343;
+	background-color: #F9F9F9;
 }
 
 .layout {
 	position: relative;
-	color: #7F8FA3;
+	background-color: #F9F9F9;
+	color: #303D4F;
+	min-height: calc(100vh);
 	header {
 		padding: 0 2rem;
 		.logo {
-			height: 64px;
+			height: 40px;
 		}
 		.lang {
 			display: flex;
@@ -49,10 +50,10 @@
 		}
 	}
 	.content {
-		min-height: calc(100vh - 235px);
+		min-height: calc(100vh - 360px);
 		.voting, .voting-result, .voteList {
 			.border, .border-skin-border, .border-md, .border-lg, .border-b, .border-t, .border-r, .border-l {
-				border-color: #313D4F;
+				border-color: #DFDFDF;
 				border-style: solid;
 			}
 		}

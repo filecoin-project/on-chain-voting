@@ -15,7 +15,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import {
-  darkTheme,
+  lightTheme,
   RainbowKitProvider,
   getDefaultConfig,
 } from "@rainbow-me/rainbowkit";
@@ -31,7 +31,7 @@ import App from "./App";
 const queryClient = new QueryClient();
 
 const filecoinCalibrationChain = {
-  id: 314_159,
+  id: 314159,
   name: 'Filecoin Calibration',
   nativeCurrency: {
     decimals: 18,
@@ -39,12 +39,12 @@ const filecoinCalibrationChain = {
     symbol: 'tFIL',
   },
   rpcUrls: {
-    default: { http: ['/rpc/v1'] },
+    default: { http: ['https://api.calibration.node.glif.io/rpc/v1'] },
   },
   blockExplorers: {
     default: {
-      name: 'Filscan',
-      url: 'https://calibration.filscan.io',
+      name: 'filfox',
+      url: 'https://calibration.filfox.info/en',
     },
   },
   testnet: true,
@@ -66,13 +66,25 @@ const config = getDefaultConfig({
   ],
 })
 
+//dynamic add font
+const style = document.createElement('style');
+style.type = 'text/css';
+style.innerHTML = `
+  @font-face {
+    font-family: 'SuisseIntl';
+    src: url('/fonts/SuisseIntl-Regular.ttf') format('truetype');
+  }
+`;
+
+document.head.appendChild(style);
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <BrowserRouter>
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
           locale="en-US"
-          theme={darkTheme({
+          theme={lightTheme({
             accentColor: "#7b3fe4",
             accentColorForeground: "white",
           })}
