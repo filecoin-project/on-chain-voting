@@ -131,7 +131,6 @@ const Home = () => {
       setTimeout(() => {
         setShouldRefetch(true);
         refetch().then(() => {
-          console.log(latestId);
           // Reset shouldRefetch after refetching
           setShouldRefetch(false);
         });
