@@ -131,6 +131,7 @@ const Home = () => {
       setTimeout(() => {
         setShouldRefetch(true);
         refetch().then(() => {
+          console.log(latestId);
           // Reset shouldRefetch after refetching
           setShouldRefetch(false);
         });
@@ -365,7 +366,7 @@ const Home = () => {
       return (
         <div
           key={item.cid + index}
-          className="rounded-xl border-[1px] border-solid border-[#DFDFDF] bg-[#FFFFFF] px-[30px] py-[12px] mb-8"
+          className="rounded-xl border-[1px] border-solid border-[#DFDFDF] bg-[#FFFFFF] px-[30px] py-[12px] mb-[16px]"
         >
           <div className="flex justify-between mb-3">
             <div
@@ -497,7 +498,7 @@ const Home = () => {
   return (
     <div className="home_container main">
       {contextHolder}
-      <div className="flex justify-between items-center rounded-xl border-[1px] border-solid border-[#DFDFDF] bg-[#ffffff] mb-8 px-[12px]">
+      <div className="flex justify-between items-center rounded-xl border-[1px] border-solid border-[#DFDFDF] bg-[#ffffff] mb-[32px] px-[12px]">
         <div className="flex justify-between">
           <ListFilter
             name="Status"
@@ -509,7 +510,7 @@ const Home = () => {
         {
           !!isFipEditorAddress &&
           <button
-            className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-4 rounded-full"
+            className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-4 rounded-xl"
             onClick={handleCreate}
           >
             Create A Proposal

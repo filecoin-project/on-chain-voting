@@ -135,7 +135,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
     return <div>{totalPercent}</div>;
   }
   return (
-    <div className="border-y border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border my-12">
+    <div className="border-y border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border mt-[20px] mb-[20px]">
       <div className="group flex h-[57px] justify-between rounded-t-none border-b border-skin-border px-6 pb-[12px] pt-3 md:rounded-t-lg">
         <h4 className="flex items-center">
           <div className="font-medium">Votes</div>

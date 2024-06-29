@@ -238,7 +238,7 @@ const App: React.FC = () => {
   return (
     <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
       <div className="layout font-body">
-        {!isLanding && <header className='h-[96px] bg-[#ffffff]'>
+        {!isLanding && <header className='h-[96px] bg-[#ffffff] border-b border-solid border-[#DFDFDF]'>
           <div className='w-[1000px] h-[88px] mx-auto flex items-center justify-between'>
             <div className='flex items-center'>
               <div className='flex-shrink-0'>

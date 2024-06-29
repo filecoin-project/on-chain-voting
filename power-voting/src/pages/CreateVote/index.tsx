@@ -19,7 +19,7 @@ import dayjs from "dayjs";
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { useNavigate, Link } from "react-router-dom";
-import Table from '../../components/Table';
+import Table from '../../components/CreateTable';
 import { useForm, Controller } from 'react-hook-form';
 import classNames from 'classnames';
 import type { BaseError } from "wagmi";
@@ -313,7 +313,7 @@ const CreateVote = () => {
       return
     }
 
-    if(values.descriptions.length>=2000){
+    if(values.descriptions.length>=2048){
       messageApi.open({
         type: "warning",
         content: SAVE_DRAFT_TOO_LARGE,
@@ -401,7 +401,7 @@ const CreateVote = () => {
 
             render={() => <input
               className={classNames(
-                'form-input w-full rounded !bg-[#ffffff] border-1 border-[#EEEEEE] text-black',
+                'form-input w-full rounded !bg-[#ffffff] border-1 border-[#EEEEEE] text-[#4B535B]',
                 errors.name && 'border-red-500 focus:border-red-500'
               )}
               placeholder='Proposal Title'
@@ -419,9 +419,9 @@ const CreateVote = () => {
       name: 'Description',
       width: 280,
       desc: <div className="text-red">
-        <span className="text-sm" style={{fontFamily:"SuisseIntl"}}>
+        <span className="text-sm">
           Describe FIP objectives, implementation details, risks, and include GitHub links for transparency. See a template <a target="_blank"
-            rel="noopener" href="" className="text-sm" style={{ color: "blue" }}>here↗</a>.
+            rel="noopener" href="" className="text-sm" style={{ color: "#005292" }}>here↗</a>.
           <br /> You can use Markdown formatting in the text input field.
         </span>
 
@@ -469,10 +469,9 @@ const CreateVote = () => {
                       value={[date[0], date[1]]}
                       onChange={onChange}
                       className={classNames(
-                        'form-input rounded w-[450px] !bg-[#ffffff] border border-[#eeeeee] text-black',
+                        'form-input rounded w-[450px] !bg-[#ffffff] border border-[#eeeeee]',
                         errors.time && 'border-red-500 focus:border-red-500'
                       )}
-                      style={{ color: 'red' }}
                     />
                     {errors.time && (
                       <p className='text-red-500 mt-2'>Proposal Time is required</p>
@@ -503,7 +502,7 @@ const CreateVote = () => {
                       onChange={onChange}
                       value={value}
                       className={classNames(
-                        'form-select rounded bg-[#ffffff] border border-[#eeeeee] text-black',
+                        'form-select w-[450px] rounded bg-[#ffffff] border border-[#eeeeee] text-[#4B535B]',
                         errors.timezone && 'border-red-500 focus:border-red-500'
                       )}
                     >
@@ -541,9 +540,9 @@ const CreateVote = () => {
       </div>
       <form onSubmit={handleSubmit(onSubmit)} >
         <div className='flow-root space-y-8'>
-          <Table title='Create A Proposal' subTitle={<div className="text-base font-normal">
+          <Table title='Create Proposal' subTitle={<div className="text-base font-normal">
             Proposals should be clear, concise, and focused on specific improvements or changes. FIPs must adhere to the Filecoin community's <a target="_blank"
-              rel="noopener" href="" style={{ color: "blue" }}>code of conduct and best practices↗</a>.
+              rel="noopener" href="" style={{ color: "#005292" }}>code of conduct and best practices↗</a>.
           </div>} list={list} />
 
           <div className="flex justify-center items-center text-center ">
@@ -552,7 +551,7 @@ const CreateVote = () => {
             </Link>
             <div className='w-full items-center flex justify-end text-center'>
               <Link to={""}>
-                <div className="text-[#313D4F] mr-4 cursor-pointer" onClick={saveDraft} >
+                <div className="text-[#313D4F] mr-[32px] font-semibold cursor-pointer" onClick={saveDraft} >
                   Save Draft
                 </div>
               </Link>

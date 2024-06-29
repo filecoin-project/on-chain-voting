@@ -225,7 +225,7 @@ const MinerId = () => {
     getMinerIdsLoading ? <Loading /> : <div className="px-3 mb-6 md:px-0">
       {contextHolder}
       <button>
-        <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">
+        <div className="inline-flex items-center mb-8 gap-1 text-skin-text hover:text-skin-link">
           <Link to="/home" className="flex items-center">
             <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
               <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"

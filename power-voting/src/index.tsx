@@ -66,6 +66,18 @@ const config = getDefaultConfig({
   ],
 })
 
+//dynamic add font
+const style = document.createElement('style');
+style.type = 'text/css';
+style.innerHTML = `
+  @font-face {
+    font-family: 'SuisseIntl';
+    src: url('/fonts/SuisseIntl-Regular.ttf') format('truetype');
+  }
+`;
+
+document.head.appendChild(style);
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <BrowserRouter>
     <WagmiProvider config={config}>

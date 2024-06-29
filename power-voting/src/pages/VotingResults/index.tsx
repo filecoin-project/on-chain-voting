@@ -192,7 +192,7 @@ const VotingResults = () => {
                 <VoteStatusBtn status={(votingData?.subStatus > 0) ? votingData?.subStatus : votingData?.voteStatus} />
                 <div className="flex items-center justify-center ml-[12px]">
                   <div className='text-[#4B535B] text-[14px]'>Created by</div>
-                  <div className='ml-[8px] flex items-center justify-center bg-[#F5F5F5] rounded-full h-[32px]'>
+                  <div className='p-[5px] ml-[8px] flex items-center justify-center bg-[#F5F5F5] rounded-full'>
                     <img className="w-[20px] h-[20px] rounded-full mr-[4px]" src={img} alt="" />
                     <a
                       className="text-[#313D4F]"
