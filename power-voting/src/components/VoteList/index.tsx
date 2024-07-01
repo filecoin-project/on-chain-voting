@@ -104,7 +104,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
    */
   const renderFooter = (data: any[], votes: number) => {
     // Initialize the string for total percent calculation
-    let totalPercent = "Total Percent = ";
+    let totalPercent = `${t('content.totalPercent')} = `;
     // Initialize count for non-zero total values
     let count = 0;
     // Initialize an array to store non-zero percent values
