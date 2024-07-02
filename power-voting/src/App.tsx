@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRoutes, useNavigate, Link, useLocation } from "react-router-dom";
 import axios from "axios";
 import {
   ConnectButton,
   useConnectModal
 } from "@rainbow-me/rainbowkit";
-import { ConfigProvider, theme, Modal, Dropdown, FloatButton } from 'antd';
+import { ConfigProvider, theme, Modal, Dropdown, FloatButton, Input } from 'antd';
 import { useAccount } from "wagmi";
 import Countdown from 'react-countdown';
 import timezones from '../public/json/timezons.json';
@@ -30,7 +30,7 @@ import "tailwindcss/tailwind.css";
 import { STORING_DATA_MSG } from "./common/consts";
 import { useVoterInfo, useCurrentTimezone } from "./common/store";
 import { useCheckFipEditorAddress, useVoterInfoSet } from "./common/hooks";
-
+import { SearchOutlined } from '@ant-design/icons';
 const App: React.FC = () => {
   // Destructure values from custom hooks
   const { chain, address, isConnected } = useAccount();
@@ -46,7 +46,8 @@ const App: React.FC = () => {
   // State variables
   const [expirationTime, setExpirationTime] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
-
+  const [isFocus, setIsFocus] = useState<boolean>(false); // Determine whether the mouse has clicked on the search box
+  const [searchValue, setSearchValue] = useState<string>(); // Stores the value of the search box
   // Get the user's timezone
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const text = timezones.find((item: any) => item.value === timezone)?.text;
@@ -150,7 +151,8 @@ const App: React.FC = () => {
         const decodeString = atob(data.split('.')[1]);
         const payload = JSON.parse(decodeString);
         const { aud, prf } = payload;
-        navigate('/ucanDelegate/delete', { state: {
+        navigate('/ucanDelegate/delete', {
+          state: {
             params: {
               isGithubType,
               aud,
@@ -234,12 +236,14 @@ const App: React.FC = () => {
       ],
     })
   }
-
+  const onSearch = useCallback(() => {
+    console.log(searchValue);
+  }, [searchValue])
   return (
     <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
       <div className="layout font-body">
         {!isLanding && <header className='h-[96px] bg-[#ffffff] border-b border-solid border-[#DFDFDF]'>
-          <div className='w-[1000px] h-[88px] mx-auto flex items-center justify-between'>
+          <div className='w-full h-[88px] px-60 flex items-center justify-between'>
             <div className='flex items-center'>
               <div className='flex-shrink-0'>
                 <Link to='/'>
@@ -253,6 +257,18 @@ const App: React.FC = () => {
                 >
                   Power Voting
                 </Link>
+              </div>
+              <div className="ml-6">
+                <Input
+                  placeholder="Search Proposals"
+                  size="large"
+                  prefix={<SearchOutlined onClick={() => onSearch()} className={`${isFocus ? "text-[#1677ff]" : "text-[#8b949e]"} text-xl hover:text-[#1677ff]`} />}
+                  onClick={() => setIsFocus(true)}
+                  onBlur={() => setIsFocus(false)}
+                  onChange={(e) => setSearchValue(e.currentTarget.value)}
+                  onPressEnter={() => onSearch()}
+                  className={`${isFocus ? 'w-[270px]' : "w-[180px]"} font-medium text-base item-center text-slate-800 bg-[#f7f7f7] rounded-lg`}
+                />
               </div>
             </div>
             <div className='flex items-center'>
