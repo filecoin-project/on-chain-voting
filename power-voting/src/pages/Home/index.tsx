@@ -133,8 +133,10 @@ const Home = () => {
         refetch().then(() => {
           // Reset shouldRefetch after refetching
           setShouldRefetch(false);
+        }).finally(()=>{
+          getProposalList(page);
         });
-        getProposalList(page);
+       
       }, 3000);
     }
   }, [isFetched]);
