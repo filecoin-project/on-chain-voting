@@ -12,25 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, { useState, useEffect, useRef } from "react";
-import { useRoutes, useNavigate, Link, useLocation } from "react-router-dom";
-import axios from "axios";
 import {
   ConnectButton,
   useConnectModal
 } from "@rainbow-me/rainbowkit";
-import { ConfigProvider, theme, Modal, Dropdown, FloatButton } from 'antd';
-import { useAccount } from "wagmi";
+import { ConfigProvider, Dropdown, FloatButton, Modal, theme } from 'antd';
+import enUS from 'antd/locale/en_US';
+import zhCN from 'antd/locale/zh_CN';
+import axios from "axios";
+import dayjs from 'dayjs';
+import 'dayjs/locale/zh-cn';
+import React, { useEffect, useRef, useState } from "react";
 import Countdown from 'react-countdown';
-import timezones from '../public/json/timezons.json';
-import routes from "./router";
-import Footer from './components/Footer';
-import "./common/styles/reset.less";
+import { useTranslation } from 'react-i18next';
+import { Link, useLocation, useNavigate, useRoutes } from "react-router-dom";
 import "tailwindcss/tailwind.css";
+import { useAccount } from "wagmi";
+import timezones from '../public/json/timezons.json';
 import { STORING_DATA_MSG } from "./common/consts";
-import { useVoterInfo, useCurrentTimezone } from "./common/store";
 import { useCheckFipEditorAddress, useVoterInfoSet } from "./common/hooks";
-
+import { useCurrentTimezone, useVoterInfo } from "./common/store";
+import "./common/styles/reset.less";
+import Footer from './components/Footer';
+import './lang/config';
+import routes from "./router";
 const App: React.FC = () => {
   // Destructure values from custom hooks
   const { chain, address, isConnected } = useAccount();
@@ -46,7 +51,7 @@ const App: React.FC = () => {
   // State variables
   const [expirationTime, setExpirationTime] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
-
+  const [language, setLanguage] = useState<any>({ meaning: 'en', value: enUS });
   // Get the user's timezone
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const text = timezones.find((item: any) => item.value === timezone)?.text;
@@ -67,6 +72,7 @@ const App: React.FC = () => {
   const setTimezone = useCurrentTimezone((state: any) => state.setTimezone);
 
   const { pathname } = useLocation();
+  const { t, i18n } = useTranslation();
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
@@ -150,7 +156,8 @@ const App: React.FC = () => {
         const decodeString = atob(data.split('.')[1]);
         const payload = JSON.parse(decodeString);
         const { aud, prf } = payload;
-        navigate('/ucanDelegate/delete', { state: {
+        navigate('/ucanDelegate/delete', {
+          state: {
             params: {
               isGithubType,
               aud,
@@ -180,7 +187,7 @@ const App: React.FC = () => {
         <a
           onClick={handleDelegate}
         >
-          UCAN Delegates
+          {t('content.UCANDelegates')}
         </a>
       ),
     },
@@ -190,7 +197,7 @@ const App: React.FC = () => {
         <a
           onClick={() => { handleJump('/minerid') }}
         >
-          Miner IDs Management
+          {t('content.minerIDsManagement')}
         </a>
       ),
     },
@@ -207,7 +214,7 @@ const App: React.FC = () => {
             <a
               onClick={() => { handleJump('/fip-editor/propose') }}
             >
-              Propose
+              {t('content.propose')}
             </a>
           ),
         },
@@ -217,7 +224,7 @@ const App: React.FC = () => {
             <a
               onClick={() => { handleJump('/fip-editor/approve') }}
             >
-              Approve
+              {t('content.approve')}
             </a>
           ),
         },
@@ -227,7 +234,7 @@ const App: React.FC = () => {
             <a
               onClick={() => { handleJump('/fip-editor/revoke') }}
             >
-              Revoke
+              {t('content.revoke')}
             </a>
           ),
         },
@@ -235,8 +242,29 @@ const App: React.FC = () => {
     })
   }
 
+  const languageOptions = [
+    { label: 'EN', value: 'en' },
+    { label: '中文', value: 'zh' },
+  ];
+  const changeLanguage = (value: string) => {
+    i18n.changeLanguage(value)
+    if (value === 'en') {
+      setLanguage({ meaning: 'en', value: enUS });
+      dayjs.locale('en');
+    } else if (value === 'zh') {
+      setLanguage({ meaning: 'zh', value: zhCN });
+      dayjs.locale('zh-cn');
+    }
+  };
   return (
-    <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
+    <ConfigProvider theme={{
+      algorithm: theme.defaultAlgorithm,
+      components: {
+        Radio: {
+          buttonSolidCheckedBg: ''
+        }
+      }
+    }} locale={language.value}>
       <div className="layout font-body">
         {!isLanding && <header className='h-[96px] bg-[#ffffff] border-b border-solid border-[#DFDFDF]'>
           <div className='w-[1000px] h-[88px] mx-auto flex items-center justify-between'>
@@ -251,7 +279,7 @@ const App: React.FC = () => {
                   to='/'
                   className='text-black text-2xl font-semibold hover:opacity-80'
                 >
-                  Power Voting
+                  {t('content.powerVoting')}
                 </Link>
               </div>
             </div>
@@ -266,11 +294,21 @@ const App: React.FC = () => {
                 <button
                   className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-xl mr-4"
                 >
-                  Tools
+                  {t('content.tools')}
                 </button>
               </Dropdown>
               <div className="connect flex items-center">
                 <ConnectButton showBalance={false} />
+                <div className='px-4 py-2 h-full flex flex-nowrap text-sm'>
+                  {languageOptions.map((item) => {
+                    return (
+                      <div className={`h-full mr-1.5 cursor-pointer text-black font-semibold ${item.value === language.meaning ? 'border-solid border-b-2 border-current' : 'border-none'}`} onClick={() => changeLanguage(item.value)}>
+                        <div className='h-5 leading-6 text-center my-*'>{item.label}</div>
+                      </div>
+                    )
+                  })
+                  }
+                </div>
               </div>
             </div>
             <Modal
@@ -283,7 +321,7 @@ const App: React.FC = () => {
               footer={false}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              <p>{STORING_DATA_MSG} Please wait:&nbsp;
+              <p>{t(STORING_DATA_MSG)} {t('content.pleaseWait')}:&nbsp;
                 <Countdown
                   date={expirationTime}
                   renderer={({ minutes, seconds, completed }) => {
