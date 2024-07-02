@@ -117,6 +117,18 @@
         "ucanDelegatesDeauthorize": "UCAN委托 (取消授权)",
         "deauthorize": "取消授权",
         "submit": "提交",
-        "totalPercent": "总百分比"
+        "totalPercent": "总百分比",
+        "documentation": "文档",
+        "resources": "资源库",
+        "poweredBy": "联合出品",
+        "allRightReserved": "版权所有 © 2024",
+        "partners": "合作伙伴",
+        "contactSupport": "联系&支持",
+        "legal": "法律责任",
+        "privacyTerms": "隐私条款",
+        "codeConduct": "行为准则",
+        "discord": "Discord",
+        "slack": "Slack",
+        "FAQs":"问答"
     }
 }

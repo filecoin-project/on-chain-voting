@@ -117,6 +117,18 @@
         "ucanDelegatesDeauthorize": "UCAN Delegates (Deauthorize)",
         "deauthorize": "Deauthorize",
         "submit": "Submit",
-        "totalPercent": "Total Percent"
+        "totalPercent": "Total Percent",
+        "documentation":"Documentation",
+        "resources":"Resources",
+        "poweredBy":"Powered by",
+        "allRightReserved":"All Right Reserved © 2024",
+        "partners":"Partners",
+        "contactSupport":"Contact & Support",
+        "legal":"Legal",
+        "privacyTerms":"Privacy & Terms",
+        "codeConduct":"Code of Conduct",
+        "discord":"Discord",
+        "slack":"Slack",
+        "FAQs":"FAQs"
     }
 }
