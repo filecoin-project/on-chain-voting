@@ -13,8 +13,9 @@
 // limitations under the License.
 
 import React from "react";
-
+import { useTranslation } from 'react-i18next';
 const Footer = () => {
+  const { t } = useTranslation();
   // const partners = [
   //   {
   //     href: 'https://protocol.ai',
@@ -25,15 +26,15 @@ const Footer = () => {
   const resources = [
     {
       href: "",
-      text: "FAQs ↗"
+      text: `${t('content.FAQs')} ↗`
     },
     {
       href: "",
-      text: "Documentation ↗"
+      text: `${t('content.documentation')} ↗`
     },
     {
       href: "",
-      text: "Resources ↗"
+      text: `${t('content.resources')} ↗`
     }
   ]
 
@@ -44,21 +45,21 @@ const Footer = () => {
     },
     {
       href: "https://discord.gg/S8NHC7fV26",
-      text: "Discord ↗"
+      text: `${t('content.discord')} ↗`
     },
     {
       href: "",
-      text: "Slack ↗"
+      text: `${t('content.slack')} ↗`
     }
   ]
   const legal = [
     {
       href: "",
-      text: "Privacy & Terms ↗"
+      text: `${t('content.privacyTerms')} ↗`
     },
     {
       href: "",
-      text: "Code of Conduct ↗"
+      text: `${t('content.codeConduct')} ↗`
     }
     ,
     {
@@ -70,7 +71,7 @@ const Footer = () => {
   return (
     <footer className='h-[265px] flex px-8 items-center justify-between bg-[#000000]'>
       <div className='flex-column items-center pl-[64px]'>
-        <p className='text-[12px] font-normal text-[#ffffff]'>Powered by</p>
+        <p className='text-[12px] font-normal text-[#ffffff]'>{t('content.poweredBy')}</p>
 
         <div className="flex mt-[35px]">
           <a target="_blank"
@@ -86,12 +87,12 @@ const Footer = () => {
           maxWidth: "32rem",
           marginTop: "32px"
         }}>
-          <p className='text-[12px] font-normal'>All Right Reserved © 2024</p>
+          <p className='text-[12px] font-normal'>{t('content.allRightReserved')}</p>
         </div>
       </div>
       <div className='flex pr-[64px]'>
         <div className='mr-[91px]'>
-          <h4 className='text-xl text-[#ffffff] mb-[12px]'>Partners</h4>
+          <h4 className='text-xl text-[#ffffff] mb-[12px]'>{t('content.partners')}</h4>
           <div className='justify-center text-xs'>
             {resources.map((partner, index) => (
               <a key={index} className='flex items-center hover:text-blue-300 mt-[16px] text-[#989898]' href={partner.href} target='_blank' rel="noreferrer" >
@@ -101,7 +102,7 @@ const Footer = () => {
           </div>
         </div>
         <div className='mr-[91px]'>
-          <h4 className='text-xl text-[#ffffff] mb-[12px]'>Contact & Support</h4>
+          <h4 className='text-xl text-[#ffffff] mb-[12px]'>{t('content.contactSupport')}</h4>
           <div className='justify-center text-xs'>
             {contact.map((partner, index) => (
               <a key={index} className='flex items-center hover:text-blue-300 mt-[16px] text-[#989898]' href={partner.href} target='_blank' rel="noreferrer" >
@@ -111,7 +112,7 @@ const Footer = () => {
           </div>
         </div>
         <div >
-          <h4 className='text-xl text-[#ffffff] mb-[12px]'>Legal</h4>
+          <h4 className='text-xl text-[#ffffff] mb-[12px]'>{t('content.legal')}</h4>
           <div className='justify-center text-xs'>
             {legal.map((partner, index) => (
               <a key={index} className='flex items-center hover:text-blue-300 mt-[16px] text-[#989898]' href={partner.href} target='_blank' rel="noreferrer" >
