@@ -497,13 +497,33 @@ export const NOT_FIP_EDITOR_MSG = 'content.fipCreateProposals';
 export const NO_FIP_EDITOR_APPROVE_ADDRESS_MSG = 'content.inputAddress';
 export const NO_FIP_EDITOR_REVOKE_ADDRESS_MSG = 'content.selectAddress';
 export const NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG = 'content.twoFIPRevoke';
-export const FIP_ALREADY_EXECUTE_MSG="content.activePproposal"
-export const FIP_APPROVE_SELF_MSG="content.noPropose"
-export const FIP_APPROVE_ALREADY_MSG="content.addressDditor"
+export const FIP_ALREADY_EXECUTE_MSG = "content.activePproposal"
+export const FIP_APPROVE_SELF_MSG = "content.noPropose"
+export const FIP_APPROVE_ALREADY_MSG = "content.addressDditor"
 export const HAVE_APPROVED_MSG = 'content.alreadyApproved';
 export const HAVE_REVOKED_MSG = 'content.alreadyRevoked';
 export const CAN_NOT_REVOKE_YOURSELF_MSG = 'content.revokeYourself';
 export const SAVE_DRAFT_SUCCESS = "content.saveSuccess"
 export const SAVE_DRAFT_TOO_LARGE = "content.savedDescriptionCharacters"
 export const SAVE_DRAFT_FAIL = "content.saveFail"
-export const UPLOAD_DATA_FAIL_MSG="content.saveDataFail"
+export const UPLOAD_DATA_FAIL_MSG = "content.saveDataFail"
+
+// Converts hexadecimal to a string
+export const hexToString = (hex: any) => {
+  if(!hex){
+    return '';
+  }
+  let str = '';
+  if (hex.substring(1, 3) === '0x') {
+    str = hex.substring(3)
+  } else {
+    str = hex;
+  }
+  // Split a hexadecimal string by two characters
+  const pairs = str.match(/[\dA-Fa-f]{2}/g);
+  if (pairs == null) {
+    return '';
+  }
+  // Converts split hexadecimal numbers to characters and concatenates them
+  return pairs.map((pair: any) => String.fromCharCode(parseInt(pair, 16))).join('').replace(/[^\x20-\x7E]/g, '').trim();
+}
