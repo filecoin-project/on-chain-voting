@@ -22,18 +22,19 @@ import type { BaseError } from "wagmi";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import fileCoinAbi from "../../../common/abi/power-voting.json";
 import {
-  FIP_ALREADY_EXECUTE_MSG,
-  FIP_APPROVE_ALREADY_MSG,
-  FIP_APPROVE_SELF_MSG,
+  // FIP_ALREADY_EXECUTE_MSG,
+  // FIP_APPROVE_ALREADY_MSG,
+  // FIP_APPROVE_SELF_MSG,
   FIP_EDITOR_APPROVE_TYPE,
   FIP_EDITOR_REVOKE_TYPE,
-  NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG,
-  NO_FIP_EDITOR_APPROVE_ADDRESS_MSG,
-  NO_FIP_EDITOR_REVOKE_ADDRESS_MSG,
+  // NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG,
+  // NO_FIP_EDITOR_APPROVE_ADDRESS_MSG,
+  // NO_FIP_EDITOR_REVOKE_ADDRESS_MSG,
   STORING_DATA_MSG,
   UPLOAD_DATA_FAIL_MSG,
+  hexToString,
 } from "../../../common/consts";
-import { useApproveProposalId, useCheckFipEditorAddress, useFipEditorProposalDataSet, useFipEditors, useRevokeProposalId } from "../../../common/hooks";
+import {  useCheckFipEditorAddress, useFipEditors } from "../../../common/hooks";
 import LoadingButton from '../../../components/LoadingButton';
 import Table from '../../../components/Table';
 import { getContractAddress, getWeb3IpfsId } from "../../../utils";
@@ -57,22 +58,22 @@ const FipEditorPropose = () => {
 
 
   //load revoke proposa
-  const { revokeProposalId } = useRevokeProposalId(chainId);
-  const revokeResult = useFipEditorProposalDataSet({
-    chainId,
-    idList: revokeProposalId,
-    page: 1,
-    pageSize: revokeProposalId?.length ?? 0,
-  });
+  // const { revokeProposalId } = useRevokeProposalId(chainId);
+  // const revokeResult = useFipEditorProposalDataSet({
+  //   chainId,
+  //   idList: revokeProposalId,
+  //   page: 1,
+  //   pageSize: revokeProposalId?.length ?? 0,
+  // });
 
   //load approve
-  const { approveProposalId } = useApproveProposalId(chainId);
-  const approveResult = useFipEditorProposalDataSet({
-    chainId,
-    idList: approveProposalId,
-    page: 1,
-    pageSize: approveProposalId?.length ?? 0,
-  });
+  // const { approveProposalId } = useApproveProposalId(chainId);
+  // const approveResult = useFipEditorProposalDataSet({
+  //   chainId,
+  //   idList: approveProposalId,
+  //   page: 1,
+  //   pageSize: approveProposalId?.length ?? 0,
+  // });
 
   const {
     data: hash,
@@ -80,7 +81,7 @@ const FipEditorPropose = () => {
     error,
     isPending: writeContractPending,
     isSuccess: writeContractSuccess,
-    reset
+    reset,
   } = useWriteContract();
 
   const [loading, setLoading] = useState(writeContractPending);
@@ -113,9 +114,14 @@ const FipEditorPropose = () => {
 
   useEffect(() => {
     if (error) {
+      // Get error cause
+      const errorStr = JSON.stringify(error);
+      // Intercepts the first hexadecimal in the string
+      const reg = /revert reason:\s*0x[0-9A-Fa-f]+/;
+      const match = errorStr.match(reg) || [];
       messageApi.open({
         type: 'error',
-        content: (error as BaseError)?.shortMessage || error?.message,
+        content: hexToString(match[0]) || (error as BaseError)?.shortMessage,
       });
     }
     reset();
@@ -136,72 +142,72 @@ const FipEditorPropose = () => {
    */
   const onSubmit = async () => {
     // Check if required fields are filled based on proposal type
-    if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && !fipAddress) {
-      messageApi.open({
-        type: 'warning',
-        // Prompt user to fill required fields
-        content: t(NO_FIP_EDITOR_APPROVE_ADDRESS_MSG),
-      });
-      return;
-    }
+    // if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && !fipAddress) {
+    //   messageApi.open({
+    //     type: 'warning',
+    //     // Prompt user to fill required fields
+    //     content: t(NO_FIP_EDITOR_APPROVE_ADDRESS_MSG),
+    //   });
+    //   return;
+    // }
 
-    if (fipProposalType === FIP_EDITOR_REVOKE_TYPE && !selectedAddress) {
-      messageApi.open({
-        type: 'warning',
-        // Prompt user to fill required fields
-        content: t(NO_FIP_EDITOR_REVOKE_ADDRESS_MSG),
-      });
-      return;
-    }
+    // if (fipProposalType === FIP_EDITOR_REVOKE_TYPE && !selectedAddress) {
+    //   messageApi.open({
+    //     type: 'warning',
+    //     // Prompt user to fill required fields
+    //     content: t(NO_FIP_EDITOR_REVOKE_ADDRESS_MSG),
+    //   });
+    //   return;
+    // }
 
-    if (fipProposalType === FIP_EDITOR_REVOKE_TYPE && fipEditors.length <= 2) {
-      messageApi.open({
-        type: 'warning',
-        // must more than 2
-        content: t(NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG),
-      });
-      return;
-    }
+    // if (fipProposalType === FIP_EDITOR_REVOKE_TYPE && fipEditors.length <= 2) {
+    //   messageApi.open({
+    //     type: 'warning',
+    //     // must more than 2
+    //     content: t(NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG),
+    //   });
+    //   return;
+    // }
 
 
 
-    if (fipProposalType === FIP_EDITOR_REVOKE_TYPE && revokeResult.getFipEditorProposalIdSuccess) {
-      const find = revokeResult.fipEditorProposalData?.find((v: any) => v.result[1] === selectedAddress)
-      if (find) {
-        messageApi.open({
-          type: 'warning',
-          content: t(FIP_ALREADY_EXECUTE_MSG),
-        });
-        return;
-      }
-    }
-    if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && approveResult.getFipEditorProposalIdSuccess) {
-      const find = approveResult.fipEditorProposalData?.find((v: any) => v.result[1] === fipAddress)
-      if (find) {
-        messageApi.open({
-          type: 'warning',
-          content: t(FIP_ALREADY_EXECUTE_MSG),
-        });
-        return;
-      }
-    }
+    // if (fipProposalType === FIP_EDITOR_REVOKE_TYPE && revokeResult.getFipEditorProposalIdSuccess) {
+    //   const find = revokeResult.fipEditorProposalData?.find((v: any) => v.result[1] === selectedAddress)
+    //   if (find) {
+    //     messageApi.open({
+    //       type: 'warning',
+    //       content: t(FIP_ALREADY_EXECUTE_MSG),
+    //     });
+    //     return;
+    //   }
+    // }
+    // if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && approveResult.getFipEditorProposalIdSuccess) {
+    //   const find = approveResult.fipEditorProposalData?.find((v: any) => v.result[1] === fipAddress)
+    //   if (find) {
+    //     messageApi.open({
+    //       type: 'warning',
+    //       content: t(FIP_ALREADY_EXECUTE_MSG),
+    //     });
+    //     return;
+    //   }
+    // }
 
-    if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && fipAddress === address) {
-      messageApi.open({
-        type: 'warning',
-        content: t(FIP_APPROVE_SELF_MSG),
-      });
-      return;
-    }
+    // if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && fipAddress === address) {
+    //   messageApi.open({
+    //     type: 'warning',
+    //     content: t(FIP_APPROVE_SELF_MSG),
+    //   });
+    //   return;
+    // }
 
-    //fipEditors
-    if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && fipEditors.includes(fipAddress)) {
-      messageApi.open({
-        type: 'warning',
-        content: t(FIP_APPROVE_ALREADY_MSG),
-      });
-      return;
-    }
+    // //fipEditors
+    // if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && fipEditors.includes(fipAddress)) {
+    //   messageApi.open({
+    //     type: 'warning',
+    //     content: t(FIP_APPROVE_ALREADY_MSG),
+    //   });
+    //   return;
+    // }
 
 
     // Set loading state to true while submitting proposal
@@ -211,7 +217,7 @@ const FipEditorPropose = () => {
     const cid = await getWeb3IpfsId(fipInfo);
 
 
-    if(!cid?.length){
+    if (!cid?.length) {
       setLoading(false);
       messageApi.open({
         type: 'warning',
@@ -235,7 +241,6 @@ const FipEditorPropose = () => {
       functionName: 'createFipEditorProposal',
       args: proposalArgs,
     });
-
     setLoading(false);
   }
 
@@ -243,7 +248,6 @@ const FipEditorPropose = () => {
     useWaitForTransactionReceipt({
       hash,
     })
-
   const isLoading = loading || writeContractPending || transactionLoading;
 
   return (
