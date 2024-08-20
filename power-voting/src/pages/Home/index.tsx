@@ -44,12 +44,13 @@ import { markdownToText } from "../../utils";
 import { useCurrentTimezone, useStoringCid } from "../../common/store";
 import { useLatestId, useCheckFipEditorAddress, useProposalDataSet } from "../../common/hooks";
 import VoteStatusBtn from "src/components/VoteStatusBtn";
-
+import { useTranslation } from 'react-i18next';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const Home = () => {
   const navigate = useNavigate();
+  const { t,i18n } = useTranslation();
   const { chain, address, isConnected } = useAccount();
   const chainId = chain?.id || 0;
 
@@ -57,7 +58,7 @@ const Home = () => {
 
   const [filterList, setFilterList] = useState([
     {
-      label: "All",
+      label: t('content.all'),
       value: VOTE_ALL_STATUS
     }
   ])
@@ -86,7 +87,6 @@ const Home = () => {
   const { isFetched, isSuccess, isError } = useWaitForTransactionReceipt({
     hash: storingCid[0]?.hash
   });
-
   useEffect(() => {
     if (error) {
       messageApi.open({
@@ -106,7 +106,7 @@ const Home = () => {
     if (isConnected && !loading && !getLatestIdLoading && !getProposalIdLoading) {
       getProposalList(page);
     }
-  }, [chain, page, address, isConnected]);
+}, [chain, page, address, isConnected,i18n.language]);
 
   useEffect(() => {
     if (isFetched) {
@@ -117,14 +117,14 @@ const Home = () => {
       if (isSuccess) {
         messageApi.open({
           type: 'success',
-          content: STORING_SUCCESS_MSG
+          content: t(STORING_SUCCESS_MSG)
         })
       }
       // If the transaction fails, show an error message
       if (isError) {
         messageApi.open({
           type: 'error',
-          content: STORING_FAILED_MSG
+          content: t(STORING_FAILED_MSG)
         })
       }
       // After 3 seconds, set shouldRefetch to true and trigger a refetch
@@ -133,8 +133,10 @@ const Home = () => {
         refetch().then(() => {
           // Reset shouldRefetch after refetching
           setShouldRefetch(false);
+        }).finally(()=>{
+          getProposalList(page);
         });
-        getProposalList(page);
+       
       }, 3000);
     }
   }, [isFetched]);
@@ -213,7 +215,12 @@ const Home = () => {
       const proposalsList = await getList(list);
       const originList = proposalsList || [];
       // Set filter list for proposal filtering
-      setFilterList(VOTE_FILTER_LIST);
+      setFilterList(VOTE_FILTER_LIST.map((item)=>{
+        return {
+          label: t(item.label),
+          value: item.value
+        }
+      }));
       // Set the proposal list state
       setProposalList([...storingData, ...originList]);
     } catch (e) {
@@ -222,7 +229,6 @@ const Home = () => {
       setLoading(false);
     }
   }
-
   /**
    * get proposal info
    * @param proposals
@@ -308,7 +314,7 @@ const Home = () => {
     if (item.proposalStatus === STORING_STATUS) {
       messageApi.open({
         type: 'warning',
-        content: STORING_DATA_MSG,
+        content: t(STORING_DATA_MSG),
       });
       return;
     }
@@ -343,7 +349,7 @@ const Home = () => {
         <div className='empty mt-20'>
           <Empty
             description={
-              <span className='text-black'>No Data</span>
+              <span className='text-black'>{t('content.noData')}</span>
             }
           />
         </div>
@@ -384,7 +390,7 @@ const Home = () => {
                 </div>
               </a>
               <div className="truncate text-[#4B535B] text-sm ml-5">
-                Created {dayjs(item.currentTime * 1000).format('YYYY-MM-D')}
+                {t('content.created')} {dayjs(item.currentTime * 1000).format('YYYY-MM-D')}
               </div>
             </div>
             <VoteStatusBtn status={(item.subStatus > 0) ? item.subStatus : item.proposalStatus} />
@@ -446,7 +452,7 @@ const Home = () => {
             </div>
           }
           <div className="text-[#4B535B] text-sm mt-4">
-            <span className="mr-2">End Time:</span>
+            <span className="mr-2">{t('content.endTime')}:</span>
             {dayjs(item.expTime * 1000).format('MMM.D, YYYY, h:mm A')} ({timezone})
           </div>
         </div >
@@ -468,7 +474,7 @@ const Home = () => {
         <div className='empty mt-20'>
           <Empty
             description={
-              <span className='text-black'>No Data</span>
+              <span className='text-black'>{t('content.noData')}</span>
             }
           />
         </div>
@@ -512,7 +518,7 @@ const Home = () => {
             className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-4 rounded-xl"
             onClick={handleCreate}
           >
-            Create A Proposal
+            {t('content.createProposal')}
           </button>
         }
       </div>

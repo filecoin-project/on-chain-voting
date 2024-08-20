@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 export const powerVotingMainNetContractAddress = process.env.POWER_VOTING_MAINNET_CONTRACT_ADDRESS || '';
 export const oracleMainNetContractAddress = process.env.ORACLE_MAINNET_CONTRACT_ADDRESS || '';
 export const oraclePowerMainNetContractAddress = process.env.ORACLE_POWER_MAINNET_CONTRACT_ADDRESS || '';
@@ -37,12 +36,11 @@ export const WRONG_NET_STATUS = 5;
 export const STORING_STATUS = 6;
 export const PASSED_STATUS = 7;
 export const REJECTED_STATUS = 8;
-
 export const VOTE_OPTIONS = ['Approve', 'Reject'];
 export const VOTE_LIST = [
   {
     value: WRONG_NET_STATUS,
-    label: 'Wrong Network',
+    label: 'content.wrongNetwork',
     bgColor: "#FFF3F3",
     textColor: "#AA0101",
     borderColor: "#FFDBDB",
@@ -51,7 +49,7 @@ export const VOTE_LIST = [
   },
   {
     value: PENDING_STATUS,
-    label: 'Pending',
+    label: "content.pending",
     bgColor: "#FFF1CE",
     textColor: "#7C4300",
     borderColor: "#FFDD87",
@@ -60,7 +58,7 @@ export const VOTE_LIST = [
   },
   {
     value: IN_PROGRESS_STATUS,
-    label: 'In Progress',
+    label: 'content.progressing',
     bgColor: "#FFF1CE",
     textColor: "#7C4300",
     borderColor: "#FFDD87",
@@ -68,7 +66,7 @@ export const VOTE_LIST = [
   },
   {
     value: VOTE_COUNTING_STATUS,
-    label: 'Vote Counting',
+    label: 'content.voteCounting',
     bgColor: "#FFF1CE",
     textColor: "#7C4300",
     borderColor: "#FFDD87",
@@ -76,7 +74,7 @@ export const VOTE_LIST = [
   },
   {
     value: COMPLETED_STATUS,
-    label: 'Complete',
+    label: 'content.complete',
     bgColor: "#E7F4FF",
     textColor: "#005292",
     borderColor: "#C3E5FF",
@@ -85,7 +83,7 @@ export const VOTE_LIST = [
   },
   {
     value: STORING_STATUS,
-    label: 'Storing',
+    label: 'content.storing',
     bgColor: "#FFF1CE",
     textColor: "#7C4300",
     borderColor: "#FFDD87",
@@ -93,7 +91,7 @@ export const VOTE_LIST = [
   },
   {
     value: PASSED_STATUS,
-    label: 'Passed',
+    label: 'content.passed',
     bgColor: "#E3FFEE",
     textColor: "#006227",
     borderColor: "#87FFBE",
@@ -101,7 +99,7 @@ export const VOTE_LIST = [
   },
   {
     value: REJECTED_STATUS,
-    label: 'Rejected',
+    label: 'content.rejected',
     bgColor: "#FFF3F3",
     textColor: "#AA0101",
     borderColor: "#FFDBDB",
@@ -110,23 +108,23 @@ export const VOTE_LIST = [
 ]
 export const VOTE_FILTER_LIST = [
   {
-    label: "All",
+    label: 'content.all',
     value: VOTE_ALL_STATUS
   },
   {
-    label: "Pending",
+    label: 'content.pending',
     value: PENDING_STATUS
   },
   {
-    label: "In Progress",
+    label: 'content.progressing',
     value: IN_PROGRESS_STATUS
   },
   {
-    label: "Vote Counting",
+    label: 'content.voteCounting',
     value: VOTE_COUNTING_STATUS
   },
   {
-    label: "Complete",
+    label: 'content.complete',
     value: COMPLETED_STATUS
   }
 ];
@@ -135,7 +133,7 @@ export const UCAN_TYPE_GITHUB = 2;
 
 export const UCAN_TYPE_FILECOIN_OPTIONS = [
   {
-    label: 'Filecoin',
+    label: 'content.filecoin',
     value: UCAN_TYPE_FILECOIN
   },
 ];
@@ -485,27 +483,47 @@ export const UCAN_JWT_HEADER = {
   type: 'JWT',
   version: '0.0.1'
 };
-export const OPERATION_CANCELED_MSG = 'Operation Canceled';
-export const STORING_DATA_MSG = 'Storing data on chain!';
-export const STORING_SUCCESS_MSG = 'Data stored on chain successfully!';
-export const STORING_FAILED_MSG = 'Data stored on chain failed!';
-export const VOTE_SUCCESS_MSG = 'Vote successful!';
-export const CHOOSE_VOTE_MSG = 'Please choose a option to vote!';
-export const WRONG_START_TIME_MSG = 'Start time can\'t be less than current time!';
-export const WRONG_EXPIRATION_TIME_MSG = 'Expiration time can\'t be less than current time!';
-export const WRONG_MINER_ID_MSG = 'Please check your miner ID!';
-export const DUPLICATED_MINER_ID_MSG = 'Your miner ID is duplicated!';
-export const NOT_FIP_EDITOR_MSG = 'Please select a FIP Editor to create proposals!';
-export const NO_FIP_EDITOR_APPROVE_ADDRESS_MSG = 'Please input an address!';
-export const NO_FIP_EDITOR_REVOKE_ADDRESS_MSG = 'Please select an address!';
-export const NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG = 'There must be more than two FIP editors to revoke';
-export const FIP_ALREADY_EXECUTE_MSG="Address has an active proposal "
-export const FIP_APPROVE_SELF_MSG="Cannot propose to self"
-export const FIP_APPROVE_ALREADY_MSG="Address is already a FIP editor"
-export const HAVE_APPROVED_MSG = 'You have already approved!';
-export const HAVE_REVOKED_MSG = 'You have already revoked!';
-export const CAN_NOT_REVOKE_YOURSELF_MSG = 'You can\'t revoke yourself!';
-export const SAVE_DRAFT_SUCCESS = "Save Success"
-export const SAVE_DRAFT_TOO_LARGE = "The saved description should be within 2048 characters"
-export const SAVE_DRAFT_FAIL = "Save Fail"
-export const UPLOAD_DATA_FAIL_MSG="Save Data Fail"
+export const OPERATION_CANCELED_MSG = 'content.operationCanceled';
+export const STORING_DATA_MSG = 'content.storingChain';
+export const STORING_SUCCESS_MSG = 'content.storedSuccessfully';
+export const STORING_FAILED_MSG = 'content.dataStoredFailed';
+export const VOTE_SUCCESS_MSG = 'content.voteSuccessful';
+export const CHOOSE_VOTE_MSG = 'content.chooseVote';
+export const WRONG_START_TIME_MSG = 'content.startTimeLoss';
+export const WRONG_EXPIRATION_TIME_MSG = 'content.expirationTime';
+export const WRONG_MINER_ID_MSG = 'content.checkID';
+export const DUPLICATED_MINER_ID_MSG = 'content.iDDuplicated';
+export const NOT_FIP_EDITOR_MSG = 'content.fipCreateProposals';
+export const NO_FIP_EDITOR_APPROVE_ADDRESS_MSG = 'content.inputAddress';
+export const NO_FIP_EDITOR_REVOKE_ADDRESS_MSG = 'content.selectAddress';
+export const NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG = 'content.twoFIPRevoke';
+export const FIP_ALREADY_EXECUTE_MSG = "content.activePproposal"
+export const FIP_APPROVE_SELF_MSG = "content.noPropose"
+export const FIP_APPROVE_ALREADY_MSG = "content.addressDditor"
+export const HAVE_APPROVED_MSG = 'content.alreadyApproved';
+export const HAVE_REVOKED_MSG = 'content.alreadyRevoked';
+export const CAN_NOT_REVOKE_YOURSELF_MSG = 'content.revokeYourself';
+export const SAVE_DRAFT_SUCCESS = "content.saveSuccess"
+export const SAVE_DRAFT_TOO_LARGE = "content.savedDescriptionCharacters"
+export const SAVE_DRAFT_FAIL = "content.saveFail"
+export const UPLOAD_DATA_FAIL_MSG = "content.saveDataFail"
+
+// Converts hexadecimal to a string
+export const hexToString = (hex: any) => {
+  if(!hex){
+    return '';
+  }
+  let str = '';
+  if (hex.substring(1, 3) === '0x') {
+    str = hex.substring(3)
+  } else {
+    str = hex;
+  }
+  // Split a hexadecimal string by two characters
+  const pairs = str.match(/[\dA-Fa-f]{2}/g);
+  if (pairs == null) {
+    return '';
+  }
+  // Converts split hexadecimal numbers to characters and concatenates them
+  return pairs.map((pair: any) => String.fromCharCode(parseInt(pair, 16))).join('').replace(/[^\x20-\x7E]/g, '').trim();
+}
