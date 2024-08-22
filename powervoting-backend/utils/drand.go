@@ -41,6 +41,7 @@ func DecodeVoteList(voteInfo model.Vote) ([]model.Vote4Counting, error) {
 		zap.L().Error("get vote info from IPFS error: ", zap.Error(err))
 		return voteList, err
 	}
+	zap.L().Debug("---vote info", zap.String("ipfs", ipfs))
 	retry_times := 5
 	var decrypt []byte
 	for i := 0; i < retry_times; i++ {
@@ -87,6 +88,7 @@ func DecodeVoteList(voteInfo model.Vote) ([]model.Vote4Counting, error) {
 // It constructs the IPFS URL and sends an HTTP GET request to fetch the data.
 // The function returns the retrieved data or an error if the operation fails.
 func GetIpfs(votInfo string) (string, error) {
+	zap.L().Debug("--------------get vote info from IPFS: ", zap.String("votInfo", votInfo))
 	url := fmt.Sprintf("https://%s.ipfs.w3s.link/", votInfo)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -146,6 +148,7 @@ func GetOptions(cid string) ([]string, error) {
 		zap.L().Error("get ipfs error: ", zap.Error(err))
 		return nil, err
 	}
+	zap.L().Debug("---options ipfs", zap.String("ipfs", ipfs))
 	var proposalDetail model.ProposalDetail
 	err = json.Unmarshal([]byte(ipfs), &proposalDetail)
 	if err != nil {
