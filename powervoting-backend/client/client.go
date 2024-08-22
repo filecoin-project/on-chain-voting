@@ -3,14 +3,15 @@ package client
 import (
 	"context"
 	"fmt"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"math/big"
 	"powervoting-server/config"
 	"powervoting-server/model"
 	"sync"
 	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	pb "powervoting-server/client/proto"
 )

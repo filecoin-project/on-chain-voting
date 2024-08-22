@@ -16,7 +16,6 @@ package task
 
 import (
 	"fmt"
-	"go.uber.org/zap"
 	"powervoting-server/config"
 	"powervoting-server/constant"
 	"powervoting-server/contract"
@@ -26,6 +25,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 // SyncVoteHandler asynchronously synchronizes votes for proposals across multiple networks.
@@ -36,7 +37,7 @@ func SyncVoteHandler() {
 
 	for _, network := range config.Client.Network {
 		var proposalList []model.Proposal
-		if err := db.Engine.Model(model.Proposal{}).Where("status", 0).Where("network", network.Id).Find(&proposalList).Error; err != nil {
+		if err := db.Engine.Model(model.Proposal{}).Where("status", constant.ProposalStatusPending).Where("network", network.Id).Find(&proposalList).Error; err != nil {
 			zap.L().Error("get proposal list error: ", zap.Error(err))
 		}
 		ethClient, err := contract.GetClient(network.Id)
@@ -83,6 +84,7 @@ func SyncVote(ethClient model.GoEthClient, proposalId int64, db db.DataRepo) err
 		return err
 	}
 	contractProposal, err := utils.GetProposal(ethClient, proposalId)
+	zap.L().Debug("contract proposal: ", zap.Any("contractProposal", contractProposal))
 	if err != nil {
 		zap.L().Error("get proposal error: ", zap.Error(err))
 		return err
