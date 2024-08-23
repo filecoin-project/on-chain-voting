@@ -140,13 +140,13 @@ const CreateVote = () => {
       })
       if (resp.data != null && resp.data.data?.length) {
         const result = (resp.data.data as ProposalDraft[])[0]
-        setValue("descriptions", result.Descriptions)
-        setValue("name", result.Name)
-        if(result.Time.length){
+        setValue("descriptions", result.descriptions)
+        setValue("name", result.name)
+        if (result.Time.length) {
           setValue("time", result.Time.split(OPTION_SPLIT_TAG) ?? [])
         }
-        if (result.Timezone) {
-          setValue("timezone", result.Timezone)
+        if (result.timezone) {
+          setValue("timezone", result.timezone)
         }
         setHasDraft(true)
       }
@@ -187,7 +187,6 @@ const CreateVote = () => {
     const expTimestamp = dayjs(values.time[1]).add(offset, 'minute').unix();
     const { data } = await axios.get(worldTimeApi);
     const currentTime = data?.unixtime;
-
     // Check if current time is after start time
     if (currentTime > startTimestamp) {
       messageApi.open({
@@ -197,7 +196,6 @@ const CreateVote = () => {
       setLoading(false);
       return false;
     }
-
     // Check if current time is after expiration time
     if (currentTime > expTimestamp) {
       messageApi.open({
@@ -224,7 +222,6 @@ const CreateVote = () => {
       githubObj.githubName = githubName;
       githubObj.githubAvatar = data.avatar_url;
     }
-
     // Prepare values object with additional information
     const _values = {
       ...values,
@@ -238,9 +235,7 @@ const CreateVote = () => {
       chainId: chainId,
       currentTime,
     };
-
     const cid = await getWeb3IpfsId(_values);
-
     if (!cid?.length) {
       messageApi.open({
         type: 'warning',
@@ -251,7 +246,6 @@ const CreateVote = () => {
     }
 
     setCid(cid);
-
     if (isConnected) {
       // Check if user is a FIP editor
       if (isFipEditorAddress) {
@@ -276,6 +270,21 @@ const CreateVote = () => {
     } else {
       openConnectModal && openConnectModal();
     }
+    const params = {
+      ...githubObj,
+      GMTOffset,
+      startTime: startTimestamp,
+      expTime: expTimestamp,
+      address: address,
+      chainId: chainId,
+      currentTime,
+      timezone: values.timezone,
+      name: values.name,
+      descriptions: values.descriptions,
+      cid,
+      proposalId: ''
+    }
+    await axios.post('/api/proposal/add', params);
     //clear draft
     if (hasDraft) {
       clearDraft()
@@ -285,13 +294,15 @@ const CreateVote = () => {
   const clearDraft = async () => {
     try {
       const data = {
-        Timezone: "",
-        Time: "",
-        Name: "",
-        Descriptions: "",
-        Option: "",
-        Address: address,
-        ChainId: chainId,
+        timezone: '',
+        name: '',
+        descriptions: '',
+        // GMTOffset,
+        startTime: '',
+        expTime: '',
+        address: address,
+        chainId: chainId,
+        currentTime:''
       }
       await axios.post(proposalDraftAddApi, data)
       setHasDraft(false)
@@ -315,22 +326,46 @@ const CreateVote = () => {
       return
     }
 
-    if(values.descriptions.length>=2048){
+    if (values.descriptions.length >= 2048) {
       messageApi.open({
         type: "warning",
         content: t(SAVE_DRAFT_TOO_LARGE),
       });
       return
     }
-    setDraftSave(true)
+    setDraftSave(true);
+    const githubObj = {
+      githubName: '',
+      githubAvatar: ''
+    }
+    if (voterInfo && voterInfo[0]) {
+      const githubName = voterInfo[0];
+      const { data } = await axios.get(`${githubApi}/${githubName}`);
+      githubObj.githubName = githubName;
+      githubObj.githubAvatar = data.avatar_url;
+    }
+    const { data: timeData } = await axios.get(worldTimeApi);
+    const currentTime = timeData?.unixtime;
+    const offset = dayjs().utcOffset() - dayjs().tz(values.timezone).utcOffset();
+    const startTimestamp = dayjs(values.time[0]).add(offset, 'minute').unix();
+    const expTimestamp = dayjs(values.time[1]).add(offset, 'minute').unix();
+    // Get text for timezone array
+    // const text = timezoneOption?.find((item: any) => item.value === values.value)?.text || '';
+    // Extract GMT offset from text using regex
+    // const regex = /(?<=\().*?(?=\))/g;
+    // const GMTOffset = text.match(regex);
     const data = {
-      Timezone: values.timezone,
+      timezone: values.timezone,
+      name: values.name,
+      descriptions: values.descriptions,
+      ...githubObj,
+      // GMTOffset,
+      startTime: startTimestamp,
+      expTime: expTimestamp,
+      address: address,
+      chainId: chainId,
+      currentTime,
       Time: (values.time ?? []).join(OPTION_SPLIT_TAG),
-      Name: values.name,
-      Descriptions: values.descriptions,
-      Option: "",
-      Address: address,
-      ChainId: chainId,
     }
     try {
       const res = await axios.post(proposalDraftAddApi, data)

@@ -23,7 +23,7 @@ import zhCN from 'antd/locale/zh_CN';
 import axios from "axios";
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Countdown from 'react-countdown';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate, useRoutes } from "react-router-dom";
@@ -32,7 +32,7 @@ import { useAccount } from "wagmi";
 import timezones from '../public/json/timezons.json';
 import { STORING_DATA_MSG } from "./common/consts";
 import { useCheckFipEditorAddress, useVoterInfoSet } from "./common/hooks";
-import { useCurrentTimezone, useVoterInfo } from "./common/store";
+import { useCurrentTimezone, useVoterInfo, useVotingList } from "./common/store";
 import "./common/styles/reset.less";
 import Footer from './components/Footer';
 import './lang/config';
@@ -70,7 +70,7 @@ const App: React.FC = () => {
 
   // Update voter information in state
   const setVoterInfo = useVoterInfo((state: any) => state.setVoterInfo);
-
+  const setVotingList = useVotingList((state: any) => state.setVotingList);
   // Update current timezone in state
   const setTimezone = useCurrentTimezone((state: any) => state.setTimezone);
 
@@ -259,9 +259,18 @@ const App: React.FC = () => {
       dayjs.locale('zh-cn');
     }
   };
-  const onSearch = useCallback(() => {
-    console.log(searchValue);
-  }, [searchValue])
+  const searchKey = async (value?: string) => {
+    const params = {
+      page: 1,
+      pageSize: 5,
+      searchKey: value
+    }
+    const { data: { data: votingData } } = await axios.get('/api/proposal/list', { params })
+    setVotingList({ votingList: votingData.list || [], totalPage: votingData.total, searchKey: value })
+  }
+  useEffect(() => {
+    searchKey()
+  },[])
   return (
     <ConfigProvider theme={{
       algorithm: theme.defaultAlgorithm,
@@ -292,11 +301,11 @@ const App: React.FC = () => {
                 <Input
                   placeholder="Search Proposals"
                   size="large"
-                  prefix={<SearchOutlined onClick={() => onSearch()} className={`${isFocus ? "text-[#1677ff]" : "text-[#8b949e]"} text-xl hover:text-[#1677ff]`} />}
+                  prefix={<SearchOutlined onClick={() => searchKey(searchValue)} className={`${isFocus ? "text-[#1677ff]" : "text-[#8b949e]"} text-xl hover:text-[#1677ff]`} />}
                   onClick={() => setIsFocus(true)}
                   onBlur={() => setIsFocus(false)}
                   onChange={(e) => setSearchValue(e.currentTarget.value)}
-                  onPressEnter={() => onSearch()}
+                  onPressEnter={() => searchKey(searchValue)}
                   className={`${isFocus ? 'w-[270px]' : "w-[180px]"} font-medium text-base item-center text-slate-800 bg-[#f7f7f7] rounded-lg`}
                 />
               </div>
