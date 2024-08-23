@@ -69,3 +69,17 @@ func SyncDevWeightStepDay(service *service.SyncService) func() {
 		}
 	}
 }
+
+func SyncDelegateEvent(service *service.SyncService) func() {
+	return func() {
+		ctx := context.Background()
+		for _, network := range config.Client.Network {
+			// sync date height
+			err := service.SyncDelegateEvent(ctx, network.Id)
+			if err != nil {
+				zap.L().Error("failed to sync delegate event, it will skipped ", zap.Error(err), zap.Int64("network_id", network.Id))
+				continue
+			}
+		}
+	}
+}

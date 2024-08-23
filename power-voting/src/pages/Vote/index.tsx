@@ -12,39 +12,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, { useEffect, useState } from "react";
-import { useNavigate, Link, useParams } from "react-router-dom";
+import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
 import { message } from "antd";
 import axios from 'axios';
 import dayjs from 'dayjs';
+import React, { useEffect, useState } from "react";
+import { useTranslation } from 'react-i18next';
+import { Link, useNavigate, useParams } from "react-router-dom";
+import VoteStatusBtn from "src/components/VoteStatusBtn";
+import { Buffer, mainnetClient, roundAt, timelockEncrypt } from "tlock-js";
 import type { BaseError } from "wagmi";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { useConnectModal, useChainModal } from "@rainbow-me/rainbowkit";
-import { getContractAddress, getWeb3IpfsId } from '../../utils';
-import MDEditor from "../../components/MDEditor";
-import EllipsisMiddle from "../../components/EllipsisMiddle";
-import LoadingButton from "../../components/LoadingButton";
+import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import fileCoinAbi from "../../common/abi/power-voting.json";
 import {
+  CHOOSE_VOTE_MSG,
   IN_PROGRESS_STATUS,
+  PENDING_STATUS,
+  UPLOAD_DATA_FAIL_MSG,
+  VOTE_SUCCESS_MSG,
   WRONG_NET_STATUS,
   web3AvatarUrl,
-  CHOOSE_VOTE_MSG,
-  PENDING_STATUS,
   worldTimeApi,
-  VOTE_SUCCESS_MSG,
-  UPLOAD_DATA_FAIL_MSG,
 } from "../../common/consts";
-import { timelockEncrypt, roundAt, mainnetClient, Buffer } from "tlock-js";
-import type { ProposalList, ProposalOption } from "../../common/types";
-import "./index.less";
-import fileCoinAbi from "../../common/abi/power-voting.json";
 import { useCurrentTimezone } from "../../common/store";
-import VoteStatusBtn from "src/components/VoteStatusBtn";
-
+import type { ProposalList, ProposalOption } from "../../common/types";
+import EllipsisMiddle from "../../components/EllipsisMiddle";
+import LoadingButton from "../../components/LoadingButton";
+import MDEditor from "../../components/MDEditor";
+import { getContractAddress, getWeb3IpfsId } from '../../utils';
+import "./index.less";
 const Vote = () => {
   const { chain, isConnected } = useAccount();
   const chainId = chain?.id || 0;
   const { id, cid } = useParams();
+  const { t } = useTranslation();
   const [votingData, setVotingData] = useState({} as ProposalList);
   const { openConnectModal } = useConnectModal();
   const { openChainModal } = useChainModal();
@@ -75,7 +76,7 @@ const Vote = () => {
     if (writeContractSuccess) {
       messageApi.open({
         type: 'success',
-        content: VOTE_SUCCESS_MSG,
+        content: t(VOTE_SUCCESS_MSG),
       });
       setTimeout(() => {
         navigate("/home");
@@ -164,7 +165,7 @@ const Vote = () => {
       // If not, display a warning message
       messageApi.open({
         type: 'warning',
-        content: CHOOSE_VOTE_MSG,
+        content: t(CHOOSE_VOTE_MSG),
       });
     } else {
       // If a valid option is selected, proceed with voting
@@ -178,7 +179,7 @@ const Vote = () => {
         setLoading(false);
         messageApi.open({
           type: 'warning',
-          content: UPLOAD_DATA_FAIL_MSG,
+          content: t(UPLOAD_DATA_FAIL_MSG),
         });
         return;
       }
@@ -233,7 +234,7 @@ const Vote = () => {
                   <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                     d="m11 17l-5-5m0 0l5-5m-5 5h12"></path>
                 </svg>
-                Back
+                {t('content.back')}
               </Link>
             </div>
           </button>
@@ -249,8 +250,8 @@ const Vote = () => {
                 <VoteStatusBtn status={votingData.voteStatus} />
 
                 <div className="flex items-center justify-center ml-[12px]">
-                  <div className='text-[#4B535B] text-[14px]'>Created by</div>
-                  <div className='ml-[8px] flex items-center justify-center bg-[#F5F5F5] rounded-full h-[32px]'>
+                  <div className='text-[#4B535B] text-[14px]'>{t('content.createdby')}</div>
+                  <div className='ml-[8px] flex items-center justify-center bg-[#F5F5F5] rounded-full p-[5px]'>
                     <img className="w-[20px] h-[20px] rounded-full mr-[4px]" src={img} alt="" />
                     <a
                       className="text-[#313D4F]"
@@ -287,21 +288,21 @@ const Vote = () => {
             <div
               className="group flex h-[57px] justify-between rounded-t-none border-b border-skin-border border-solid px-4 pb-[12px] pt-3 md:rounded-t-lg">
               <h4 className="flex items-center font-medium">
-                <div>Details</div>
+                <div>{t('content.details')}</div>
               </h4>
             </div>
             <div className="p-4 leading-6 sm:leading-8">
               <div className='space-y-1 text-sm font-medium'>
                 <div className='flex justify-between'>
-                  <div>Start Time</div>
+                  <div>{t('content.startTime')}</div>
                   <span className='text-[#313D4F] text-sm font-normal'>{votingData?.startTime && dayjs(votingData.startTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
                 </div>
                 <div className='flex justify-between'>
-                  <div>End Time</div>
+                  <div>{t('content.endTime')}</div>
                   <span className='text-[#313D4F] text-sm font-normal'>{votingData?.expTime && dayjs(votingData.expTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
                 </div>
                 <div className='flex justify-between'>
-                  <div>Timezone</div>
+                  <div>{t('content.timezone')}</div>
                   <span className='text-[#313D4F] text-sm font-normal'>{timezone}</span>
                 </div>
               </div>
@@ -314,7 +315,7 @@ const Vote = () => {
             <div className="border-[#313D4F] mt-6 border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border border-solid">
               <div className="group flex h-[57px] !border-[#eeeeee] justify-between items-center border-b px-4 pb-[12px] pt-3 border-solid">
                 <h4 className="font-medium">
-                  Cast Your Vote
+                  {t('content.castVote')}
                 </h4>
               </div>
               <div className="p-4 text-center">
@@ -338,7 +339,7 @@ const Vote = () => {
                     )
                   })
                 }
-                <LoadingButton text='Vote' isFull={true} loading={loading || writeContractPending || transactionLoading} handleClick={startVoting} />
+                <LoadingButton text={t('content.vote')} isFull={true} loading={loading || writeContractPending || transactionLoading} handleClick={startVoting} />
               </div>
             </div>
           </div>

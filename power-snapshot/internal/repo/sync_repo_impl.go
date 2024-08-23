@@ -105,6 +105,7 @@ func (s *SyncRepoImpl) GetAddrSyncedDate(ctx context.Context, netId int64, addr 
 	m := strings.Split(res, ",")
 	return m, nil
 }
+
 func (s *SyncRepoImpl) SetAddrSyncedDate(ctx context.Context, netId int64, addr string, dates []string) error {
 	key := fmt.Sprintf(constant.RedisAddrSyncedDate, netId)
 	datesStr := strings.Join(dates, ",")
@@ -248,4 +249,113 @@ func (s *SyncRepoImpl) ExistDeveloperWeights(ctx context.Context, dateStr string
 	}
 
 	return exist, nil
+}
+
+func (s *SyncRepoImpl) GetDict(ctx context.Context, netId int64) (int64, error) {
+	key := fmt.Sprintf(constant.RedisDict, netId)
+
+	val, err := s.redisClient.Get(ctx, key).Int()
+	if err == redis.Nil {
+		return 0, nil
+	} else if err != nil {
+		return 0, err
+	}
+	return int64(val), nil
+}
+
+func (s *SyncRepoImpl) SetDelegateEvent(ctx context.Context, netId int64, createDelegateEvents []models.CreateDelegateEvent, deleteDelegateEvents []models.DeleteDelegateEvent, endBlock int64) error {
+	// Start a new transaction
+	tx := s.redisClient.TxPipeline()
+
+	if len(createDelegateEvents) > 0 {
+		for _, event := range createDelegateEvents {
+			// Serialize the event to JSON
+			eventJSON, err := json.Marshal(event)
+			if err != nil {
+				return fmt.Errorf("failed to serialize CreateDelegateEvent: %v", err)
+			}
+
+			// Determine the Redis sorted set key
+			key := fmt.Sprintf(constant.RedisCreateDelegateEvent, netId, event.VoterAddress)
+
+			// Queue the ZADD command in the transaction
+			tx.ZAdd(ctx, key, redis.Z{
+				Score:  float64(event.BlockHeight),
+				Member: eventJSON,
+			})
+		}
+	}
+
+	if len(deleteDelegateEvents) > 0 {
+		for _, event := range deleteDelegateEvents {
+			// Serialize the event to JSON
+			eventJSON, err := json.Marshal(event)
+			if err != nil {
+				return fmt.Errorf("failed to serialize DeleteDelegateEvent: %v", err)
+			}
+
+			// Determine the Redis sorted set key
+			key := fmt.Sprintf(constant.RedisDeleteDelegateEvent, netId, event.VoterAddress)
+
+			// Queue the ZADD command in the transaction
+			tx.ZAdd(ctx, key, redis.Z{
+				Score:  float64(event.BlockHeight),
+				Member: eventJSON,
+			})
+		}
+	}
+
+	// Update the block height in the same transaction
+	dictKey := fmt.Sprintf(constant.RedisDict, netId)
+	tx.Set(ctx, dictKey, endBlock, 0)
+
+	// Execute the transaction
+	_, err := tx.Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to execute Redis transaction: %v", err)
+	}
+
+	return nil
+}
+
+func (s *SyncRepoImpl) GetDelegateEvent(ctx context.Context, netId int64, addr string, maxBlockHeight int64) (models.CreateDelegateEvent, models.DeleteDelegateEvent, error) {
+	// Query CreateDelegateEvent
+	createKey := fmt.Sprintf(constant.RedisCreateDelegateEvent, netId, addr)
+	createResult, err := s.redisClient.ZRevRangeByScore(ctx, createKey, &redis.ZRangeBy{
+		Max:   fmt.Sprintf("%d", maxBlockHeight),
+		Min:   "-inf",
+		Count: 1,
+	}).Result()
+	if err != nil {
+		return models.CreateDelegateEvent{}, models.DeleteDelegateEvent{}, fmt.Errorf("failed to get CreateDelegateEvent from Redis: %v", err)
+	}
+
+	var createEvent models.CreateDelegateEvent
+	if len(createResult) > 0 {
+		err = json.Unmarshal([]byte(createResult[0]), &createEvent)
+		if err != nil {
+			return models.CreateDelegateEvent{}, models.DeleteDelegateEvent{}, fmt.Errorf("failed to deserialize CreateDelegateEvent: %v", err)
+		}
+	}
+
+	// Query DeleteDelegateEvent
+	deleteKey := fmt.Sprintf(constant.RedisDeleteDelegateEvent, netId, addr)
+	deleteResult, err := s.redisClient.ZRevRangeByScore(ctx, deleteKey, &redis.ZRangeBy{
+		Max:   fmt.Sprintf("%d", maxBlockHeight),
+		Min:   "-inf",
+		Count: 1,
+	}).Result()
+	if err != nil {
+		return models.CreateDelegateEvent{}, models.DeleteDelegateEvent{}, fmt.Errorf("failed to get DeleteDelegateEvent from Redis: %v", err)
+	}
+
+	var deleteEvent models.DeleteDelegateEvent
+	if len(deleteResult) > 0 {
+		err = json.Unmarshal([]byte(deleteResult[0]), &deleteEvent)
+		if err != nil {
+			return models.CreateDelegateEvent{}, models.DeleteDelegateEvent{}, fmt.Errorf("failed to deserialize DeleteDelegateEvent: %v", err)
+		}
+	}
+
+	return createEvent, deleteEvent, nil
 }

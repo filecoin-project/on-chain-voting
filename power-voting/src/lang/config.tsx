@@ -12,14 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package constant
-
-const (
-	RedisDateHeight          = "%d_DATA_HEIGHT"
-	RedisAddrSyncedDate      = "%d_SYNCED_DATE"
-	RedisAddrPower           = "%d_POWER_%s"
-	RedisDeveloperPower      = "DEV_POWER"
-	RedisDict                = "%d_DICT"
-	RedisCreateDelegateEvent = "%d_CREATE_DELEGATE_EVENT_%s"
-	RedisDeleteDelegateEvent = "%d_DELETE_DELEGATE_EVENT_%s"
-)
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+// Chinese language pack
+import zh from './zh.json';
+// English language pack
+import en from './en.json';
+ 
+const resources = {
+  en: {
+    translation: en
+  },
+  zh: {
+    translation: zh
+  }
+};
+ 
+i18n.use(initReactI18next).init({
+  resources,
+  lng: 'en', //Set default language
+  interpolation: {
+    escapeValue: false
+  }
+});
+ 
+export default i18n;
