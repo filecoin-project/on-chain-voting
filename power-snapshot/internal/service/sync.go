@@ -19,6 +19,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/nats-io/nats.go/jetstream"
 	"math/big"
 	"power-snapshot/constant"
@@ -52,6 +55,10 @@ type SyncRepo interface {
 	GetDeveloperWeights(ctx context.Context, dateStr string) (map[string]int64, error)
 	GetUserDeveloperWeights(ctx context.Context, dateStr string, username string) (int64, error)
 	ExistDeveloperWeights(ctx context.Context, dateStr string) (bool, error)
+
+	GetDict(ctx context.Context, netId int64) (int64, error)
+	SetDelegateEvent(ctx context.Context, netId int64, createDelegateEvent []models.CreateDelegateEvent, deleteDelegateEvent []models.DeleteDelegateEvent, endBlock int64) error
+	GetDelegateEvent(ctx context.Context, netId int64, addr string, maxBlockHeight int64) (models.CreateDelegateEvent, models.DeleteDelegateEvent, error)
 }
 
 type SyncService struct {
@@ -538,4 +545,117 @@ func (s *SyncService) StartSyncWorker(ctx context.Context, netID int64) error {
 			}()
 		}
 	}
+}
+
+func (s *SyncService) GetDelegateEvent(ctx context.Context, netID int64) ([]models.CreateDelegateEvent, []models.DeleteDelegateEvent, int64, error) {
+	ethClient, err := s.baseRepo.GetEthClient(ctx, netID)
+	if err != nil {
+		zap.L().Error("failed to get ethClient", zap.Error(err))
+		return nil, nil, 0, err
+	}
+
+	rpcClient, err := s.baseRepo.GetLotusClientByHashKey(ctx, netID, carbon.Now().SubDay().EndOfDay().ToDateString())
+	if err != nil {
+		zap.L().Error("failed to get rpcClient", zap.Error(err))
+		return nil, nil, 0, err
+	}
+
+	endBlock, err := utils.GetNewestHeight(ctx, rpcClient)
+	if err != nil {
+		zap.L().Error("failed to height dict", zap.Error(err))
+		return nil, nil, 0, err
+	}
+
+	startBlock, err := s.syncRepo.GetDict(ctx, netID)
+	if err != nil {
+		zap.L().Error("failed to get dict", zap.Error(err))
+		return nil, nil, 0, err
+	}
+
+	if startBlock == 0 {
+		startBlock = ethClient.OracleStartHeight
+	}
+
+	// Define block range size for each query
+	blockRange := int64(2880)
+
+	// Define the event signature hash
+	createDelegateSignature := []byte("CreateDelegate(address,uint64[],string)")
+	deleteDelegateSignature := []byte("DeleteDelegate(address,uint64[],uint64[],string)")
+
+	createDelegateEventHash := common.BytesToHash(crypto.Keccak256(createDelegateSignature))
+	deleteDelegateEventHash := common.BytesToHash(crypto.Keccak256(deleteDelegateSignature))
+
+	// Query logs in batches
+	var createDelegateEvent []models.CreateDelegateEvent
+	var deleteDelegateEvent []models.DeleteDelegateEvent
+
+	for fromBlock := startBlock; fromBlock <= endBlock; fromBlock += blockRange {
+		toBlock := fromBlock + blockRange - 1
+		if toBlock > endBlock {
+			toBlock = endBlock
+		}
+
+		query := ethereum.FilterQuery{
+			FromBlock: big.NewInt(fromBlock),
+			ToBlock:   big.NewInt(toBlock),
+			Addresses: []common.Address{ethClient.OracleContract},
+		}
+
+		logs, err := ethClient.ContractClient.FilterLogs(context.Background(), query)
+		if err != nil {
+			zap.L().Error("failed to retrieve logs", zap.Error(err))
+			return nil, nil, 0, err
+		}
+
+		// Print and decode each log
+		if len(logs) != 0 {
+			for _, vLog := range logs {
+				// Check if the log is a CreateDelegate event
+				if vLog.Topics[0] == createDelegateEventHash {
+					event := new(models.CreateDelegateEvent)
+					err := ethClient.OracleAbi.UnpackIntoInterface(event, "CreateDelegate", vLog.Data)
+					if err != nil {
+						zap.L().Error("failed to unpack log data", zap.Error(err))
+						return nil, nil, 0, err
+					}
+
+					// Print decoded event data
+					event.BlockHeight = int(vLog.BlockNumber)
+					createDelegateEvent = append(createDelegateEvent, *event)
+				}
+				if vLog.Topics[0] == deleteDelegateEventHash {
+					event := new(models.DeleteDelegateEvent)
+					err := ethClient.OracleAbi.UnpackIntoInterface(event, "DeleteDelegate", vLog.Data)
+					if err != nil {
+						zap.L().Error("failed to unpack log data", zap.Error(err))
+						return nil, nil, 0, err
+					}
+
+					// Print decoded event data
+					event.BlockHeight = int(vLog.BlockNumber)
+					deleteDelegateEvent = append(deleteDelegateEvent, *event)
+				}
+			}
+		}
+	}
+	return createDelegateEvent, deleteDelegateEvent, endBlock, nil
+}
+
+func (s *SyncService) SyncDelegateEvent(ctx context.Context, netID int64) error {
+	createDelegateEvent, deleteDelegateEvent, endBlock, err := s.GetDelegateEvent(ctx, netID)
+	if err != nil {
+		return err
+	}
+	err = s.syncRepo.SetDelegateEvent(ctx, netID, createDelegateEvent, deleteDelegateEvent, endBlock)
+	if err != nil {
+		return err
+	}
+
+	zap.L().Info("sync event",
+		zap.Int64("EndBlock", endBlock),
+		zap.Any("CreateDelegateEvent", createDelegateEvent),
+		zap.Any("DeleteDelegateEvent", deleteDelegateEvent))
+	return nil
+
 }

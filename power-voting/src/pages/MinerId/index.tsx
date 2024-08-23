@@ -12,29 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import { message } from 'antd';
-import Table from '../../components/Table';
-import LoadingButton from '../../components/LoadingButton';
+import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from 'react-i18next';
+import { Link, useNavigate } from "react-router-dom";
 import type { BaseError } from "wagmi";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { filecoinCalibration } from "wagmi/chains";
+import oraclePowerAbi from "../../common/abi/oracle-powers.json";
+import fileCoinAbi from "../../common/abi/power-voting.json";
 import {
   DUPLICATED_MINER_ID_MSG,
   STORING_DATA_MSG,
   WRONG_MINER_ID_MSG
 } from "../../common/consts";
-import Loading from "../../components/Loading";
-import { getContractAddress, hasDuplicates } from "../../utils";
-import fileCoinAbi from "../../common/abi/power-voting.json";
-import oraclePowerAbi from "../../common/abi/oracle-powers.json";
 import { useMinerIdSet, useOwnerDataSet } from "../../common/hooks";
-
+import Loading from "../../components/Loading";
+import LoadingButton from '../../components/LoadingButton';
+import Table from '../../components/Table';
+import { getContractAddress, hasDuplicates } from "../../utils";
 const MinerId = () => {
   const { chain, isConnected, address } = useAccount();
   const chainId = chain?.id || 0;
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const prevAddressRef = useRef(address);
   const [minerIds, setMinerIds] = useState(['']);
   const [contracts, setContracts] = useState([] as any);
@@ -86,7 +87,7 @@ const MinerId = () => {
     if (writeContractSuccess) {
       messageApi.open({
         type: 'success',
-        content: STORING_DATA_MSG,
+        content: t(STORING_DATA_MSG),
       });
       setTimeout(() => {
         navigate("/home");
@@ -165,7 +166,7 @@ const MinerId = () => {
     if (minerIds.length && hasDuplicates(minerIds)) {
       messageApi.open({
         type: 'error',
-        content: DUPLICATED_MINER_ID_MSG,
+        content: t(DUPLICATED_MINER_ID_MSG),
       });
       return;
     }
@@ -179,7 +180,7 @@ const MinerId = () => {
       console.log(hasError)
       messageApi.open({
         type: 'warning',
-        content: WRONG_MINER_ID_MSG,
+        content: t(WRONG_MINER_ID_MSG),
       });
       setLoading(false);
       return;
@@ -196,7 +197,7 @@ const MinerId = () => {
       if (!allSuccessful) {
         messageApi.open({
           type: 'error',
-          content: WRONG_MINER_ID_MSG,
+          content: t(WRONG_MINER_ID_MSG),
         });
         setLoading(false);
         return;
@@ -225,19 +226,19 @@ const MinerId = () => {
     getMinerIdsLoading ? <Loading /> : <div className="px-3 mb-6 md:px-0">
       {contextHolder}
       <button>
-        <div className="inline-flex items-center gap-1 text-skin-text hover:text-skin-link">
+        <div className="inline-flex items-center mb-8 gap-1 text-skin-text hover:text-skin-link">
           <Link to="/home" className="flex items-center">
             <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
               <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                 d="m11 17l-5-5m0 0l5-5m-5 5h12" />
             </svg>
-            Back
+            {t('content.back')}
           </Link>
         </div>
       </button>
       <div className='flow-root space-y-8'>
         <Table
-          title='Miner IDs Management'
+          title={t('content.minerIDsManagement')}
           list={[
             {
               name: 'Miner IDs',
@@ -245,7 +246,7 @@ const MinerId = () => {
               comp: (
                 <textarea
                   defaultValue={minerIds}
-                  placeholder='Input miner ID (For multiple miner IDs, use commas to separate them.)'
+                  placeholder={t('content.inputMinerIDmultiplEseparate')}
                   className='form-input h-[320px] w-full rounded bg-[#ffffff] border border-[#EEEEEE] text-black'
                   onBlur={e => { handleMinerChange(e.target.value) }}
                 />
@@ -255,7 +256,7 @@ const MinerId = () => {
         />
 
         <div className='text-center'>
-          <LoadingButton text='Submit' loading={loading || writeContractPending || transactionLoading} handleClick={onSubmit} />
+          <LoadingButton text={t('content.submit')} loading={loading || writeContractPending || transactionLoading} handleClick={onSubmit} />
         </div>
       </div>
     </div>

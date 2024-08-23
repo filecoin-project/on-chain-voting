@@ -110,15 +110,16 @@ func getGoEthClient(network models.Network) (models.GoEthClient, error) {
 
 	// generate goEthClient
 	goEthClient := models.GoEthClient{
-		Id:             network.Id,
-		Name:           network.Name,
-		IdPrefix:       network.IdPrefix,
-		QueryClient:    rpcs,
-		QueryRpc:       network.QueryRpc,
-		ContractClient: contractClient,
-		ContractRpc:    network.ContractRpc,
-		OracleAbi:      oracleAbi,
-		OracleContract: oracleContract,
+		Id:                network.Id,
+		Name:              network.Name,
+		IdPrefix:          network.IdPrefix,
+		QueryClient:       rpcs,
+		QueryRpc:          network.QueryRpc,
+		ContractClient:    contractClient,
+		OracleStartHeight: network.OracleStartHeight,
+		ContractRpc:       network.ContractRpc,
+		OracleAbi:         oracleAbi,
+		OracleContract:    oracleContract,
 	}
 	return goEthClient, nil
 }

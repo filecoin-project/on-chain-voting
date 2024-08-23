@@ -116,6 +116,11 @@ func main() {
 			Spec: "0 0 0/1 * * ?",
 			Job:  task.SyncDevWeightStepDay(syncSrv),
 		},
+		{
+			// every day 1 am
+			Spec: "0 0 1 * * ?",
+			Job:  task.SyncDelegateEvent(syncSrv),
+		},
 	}
 	scheduler.TaskScheduler(jobs)
 	// init handler

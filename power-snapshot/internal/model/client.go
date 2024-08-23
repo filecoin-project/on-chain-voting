@@ -22,13 +22,14 @@ import (
 
 // GoEthClient represents the structure for interacting with the Ethereum client.
 type GoEthClient struct {
-	Id             int64               // Unique identifier for the client
-	Name           string              // Name of the client
-	IdPrefix       string              // id prefix
-	QueryClient    []*ethclient.Client // Ethereum client instance
-	ContractClient *ethclient.Client
-	ContractRpc    string         // RPC endpoint for the contract client
-	QueryRpc       []string       // RPC endpoint for the query client
-	OracleAbi      abi.ABI        // ABI for Oracle contract
-	OracleContract common.Address // Contract address for Oracle
+	Id                int64               // Unique identifier for the client
+	Name              string              // Name of the client
+	IdPrefix          string              // id prefix
+	QueryClient       []*ethclient.Client // Ethereum client instance
+	ContractClient    *ethclient.Client
+	ContractRpc       string         // RPC endpoint for the contract client
+	QueryRpc          []string       // RPC endpoint for the query client
+	OracleAbi         abi.ABI        // ABI for Oracle contract
+	OracleContract    common.Address // Contract address for Oracle
+	OracleStartHeight int64          // Start height
 }

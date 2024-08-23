@@ -1,3 +1,17 @@
+// Copyright (C) 2023-2024 StorSwift Inc.
+// This file is part of the PowerVoting library.
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at:
+// http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package service
 
 import (
@@ -5,7 +19,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/nats-io/nats.go/jetstream"
+	"github.com/redis/go-redis/v9"
 	"github.com/ybbus/jsonrpc/v3"
+	"hash/fnv"
 	"power-snapshot/config"
 	"power-snapshot/constant"
 	"power-snapshot/internal/data"
@@ -29,8 +45,21 @@ type mockBaseRepo struct {
 	DhMap             map[string]int64
 }
 
-func (m *mockBaseRepo) GetLotusClientByHashKey(ctx context.Context, netId int64, key string) (jsonrpc.RPCClient, error) {
-	return nil, nil
+func (m *mockBaseRepo) GetLotusClientByHashKey(ctx context.Context, netID int64, key string) (jsonrpc.RPCClient, error) {
+	manager, err := utils.NewGoEthClientManager(config.Client.Network)
+	if err != nil {
+		return nil, err
+	}
+	client, err := manager.GetClient(netID)
+	h := fnv.New32a()
+	key = fmt.Sprintf("%s_%d", key, time.Now().UnixNano())
+	_, err = h.Write([]byte(key))
+	if err != nil {
+		return nil, err
+	}
+	index := h.Sum32() % uint32(len(client.QueryRpc))
+
+	return jsonrpc.NewClient(client.QueryRpc[index]), nil
 }
 
 func (m *mockBaseRepo) ListVoterAddr(ctx context.Context, netID int64) ([]string, error) {
@@ -111,6 +140,94 @@ func (m *mockBaseRepo) GetVoteInfo(ctx context.Context, netID int64, addr string
 type mockSyncRepo struct {
 	AddrSyncedDateMap map[string][]string
 	AddrPowerMap      map[string]map[string]models.SyncPower
+}
+
+func (m *mockSyncRepo) GetDelegateEvent(ctx context.Context, netId int64, addr string, maxBlockHeight int64) (models.CreateDelegateEvent, models.DeleteDelegateEvent, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m *mockSyncRepo) GetDict(ctx context.Context, netId int64) (int64, error) {
+	config.InitLogger()
+	err := config.InitConfig("../../")
+	if err != nil {
+		return 0, err
+	}
+	client, err := data.NewRedisClient()
+	if err != nil {
+		return 0, err
+	}
+
+	key := fmt.Sprintf(constant.RedisDict, netId)
+
+	val, err := client.Get(ctx, key).Int()
+	if err == redis.Nil {
+		return 0, nil
+	} else if err != nil {
+		return 0, err
+	}
+	return int64(val), nil
+}
+
+func (m *mockSyncRepo) SetDelegateEvent(ctx context.Context, netId int64, createDelegateEvents []models.CreateDelegateEvent, deleteDelegateEvents []models.DeleteDelegateEvent, endBlock int64) error {
+	config.InitLogger()
+	err := config.InitConfig("../../")
+	if err != nil {
+		return err
+	}
+	client, err := data.NewRedisClient()
+	if err != nil {
+		return err
+	}
+
+	// Start a new transaction
+	tx := client.TxPipeline()
+
+	for _, event := range createDelegateEvents {
+		// Serialize the event to JSON
+		eventJSON, err := json.Marshal(event)
+		if err != nil {
+			return fmt.Errorf("failed to serialize CreateDelegateEvent: %v", err)
+		}
+
+		// Determine the Redis sorted set key
+		key := fmt.Sprintf(constant.RedisCreateDelegateEvent, netId, event.VoterAddress)
+
+		// Queue the ZADD command in the transaction
+		tx.ZAdd(ctx, key, redis.Z{
+			Score:  float64(event.BlockHeight),
+			Member: eventJSON,
+		})
+	}
+
+	for _, event := range deleteDelegateEvents {
+		// Serialize the event to JSON
+		eventJSON, err := json.Marshal(event)
+		if err != nil {
+			return fmt.Errorf("failed to serialize DeleteDelegateEvent: %v", err)
+		}
+
+		// Determine the Redis sorted set key
+		key := fmt.Sprintf(constant.RedisDeleteDelegateEvent, netId, event.VoterAddress)
+
+		// Queue the ZADD command in the transaction
+		tx.ZAdd(ctx, key, redis.Z{
+			Score:  float64(event.BlockHeight),
+			Member: eventJSON,
+		})
+	}
+
+	// Update the block height in the same transaction
+	dictKey := fmt.Sprintf(constant.RedisDict, netId)
+	tx.Set(ctx, dictKey, endBlock, 0)
+
+	// Execute the transaction
+	_, err = tx.Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to execute Redis transaction: %v", err)
+	}
+
+	return nil
 }
 
 func (m *mockSyncRepo) SetDeveloperWeights(ctx context.Context, dateStr string, in map[string]int64) error {
@@ -357,4 +474,19 @@ func TestProducer(t *testing.T) {
 	}
 
 	select {}
+}
+
+func TestSyncCreateDelegateEvent(t *testing.T) {
+	config.InitLogger()
+	err := config.InitConfig("../..")
+	assert.NoError(t, err)
+	b := &mockBaseRepo{}
+	r := &mockSyncRepo{
+		AddrPowerMap:      make(map[string]map[string]models.SyncPower),
+		AddrSyncedDateMap: map[string][]string{},
+	}
+	sync := NewSyncService(b, r)
+
+	err = sync.SyncDelegateEvent(context.Background(), testNetID)
+	assert.NoError(t, err)
 }

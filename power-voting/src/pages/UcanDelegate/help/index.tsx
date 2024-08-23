@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from "react";
 import type { FC } from "react";
-import { useLocation, useNavigate, Link } from "react-router-dom";
+import React from "react";
+import { useTranslation } from 'react-i18next';
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import MDEditor from "../../../components/MDEditor";
 import './index.less';
-
 const Index: FC = () => {
   const location = useLocation();
   const doc = location.state?.doc;
   const navigate = useNavigate();
+  const { t } = useTranslation();
  
   return (
     <div>
@@ -33,7 +34,7 @@ const Index: FC = () => {
                 <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                       d="m11 17l-5-5m0 0l5-5m-5 5h12"></path>
               </svg>
-              Back
+              {t('content.back')}
             </Link>
           </div>
         </button>

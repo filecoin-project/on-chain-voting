@@ -64,11 +64,35 @@ export interface ProposalList extends ProposalData {
 }
 
 export interface ProposalDraft {
-  Timezone: string
+  timezone: string
   Time: string
-  Name: string
-  Descriptions: string
+  name: string
+  descriptions: string
   Option: string
   Address: string
-  ChainId: number
+  ChainId: number,
+  startTime:number,
+}
+export interface VotingList{
+  proposalId: number, 
+  cid: string, 
+  address: string, 
+  startTime: number, 
+  expTime: number, 
+  chainId: number, 
+  name: string, 
+  timezone: string, 
+  descriptions: string, 
+  githubName: string, 
+  githubAvatar: string, 
+  gmtOffset: string, 
+  currentTime: number, 
+  createdAt: number, 
+  updatedAt: number, 
+  voteResult: Array<any>, 
+  time: Array<any>, 
+  option: Array<string>, 
+  showTime: Array<any>, 
+  status: number, 
+  voteCount: number 
 }

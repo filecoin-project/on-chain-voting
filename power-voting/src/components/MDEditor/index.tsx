@@ -157,7 +157,7 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
     readOnly ?
       <div className='relative'>
         <MdEditor
-          className={`rcmd scrollD  ${className} ${moreButton && showMore ? 'mb-10' : ''}`}
+          className={`rcmd scrollD  ${className} ${moreButton && showMore ? 'mb-20' : ''}`}
           value={value}
           readOnly={readOnly}
           style={{ ...style, maxHeight: moreButton && showMore ? '70vh' : 'fit-content' }}
