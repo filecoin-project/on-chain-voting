@@ -282,7 +282,7 @@ const App: React.FC = () => {
     }} locale={language.value}>
       <div className="layout font-body">
         {!isLanding && <header className='h-[96px] bg-[#ffffff] border-b border-solid border-[#DFDFDF]'>
-          <div className='w-full h-[88px] px-60 flex items-center justify-between'>
+          <div className='w-full h-[88px] px-40 flex items-center justify-between'>
             <div className='flex items-center'>
               <div className='flex-shrink-0'>
                 <Link to='/'>
