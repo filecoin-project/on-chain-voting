@@ -138,7 +138,6 @@ const Home = () => {
       }, 3000);
     }
   }, [isFetched]);
-console.log('isFetchedisFetchedisFetched',isFetched,shouldRefetch)
   /**
    * get proposal list
    * @param page
