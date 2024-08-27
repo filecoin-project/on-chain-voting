@@ -13,7 +13,14 @@ export const useCurrentTimezone = create(set => ({
   timezone: '',
   setTimezone: (newTimezone: '') => set({ timezone: newTimezone }),
 }));
-
+export const useVotingList = create(set => ({
+  votingData: {
+    votingList: [],
+    totalPage: 10,
+    searchKey:''
+  },
+  setVotingList: (newData: any) => set({ votingData: newData }),
+}));
 export const useStoringCid = create<StoringCidState>((set, get) => ({
   storingCid: localStorage.getItem('storingCid') ? JSON.parse(localStorage.getItem('storingCid')!) : [],
 
