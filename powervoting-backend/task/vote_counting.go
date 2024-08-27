@@ -24,6 +24,7 @@ import (
 	"powervoting-server/db"
 	"powervoting-server/model"
 	"powervoting-server/utils"
+	"strconv"
 	"sync"
 	"time"
 
@@ -52,7 +53,6 @@ func VotingCountHandler() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			zap.L().Info("vote count start:", zap.Int64("networkId", network.Id))
 			if err := VotingCount(ethClient, db.Engine); err != nil {
 				mu.Lock()
 				errList = append(errList, err)
@@ -101,32 +101,47 @@ func VotingCount(ethClient model.GoEthClient, db db.DataRepo) error {
 		zap.L().Error("get proposal from db error:", zap.Error(err))
 		return err
 	}
+
 	for _, proposal := range proposals {
+
+		zap.L().Info("single vote counting, proposal: ", zap.Any("proposalId", proposal.ProposalId), zap.Reflect("proposal", proposal))
+		hasErr := false
+
 		err := SyncVote(ethClient, proposal.ProposalId, db)
 		if err != nil {
-			zap.L().Error("sync vote error:", zap.Error(err))
+			zap.L().Error("sync vote error:", zap.Any("proposalId", proposal.ProposalId), zap.Error(err))
 		}
+
 		voteInfos, err := db.GetVoteList(ethClient.Id, proposal.ProposalId)
 		if err != nil {
-			zap.L().Error("get vote info from db error:", zap.Error(err))
+			zap.L().Error("get vote info from db error:", zap.Any("proposalId", proposal.ProposalId), zap.Error(err))
 			continue
 		}
+
 		var voteList []model.Vote4Counting
-		zap.L().Info("voteInfos: ", zap.Reflect("voteInfos", voteInfos))
+		zap.L().Info("voteInfos: ", zap.Any("proposalId", proposal.ProposalId), zap.Reflect("voteInfos", voteInfos))
 		for _, voteInfo := range voteInfos {
 			list, err := utils.DecodeVoteList(voteInfo)
 			if err != nil {
 				zap.L().Error("get vote info from IPFS or decrypt error: ", zap.Error(err))
-				return err
+				hasErr = true
+				break
 			}
 			voteList = append(voteList, list...)
 		}
+
+		if hasErr {
+			zap.L().Info("single vote counting end : ", zap.Any("proposalId", proposal.ProposalId))
+			continue
+		}
+
 		zap.L().Info("voteList: ", zap.Reflect("voteList", voteList))
 
 		num, err := rand.Int(rand.Reader, big.NewInt(61))
 		if err != nil {
 			zap.L().Error("Generate random number error: ", zap.Error(err))
-			return err
+			zap.L().Info("single vote counting end : ", zap.Any("proposalId", proposal.ProposalId))
+			continue
 		}
 
 		var votePowerList []model.VotePower
@@ -141,7 +156,8 @@ func VotingCount(ethClient model.GoEthClient, db db.DataRepo) error {
 			power, err := client.GetAddressPower(ethClient.Id, vote.Address, int32(num.Int64()))
 			if err != nil {
 				zap.L().Error("get power error: ", zap.Error(err))
-				return err
+				hasErr = true
+				break
 			}
 
 			zap.L().Info("address and power", zap.Reflect("address", vote.Address), zap.Reflect("power", power))
@@ -153,6 +169,10 @@ func VotingCount(ethClient model.GoEthClient, db db.DataRepo) error {
 				totalDeveloperPower.Add(totalDeveloperPower, power.DeveloperPower)
 				addressIsCount[vote.Address] = true
 			}
+		}
+		if hasErr {
+			zap.L().Info("single vote counting end : ", zap.Any("proposalId", proposal.ProposalId))
+			continue
 		}
 
 		zap.L().Info("total data",
@@ -285,6 +305,7 @@ func VotingCount(ethClient model.GoEthClient, db db.DataRepo) error {
 		options, err := utils.GetOptions(proposal.Cid)
 		if err != nil {
 			zap.L().Error("get options error: ", zap.Error(err))
+			zap.L().Info("single vote counting end : ", zap.Any("proposalId", proposal.ProposalId))
 			continue
 		}
 		for i := 0; i < len(options); i++ {
@@ -297,6 +318,7 @@ func VotingCount(ethClient model.GoEthClient, db db.DataRepo) error {
 			voteResultList = append(voteResultList, voteResult)
 		}
 		// Save vote history and vote result to database and update status
+		zap.L().Info("save vote history and vote result", zap.String("proposal id", strconv.FormatInt(proposal.Id, 10)))
 		db.VoteResult(proposal.Id, voteHistory, voteResultList)
 	}
 	return nil

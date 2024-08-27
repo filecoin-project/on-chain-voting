@@ -26,4 +26,12 @@ const (
 
 	// VoteReject represents the rejection vote status.
 	VoteReject = 1
+
+	ProposalStatusStoring    = 0
+	ProposalStatusPending    = 1
+	ProposalStatusInProgress = 2
+	ProposalStatusCounting   = 3
+	ProposalStatusCompleted  = 4
+	ProposalStatusRejected   = 5
+	ProposalStatusPassed     = 6
 )
