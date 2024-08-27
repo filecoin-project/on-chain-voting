@@ -20,7 +20,7 @@
     "@tanstack/react-query": "^5.35.1",
     "@web3-storage/w3up-client": "^13.0.1",
     "antd": "5.17.3",
-    "axios": "^1.6.0",
+    "axios": "^1.7.4",
     "classnames": "latest",
     "cross-env": "^7.0.3",
     "dayjs": "^1.11.9",
