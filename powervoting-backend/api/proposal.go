@@ -75,7 +75,7 @@ func VoteHistory(c *gin.Context) {
 func W3Upload(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil {
-		zap.L().Debug("1 upload file error: ", zap.Error(err))
+		zap.L().Info("get upload file error: ", zap.Error(err))
 		response.SystemError(c)
 		return
 	}
@@ -109,7 +109,7 @@ func W3Upload(c *gin.Context) {
 	err = cmd.Run()
 	if err != nil {
 		os.Remove(absolutePath)
-		zap.L().Debug("2 upload file error: ", zap.Error(err))
+		zap.L().Info("w3 upload file error: ", zap.Error(err))
 		response.SystemError(c)
 		return
 	}
@@ -117,7 +117,7 @@ func W3Upload(c *gin.Context) {
 	err = json.Unmarshal([]byte(outBuf.Bytes()), &jsonData)
 	if err != nil {
 		os.Remove(absolutePath)
-		zap.L().Debug("3 upload file error: ", zap.Error(err))
+		zap.L().Info("get upload file error: ", zap.Error(err))
 		response.SystemError(c)
 		return
 	}

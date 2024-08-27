@@ -42,7 +42,7 @@ var Engine *Mysql
 func InitMysql() {
 	var err error
 	db, err := gorm.Open(mysql.New(mysql.Config{
-		DSN:                       fmt.Sprintf("%s:%s@tcp(%s)/pvnew?charset=utf8&parseTime=True&loc=Local", config.Client.Mysql.Username, config.Client.Mysql.Password, config.Client.Mysql.Url),
+		DSN:                       fmt.Sprintf("%s:%s@tcp(%s)/power-voting-filecoin?charset=utf8&parseTime=True&loc=Local", config.Client.Mysql.Username, config.Client.Mysql.Password, config.Client.Mysql.Url),
 		DefaultStringSize:         256,   // string size
 		DisableDatetimePrecision:  true,  // datetime precision is disabled. Databases earlier than MySQL 5.6 do not support dateTime precision
 		DontSupportRenameIndex:    true,  // Rename indexes by deleting and creating new indexes. Databases before MySQL 5.7 and MariaDB do not support rename indexes
