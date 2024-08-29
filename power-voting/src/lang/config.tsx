@@ -12,26 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package constant
-
-const (
-	// ProposalStartKey is the key used to record the start of proposals.
-	ProposalStartKey = "ProposalStartKey"
-
-	// VoteStartKey is the key used to record the start of votes.
-	VoteStartKey = "VoteStartKey"
-
-	// VoteApprove represents the approval vote status.
-	VoteApprove = 0
-
-	// VoteReject represents the rejection vote status.
-	VoteReject = 1
-
-	ProposalStatusStoring    = 0
-	ProposalStatusPending    = 1
-	ProposalStatusInProgress = 2
-	ProposalStatusCounting   = 3
-	ProposalStatusCompleted  = 4
-	ProposalStatusRejected   = 5
-	ProposalStatusPassed     = 6
-)
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+// Chinese language pack
+import zh from './zh.json';
+// English language pack
+import en from './en.json';
+ 
+const resources = {
+  en: {
+    translation: en
+  },
+  zh: {
+    translation: zh
+  }
+};
+ 
+i18n.use(initReactI18next).init({
+  resources,
+  lng: 'en', //Set default language
+  interpolation: {
+    escapeValue: false
+  }
+});
+ 
+export default i18n;
