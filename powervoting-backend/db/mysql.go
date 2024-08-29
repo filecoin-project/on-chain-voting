@@ -86,7 +86,7 @@ func InitMysql() {
 // It returns the list of proposals and any error encountered during the database query.
 func (m *Mysql) GetProposalList(network int64, timestamp int64) ([]model.Proposal, error) {
 	var proposalList []model.Proposal
-	tx := m.Model(model.Proposal{}).Where("network = ? and exp_time <= ? and status = 0", network, timestamp).Find(&proposalList)
+	tx := m.Model(model.Proposal{}).Where("network = ? and exp_time <= ? and status = ?", network, timestamp, constant.ProposalStatusPending).Order("id desc").Find(&proposalList)
 	return proposalList, tx.Error
 }
 
@@ -119,7 +119,7 @@ func (m *Mysql) VoteResult(proposalId int64, history model.VoteCompleteHistory, 
 			zap.L().Error("batch create error: ", zap.Error(create.Error))
 			return create.Error
 		}
-		update := tx.Model(model.Proposal{}).Where("id", proposalId).Update("status", 1)
+		update := tx.Model(model.Proposal{}).Where("id", proposalId).Update("status", constant.ProposalStatusCompleted)
 		if update.Error != nil {
 			zap.L().Error("update proposal status error: ", zap.Error(update.Error))
 			return update.Error
@@ -198,6 +198,26 @@ func (m *Mysql) CreateProposal(in *model.Proposal) (int64, error) {
 	if err := m.Model(model.Proposal{}).Create(in).Error; err != nil {
 		zap.L().Error("create proposal error: ", zap.Error(err))
 		return 0, err
+	}
+	return in.Id, nil
+}
+
+func (m *Mysql) UpdateProposal(in *model.Proposal) (int64, error) {
+	var proposal model.Proposal
+	m.Model(model.Proposal{}).Where("cid", in.Cid).Take(&proposal)
+	if proposal.Id == 0 {
+		if _, err := m.CreateProposal(in); err != nil {
+			zap.L().Error("create proposal error: ", zap.Error(err))
+			return 0, err
+		}
+	} else {
+		if proposal.Status == constant.ProposalStatusStoring && in.Status == constant.ProposalStatusPending {
+			in.Status = constant.ProposalStatusPending
+		}
+		if err := m.Model(model.Proposal{}).Where("cid", in.Cid).Updates(in).Error; err != nil {
+			zap.L().Error("create proposal error: ", zap.Error(err))
+			return 0, err
+		}
 	}
 	return in.Id, nil
 }
