@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { SearchOutlined } from '@ant-design/icons';
 import {
   ConnectButton,
   useConnectModal
 } from "@rainbow-me/rainbowkit";
-import { ConfigProvider, Dropdown, FloatButton, Modal, theme } from 'antd';
+import { ConfigProvider, Dropdown, FloatButton, Input, Modal, theme } from 'antd';
 import enUS from 'antd/locale/en_US';
 import zhCN from 'antd/locale/zh_CN';
 import axios from "axios";
@@ -31,7 +32,7 @@ import { useAccount } from "wagmi";
 import timezones from '../public/json/timezons.json';
 import { STORING_DATA_MSG } from "./common/consts";
 import { useCheckFipEditorAddress, useVoterInfoSet } from "./common/hooks";
-import { useCurrentTimezone, useVoterInfo } from "./common/store";
+import { useCurrentTimezone, useVoterInfo, useVotingList } from "./common/store";
 import "./common/styles/reset.less";
 import Footer from './components/Footer';
 import './lang/config';
@@ -52,6 +53,8 @@ const App: React.FC = () => {
   const [expirationTime, setExpirationTime] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [language, setLanguage] = useState<any>({ meaning: 'en', value: enUS });
+  const [isFocus, setIsFocus] = useState<boolean>(false); // Determine whether the mouse has clicked on the search box
+  const [searchValue, setSearchValue] = useState<string>(); // Stores the value of the search box
   // Get the user's timezone
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const text = timezones.find((item: any) => item.value === timezone)?.text;
@@ -67,7 +70,7 @@ const App: React.FC = () => {
 
   // Update voter information in state
   const setVoterInfo = useVoterInfo((state: any) => state.setVoterInfo);
-
+  const setVotingList = useVotingList((state: any) => state.setVotingList);
   // Update current timezone in state
   const setTimezone = useCurrentTimezone((state: any) => state.setTimezone);
 
@@ -256,6 +259,18 @@ const App: React.FC = () => {
       dayjs.locale('zh-cn');
     }
   };
+  const searchKey = async (value?: string) => {
+    const params = {
+      page: 1,
+      pageSize: 5,
+      searchKey: value
+    }
+    const { data: { data: votingData } } = await axios.get('/api/proposal/list', { params })
+    setVotingList({ votingList: votingData.list || [], totalPage: votingData.total, searchKey: value })
+  }
+  useEffect(() => {
+    searchKey()
+  },[])
   return (
     <ConfigProvider theme={{
       algorithm: theme.defaultAlgorithm,
@@ -267,7 +282,7 @@ const App: React.FC = () => {
     }} locale={language.value}>
       <div className="layout font-body">
         {!isLanding && <header className='h-[96px] bg-[#ffffff] border-b border-solid border-[#DFDFDF]'>
-          <div className='w-[1000px] h-[88px] mx-auto flex items-center justify-between'>
+          <div className='w-full h-[88px] px-40 flex items-center justify-between'>
             <div className='flex items-center'>
               <div className='flex-shrink-0'>
                 <Link to='/'>
@@ -281,6 +296,18 @@ const App: React.FC = () => {
                 >
                   {t('content.powerVoting')}
                 </Link>
+              </div>
+              <div className="ml-6">
+                <Input
+                  placeholder="Search Proposals"
+                  size="large"
+                  prefix={<SearchOutlined onClick={() => searchKey(searchValue)} className={`${isFocus ? "text-[#1677ff]" : "text-[#8b949e]"} text-xl hover:text-[#1677ff]`} />}
+                  onClick={() => setIsFocus(true)}
+                  onBlur={() => setIsFocus(false)}
+                  onChange={(e) => setSearchValue(e.currentTarget.value)}
+                  onPressEnter={() => searchKey(searchValue)}
+                  className={`${isFocus ? 'w-[270px]' : "w-[180px]"} font-medium text-base item-center text-slate-800 bg-[#f7f7f7] rounded-lg`}
+                />
               </div>
             </div>
             <div className='flex items-center'>

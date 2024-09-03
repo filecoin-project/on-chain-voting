@@ -27,26 +27,26 @@ export const proposalDraftAddApi = '/api/proposal/draft/add';
 export const proposalDraftGetApi = '/api/proposal/draft/get';
 
 export const worldTimeApi = 'https://worldtimeapi.org/api/timezone/Etc/UTC';
-export const IN_PROGRESS_STATUS = 0;
-export const COMPLETED_STATUS = 1;
-export const PENDING_STATUS = 2;
+export const IN_PROGRESS_STATUS = 2;
+export const COMPLETED_STATUS = 4;
+export const PENDING_STATUS = 1;
 export const VOTE_COUNTING_STATUS = 3;
-export const VOTE_ALL_STATUS = 4;
+export const VOTE_ALL_STATUS = 7;
 export const WRONG_NET_STATUS = 5;
-export const STORING_STATUS = 6;
-export const PASSED_STATUS = 7;
-export const REJECTED_STATUS = 8;
+export const STORING_STATUS = 0;
+export const PASSED_STATUS = 6;
+export const REJECTED_STATUS = 5;
 export const VOTE_OPTIONS = ['Approve', 'Reject'];
 export const VOTE_LIST = [
-  {
-    value: WRONG_NET_STATUS,
-    label: 'content.wrongNetwork',
-    bgColor: "#FFF3F3",
-    textColor: "#AA0101",
-    borderColor: "#FFDBDB",
-    dotColor: "#FF0000"
+  // {
+  //   value: WRONG_NET_STATUS,
+  //   label: 'content.wrongNetwork',
+  //   bgColor: "#FFF3F3",
+  //   textColor: "#AA0101",
+  //   borderColor: "#FFDBDB",
+  //   dotColor: "#FF0000"
 
-  },
+  // },
   {
     value: PENDING_STATUS,
     label: "content.pending",
