@@ -154,6 +154,22 @@ func GetClientBalanceByHeight(ctx context.Context, lotusRpcClient jsonrpc.RPCCli
 	return t, nil
 }
 
+func GetDealSumByHeightAndActorId(ctx context.Context, lotusRpcClient jsonrpc.RPCClient, actorId string, height int64) (int64, error) {
+	t, err := GetClientBalanceByHeight(ctx, lotusRpcClient, height)
+	if err != nil {
+		return 0, err
+	}
+
+	var sum int64
+	for _, v := range t {
+		if v.Proposal.Client == actorId && v.Proposal.EndEpoch > height {
+			sum += v.Proposal.PieceSize
+		}
+	}
+
+	return sum, nil
+}
+
 func GetNewestHeight(ctx context.Context, lotusRpcClient jsonrpc.RPCClient) (height int64, err error) {
 	resp, err := lotusRpcClient.Call(ctx, "Filecoin.ChainHead")
 	if err != nil {
