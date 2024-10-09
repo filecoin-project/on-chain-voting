@@ -130,34 +130,44 @@ func GetMinerPowerByHeight(ctx context.Context, lotusRpcClient jsonrpc.RPCClient
 	return minerPower, nil
 }
 
-func GetClientBalanceByHeight(ctx context.Context, lotusRpcClient jsonrpc.RPCClient, id string, height int64) (string, error) {
+func GetClientBalanceByHeight(ctx context.Context, lotusRpcClient jsonrpc.RPCClient, height int64) (types.StateMarketDeals, error) {
 	height, tipSetKey, err := GetTipSetByHeight(lotusRpcClient, height)
 	if err != nil {
-		return "", err
+		return types.StateMarketDeals{}, err
 	}
+	tipSetList := append([]any{}, tipSetKey)
 
-	addressStr, err := filecoinAddress.NewFromString(id)
+	var t types.StateMarketDeals
+	resp, err := lotusRpcClient.Call(ctx, "Filecoin.StateMarketDeals", tipSetList)
 	if err != nil {
-		return "", err
+		return types.StateMarketDeals{}, err
 	}
-
-	tipSetList := append([]any{}, addressStr, tipSetKey)
-
-	var t types.StorageMarket
-	resp, err := lotusRpcClient.Call(ctx, "Filecoin.StateMarketBalance", tipSetList)
-	if err != nil {
-		return "", err
-	}
-
 	tmp, err := json.Marshal(resp.Result)
 	if err != nil {
-		return "", err
-	}
-	if err := json.Unmarshal(tmp, &t); err != nil {
-		return "", err
+		return types.StateMarketDeals{}, err
 	}
 
-	return t.Locked, nil
+	if err := json.Unmarshal(tmp, &t); err != nil {
+		return types.StateMarketDeals{}, err
+	}
+
+	return t, nil
+}
+
+func GetDealSumByHeightAndActorId(ctx context.Context, lotusRpcClient jsonrpc.RPCClient, actorId string, height int64) (int64, error) {
+	t, err := GetClientBalanceByHeight(ctx, lotusRpcClient, height)
+	if err != nil {
+		return 0, err
+	}
+
+	var sum int64
+	for _, v := range t {
+		if v.Proposal.Client == actorId && v.Proposal.EndEpoch > height && v.Proposal.VerifiedDeal {
+			sum += v.Proposal.PieceSize
+		}
+	}
+
+	return sum, nil
 }
 
 func GetNewestHeight(ctx context.Context, lotusRpcClient jsonrpc.RPCClient) (height int64, err error) {

@@ -16,9 +16,11 @@ package service
 
 import (
 	"context"
+	"power-snapshot/utils"
+	"strconv"
+
 	"github.com/ybbus/jsonrpc/v3"
 	"go.uber.org/zap"
-	"power-snapshot/utils"
 )
 
 // GetPower synchronizes the power snapshot for the given actor and miner at a specific height.
@@ -41,7 +43,7 @@ func GetPower(ctx context.Context, lotusRpcClient jsonrpc.RPCClient, actorId, mi
 	}
 
 	// Fetch the client balance
-	clientBalance, err := utils.GetClientBalanceByHeight(ctx, lotusRpcClient, actorId, height)
+	clientBalance, err := utils.GetDealSumByHeightAndActorId(ctx, lotusRpcClient, actorId, height)
 	if err != nil {
 		zap.L().Error("failed to get client balance", zap.Error(err))
 		return
@@ -50,7 +52,7 @@ func GetPower(ctx context.Context, lotusRpcClient jsonrpc.RPCClient, actorId, mi
 	zap.L().Info("fetched balances and power",
 		zap.String("walletBalance", walletBalance),
 		zap.String("minerPower", power.MinerPower.QualityAdjPower),
-		zap.String("clientBalance", clientBalance),
+		zap.String("clientBalance", strconv.FormatInt(clientBalance, 10)),
 	)
 
 }
@@ -64,13 +66,13 @@ func GetActorPower(ctx context.Context, lotusRpcClient jsonrpc.RPCClient, actorI
 	}
 
 	// Fetch the client balance
-	clientBalance, err := utils.GetClientBalanceByHeight(ctx, lotusRpcClient, actorId, height)
+	clientBalance, err := utils.GetDealSumByHeightAndActorId(ctx, lotusRpcClient, actorId, height)
 	if err != nil {
 		zap.L().Error("failed to get client balance", zap.Error(err))
 		return "", "", err
 	}
 
-	return walletBalance, clientBalance, nil
+	return walletBalance, strconv.FormatInt(clientBalance, 10), nil
 }
 
 func GetMinerPower(ctx context.Context, lotusRpcClient jsonrpc.RPCClient, minerId string, height int64) (string, error) {

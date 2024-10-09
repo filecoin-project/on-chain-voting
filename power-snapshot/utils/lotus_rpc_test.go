@@ -95,7 +95,7 @@ func TestGetClientBalanceByHeight(t *testing.T) {
 	assert.Nil(t, err)
 
 	lotusRpcClient := NewClient(client.QueryRpc[0])
-	rsp, err := GetClientBalanceByHeight(context.Background(), lotusRpcClient, id, 1669397)
+	rsp, err := GetClientBalanceByHeight(context.Background(), lotusRpcClient, 2008311)
 	assert.Nil(t, err)
 
 	zap.L().Info("result", zap.Any("client", rsp))
