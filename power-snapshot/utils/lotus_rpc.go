@@ -162,7 +162,7 @@ func GetDealSumByHeightAndActorId(ctx context.Context, lotusRpcClient jsonrpc.RP
 
 	var sum int64
 	for _, v := range t {
-		if v.Proposal.Client == actorId && v.Proposal.EndEpoch > height {
+		if v.Proposal.Client == actorId && v.Proposal.EndEpoch > height && v.Proposal.VerifiedDeal {
 			sum += v.Proposal.PieceSize
 		}
 	}
