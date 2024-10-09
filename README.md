@@ -1,8 +1,24 @@
 # On Chain Voting for FIPs
 This repo contains a complete copy of the on chain voting tool being developed
-by StorSwift for use in the Filecoin Improvement Proposal (FIP) process. More
+by the Filecoin Foundation, in partnership with StorSwift, for use in the Filecoin Improvement Proposal (FIP) process. More
 information about FIPs can be found in [the FIPs
 repo](https://github.com/filecoin-project/FIPs)
 
+If you'd like to try out a deployed version of the tool, you can check it out at [vote.fil.org](https://vote.fil.org).
+
+Please keep in mind, the tool is still under active development, and may not currently meet all the requirements of our community. If you find someplace where we are falling short (i.e. buggy code, clunky UI, unclear process), please submit an issue to this repo and bring it to our attention.
+
 ### Specification
 The specification for the on chain voting tool can be found [in this Google Doc](https://docs.google.com/document/d/13910NE-O3mUQ6rztt6f3xe7hwW_aS-xaPW_zHuTpBW4/edit)
+
+### Repo structure
+The system at a high level is composed of a few core components, each listed in a separate folder:
+
+- [**docs**](https://github.com/filecoin-project/on-chain-voting/tree/main/docs): Documentation
+- [**power-oracle-contracts**](https://github.com/filecoin-project/on-chain-voting/tree/main/power-oracle-contracts): Contains smart contracts for the Oracle contract functionality, which stores voter info, miner id mappings, and other shared state.
+- [**power-oracle-node**](https://github.com/filecoin-project/on-chain-voting/tree/main/power-oracle-node): Contains the code for the Oracle nodes that power the Oracle contract
+- [**power-snapshot**](https://github.com/filecoin-project/on-chain-voting/tree/main/power-snapshot): Contains code for the snapshot service, used to take and store snapshots of key data for later use in calculating vote power.
+- [**power-voting**](https://github.com/filecoin-project/on-chain-voting/tree/main/power-voting): Contains the frontend dApp code that runs the UI, timelock encypts vote data, and stores proposals and ecnypted data in web3.storage.
+- [**powervoting-backend**](https://github.com/filecoin-project/on-chain-voting/tree/main/powervoting-backend): The powervoting backend contains code necessary to sync proposals and votes, decode all votes once the timelock encryption has expired, and calculate the final result based on the power of each respective vote. Everything this service does should be independently verifiable using on chain data.
+- [**powervoting-contracts**](https://github.com/filecoin-project/on-chain-voting/tree/main/powervoting-contracts): Contains smart contracts used for the core Power Voting functionality, including managing FIP Editors, creating proposals, and casting votes.
+- [**ucan-utils**](https://github.com/filecoin-project/on-chain-voting/tree/main/ucan-utils): Contains utility functions for UCAN delegations, which is currently used for delegating voting rights, associated miner addresses, and associating github accounts with a wallet.
