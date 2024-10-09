@@ -35,6 +35,6 @@ We are requesting the community help us to engage in a community code review of 
 - The current test suite is testing the code correctly
 - There are no critical pathways that are not being tested)
 - The current tool is usable by all members of the community
-- The current tools is not biased towards any one particular part of the community
+- The current tool is not biased towards any one particular part of the community
 
 To share your feedback, please file an issue on this repository, or reach out to ian@fil.org directly with more substaintial questions.
