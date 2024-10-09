@@ -26,3 +26,15 @@ The system at a high level is composed of a few core components, each listed in 
 ### Testing
 Each component of the overall system is tested using a go test suite (or [`forge`](https://github.com/foundry-rs/foundry), in the case of smart contracts). The test suite for each component is run by CI anytime the code in that subfolder changes. You can view test history on theGithub actions page: https://github.com/filecoin-project/on-chain-voting/actions
 
+### Community Code Review
+*“Given enough eyeballs, all bugs are shallow” - Linus’s Law*
+
+We are requesting the community help us to engage in a community code review of the current implementation. This is to make sure of a few things:
+- There are no errors with the specification
+- The current implementation (and associated tests) agree with the specification
+- The current test suite is testing the code correctly
+- There are no critical pathways that are not being tested)
+- The current tool is usable by all members of the community
+- The current tools is not biased towards any one particular part of the community
+
+To share your feedback, please file an issue on this repository, or reach out to ian@fil.org directly with more substaintial questions.
