@@ -166,22 +166,18 @@ const FipEditorRevoke = () => {
       key: 'total',
       align: 'center' as const,
       width: 120,
-      render: (_: any, record: any) => {
-        const disabled =  !!record.voteList.find((item: any) => item.address === address && item.status === 'Revoked');
-        return (
-          <a className='hover:text-black flex justify-center' onClick={() => handleRevoke(record)}>
-            <Popconfirm
-              title={t('content.revokeFIPEditor')}
-              description={t('content.isConfirmRevoke')}
-              onConfirm={() => { confirm(record) }}
-              okText={t('content.yes')}
-              cancelText={t('content.no')}
-            >
-              <Button type='primary' className='w-[80px] h-[24px] flex justify-center items-center' loading={record.proposalId === currentProposalId && isLoading} disabled={disabled}>Revoke</Button>
-            </Popconfirm>
-          </a>
-        )
-      }
+      render: (_: any, record: any) =>
+        <a className='hover:text-black flex justify-center' onClick={() => handleRevoke(record)}>
+          <Popconfirm
+            title={t('content.revokeFIPEditor')}
+            description={t('content.isConfirmRevoke')}
+            onConfirm={() => { confirm(record) }}
+            okText={t('content.yes')}
+            cancelText={t('content.no')}
+          >
+            <Button type='primary' className='w-[80px] h-[24px] flex justify-center items-center' loading={record.proposalId === currentProposalId && isLoading} >Revoke</Button>
+          </Popconfirm>
+        </a>
     },
   ];
   const handlePageChange = (page: number) => {
