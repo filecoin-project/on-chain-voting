@@ -1,0 +1,40 @@
+name: Power-snapshot-test
+
+on:
+  push:
+    branches: [ "feat/add_snapshot_ci" ]
+    paths:
+      - 'power-snapshot/*'
+  pull_request:
+    branches: [ "feat/add_snapshot_ci" ]
+    paths:
+      - 'power-snapshot/*'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      reids:
+        image: redis:latest
+        ports:
+          - 6379:6379
+        options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install dependencies
+        run: |
+          cd ./power-snapshot
+          go mod tidy   
+
+      - name: Test
+        run: |
+          cd ./power-snapshot
+          go test -v ./...
