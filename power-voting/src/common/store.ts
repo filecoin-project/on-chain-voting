@@ -21,6 +21,12 @@ export const useVotingList = create(set => ({
   },
   setVotingList: (newData: any) => set({ votingData: newData }),
 }));
+
+export const usePropsalStatus = create(set => ({
+  status: '',
+  setStatusList: (status: 0) => set({ status: status }),
+}));
+
 export const useStoringCid = create<StoringCidState>((set, get) => ({
   storingCid: localStorage.getItem('storingCid') ? JSON.parse(localStorage.getItem('storingCid')!) : [],
 
