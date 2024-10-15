@@ -2,11 +2,11 @@ name: Power-snapshot-test
 
 on:
   push:
-    branches: [ "feat/add_snapshot_ci" ]
+    branches: [ "main" ]
     paths:
       - 'power-snapshot/*'
   pull_request:
-    branches: [ "feat/add_snapshot_ci" ]
+    branches: [ "main" ]
     paths:
       - 'power-snapshot/*'
 
