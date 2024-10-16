@@ -215,6 +215,11 @@ func ProposalList(c *gin.Context) {
 		queryList.Where("name like ?", "%"+req.SearchKey+"%")
 	}
 
+	if req.Network != 0 {
+		queryCount.Where("network = ?", req.Network)
+		queryList.Where("network = ?", req.Network)
+	}
+
 	switch req.Status {
 	case constant.ProposalStatusPending:
 		queryCount.Where("status = ?", constant.ProposalStatusPending).Where("start_time > ?", time.Now().Unix())
