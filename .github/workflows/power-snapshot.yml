@@ -11,7 +11,7 @@ on:
       - 'power-snapshot/*'
 
 jobs:
-  test:
+  snapshot-test:
     runs-on: ubuntu-latest
 
     services:
@@ -33,6 +33,13 @@ jobs:
         run: |
           cd ./power-snapshot
           go mod tidy   
+
+      - name: Copy config file to test dir
+        run: |
+          cd ./power-snapshot
+          cp ./abi/* ./internal/service
+          cp ./abi/* ./utils
+
 
       - name: Test
         run: |
