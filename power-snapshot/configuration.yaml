@@ -1,12 +1,12 @@
 server:
   # service startup port
-  port: :
+  port: 18001
 
 redis:
-  uri:
+  uri: localhost:16379
   user:
   password:
-  db:
+  db: 0
 
 nats:
   uri:
@@ -16,17 +16,15 @@ network:
     name: FileCoin-Calibration
     idPrefix: t0
     queryRpc:
-      -
-      -
-    contractRpc:
-    oracleContract:
+      - https://calibration.filfox.info/rpc/v1
+    contractRpc: https://calibration.filfox.info/rpc/v1
+    oracleContract: 0x1B9e5E36635e73426Dc0DD3E3ec4070A86099B82
+    oracleStartHeight: 1740975
     oracleAbi: oracle.json
 
 github:
   # github token
   token:
-  -
-  -
-  -
-  # graphql api
+    - 
+    # graphql api
   graphql: https://api.github.com/graphql
