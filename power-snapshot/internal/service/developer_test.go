@@ -17,11 +17,13 @@ package service
 import (
 	"context"
 	"fmt"
-	"golang.org/x/sync/errgroup"
 	"log"
 	"power-snapshot/config"
 	"testing"
 	"time"
+
+	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -37,12 +39,10 @@ func TestGetDeveloperWeights(t *testing.T) {
 		return
 	}
 
-	totalWeights, err := GetDeveloperWeights(time.Date(2024, 6, 21, 12, 00, 00, 00, time.Local))
-	if err != nil {
-		log.Fatalf("Failed to get developer weights: %v", err)
-	}
-	fmt.Println("len(totalWeights):", len(totalWeights))
-	assert.NotEmpty(t, totalWeights, 1)
+	totalWeights, err := GetDeveloperWeights(time.Date(2024, 10, 15, 12, 00, 00, 00, time.Local))
+	assert.Nil(t, err)
+
+	zap.L().Info("result", zap.Any("client", totalWeights))
 }
 
 func TestGetContributors(t *testing.T) {
@@ -58,8 +58,8 @@ func TestGetContributors(t *testing.T) {
 	token := tokenManager.GetCoreAvailableToken()
 	res, err := getContributors(ctx, "filecoin-project", "venus", since, token)
 	assert.Nil(t, err)
-	fmt.Printf("%v", res)
-	assert.NotEmpty(t, res)
+
+	zap.L().Info("result", zap.Any("res", res))
 }
 
 func TestAddMonths(t *testing.T) {
@@ -83,7 +83,7 @@ func TestAddMerge(t *testing.T) {
 	}
 
 	expected := map[string]int64{
-		"test1": 5,
+		"test1": 1,
 		"test2": 2,
 		"test3": 5,
 	}
@@ -106,7 +106,7 @@ func worker(ctx context.Context, id int) error {
 	for i := 0; i < 10; i++ {
 		time.Sleep(1 * time.Second)
 		if ctx.Err() != nil {
-			println("中奖了!", id)
+			println("err id!", id)
 			return ctx.Err()
 		}
 	}

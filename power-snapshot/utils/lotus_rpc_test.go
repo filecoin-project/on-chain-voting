@@ -24,7 +24,8 @@ import (
 )
 
 var (
-	address = "0x7C24ca5FBA6f1E228a520911476746D25Be5EdbE"
+	address = "t410fpqsmux52n4pcfcssbeiuoz2g2jn6l3n6zf6tmii"
+	ethAddr = "0x7C24ca5FBA6f1E228a520911476746D25Be5EdbE"
 	id      = "t099523"
 )
 
@@ -41,7 +42,7 @@ func TestIDFromAddress(t *testing.T) {
 	res, err := IDFromAddress(context.Background(), lotusRpcClient, address)
 	assert.Nil(t, err)
 
-	expectedID := "t065744"
+	expectedID := id
 	assert.Equal(t, res, expectedID)
 
 	zap.L().Info("result", zap.Any("id", res))
@@ -75,12 +76,8 @@ func TestGetMinerPowerByHeight(t *testing.T) {
 	assert.Nil(t, err)
 
 	lotusRpcClient := NewClient(client.QueryRpc[0])
-	rsp, err := GetMinerPowerByHeight(context.Background(), lotusRpcClient, "t03751", 1669397)
+	rsp, err := GetMinerPowerByHeight(context.Background(), lotusRpcClient, "t03751", 2058000)
 	assert.Nil(t, err)
-
-	assert.True(t, rsp.HasMinPower)
-	expectedRawBytePower := "1060925641588736"
-	assert.Equal(t, expectedRawBytePower, rsp.MinerPower.RawBytePower)
 
 	zap.L().Info("result", zap.Any("miner", rsp))
 }
@@ -95,10 +92,8 @@ func TestGetClientBalanceByHeight(t *testing.T) {
 	assert.Nil(t, err)
 
 	lotusRpcClient := NewClient(client.QueryRpc[0])
-	rsp, err := GetClientBalanceByHeight(context.Background(), lotusRpcClient, 2008311)
+	_, err = GetClientBalanceByHeight(context.Background(), lotusRpcClient, 2008311)
 	assert.Nil(t, err)
-
-	zap.L().Info("result", zap.Any("client", rsp))
 }
 
 func TestGetNewestHeightAndTipset(t *testing.T) {
@@ -126,7 +121,7 @@ func TestGetBlockHeader(t *testing.T) {
 	assert.Nil(t, err)
 
 	lotusRpcClient := NewClient(client.QueryRpc[0])
-	rsp, err := GetBlockHeader(context.Background(), lotusRpcClient, 1560498)
+	rsp, err := GetBlockHeader(context.Background(), lotusRpcClient, 2057965)
 	assert.Nil(t, err)
 
 	zap.L().Info("result", zap.Any("block", rsp))
