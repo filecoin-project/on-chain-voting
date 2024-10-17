@@ -164,16 +164,21 @@ const FipEditorApprove = () => {
       key: 'total',
       align: 'center' as const,
       width: 120,
-      render: (_: any, record: any) =>
-        <Popconfirm
-          title={t('content.approveFIPEditor')}
-          description={t('content.isConfirmApprove')}
-          onConfirm={() => { confirm(record) }}
-          okText={t('content.yes')}
-          cancelText={t('content.no')}
-        >
-          <Button type='primary' className='w-[80px] h-[24px] flex justify-center items-center' loading={record.proposalId === currentProposalId && isLoading} >{t('content.approve')}</Button>
-        </Popconfirm>
+      render: (_: any, record: any) => {
+        const disabled =  !!record.voteList.find((item: any) => item.address === address && item.status === 'Approved');
+        return (
+          <Popconfirm
+            title={t('content.approveFIPEditor')}
+            description={t('content.isConfirmApprove')}
+            onConfirm={() => { confirm(record) }}
+            okText={t('content.yes')}
+            cancelText={t('content.no')}
+          >
+            <Button type='primary' className='w-[80px] h-[24px] flex justify-center items-center' loading={record.proposalId === currentProposalId && isLoading} disabled={disabled}>{t('content.approve')}</Button>
+          </Popconfirm>
+        )
+      }
+
     },
   ];
 

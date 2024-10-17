@@ -36,7 +36,7 @@ import {
   web3AvatarUrl
 } from '../../common/consts';
 import { useCheckFipEditorAddress, useLatestId, useProposalDataSet } from "../../common/hooks";
-import { useCurrentTimezone, useStoringCid, useVotingList } from "../../common/store";
+import { useCurrentTimezone, usePropsalStatus, useStoringCid, useVotingList } from "../../common/store";
 import type { ProposalResult, VotingList } from '../../common/types';
 import EllipsisMiddle from "../../components/EllipsisMiddle";
 import ListFilter from "../../components/ListFilter";
@@ -73,7 +73,7 @@ const Home = () => {
   const setStoringCid = useStoringCid((state: any) => state.setStoringCid);
   const { votingList, totalPage, searchKey } = useVotingList((state: any) => state.votingData);
   const setVotingList = useVotingList((state: any) => state.setVotingList);
-
+  const setStatusList = usePropsalStatus((state: any) => state.setStatusList);
   const { isFipEditorAddress } = useCheckFipEditorAddress(chainId, address);
   const { latestId, getLatestIdLoading, refetch } = useLatestId(chainId, !shouldRefetch);
   const { getProposalIdLoading, getProposalIdSuccess, error } = useProposalDataSet({
@@ -133,13 +133,12 @@ const Home = () => {
           getProposalList(page);
           setShouldRefetch(false);
         }).finally(() => {
-          queryVotingList(page, proposalStatus);
+          // queryVotingList(page, proposalStatus);
         });
 
       }, 3000);
     }
   }, [isFetched]);
-console.log('isFetchedisFetchedisFetched',isFetched,shouldRefetch)
   /**
    * get proposal list
    * @param page
@@ -315,11 +314,11 @@ console.log('isFetchedisFetchedisFetched',isFetched,shouldRefetch)
   const handleFilter = async (status: number) => {
     setProposalStatus(status);
     queryVotingList(1, status);
+    setStatusList(status)
     setPage(1);
   }
   useEffect(() => {
     //When the search value changes, display all by default
-    setProposalStatus(VOTE_ALL_STATUS);
     setPage(1);
   }, [searchKey])
   /**
