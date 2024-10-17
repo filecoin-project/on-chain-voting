@@ -15,13 +15,15 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 	"net/http"
+	"powervoting-server/client"
 	"powervoting-server/config"
 	"powervoting-server/db"
 	"powervoting-server/routers"
 	"powervoting-server/scheduler"
+
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -31,6 +33,8 @@ func main() {
 	config.InitLogger()
 	// initialization mysql
 	db.InitMysql()
+
+	client.InitW3Client()
 	// initialization scheduled task
 	go scheduler.TaskScheduler()
 

@@ -21,6 +21,7 @@ type Config struct {
 	Drand    Drand     // Drand network configuration
 	Snapshot Snapshot  // Snapshot configuration
 	Network  []Network // List of network configurations
+	W3Client W3Client  // W3client configurations
 }
 
 // Server represents the server configuration.
@@ -54,4 +55,11 @@ type Network struct {
 
 type Snapshot struct {
 	Rpc string // Port number for the server
+}
+
+type W3Client struct {
+	Did        string
+	PrivateKey string
+	Proof      string
+	Space      string
 }

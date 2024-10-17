@@ -28,3 +28,8 @@ network:
     oracleAbi: oracle.json
     powerVotingContract:
     oracleContract:
+
+w3client:
+  did: 
+  privateKey: 
+  proof: 

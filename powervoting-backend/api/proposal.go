@@ -15,14 +15,12 @@
 package api
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"powervoting-server/client"
 	"powervoting-server/constant"
 	"powervoting-server/db"
 	"powervoting-server/model"
@@ -99,30 +97,17 @@ func W3Upload(c *gin.Context) {
 		response.SystemError(c)
 		return
 	}
-	zap.L().Info("upload with w3")
-	cmd := exec.Command("w3", "upload", absolutePath, "--json", "--no-wrap")
 
-	//execut w3 upload xxxx
-	var outBuf, errBuf bytes.Buffer
-	cmd.Stdout = &outBuf
-	cmd.Stderr = &errBuf
-	err = cmd.Run()
-	if err != nil {
-		os.Remove(absolutePath)
-		zap.L().Info("w3 upload file error: ", zap.Error(err))
-		response.SystemError(c)
-		return
-	}
-	var jsonData map[string]interface{}
-	err = json.Unmarshal([]byte(outBuf.Bytes()), &jsonData)
+	zap.L().Info("upload with w3")
+	cid, err := client.W3.Upload(absolutePath)
 	if err != nil {
 		os.Remove(absolutePath)
 		zap.L().Info("get upload file error: ", zap.Error(err))
 		response.SystemError(c)
-		return
 	}
+
 	os.Remove(absolutePath)
-	response.SuccessWithData(jsonData, c)
+	response.SuccessWithData(cid, c)
 }
 
 func AddDraft(c *gin.Context) {
