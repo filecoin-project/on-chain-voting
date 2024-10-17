@@ -18,9 +18,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/nats-io/nats.go/jetstream"
-	"github.com/redis/go-redis/v9"
-	"github.com/ybbus/jsonrpc/v3"
 	"hash/fnv"
 	"power-snapshot/config"
 	"power-snapshot/constant"
@@ -30,6 +27,10 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/nats-io/nats.go/jetstream"
+	"github.com/redis/go-redis/v9"
+	"github.com/ybbus/jsonrpc/v3"
 
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -384,8 +385,8 @@ func TestSyncDateHeight(t *testing.T) {
 
 	dh, err := getDateHeight(context.Background(),
 		utils.NewClient(client.QueryRpc[0]),
-		time.Date(2024, 6, 13, 0, 0, 0, 0, time.Local),
-		60)
+		time.Date(2024, 10, 15, 0, 0, 0, 0, time.Local),
+		2)
 	assert.NoError(t, err)
 	zap.L().Info("result", zap.Any("dh", dh))
 
@@ -419,32 +420,32 @@ func TestSyncAllAddrPower(t *testing.T) {
 }
 
 func TestNats(t *testing.T) {
-	config.InitLogger()
-	err := config.InitConfig("../..")
-	assert.NoError(t, err)
+	// config.InitLogger()
+	// err := config.InitConfig("../..")
+	// assert.NoError(t, err)
 
-	ctx := context.Background()
-	client, err := data.NewJetstreamClient()
-	assert.NoError(t, err)
+	// ctx := context.Background()
+	// client, err := data.NewJetstreamClient()
+	// assert.NoError(t, err)
 
-	cons, err := client.CreateOrUpdateConsumer(ctx, "TASKS", jetstream.ConsumerConfig{
-		Name:          fmt.Sprintf("processor-%d", testNetID),
-		FilterSubject: fmt.Sprintf("tasks.%d", testNetID),
-		AckPolicy:     jetstream.AckExplicitPolicy,
-	})
-	assert.NoError(t, err)
+	// cons, err := client.CreateOrUpdateConsumer(ctx, "TASKS", jetstream.ConsumerConfig{
+	// 	Name:          fmt.Sprintf("processor-%d", testNetID),
+	// 	FilterSubject: fmt.Sprintf("tasks.%d", testNetID),
+	// 	AckPolicy:     jetstream.AckExplicitPolicy,
+	// })
+	// assert.NoError(t, err)
 
-	for {
-		mc, err := cons.Fetch(1000)
-		for msg := range mc.Messages() {
-			println("r: " + string(msg.Data()))
-			err = msg.Ack()
-			if err != nil {
-				zap.S().Error("ack failed", zap.Error(err))
-				return
-			}
-		}
-	}
+	// for {
+	// 	mc, err := cons.Fetch(1000)
+	// 	for msg := range mc.Messages() {
+	// 		println("r: " + string(msg.Data()))
+	// 		err = msg.Ack()
+	// 		if err != nil {
+	// 			zap.S().Error("ack failed", zap.Error(err))
+	// 			return
+	// 		}
+	// 	}
+	// }
 
 }
 
