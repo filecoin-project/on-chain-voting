@@ -299,7 +299,8 @@ const Home = () => {
 
   const queryVotingList = async (page: number, proposalStatus: number) => {
     const params = {
-      page: page,
+      chainId,
+      page,
       pageSize: 5,
       searchKey: searchKey,
       status: proposalStatus === VOTE_ALL_STATUS ? 0 : proposalStatus,

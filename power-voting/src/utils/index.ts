@@ -160,7 +160,7 @@ export const getWeb3IpfsId = async (params: object | string) => {
       },
     },
     );
-    return resp.data["data"]["root"]["/"];
+    return resp.data.data;
   } catch (e) {
     return ""
   }

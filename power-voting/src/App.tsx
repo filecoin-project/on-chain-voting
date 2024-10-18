@@ -262,13 +262,14 @@ const App: React.FC = () => {
   };
   const searchKey = async (value?: string) => {
     const params = {
+      chainId,
       page: 1,
       pageSize: 5,
       searchKey: value?.trim(),
       status: status === VOTE_ALL_STATUS ? 0 : status
     }
     const { data: { data: votingData } } = await axios.get('/api/proposal/list', { params })
-    setVotingList({ votingList: votingData.list || [], totalPage: votingData.total, searchKey: value })
+    setVotingList({ votingList: votingData?.list || [], totalPage: votingData?.total || 0, searchKey: value })
   }
   useEffect(() => {
     if(!chain) return
@@ -338,7 +339,7 @@ const App: React.FC = () => {
                 <div className='px-4 py-2 h-full flex flex-nowrap text-sm'>
                   {languageOptions.map((item) => {
                     return (
-                      <div className={`h-full mr-1.5 cursor-pointer text-black font-semibold ${item.value === language.meaning ? 'border-solid border-b-2 border-current' : 'border-none'}`} onClick={() => changeLanguage(item.value)}>
+                      <div key={item.label} className={`h-full mr-1.5 cursor-pointer text-black font-semibold ${item.value === language.meaning ? 'border-solid border-b-2 border-current' : 'border-none'}`} onClick={() => changeLanguage(item.value)}>
                         <div className='h-5 leading-6 text-center my-*'>{item.label}</div>
                       </div>
                     )
