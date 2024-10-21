@@ -95,24 +95,19 @@ func TestAddMerge(t *testing.T) {
 func worker(ctx context.Context, id int) error {
 	fmt.Printf("Worker %d is processing business logic\n", id)
 
-	// 例如，处理一些数据或调用外部API
-	// 模拟可能发生错误的情况
 	if id == 60 {
 		println("60出错了!!!")
 		return fmt.Errorf("business logic error in worker %d", id)
 	}
 
-	// 模拟每次 io操作时候的检查 err
 	for i := 0; i < 10; i++ {
 		time.Sleep(1 * time.Second)
 		if ctx.Err() != nil {
-			println("err id!", id)
 			return ctx.Err()
 		}
 	}
 
 	println("Worker done in fact ", id)
-	// 检查上下文是否被取消
 	select {
 	case <-ctx.Done():
 		fmt.Printf("Worker %d cancel\n", id)
@@ -123,7 +118,6 @@ func worker(ctx context.Context, id int) error {
 	return nil
 }
 
-// nestedWorker 启动嵌套的 worker 协程
 func nestedWorker(ctx context.Context, id int) error {
 	g, ctx := errgroup.WithContext(ctx)
 
