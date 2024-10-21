@@ -449,34 +449,6 @@ func TestNats(t *testing.T) {
 
 }
 
-func TestProducer(t *testing.T) {
-	config.InitLogger()
-	err := config.InitConfig("../..")
-	assert.NoError(t, err)
-
-	ctx := context.Background()
-	client, err := data.NewJetstreamClient()
-	assert.NoError(t, err)
-
-	cfg := jetstream.StreamConfig{
-		Name:      "TASKS",
-		Retention: jetstream.WorkQueuePolicy,
-		Subjects:  []string{"tasks.>"},
-	}
-
-	_, err = client.CreateOrUpdateStream(context.Background(), cfg)
-	assert.NoError(t, err)
-
-	key := fmt.Sprintf("tasks.%d", testNetID)
-	for i := 0; i < 10000; i++ {
-		println("p: ", i)
-		_, err := client.Publish(ctx, key, []byte(fmt.Sprintf("id: %d", i)))
-		assert.NoError(t, err)
-	}
-
-	select {}
-}
-
 func TestSyncCreateDelegateEvent(t *testing.T) {
 	config.InitLogger()
 	err := config.InitConfig("../..")
