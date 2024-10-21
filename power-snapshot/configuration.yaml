@@ -1,6 +1,6 @@
 server:
   # service startup port
-  port: :
+  port:
 
 redis:
   uri: redis:6379
