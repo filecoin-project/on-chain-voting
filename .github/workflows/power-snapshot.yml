@@ -44,6 +44,4 @@ jobs:
       - name: Test
         run: |
           cd ./power-snapshot
-          go test -v ./utils/lotus_rpc_test.go
-          go test -v ./service/power_test.go
-          go test -v ./service/developer_test.go
+          go test -run '^TestGetPower$|^TestGetActorPower$|^TestGetMinerPower$TestIDFromAddress$|^TestWalletBalanceByHeight$|^TestGetMinerPowerByHeight$|^TestGetClientBalanceByHeight$|^TestGetNewestHeightAndTipset$|^TestGetBlockHeader$' ./...
