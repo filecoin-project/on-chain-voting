@@ -19,6 +19,7 @@ import (
 	"powervoting-server/config"
 	"powervoting-server/model"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -172,7 +173,7 @@ func TestGetProposalList(t *testing.T) {
 
 	config.InitConfig("../")
 	InitMysql()
-
+	currentTime := time.Now()
 	expectedProposalList := []model.Proposal{
 		{
 			Id:           1,
@@ -185,6 +186,8 @@ func TestGetProposalList(t *testing.T) {
 			VoteCount:    1,
 			Status:       1,
 			Network:      314159,
+			CreatedAt:    currentTime,
+			UpdatedAt:    currentTime,
 		},
 	}
 	err := Engine.Model(model.Proposal{}).Create(&expectedProposalList).Error
