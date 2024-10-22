@@ -28,9 +28,15 @@ network:
     oracleAbi: oracle.json
     powerVotingContract:
     oracleContract:
+    privateKey: 
+      # wallet address
+    walletAddress: 
+      # gas limit
+    gasLimit: 
 
 w3client:
   did: 
   privateKey: 
    # proof.ucan path
   proof: 
+  space:

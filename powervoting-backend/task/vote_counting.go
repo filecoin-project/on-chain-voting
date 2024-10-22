@@ -15,7 +15,6 @@
 package task
 
 import (
-	"crypto/rand"
 	"math/big"
 	"powervoting-server/client"
 	"powervoting-server/config"
@@ -142,13 +141,6 @@ func VotingCount(ethClient model.GoEthClient, db db.DataRepo) error {
 
 		zap.L().Info("voteList: ", zap.Any("proposalId", proposal.ProposalId), zap.Reflect("voteList", voteList))
 
-		num, err := rand.Int(rand.Reader, big.NewInt(61))
-		if err != nil {
-			zap.L().Error("Generate random number error: ", zap.Error(err))
-			zap.L().Info("single vote counting end : ", zap.Any("proposalId", proposal.ProposalId))
-			continue
-		}
-
 		var votePowerList []model.VotePower
 		// calc total power
 		totalSpPower := new(big.Int)
@@ -158,7 +150,7 @@ func VotingCount(ethClient model.GoEthClient, db db.DataRepo) error {
 		powerMap := make(map[string]model.Power)
 		addressIsCount := make(map[string]bool)
 		for _, vote := range voteList {
-			power, err := client.GetAddressPower(ethClient.Id, vote.Address, int32(num.Int64()))
+			power, err := client.GetAddressPowerByDay(ethClient.Id, vote.Address, proposal.VoteCountDay)
 			if err != nil {
 				zap.L().Error("get power error: ", zap.Error(err))
 				hasErr = true

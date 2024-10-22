@@ -127,7 +127,7 @@ func AddDraft(c *gin.Context) {
 			return
 		}
 	} else {
-		result := db.Engine.Model(model.ProposalDraft{}).Where("chain_id", draft.ChainId).Where("address", draft.Address).Select("Timezone", "Time", "Name", "Descriptions", "Option").Updates(&draft)
+		result := db.Engine.Model(model.ProposalDraft{}).Where("chain_id", draft.ChainId).Where("address", draft.Address).Select("timezone", "time", "name", "descriptions", "option", "start_time", "exp_time").Updates(&draft)
 		if result.Error != nil {
 			zap.L().Error("update draft error: ", zap.Error(result.Error))
 			response.SystemError(c)
@@ -141,7 +141,7 @@ func AddDraft(c *gin.Context) {
 func AddProposal(c *gin.Context) {
 	var proposalReq request.Proposal
 	if err := c.ShouldBindJSON(&proposalReq); err != nil {
-		zap.L().Error("add draft error: ", zap.Error(err))
+		zap.L().Error("add proposal error: ", zap.Error(err))
 		response.SystemError(c)
 		return
 	}
@@ -167,13 +167,40 @@ func AddProposal(c *gin.Context) {
 		StartTime:    proposalReq.StartTime,
 		ExpTime:      proposalReq.ExpTime,
 		CurrentTime:  proposalReq.CurrentTime,
+		VoteCountDay: proposalReq.VoteCountDay,
+		Height:       proposalReq.Height,
 	}
 
 	result := db.Engine.Model(model.Proposal{}).Create(&proposal)
 	if result.Error != nil {
-		zap.L().Error("insert draft error: ", zap.Error(result.Error))
+		zap.L().Error("insert proposal error: ", zap.Error(result.Error))
 		response.SystemError(c)
 		return
+	}
+
+	// db.Engine.Model(model.SnapshotByDay{}).Where("day", proposal.VoteCountDay).Delete(&model.SnapshotByDay{})
+	var existSnapshot model.SnapshotByDay
+	tx := db.Engine.Model(model.SnapshotByDay{}).Where("day", proposal.VoteCountDay).Find(&existSnapshot)
+	if tx.Error != nil {
+		zap.L().Error("fail to get exist power snapshot: ", zap.Error(result.Error))
+		response.SystemError(c)
+		return
+	}
+
+	if existSnapshot.Id == 0 {
+		snapshotTask := model.SnapshotByDay{
+			Day:    proposal.VoteCountDay,
+			NetId:  proposal.Network,
+			Height: proposal.Height,
+		}
+
+		res := db.Engine.Model(model.SnapshotByDay{}).Create(&snapshotTask)
+		if res.Error != nil {
+			zap.L().Error("add snapshotTask error: ", zap.Error(result.Error))
+			response.SystemError(c)
+			return
+		}
+
 	}
 
 	response.SuccessWithData(true, c)
@@ -300,6 +327,8 @@ func ProposalList(c *gin.Context) {
 			ShowTime:     []string{},
 			Status:       v.Status,
 			VoteCount:    v.VoteCount,
+			VoteCountDay: v.VoteCountDay,
+			Height:       v.Height,
 		}
 
 		startTimeFormat := time.Unix(v.StartTime, 0).In(time.UTC).Format(time.RFC3339)

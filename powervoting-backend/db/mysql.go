@@ -66,6 +66,7 @@ func InitMysql() {
 	db.AutoMigrate(&model.Dict{})
 	db.AutoMigrate(&model.VotePower{})
 	db.AutoMigrate(&model.ProposalDraft{})
+	db.AutoMigrate(&model.SnapshotByDay{})
 
 	var count int64
 	db.Model(model.Dict{}).Where("name", constant.ProposalStartKey).Count(&count)
@@ -221,4 +222,19 @@ func (m *Mysql) UpdateProposal(in *model.Proposal) (int64, error) {
 		}
 	}
 	return in.Id, nil
+}
+
+func (m *Mysql) GetSnapshotList(netId int64) ([]model.SnapshotByDay, error) {
+	var snapshotList []model.SnapshotByDay
+	tx := m.Model(model.SnapshotByDay{}).Where("net_id = ? and (cid is null or cid = '')", netId).Find(&snapshotList)
+	return snapshotList, tx.Error
+}
+
+func (m *Mysql) UpdateSnapshot(in model.SnapshotByDay) error {
+	err := m.Model(in).Updates(model.SnapshotByDay{Cid: in.Cid, PowerInfo: in.PowerInfo}).Error
+	if err != nil {
+		zap.L().Error("update snapshot backup error: ", zap.Error(err))
+		return err
+	}
+	return nil
 }

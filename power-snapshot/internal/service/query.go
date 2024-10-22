@@ -16,13 +16,16 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
 	"power-snapshot/constant"
 	models "power-snapshot/internal/model"
+	"time"
 
 	"github.com/golang-module/carbon"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
@@ -35,13 +38,15 @@ type QueryService struct {
 	baseRepo  BaseRepo
 	queryRepo QueryRepo
 	syncSrv   *SyncService
+	redis     *redis.Client
 }
 
-func NewQueryService(baseRepo BaseRepo, queryRepo QueryRepo, sync *SyncService) *QueryService {
+func NewQueryService(baseRepo BaseRepo, queryRepo QueryRepo, sync *SyncService, redis *redis.Client) *QueryService {
 	return &QueryService{
 		baseRepo:  baseRepo,
 		queryRepo: queryRepo,
 		syncSrv:   sync,
+		redis:     redis,
 	}
 }
 
@@ -51,6 +56,14 @@ func (q *QueryService) GetAddressPower(ctx context.Context, netId int64, address
 	}
 	dayStr := carbon.Now().SubDays(int(dayCount)).EndOfDay().ToShortDateString()
 	dayTime := carbon.Now().SubDays(int(dayCount)).EndOfDay().ToStdTime()
+	res, err := q.GetAddressPowerByDay(ctx, netId, address, dayStr, dayTime)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (q *QueryService) GetAddressPowerByDay(ctx context.Context, netId int64, address string, dayStr string, dayTime time.Time) (*models.SyncPower, error) {
 	power, err := q.queryRepo.GetAddressPower(ctx, netId, address, dayStr)
 	if err != nil {
 		zap.L().Error("error getting address power ", zap.Error(err))
@@ -185,4 +198,65 @@ func (q *QueryService) GetAddressPower(ctx context.Context, netId int64, address
 	}
 
 	return power, nil
+}
+
+func (q *QueryService) GetDataHeight(ctx context.Context, netId int64, dayStr string) (int64, error) {
+	dh, err := q.baseRepo.GetDateHeightMap(ctx, netId)
+	if err != nil {
+		zap.L().Error("error getting date height map", zap.Error(err))
+		return 0, err
+	}
+
+	height, ok := dh[dayStr]
+	if !ok {
+		zap.L().Error("fail to get the day height", zap.Error(err))
+		return 0, err
+	}
+
+	return height, nil
+}
+
+func (q *QueryService) GetAllAddressPowerByDay(ctx context.Context, netId int64, dayStr string) (map[string]any, error) {
+	prefix := fmt.Sprintf("%d_POWER_", netId)
+	keys, err := q.redis.Keys(ctx, prefix+"*").Result()
+	if err != nil {
+		zap.L().Error("fail to get keys", zap.Error(err))
+		return nil, err
+	}
+
+	zap.L().Info("getAllAddressPowerByDay get keys", zap.Any("keys", keys))
+	res := make(map[string]any)
+
+	var addrPower []models.SyncPower
+	for _, key := range keys {
+		hashValues, err := q.redis.HGetAll(ctx, key).Result()
+		if err != nil {
+			zap.L().Error("fail to get power", zap.Error(err))
+			return nil, err
+		}
+
+		for field, value := range hashValues {
+			if field == dayStr {
+				power := models.SyncPower{}
+				err := json.Unmarshal([]byte(value), &power)
+				if err != nil {
+					zap.L().Error("fail to get power", zap.Error(err))
+					return nil, err
+				}
+
+				zap.L().Info("getAllAddressPowerByDay get power", zap.Any("power", power))
+				addrPower = append(addrPower, power)
+			}
+		}
+	}
+
+	res["addrPower"] = addrPower
+	devPower, err := q.redis.HGet(ctx, constant.RedisDeveloperPower, dayStr).Result()
+	if err != nil {
+		zap.L().Error("fail to get DEV_POWER", zap.Error(err))
+		return nil, err
+	}
+
+	res["devPower"] = devPower
+	return res, nil
 }

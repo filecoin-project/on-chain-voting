@@ -15,15 +15,17 @@
 package contract
 
 import (
-	"go.uber.org/zap"
 	"os"
 	"powervoting-server/config"
 	"powervoting-server/model"
 	"strconv"
 	"sync"
 
+	"go.uber.org/zap"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
@@ -57,6 +59,9 @@ func GetClient(id int64) (model.GoEthClient, error) {
 				OracleContract:      network.OracleContract,
 				PowerVotingAbi:      network.PowerVotingAbi,
 				OracleAbi:           network.OracleAbi,
+				GasLimit:            network.GasLimit,
+				PrivateKey:          network.PrivateKey,
+				WalletAddress:       network.WalletAddress,
 			}
 			break
 		}
@@ -81,6 +86,7 @@ func getGoEthClient(clientConfig model.ClientConfig) (model.GoEthClient, error) 
 	// contract address, wallet private key , wallet address
 	powerVotingContract := common.HexToAddress(clientConfig.PowerVotingContract)
 	oracleContract := common.HexToAddress(clientConfig.OracleContract)
+	privateKey, err := crypto.HexToECDSA(clientConfig.PrivateKey)
 
 	// open abi file and parse json
 	powerVotingFile, err := os.Open(clientConfig.PowerVotingAbi)
@@ -115,6 +121,9 @@ func getGoEthClient(clientConfig model.ClientConfig) (model.GoEthClient, error) 
 		OracleAbi:           oracleAbi,
 		PowerVotingContract: powerVotingContract,
 		OracleContract:      oracleContract,
+		PrivateKey:          privateKey,
+		WalletAddress:       common.HexToAddress(clientConfig.WalletAddress),
+		GasLimit:            uint64(clientConfig.GasLimit),
 	}
 	return goEthClient, nil
 }

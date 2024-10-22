@@ -14,7 +14,10 @@
 
 package model
 
-import "math/big"
+import (
+	"math/big"
+	"time"
+)
 
 // Power represents the power information.
 type Power struct {
@@ -38,4 +41,21 @@ type ContractPower struct {
 type VoterToPowerStatus struct {
 	DayId        *big.Int `json:"dayId"`        // Day ID
 	HasFullRound *big.Int `json:"hasFullRound"` // Has full round
+}
+
+type SnapshotByDay struct {
+	Id        int64     `json:"id"`
+	Day       string    `gorm:"not null;uniqueIndex:uniq_day" json:"day"`
+	PowerInfo string    `gorm:"type:longtext" json:"powerInfo"` //The power set of all addresses for the day
+	NetId     int64     `gorm:"not null" json:"netId"`          // Block id
+	Cid       string    `gorm:"" json:"cid"`                    //File ID uploaded to W3Storage
+	Height    int64     `gorm:"not null" json:"height"`         // Block height
+	CreatedAt time.Time `gorm:"not null,autoCreateTime" json:"createdAt"`
+	UpdatedAt time.Time `gorm:"not null,autoUpdateTime" json:"updatedAt"`
+}
+
+type AllPowerByDay struct {
+	Id        int64  `json:"id"`
+	Day       string `json:"day"`
+	PowerInfo string `json:"powerInfo"`
 }

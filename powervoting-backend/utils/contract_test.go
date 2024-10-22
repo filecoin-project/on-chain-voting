@@ -16,10 +16,11 @@ package utils
 
 import (
 	"fmt"
-	"go.uber.org/zap"
 	"powervoting-server/config"
 	"powervoting-server/contract"
 	"testing"
+
+	"go.uber.org/zap"
 )
 
 func TestGetProposal(t *testing.T) {
@@ -88,4 +89,23 @@ func TestGetVoterToPowerStatus(t *testing.T) {
 	}
 	fmt.Printf("power: %+v\n", voterToPowerStatus)
 
+}
+
+func TestAddSnapshot(t *testing.T) {
+	d, _ := zap.NewDevelopment()
+	zap.ReplaceGlobals(d)
+
+	config.InitConfig("../")
+	client, err := contract.GetClient(314159)
+
+	if err != nil {
+		zap.L().Error("Get client error: ", zap.Error(err))
+		return
+	}
+	err = AddSnapshot(client, "cid", "20240101")
+
+	if err != nil {
+		zap.L().Error("fail to add snapshot, error: ", zap.Error(err))
+		return
+	}
 }

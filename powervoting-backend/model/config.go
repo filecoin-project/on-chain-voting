@@ -51,6 +51,9 @@ type Network struct {
 	OracleAbi           string // ABI for Oracle contract
 	PowerVotingContract string // Contract address for PowerVoting
 	OracleContract      string // Contract address for Oracle
+	PrivateKey          string // Private key for the network wallet
+	WalletAddress       string // Wallet address for the network
+	GasLimit            int64  // gasLimit
 }
 
 type Snapshot struct {
