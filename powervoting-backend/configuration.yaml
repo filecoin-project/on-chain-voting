@@ -32,4 +32,5 @@ network:
 w3client:
   did: 
   privateKey: 
+   # proof.ucan path
   proof: 
