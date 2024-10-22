@@ -6,25 +6,6 @@ Power Voting dApp utilizes timelock based on smart contract technology to achiev
 
 Power Voting dApp aims to become the infrastructure of DAO governance.
 
-## Deployment
-
-For deployment instructions, please refer to the [Deployment Guide](Install.md).
-
-## Usage
-
-1. **Configure `configuration.yaml`**: 
-
-   Edit the `configuration.yaml` file according to your environment settings.
-
-   ![Edit Configuration](img/1.png)
-
-2. **Run Tests**:
-
-   ```
-   cd /on-chain-voting/powervoting-backend
-   go test ./...
-   ```
-
 ## Problem
 
 In the community voting process governed by DAO, since the voting data of other community members can be seen before the vote counting time, the community members will be affected by the existing voting data before voting, and some members will even take advantage of a large number of voting rights in their hands to vote at the end of the voting process to make the voting results are reversed, resulting in unfair voting.
@@ -61,7 +42,16 @@ Power Snapshot requests raw data from data sources such as FileCoin and GitHub, 
 
 ![](img/ucan2.png)
 
-## Author
 
-The PowerVoting Backend is developed by StorSwift Inc.
+## Usage
 
+1. **Deployment**: 
+
+   For deployment instructions, please refer to the [Deployment Guide](Install.md).
+
+2. **Run Tests**:
+
+   ```
+   cd /on-chain-voting/powervoting-backend
+   go test ./...
+   ```
