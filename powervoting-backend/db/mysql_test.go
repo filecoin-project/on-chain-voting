@@ -183,7 +183,7 @@ func TestGetProposalList(t *testing.T) {
 			StartTime:    1,
 			ExpTime:      2,
 			VoteCount:    1,
-			Status:       0,
+			Status:       1,
 			Network:      314159,
 		},
 	}
