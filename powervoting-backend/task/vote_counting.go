@@ -137,7 +137,7 @@ func VotingCount(ethClient model.GoEthClient, db db.DataRepo) error {
 
 		zap.L().Info("voteList: ", zap.Reflect("voteList", voteList))
 
-		num, err := rand.Int(rand.Reader, big.NewInt(61))
+		num, err := rand.Int(rand.Reader, big.NewInt(14))
 		if err != nil {
 			zap.L().Error("Generate random number error: ", zap.Error(err))
 			zap.L().Info("single vote counting end : ", zap.Any("proposalId", proposal.ProposalId))

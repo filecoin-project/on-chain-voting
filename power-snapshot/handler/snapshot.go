@@ -16,6 +16,7 @@ package handler
 
 import (
 	"context"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -89,7 +90,7 @@ func (s *Snapshot) SyncAllDeveloperWeight(context.Context, *pb.SyncAllDeveloperW
 	return &pb.SyncAllDeveloperWeightResponse{}, nil
 }
 
-func (s *Snapshot) SyncDeveloperPower(ctx context.Context, req *pb.SyncDeveloperWeightRequest) (*pb.SyncDeveloperWeightResponse, error) {
+func (s *Snapshot) SyncDeveloperWeight(ctx context.Context, req *pb.SyncDeveloperWeightRequest) (*pb.SyncDeveloperWeightResponse, error) {
 	err := s.syncSrv.SyncDeveloperWeight(context.Background(), req.GetDateStr())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
