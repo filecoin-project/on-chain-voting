@@ -16,76 +16,203 @@ package service
 
 import (
 	"context"
-	"log"
-	"power-snapshot/config"
+	"encoding/json"
 	"power-snapshot/utils"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/ybbus/jsonrpc/v3"
 	"go.uber.org/zap"
 )
 
 func TestGetPower(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	lotusRpcClient := utils.NewMockRPCClient(gomock.NewController(t))
 
-	// Initialize the logger
-	config.InitLogger()
+	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.ChainGetTipSetByHeight", int64(2057965), gomock.Any()).Return(&jsonrpc.RPCResponse{
+		Result: map[string]interface{}{
+			"Cids": []interface{}{
+				map[string]interface{}{
+					"/": "bafy2bzacebes5mgufnyilg5e5p2mvhftqvoplzo65zxvcjy3j62n6w4er3hmm",
+				},
+				map[string]interface{}{
+					"/": "bafy2bzacecqarqyklux426of26bwmcvd3rjjjlsqprd3umvbjtcn6hcbjoypa",
+				},
+			},
+			"Blocks": 1,
+			"Height": json.Number("2057965"),
+			"Test":   1,
+		},
+		JSONRPC: "2.0",
+		Error:   nil,
+		ID:      0,
+	}, nil)
 
-	// Load the configuration from the specified path
-	err := config.InitConfig("../../")
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
-		return
-	}
+	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.ChainGetTipSetByHeight", int64(2057965), gomock.Any()).Return(&jsonrpc.RPCResponse{
+		Result: map[string]interface{}{
+			"Cids": []interface{}{
+				map[string]interface{}{
+					"/": "bafy2bzacebes5mgufnyilg5e5p2mvhftqvoplzo65zxvcjy3j62n6w4er3hmm",
+				},
+				map[string]interface{}{
+					"/": "bafy2bzacecqarqyklux426of26bwmcvd3rjjjlsqprd3umvbjtcn6hcbjoypa",
+				},
+			},
+			"Blocks": 1,
+			"Height": json.Number("2057965"),
+			"Test":   5,
+		},
+		JSONRPC: "2.0",
+		Error:   nil,
+		ID:      0,
+	}, nil)
 
-	// Initialize the client manager
-	manager, err := utils.NewGoEthClientManager(config.Client.Network)
-	if err != nil {
-		log.Fatalf("Failed to initialize client manager: %v", err)
-		return
-	}
+	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.ChainGetTipSetByHeight", int64(2057965), gomock.Any()).Return(&jsonrpc.RPCResponse{
+		Result: map[string]interface{}{
+			"Cids": []interface{}{
+				map[string]interface{}{
+					"/": "bafy2bzacebes5mgufnyilg5e5p2mvhftqvoplzo65zxvcjy3j62n6w4er3hmm",
+				},
+				map[string]interface{}{
+					"/": "bafy2bzacecqarqyklux426of26bwmcvd3rjjjlsqprd3umvbjtcn6hcbjoypa",
+				},
+			},
+			"Blocks": 1,
+			"Height": json.Number("2057965"),
+			"Test":   6,
+		},
+		JSONRPC: "2.0",
+		Error:   nil,
+		ID:      0,
+	}, nil)
 
-	// Get the client for the specified network
-	client, err := manager.GetClient(314159)
-	if err != nil {
-		log.Fatalf("Failed to get client: %v", err)
-		return
-	}
+	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.StateGetActor", gomock.Any()).Return(&jsonrpc.RPCResponse{
+		Result: map[string]interface{}{
+			"Balance": "100999995981726481390",
+			"Test":    2,
+		},
+		JSONRPC: "2.0",
+		Error:   nil,
+		ID:      0,
+	}, nil)
 
-	// Create a new Lotus RPC client
-	lotusRpcClient := utils.NewClient(client.QueryRpc[0])
-	GetPower(context.Background(), lotusRpcClient, "t017592", "t03751", 1490767)
+	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.StateMinerPower", gomock.Any()).Return(&jsonrpc.RPCResponse{
+		Result: map[string]interface{}{
+			"MinerPower": map[string]interface{}{
+				"RawBytePower":    "0",
+				"QualityAdjPower": "0",
+			},
+			"TotalPower": map[string]interface{}{
+				"RawBytePower":    "676818126372864",
+				"QualityAdjPower": "1954804254375936",
+			},
+			"HasMinPower": false,
+			"test":        3,
+		},
+		JSONRPC: "2.0",
+		Error:   nil,
+		ID:      0,
+	}, nil)
+
+	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.StateMarketDeals", gomock.Any()).Return(&jsonrpc.RPCResponse{
+		Result: map[string]interface{}{
+			"Deals": map[string]interface{}{
+				"116140": map[string]interface{}{
+					"Proposal": map[string]interface{}{
+						"VerifiedDeal": true,
+						"EndEpoch":     json.Number("1729065330"),
+						"PieceSize":    json.Number("1048576"),
+						"Client":       "t03751",
+					},
+					"State": "",
+				},
+				"test": 4,
+			},
+		},
+		JSONRPC: "2.0",
+		Error:   nil,
+		ID:      0,
+	}, nil)
+
+	GetPower(context.Background(), lotusRpcClient, "t017592", "t03751", 2057965)
 }
 
 func TestGetActorPower(t *testing.T) {
-	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	lotusRpcClient := utils.NewMockRPCClient(gomock.NewController(t))
 
-	// Initialize the logger
-	config.InitLogger()
+	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.ChainGetTipSetByHeight", int64(2057965), gomock.Any()).Return(&jsonrpc.RPCResponse{
+		Result: map[string]interface{}{
+			"Cids": []interface{}{
+				map[string]interface{}{
+					"/": "bafy2bzacebes5mgufnyilg5e5p2mvhftqvoplzo65zxvcjy3j62n6w4er3hmm",
+				},
+				map[string]interface{}{
+					"/": "bafy2bzacecqarqyklux426of26bwmcvd3rjjjlsqprd3umvbjtcn6hcbjoypa",
+				},
+			},
+			"Blocks": 1,
+			"Height": json.Number("2057965"),
+			"Test":   1,
+		},
+		JSONRPC: "2.0",
+		Error:   nil,
+		ID:      0,
+	}, nil)
 
-	// Load the configuration from the specified path
-	err := config.InitConfig("../../")
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
-		return
-	}
+	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.ChainGetTipSetByHeight", int64(2057965), gomock.Any()).Return(&jsonrpc.RPCResponse{
+		Result: map[string]interface{}{
+			"Cids": []interface{}{
+				map[string]interface{}{
+					"/": "bafy2bzacebes5mgufnyilg5e5p2mvhftqvoplzo65zxvcjy3j62n6w4er3hmm",
+				},
+				map[string]interface{}{
+					"/": "bafy2bzacecqarqyklux426of26bwmcvd3rjjjlsqprd3umvbjtcn6hcbjoypa",
+				},
+			},
+			"Blocks": 1,
+			"Height": json.Number("2057965"),
+			"Test":   3,
+		},
+		JSONRPC: "2.0",
+		Error:   nil,
+		ID:      0,
+	}, nil)
 
-	// Initialize the client manager
-	manager, err := utils.NewGoEthClientManager(config.Client.Network)
-	if err != nil {
-		log.Fatalf("Failed to initialize client manager: %v", err)
-		return
-	}
+	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.StateGetActor", gomock.Any()).Return(&jsonrpc.RPCResponse{
+		Result: map[string]interface{}{
+			"Balance": "100999995981726481390",
+			"Test":    2,
+		},
+		JSONRPC: "2.0",
+		Error:   nil,
+		ID:      0,
+	}, nil)
 
-	// Get the client for the specified network
-	client, err := manager.GetClient(314159)
-	if err != nil {
-		log.Fatalf("Failed to get client: %v", err)
-		return
-	}
+	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.StateMarketDeals", gomock.Any()).Return(&jsonrpc.RPCResponse{
+		Result: map[string]interface{}{
+			"Deals": map[string]interface{}{
+				"116140": map[string]interface{}{
+					"Proposal": map[string]interface{}{
+						"VerifiedDeal": true,
+						"EndEpoch":     json.Number("1729065330"),
+						"PieceSize":    json.Number("1048576"),
+						"Client":       "t03751",
+					},
+					"State": "",
+				},
+				"test": 4,
+			},
+		},
+		JSONRPC: "2.0",
+		Error:   nil,
+		ID:      0,
+	}, nil)
 
-	lotusRpcClient := utils.NewClient(client.QueryRpc[0])
-
-	walletBalance, clientBalance, err := GetActorPower(ctx, lotusRpcClient, "t099523", 2058000)
+	walletBalance, clientBalance, err := GetActorPower(context.Background(), lotusRpcClient, "t017592", 2057965)
 
 	assert.Nil(t, err)
 
@@ -93,32 +220,46 @@ func TestGetActorPower(t *testing.T) {
 }
 
 func TestGetMinerPower(t *testing.T) {
-	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	lotusRpcClient := utils.NewMockRPCClient(gomock.NewController(t))
 
-	// Initialize the logger
-	config.InitLogger()
+	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.ChainGetTipSetByHeight", int64(2057965), gomock.Any()).Return(&jsonrpc.RPCResponse{
+		Result: map[string]interface{}{
+			"Cids": []interface{}{
+				map[string]interface{}{
+					"/": "bafy2bzacebes5mgufnyilg5e5p2mvhftqvoplzo65zxvcjy3j62n6w4er3hmm",
+				},
+				map[string]interface{}{
+					"/": "bafy2bzacecqarqyklux426of26bwmcvd3rjjjlsqprd3umvbjtcn6hcbjoypa",
+				},
+			},
+			"Blocks": 1,
+			"Height": json.Number("2057965"),
+			"Test":   1,
+		},
+		JSONRPC: "2.0",
+		Error:   nil,
+		ID:      0,
+	}, nil)
 
-	// Load the configuration from the specified path
-	err := config.InitConfig("../../")
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
-		return
-	}
+	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.StateMinerPower", gomock.Any()).Return(&jsonrpc.RPCResponse{
+		Result: map[string]interface{}{
+			"MinerPower": map[string]interface{}{
+				"RawBytePower":    "0",
+				"QualityAdjPower": "0",
+			},
+			"TotalPower": map[string]interface{}{
+				"RawBytePower":    "676818126372864",
+				"QualityAdjPower": "1954804254375936",
+			},
+			"HasMinPower": false,
+			"test":        3,
+		},
+		JSONRPC: "2.0",
+		Error:   nil,
+		ID:      0,
+	}, nil)
 
-	// Initialize the client manager
-	manager, err := utils.NewGoEthClientManager(config.Client.Network)
-	if err != nil {
-		log.Fatalf("Failed to initialize client manager: %v", err)
-		return
-	}
-
-	// Get the client for the specified network
-	client, err := manager.GetClient(314159)
-	if err != nil {
-		log.Fatalf("Failed to get client: %v", err)
-		return
-	}
-
-	lotusRpcClient := utils.NewClient(client.QueryRpc[0])
-	GetMinerPower(ctx, lotusRpcClient, "t03751", 1)
+	GetMinerPower(context.Background(), lotusRpcClient, "t03751", 2057965)
 }
