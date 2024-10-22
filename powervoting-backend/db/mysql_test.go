@@ -19,7 +19,6 @@ import (
 	"powervoting-server/config"
 	"powervoting-server/model"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -173,7 +172,6 @@ func TestGetProposalList(t *testing.T) {
 
 	config.InitConfig("../")
 	InitMysql()
-	currentTime := time.Now()
 	expectedProposalList := []model.Proposal{
 		{
 			Id:           1,
