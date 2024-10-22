@@ -25,9 +25,17 @@ type Proposal struct {
 	GithubAvatar string `json:"githubAvatar"`                    // Github avatar
 	GMTOffset    string `json:"gmtOffset"`                       // GMT offset
 	CurrentTime  int64  `json:"currentTime"`                     // Current time
+	VoteCountDay string `json:"voteCountDay" binding:"required"` // Vote counting on this day
+	Height       int64  `json:"height" binding:"required"`       // Vote counting on this height
 }
 
 type GetDraft struct {
 	ChainId string `form:"chainId" binding:"required"`
 	Address string `form:"address" binding:"required"`
+}
+
+type GetPower struct {
+	Address string `form:"address" binding:"required"`
+	Day     string `form:"day" binding:"required"`
+	NetId   int64  `form:"chainId" binding:"required"`
 }
