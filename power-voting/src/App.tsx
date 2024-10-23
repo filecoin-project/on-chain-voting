@@ -30,9 +30,9 @@ import { Link, useLocation, useNavigate, useRoutes } from "react-router-dom";
 import "tailwindcss/tailwind.css";
 import { useAccount } from "wagmi";
 import timezones from '../public/json/timezons.json';
-import { STORING_DATA_MSG } from "./common/consts";
+import { STORING_DATA_MSG, VOTE_ALL_STATUS } from "./common/consts";
 import { useCheckFipEditorAddress, useVoterInfoSet } from "./common/hooks";
-import { useCurrentTimezone, useVoterInfo, useVotingList } from "./common/store";
+import { useCurrentTimezone, usePropsalStatus, useVoterInfo, useVotingList } from "./common/store";
 import "./common/styles/reset.less";
 import Footer from './components/Footer';
 import './lang/config';
@@ -44,6 +44,7 @@ const App: React.FC = () => {
   const prevAddressRef = useRef(address);
   const { openConnectModal } = useConnectModal();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Render routes based on URL
   const element = useRoutes(routes);
@@ -73,6 +74,7 @@ const App: React.FC = () => {
   const setVotingList = useVotingList((state: any) => state.setVotingList);
   // Update current timezone in state
   const setTimezone = useCurrentTimezone((state: any) => state.setTimezone);
+  const status = usePropsalStatus((state: any) => state.status);
 
   const { pathname } = useLocation();
   const { t, i18n } = useTranslation();
@@ -86,7 +88,6 @@ const App: React.FC = () => {
       window.location.reload();
     }
   }, [address]);
-
 
   // Update voter information when available
   useEffect(() => {
@@ -263,14 +264,17 @@ const App: React.FC = () => {
     const params = {
       page: 1,
       pageSize: 5,
-      searchKey: value
+      searchKey: value?.trim(),
+      status: status === VOTE_ALL_STATUS ? 0 : status
     }
     const { data: { data: votingData } } = await axios.get('/api/proposal/list', { params })
     setVotingList({ votingList: votingData.list || [], totalPage: votingData.total, searchKey: value })
   }
   useEffect(() => {
+    if(!chain) return
+    setSearchValue('')
     searchKey()
-  },[])
+  }, [chain])
   return (
     <ConfigProvider theme={{
       algorithm: theme.defaultAlgorithm,
@@ -282,7 +286,7 @@ const App: React.FC = () => {
     }} locale={language.value}>
       <div className="layout font-body">
         {!isLanding && <header className='h-[96px] bg-[#ffffff] border-b border-solid border-[#DFDFDF]'>
-          <div className='w-full h-[88px] px-60 flex items-center justify-between'>
+          <div className='w-full h-[88px] flex items-center' style={{ justifyContent: "space-evenly" }}>
             <div className='flex items-center'>
               <div className='flex-shrink-0'>
                 <Link to='/'>
@@ -297,18 +301,23 @@ const App: React.FC = () => {
                   {t('content.powerVoting')}
                 </Link>
               </div>
-              <div className="ml-6">
-                <Input
-                  placeholder="Search Proposals"
-                  size="large"
-                  prefix={<SearchOutlined onClick={() => searchKey(searchValue)} className={`${isFocus ? "text-[#1677ff]" : "text-[#8b949e]"} text-xl hover:text-[#1677ff]`} />}
-                  onClick={() => setIsFocus(true)}
-                  onBlur={() => setIsFocus(false)}
-                  onChange={(e) => setSearchValue(e.currentTarget.value)}
-                  onPressEnter={() => searchKey(searchValue)}
-                  className={`${isFocus ? 'w-[270px]' : "w-[180px]"} font-medium text-base item-center text-slate-800 bg-[#f7f7f7] rounded-lg`}
-                />
-              </div>
+              {(location.pathname === '/home' || location.pathname === '/') &&
+                <div className="ml-6">
+                  <Input
+                    placeholder="Search Proposals"
+                    size="large"
+                    prefix={<SearchOutlined onClick={() => searchKey(searchValue)} className={`${isFocus ? "text-[#1677ff]" : "text-[#8b949e]"} text-xl hover:text-[#1677ff]`} />}
+                    onClick={() => setIsFocus(true)}
+                    onBlur={() => setIsFocus(false)}
+                    onChange={(e) => setSearchValue(e.currentTarget.value)}
+                    onPressEnter={() => searchKey(searchValue)}
+                    value={searchValue}
+                    className={`${isFocus ? 'w-[270px]' : "w-[180px]"} font-medium text-base item-center text-slate-800 bg-[#f7f7f7] rounded-lg`}
+                  />
+                </div>
+
+              }
+
             </div>
             <div className='flex items-center'>
               <Dropdown
