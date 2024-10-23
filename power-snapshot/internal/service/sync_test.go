@@ -144,7 +144,7 @@ type mockSyncRepo struct {
 }
 
 func (m *mockSyncRepo) GetDelegateEvent(ctx context.Context, netId int64, addr string, maxBlockHeight int64) (models.CreateDelegateEvent, models.DeleteDelegateEvent, error) {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 
