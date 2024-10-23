@@ -96,7 +96,7 @@ func worker(ctx context.Context, id int) error {
 	fmt.Printf("Worker %d is processing business logic\n", id)
 
 	if id == 60 {
-		println("60出错了!!!")
+		println("It went wrong with 60!")
 		return fmt.Errorf("business logic error in worker %d", id)
 	}
 
