@@ -21,6 +21,7 @@ import (
 	"math/big"
 	"power-snapshot/constant"
 	models "power-snapshot/internal/model"
+	"time"
 
 	"github.com/golang-module/carbon"
 	"go.uber.org/zap"
@@ -51,6 +52,14 @@ func (q *QueryService) GetAddressPower(ctx context.Context, netId int64, address
 	}
 	dayStr := carbon.Now().SubDays(int(dayCount)).EndOfDay().ToShortDateString()
 	dayTime := carbon.Now().SubDays(int(dayCount)).EndOfDay().ToStdTime()
+	res, err := q.GetAddressPowerByDay(ctx, netId, address, dayStr, dayTime)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (q *QueryService) GetAddressPowerByDay(ctx context.Context, netId int64, address string, dayStr string, dayTime time.Time) (*models.SyncPower, error) {
 	power, err := q.queryRepo.GetAddressPower(ctx, netId, address, dayStr)
 	if err != nil {
 		zap.L().Error("error getting address power ", zap.Error(err))
@@ -185,4 +194,20 @@ func (q *QueryService) GetAddressPower(ctx context.Context, netId int64, address
 	}
 
 	return power, nil
+}
+
+func (q *QueryService) GetDataHeight(ctx context.Context, netId int64, dayStr string) (int64, error) {
+	dh, err := q.baseRepo.GetDateHeightMap(ctx, netId)
+	if err != nil {
+		zap.L().Error("error getting date height map", zap.Error(err))
+		return 0, err
+	}
+
+	height, ok := dh[dayStr]
+	if !ok {
+		zap.L().Error("fail to get the day height", zap.Error(err))
+		return 0, err
+	}
+
+	return height, nil
 }

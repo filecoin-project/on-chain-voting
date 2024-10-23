@@ -34,4 +34,6 @@ const (
 	ProposalStatusCompleted  = 4
 	ProposalStatusRejected   = 5
 	ProposalStatusPassed     = 6
+
+	RandomDay = 14
 )

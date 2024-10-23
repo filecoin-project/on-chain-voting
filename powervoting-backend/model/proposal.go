@@ -43,6 +43,16 @@ type Proposal struct {
 	CurrentTime  int64     `json:"currentTime" gorm:"not null,default:0"`     // Current time
 	CreatedAt    time.Time `json:"createdAt" gorm:"not null,autoCreateTime"`  // Created time
 	UpdatedAt    time.Time `json:"updatedAt" gorm:"not null,autoUpdateTime"`  // Updated time
+	VoteCountDay string    `json:"voteCountDay" gorm:"not null"`              // Vote counting on this day
+	Height       int64     `json:"height" gorm:"not null"`                    // Vote counting on this height
+}
+
+type DayToPowerInfo struct {
+	Id        int64     `json:"id"`
+	Day       string    `json:"day" gorm:"not null"`
+	PowerInfo string    `json:"powerInfo" gorm:"not null"`
+	CreatedAt time.Time `json:"createdAt" gorm:"not null,autoCreateTime"`
+	UpdatedAt time.Time `json:"updatedAt" gorm:"not null,autoUpdateTime"`
 }
 
 type ProposalList struct {

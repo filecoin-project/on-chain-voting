@@ -65,6 +65,8 @@ func InitMysql() {
 	db.AutoMigrate(&model.VoteCompleteHistory{})
 	db.AutoMigrate(&model.Dict{})
 	db.AutoMigrate(&model.VotePower{})
+	db.AutoMigrate(&model.DayToPowerInfo{})
+	db.AutoMigrate(&model.ProposalDraft{})
 
 	var count int64
 	db.Model(model.Dict{}).Where("name", constant.ProposalStartKey).Count(&count)

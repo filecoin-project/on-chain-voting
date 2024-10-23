@@ -87,3 +87,43 @@ func ParseAddressPowerResponse(res *pb.AddressPowerResponse) (model.Power, error
 
 	return power, nil
 }
+
+func GetDataHeight(netId int64, day string) (int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	req := &pb.DataHeightRequest{
+		NetId: netId,
+		Day:   day,
+	}
+
+	res, err := getClient().GetDataHeight(ctx, req)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get address power: %v", err)
+	}
+
+	return res.Height, nil
+}
+
+func GetAddressPowerByDay(netId int64, address string, day string) (model.Power, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	grpcReq := &pb.AddressPowerByDayRequest{
+		NetId:   netId,
+		Address: address,
+		Day:     day,
+	}
+
+	grpcRes, err := getClient().GetAddressPowerByDay(ctx, grpcReq)
+	if err != nil {
+		return model.Power{}, fmt.Errorf("failed to get address power: %v", err)
+	}
+
+	power, err := ParseAddressPowerResponse(grpcRes)
+	if err != nil {
+		return model.Power{}, fmt.Errorf("failed to parse address power response: %v", err)
+	}
+
+	return power, nil
+}

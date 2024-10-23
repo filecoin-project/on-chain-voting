@@ -34,3 +34,8 @@ type AddrInfo struct {
 	MinerIDs      []uint64 `json:"minerIDs"`
 	GithubAccount string   `json:"githubAccount"`
 }
+
+type DayHeight struct {
+	Day    string `json:"day"`
+	Height int64  `json:"height"`
+}

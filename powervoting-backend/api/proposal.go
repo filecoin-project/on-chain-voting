@@ -127,7 +127,7 @@ func AddDraft(c *gin.Context) {
 			return
 		}
 	} else {
-		result := db.Engine.Model(model.ProposalDraft{}).Where("chain_id", draft.ChainId).Where("address", draft.Address).Select("Timezone", "Time", "Name", "Descriptions", "Option").Updates(&draft)
+		result := db.Engine.Model(model.ProposalDraft{}).Where("chain_id", draft.ChainId).Where("address", draft.Address).Select("timezone", "time", "name", "descriptions", "option", "start_time", "exp_time").Updates(&draft)
 		if result.Error != nil {
 			zap.L().Error("update draft error: ", zap.Error(result.Error))
 			response.SystemError(c)
@@ -167,6 +167,8 @@ func AddProposal(c *gin.Context) {
 		StartTime:    proposalReq.StartTime,
 		ExpTime:      proposalReq.ExpTime,
 		CurrentTime:  proposalReq.CurrentTime,
+		VoteCountDay: proposalReq.VoteCountDay,
+		Height:       proposalReq.Height,
 	}
 
 	result := db.Engine.Model(model.Proposal{}).Create(&proposal)
