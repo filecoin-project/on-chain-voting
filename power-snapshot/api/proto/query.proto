@@ -27,6 +27,18 @@ service Snapshot {
   rpc SyncDeveloperWeight(SyncDeveloperWeightRequest) returns (SyncDeveloperWeightResponse) {}
   rpc GetDataHeight(DataHeightRequest) returns (DataHeightResponse) {}
   rpc GetAddressPowerByDay(AddressPowerByDayRequest) returns (AddressPowerResponse) {}
+  rpc GetAllAddrPowerByDay(GetAllAddrPowerByDayRequest) returns (GetAllAddrPowerByDayResponse) {}
+}
+
+message GetAllAddrPowerByDayRequest {
+  string day = 1;
+  int64 netId = 2;
+}
+
+message GetAllAddrPowerByDayResponse {
+  string day = 1;
+  string info = 3; 
+  int64 netId = 4;
 }
 
 message  SyncAllAddrPowerRequest {

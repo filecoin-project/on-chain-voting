@@ -16,7 +16,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v5.28.2
-// source: query1.proto
+// source: query.proto
 
 package snapshot
 
@@ -41,6 +41,7 @@ const (
 	Snapshot_SyncDeveloperWeight_FullMethodName    = "/snapshot.Snapshot/SyncDeveloperWeight"
 	Snapshot_GetDataHeight_FullMethodName          = "/snapshot.Snapshot/GetDataHeight"
 	Snapshot_GetAddressPowerByDay_FullMethodName   = "/snapshot.Snapshot/GetAddressPowerByDay"
+	Snapshot_GetAllAddrPowerByDay_FullMethodName   = "/snapshot.Snapshot/GetAllAddrPowerByDay"
 )
 
 // SnapshotClient is the client API for Snapshot service.
@@ -55,6 +56,7 @@ type SnapshotClient interface {
 	SyncDeveloperWeight(ctx context.Context, in *SyncDeveloperWeightRequest, opts ...grpc.CallOption) (*SyncDeveloperWeightResponse, error)
 	GetDataHeight(ctx context.Context, in *DataHeightRequest, opts ...grpc.CallOption) (*DataHeightResponse, error)
 	GetAddressPowerByDay(ctx context.Context, in *AddressPowerByDayRequest, opts ...grpc.CallOption) (*AddressPowerResponse, error)
+	GetAllAddrPowerByDay(ctx context.Context, in *GetAllAddrPowerByDayRequest, opts ...grpc.CallOption) (*GetAllAddrPowerByDayResponse, error)
 }
 
 type snapshotClient struct {
@@ -145,6 +147,16 @@ func (c *snapshotClient) GetAddressPowerByDay(ctx context.Context, in *AddressPo
 	return out, nil
 }
 
+func (c *snapshotClient) GetAllAddrPowerByDay(ctx context.Context, in *GetAllAddrPowerByDayRequest, opts ...grpc.CallOption) (*GetAllAddrPowerByDayResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetAllAddrPowerByDayResponse)
+	err := c.cc.Invoke(ctx, Snapshot_GetAllAddrPowerByDay_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SnapshotServer is the server API for Snapshot service.
 // All implementations must embed UnimplementedSnapshotServer
 // for forward compatibility.
@@ -157,6 +169,7 @@ type SnapshotServer interface {
 	SyncDeveloperWeight(context.Context, *SyncDeveloperWeightRequest) (*SyncDeveloperWeightResponse, error)
 	GetDataHeight(context.Context, *DataHeightRequest) (*DataHeightResponse, error)
 	GetAddressPowerByDay(context.Context, *AddressPowerByDayRequest) (*AddressPowerResponse, error)
+	GetAllAddrPowerByDay(context.Context, *GetAllAddrPowerByDayRequest) (*GetAllAddrPowerByDayResponse, error)
 	mustEmbedUnimplementedSnapshotServer()
 }
 
@@ -190,6 +203,9 @@ func (UnimplementedSnapshotServer) GetDataHeight(context.Context, *DataHeightReq
 }
 func (UnimplementedSnapshotServer) GetAddressPowerByDay(context.Context, *AddressPowerByDayRequest) (*AddressPowerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAddressPowerByDay not implemented")
+}
+func (UnimplementedSnapshotServer) GetAllAddrPowerByDay(context.Context, *GetAllAddrPowerByDayRequest) (*GetAllAddrPowerByDayResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAllAddrPowerByDay not implemented")
 }
 func (UnimplementedSnapshotServer) mustEmbedUnimplementedSnapshotServer() {}
 
@@ -348,6 +364,24 @@ func _Snapshot_GetAddressPowerByDay_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Snapshot_GetAllAddrPowerByDay_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAllAddrPowerByDayRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SnapshotServer).GetAllAddrPowerByDay(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Snapshot_GetAllAddrPowerByDay_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SnapshotServer).GetAllAddrPowerByDay(ctx, req.(*GetAllAddrPowerByDayRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Snapshot_ServiceDesc is the grpc.ServiceDesc for Snapshot service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -387,7 +421,11 @@ var Snapshot_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetAddressPowerByDay",
 			Handler:    _Snapshot_GetAddressPowerByDay_Handler,
 		},
+		{
+			MethodName: "GetAllAddrPowerByDay",
+			Handler:    _Snapshot_GetAllAddrPowerByDay_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "query1.proto",
+	Metadata: "query.proto",
 }

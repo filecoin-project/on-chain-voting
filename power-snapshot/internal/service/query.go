@@ -16,6 +16,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -24,6 +25,7 @@ import (
 	"time"
 
 	"github.com/golang-module/carbon"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
@@ -36,13 +38,15 @@ type QueryService struct {
 	baseRepo  BaseRepo
 	queryRepo QueryRepo
 	syncSrv   *SyncService
+	redis     *redis.Client
 }
 
-func NewQueryService(baseRepo BaseRepo, queryRepo QueryRepo, sync *SyncService) *QueryService {
+func NewQueryService(baseRepo BaseRepo, queryRepo QueryRepo, sync *SyncService, redis *redis.Client) *QueryService {
 	return &QueryService{
 		baseRepo:  baseRepo,
 		queryRepo: queryRepo,
 		syncSrv:   sync,
+		redis:     redis,
 	}
 }
 
@@ -210,4 +214,38 @@ func (q *QueryService) GetDataHeight(ctx context.Context, netId int64, dayStr st
 	}
 
 	return height, nil
+}
+
+func (q *QueryService) GetAllAddressPowerByDay(ctx context.Context, netId int64, dayStr string) ([]models.SyncPower, error) {
+	prefix := fmt.Sprintf("%d_POWER_", netId)
+	keys, err := q.redis.Keys(ctx, prefix+"*").Result()
+	if err != nil {
+		zap.L().Error("fail to get keys", zap.Error(err))
+		return nil, err
+	}
+
+	zap.L().Info("getAllAddressPowerByDay get keys", zap.Any("keys", keys))
+	var res []models.SyncPower
+	for _, key := range keys {
+		hashValues, err := q.redis.HGetAll(ctx, key).Result()
+		if err != nil {
+			zap.L().Error("fail to get power", zap.Error(err))
+			return nil, err
+		}
+
+		for field, value := range hashValues {
+			if field == dayStr {
+				power := models.SyncPower{}
+				err := json.Unmarshal([]byte(value), &power)
+				if err != nil {
+					zap.L().Error("fail to get power", zap.Error(err))
+					return nil, err
+				}
+
+				zap.L().Info("getAllAddressPowerByDay get power", zap.Any("power", power))
+				res = append(res, power)
+			}
+		}
+	}
+	return res, nil
 }

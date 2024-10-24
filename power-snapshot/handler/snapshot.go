@@ -16,6 +16,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/golang-module/carbon"
 	"google.golang.org/grpc/codes"
@@ -83,6 +84,24 @@ func (s *Snapshot) GetDataHeight(_ context.Context, req *pb.DataHeightRequest) (
 	return &pb.DataHeightResponse{
 		Day:    req.GetDay(),
 		Height: height,
+	}, nil
+}
+
+func (s *Snapshot) GetAllAddrPowerByDay(_ context.Context, req *pb.GetAllAddrPowerByDayRequest) (*pb.GetAllAddrPowerByDayResponse, error) {
+	addrPowers, err := s.querySrv.GetAllAddressPowerByDay(context.Background(), req.GetNetId(), req.GetDay())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	jsonRes, err := json.Marshal(addrPowers)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &pb.GetAllAddrPowerByDayResponse{
+		Day:   req.Day,
+		Info:  string(jsonRes),
+		NetId: req.NetId,
 	}, nil
 }
 
