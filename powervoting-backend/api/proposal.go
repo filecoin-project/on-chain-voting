@@ -173,7 +173,21 @@ func AddProposal(c *gin.Context) {
 
 	result := db.Engine.Model(model.Proposal{}).Create(&proposal)
 	if result.Error != nil {
-		zap.L().Error("insert draft error: ", zap.Error(result.Error))
+		zap.L().Error("insert proposal error: ", zap.Error(result.Error))
+		response.SystemError(c)
+		return
+	}
+
+	db.Engine.Model(model.SnapshotByDay{}).Where("day", proposal.VoteCountDay).Delete(&model.SnapshotByDay{})
+
+	snapshotTask := model.SnapshotByDay{
+		Day:    proposal.VoteCountDay,
+		NetId:  proposal.Network,
+		Height: proposal.Height,
+	}
+	res := db.Engine.Model(model.SnapshotByDay{}).Create(&snapshotTask)
+	if res.Error != nil {
+		zap.L().Error("add snapshotTask error: ", zap.Error(result.Error))
 		response.SystemError(c)
 		return
 	}

@@ -25,6 +25,7 @@ const (
 	Snapshot_SyncAllAddrPower_FullMethodName     = "/snapshot.Snapshot/SyncAllAddrPower"
 	Snapshot_GetDataHeight_FullMethodName        = "/snapshot.Snapshot/GetDataHeight"
 	Snapshot_GetAddressPowerByDay_FullMethodName = "/snapshot.Snapshot/GetAddressPowerByDay"
+	Snapshot_GetAllAddrPowerByDay_FullMethodName = "/snapshot.Snapshot/GetAllAddrPowerByDay"
 )
 
 // SnapshotClient is the client API for Snapshot service.
@@ -37,6 +38,7 @@ type SnapshotClient interface {
 	SyncAllAddrPower(ctx context.Context, in *SyncAllAddrPowerRequest, opts ...grpc.CallOption) (*SyncAllAddrPowerResponse, error)
 	GetDataHeight(ctx context.Context, in *DataHeightRequest, opts ...grpc.CallOption) (*DataHeightResponse, error)
 	GetAddressPowerByDay(ctx context.Context, in *AddressPowerByDayRequest, opts ...grpc.CallOption) (*AddressPowerResponse, error)
+	GetAllAddrPowerByDay(ctx context.Context, in *GetAllAddrPowerByDayRequest, opts ...grpc.CallOption) (*GetAllAddrPowerByDayResponse, error)
 }
 
 type snapshotClient struct {
@@ -101,6 +103,15 @@ func (c *snapshotClient) GetAddressPowerByDay(ctx context.Context, in *AddressPo
 	return out, nil
 }
 
+func (c *snapshotClient) GetAllAddrPowerByDay(ctx context.Context, in *GetAllAddrPowerByDayRequest, opts ...grpc.CallOption) (*GetAllAddrPowerByDayResponse, error) {
+	out := new(GetAllAddrPowerByDayResponse)
+	err := c.cc.Invoke(ctx, Snapshot_GetAllAddrPowerByDay_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SnapshotServer is the server API for Snapshot service.
 // All implementations must embed UnimplementedSnapshotServer
 // for forward compatibility.
@@ -111,6 +122,7 @@ type SnapshotServer interface {
 	SyncAllAddrPower(context.Context, *SyncAllAddrPowerRequest) (*SyncAllAddrPowerResponse, error)
 	GetDataHeight(context.Context, *DataHeightRequest) (*DataHeightResponse, error)
 	GetAddressPowerByDay(context.Context, *AddressPowerByDayRequest) (*AddressPowerResponse, error)
+	GetAllAddrPowerByDay(context.Context, *GetAllAddrPowerByDayRequest) (*GetAllAddrPowerByDayResponse, error)
 	mustEmbedUnimplementedSnapshotServer()
 }
 
@@ -139,7 +151,11 @@ func (UnimplementedSnapshotServer) GetDataHeight(context.Context, *DataHeightReq
 func (UnimplementedSnapshotServer) GetAddressPowerByDay(context.Context, *AddressPowerByDayRequest) (*AddressPowerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAddressPowerByDay not implemented")
 }
+func (UnimplementedSnapshotServer) GetAllAddrPowerByDay(context.Context, *GetAllAddrPowerByDayRequest) (*GetAllAddrPowerByDayResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAllAddrPowerByDay not implemented")
+}
 func (UnimplementedSnapshotServer) mustEmbedUnimplementedSnapshotServer() {}
+func (UnimplementedSnapshotServer) testEmbeddedByValue()                  {}
 
 // UnsafeSnapshotServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to SnapshotServer will
@@ -149,6 +165,13 @@ type UnsafeSnapshotServer interface {
 }
 
 func RegisterSnapshotServer(s grpc.ServiceRegistrar, srv SnapshotServer) {
+	// If the following call pancis, it indicates UnimplementedSnapshotServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
 	s.RegisterService(&Snapshot_ServiceDesc, srv)
 }
 
@@ -260,6 +283,24 @@ func _Snapshot_GetAddressPowerByDay_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Snapshot_GetAllAddrPowerByDay_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAllAddrPowerByDayRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SnapshotServer).GetAllAddrPowerByDay(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Snapshot_GetAllAddrPowerByDay_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SnapshotServer).GetAllAddrPowerByDay(ctx, req.(*GetAllAddrPowerByDayRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Snapshot_ServiceDesc is the grpc.ServiceDesc for Snapshot service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -290,6 +331,10 @@ var Snapshot_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAddressPowerByDay",
 			Handler:    _Snapshot_GetAddressPowerByDay_Handler,
+		},
+		{
+			MethodName: "GetAllAddrPowerByDay",
+			Handler:    _Snapshot_GetAllAddrPowerByDay_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
