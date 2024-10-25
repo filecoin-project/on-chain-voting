@@ -31,8 +31,8 @@ import {
   UCAN_GITHUB_STEP_2,
   OPERATION_CANCELED_MSG,
   STORING_DATA_MSG,
-  UPLOAD_DATA_FAIL_MSG,
-} from '../../../common/consts';
+  UPLOAD_DATA_FAIL_MSG, mainnetChainId
+} from "../../../common/consts"
 import { stringToBase64Url, validateValue, getWeb3IpfsId, getContractAddress } from '../../../utils';
 import './index.less';
 import LoadingButton from "../../../components/LoadingButton";
@@ -174,12 +174,13 @@ const UcanDelegate = () => {
 
     writeContract({
       abi: fileCoinAbi,
-      address: getContractAddress(chain?.id || 0, 'powerVoting'),
+      address: getContractAddress(chain?.id || mainnetChainId, 'powerVoting'),
       functionName: 'ucanDelegate',
       args: [
         cid
       ],
     });
+
     setLoading(false);
   }
 
@@ -271,7 +272,7 @@ const UcanDelegate = () => {
 
   const filecoinAuthorizeList = [
     {
-      name: t('content.ucatType'),
+      name: t('content.ucanType'),
       width: 100,
       hide: false,
       comp: (
@@ -284,7 +285,7 @@ const UcanDelegate = () => {
             <RadioGroup.Option
               key={item.label}
               value={item.value}
-              className='relative flex items-center cursor-pointer p-4 focus:outline-none'
+              className='relative flex items-center align-middle cursor-pointer p-4 focus:outline-none'
             >
               {({ active, checked }) => (
                 <>
@@ -362,7 +363,7 @@ const UcanDelegate = () => {
             name="prf"
             control={control}
             render={() => <textarea
-              placeholder='The full UCAN content (include header, payload and signature) signed by your Filecoin private key.'
+              placeholder={`${t('content.proofDes')}`}
               className={classNames(
                 'form-input h-[320px] w-full rounded bg-[#ffffff] border border-[#eeeeee] text-[#4B535B]',
                 errors.prf && 'border-red-500 focus:border-red-500'
@@ -380,7 +381,7 @@ const UcanDelegate = () => {
 
   const githubSignatureList = [
     {
-      name: t('content.ucatType'),
+      name: t('content.ucanType'),
       width: 100,
       hide: false,
       comp: (

@@ -23,6 +23,7 @@ import VoteStatusBtn from "src/components/VoteStatusBtn";
 import { Buffer, mainnetClient, roundAt, timelockEncrypt } from "tlock-js";
 import type { BaseError } from "wagmi";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { UserRejectedRequestError } from "viem";
 import fileCoinAbi from "../../common/abi/power-voting.json";
 import {
   CHOOSE_VOTE_MSG,
@@ -31,9 +32,8 @@ import {
   UPLOAD_DATA_FAIL_MSG,
   VOTE_SUCCESS_MSG,
   WRONG_NET_STATUS,
-  web3AvatarUrl,
-  worldTimeApi,
-} from "../../common/consts";
+  web3AvatarUrl, mainnetChainId
+} from "../../common/consts"
 import { useCurrentTimezone } from "../../common/store";
 import type { ProposalList, ProposalOption } from "../../common/types";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
@@ -43,7 +43,7 @@ import { getContractAddress, getWeb3IpfsId } from '../../utils';
 import "./index.less";
 const Vote = () => {
   const { chain, isConnected } = useAccount();
-  const chainId = chain?.id || 0;
+  const chainId = chain?.id || mainnetChainId;
   const { id, cid } = useParams();
   const { t } = useTranslation();
   const [votingData, setVotingData] = useState({} as ProposalList);
@@ -110,9 +110,8 @@ const Vote = () => {
         openConnectModal && openConnectModal();
       }
     } else {
-      const { data: { unixtime } } = await axios.get(worldTimeApi);
       // If chain ID matches, determine the vote status based on current time and start time
-      voteStatus = unixtime < data?.startTime ? PENDING_STATUS : IN_PROGRESS_STATUS;
+      voteStatus = Math.floor(Date.now() / 1000) < data?.startTime ? PENDING_STATUS : IN_PROGRESS_STATUS;
     }
     // Map each option from the fetched data to include count initialized to 0
     const option = data.option?.map((item: string) => {
@@ -186,15 +185,29 @@ const Vote = () => {
 
       // Check if user is connected to the network
       if (isConnected) {
-        writeContract({
-          abi: fileCoinAbi,
-          address: getContractAddress(chain?.id || 0, 'powerVoting'),
-          functionName: 'vote',
-          args: [
-            Number(id),
-            optionId,
-          ],
-        });
+        try {
+          writeContract({
+            abi: fileCoinAbi,
+            address: getContractAddress(chain?.id || mainnetChainId, 'powerVoting'),
+            functionName: 'vote',
+            args: [
+              Number(id),
+              optionId,
+            ],
+          });
+        } catch (error: any) {
+          if (error as UserRejectedRequestError) {
+            messageApi.open({
+              type: 'warning',
+              content: t('content.rejectedSignature'),
+            });
+          } else {
+            messageApi.open({
+              type: 'error',
+              content: (error as BaseError)?.shortMessage || error?.message,
+            });
+          }
+        }
         setLoading(false);
       } else {
         // If user is not connected, prompt to connect
@@ -326,7 +339,7 @@ const Vote = () => {
                         <div
                           className={`w-full h-[45px] border-[#eeeeee] ${selectedOptionIndex === index ? 'border-[#0190FF] bg-[#F3FAFF]' : ''} hover:border-[#0190FF] flex justify-between items-center pl-8 pr-4 md:border border-solid rounded-full cursor-pointer`}
                         >
-                          <div className="text-ellipsis h-[100%] overflow-hidden">{item.name}</div>
+                          <div className="text-ellipsis h-[100%] overflow-hidden">{item.name === "Approve" ?  t("content.approve") : t("content.reject")}</div>
                           {
                             selectedOptionIndex === index &&
                             <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-md text-[#0190FF]">

@@ -11,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+import { filecoin } from 'wagmi/chains';
+
+export const mainnetChainId = filecoin.id;
 export const powerVotingMainNetContractAddress = process.env.POWER_VOTING_MAINNET_CONTRACT_ADDRESS || '';
 export const oracleMainNetContractAddress = process.env.ORACLE_MAINNET_CONTRACT_ADDRESS || '';
 export const oraclePowerMainNetContractAddress = process.env.ORACLE_POWER_MAINNET_CONTRACT_ADDRESS || '';
@@ -25,8 +28,8 @@ export const uploadApi = '/api/w3storage/upload';
 export const proposalHistoryApi = '/api/proposal/history';
 export const proposalDraftAddApi = '/api/proposal/draft/add';
 export const proposalDraftGetApi = '/api/proposal/draft/get';
-
-export const worldTimeApi = 'https://worldtimeapi.org/api/timezone/Etc/UTC';
+export const blockHeightGetApi = '/api/filecoin/height';
+export const votePowerGetApi = '/api/proposal/draft/get';
 export const IN_PROGRESS_STATUS = 2;
 export const COMPLETED_STATUS = 4;
 export const PENDING_STATUS = 1;
@@ -288,7 +291,7 @@ var (
 
 2.1 Go to https://vote.storswift.io.
 
-2.2 Click UCAN Delegates to  cancel authorization.  The website will monitor whether the Eth account has UCAN authorization or not. The action  will cancel the authorization if it does.
+2.2 Click UCAN Delegates to cancel authorization. The website will monitor whether the Eth account has UCAN authorization or not. The action  will cancel the authorization if it does.
 
 <p>
     <img src="/images/img_1.png" />
@@ -497,9 +500,9 @@ export const NOT_FIP_EDITOR_MSG = 'content.fipCreateProposals';
 export const NO_FIP_EDITOR_APPROVE_ADDRESS_MSG = 'content.inputAddress';
 export const NO_FIP_EDITOR_REVOKE_ADDRESS_MSG = 'content.selectAddress';
 export const NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG = 'content.twoFIPRevoke';
-export const FIP_ALREADY_EXECUTE_MSG = "content.activePproposal"
+export const FIP_ALREADY_EXECUTE_MSG = "content.activeProposal"
 export const FIP_APPROVE_SELF_MSG = "content.noPropose"
-export const FIP_APPROVE_ALREADY_MSG = "content.addressDditor"
+export const FIP_APPROVE_ALREADY_MSG = "content.addressEditor"
 export const HAVE_APPROVED_MSG = 'content.alreadyApproved';
 export const HAVE_REVOKED_MSG = 'content.alreadyRevoked';
 export const CAN_NOT_REVOKE_YOURSELF_MSG = 'content.revokeYourself';
@@ -507,23 +510,3 @@ export const SAVE_DRAFT_SUCCESS = "content.saveSuccess"
 export const SAVE_DRAFT_TOO_LARGE = "content.savedDescriptionCharacters"
 export const SAVE_DRAFT_FAIL = "content.saveFail"
 export const UPLOAD_DATA_FAIL_MSG = "content.saveDataFail"
-
-// Converts hexadecimal to a string
-export const hexToString = (hex: any) => {
-  if(!hex){
-    return '';
-  }
-  let str = '';
-  if (hex.substring(1, 3) === '0x') {
-    str = hex.substring(3)
-  } else {
-    str = hex;
-  }
-  // Split a hexadecimal string by two characters
-  const pairs = str.match(/[\dA-Fa-f]{2}/g);
-  if (pairs == null) {
-    return '';
-  }
-  // Converts split hexadecimal numbers to characters and concatenates them
-  return pairs.map((pair: any) => String.fromCharCode(parseInt(pair, 16))).join('').replace(/[^\x20-\x7E]/g, '').trim();
-}

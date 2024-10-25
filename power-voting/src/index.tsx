@@ -15,8 +15,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import {
-  lightTheme,
-  RainbowKitProvider,
   getDefaultConfig,
 } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
@@ -30,6 +28,7 @@ import App from "./App";
 
 const queryClient = new QueryClient();
 
+
 const filecoinCalibrationChain = {
   id: 314159,
   name: 'Filecoin Calibration',
@@ -39,7 +38,7 @@ const filecoinCalibrationChain = {
     symbol: 'tFIL',
   },
   rpcUrls: {
-    default: { http: ['https://api.calibration.node.glif.io/rpc/v1'] },
+    default: { http: ['/rpc/v1'] },
   },
   blockExplorers: {
     default: {
@@ -82,16 +81,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <BrowserRouter>
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider
-          locale="en-US"
-          theme={lightTheme({
-            accentColor: "#7b3fe4",
-            accentColorForeground: "white",
-          })}
-          modalSize="compact"
-        >
-          <App />
-        </RainbowKitProvider>
+        <App />
       </QueryClientProvider>
     </WagmiProvider>
   </BrowserRouter>

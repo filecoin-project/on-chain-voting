@@ -29,8 +29,8 @@ import {
   STORING_DATA_MSG, OPERATION_CANCELED_MSG,
   UCAN_TYPE_FILECOIN_OPTIONS,
   UCAN_TYPE_GITHUB_OPTIONS,
-  UPLOAD_DATA_FAIL_MSG,
-} from '../../../common/consts';
+  UPLOAD_DATA_FAIL_MSG, mainnetChainId
+} from "../../../common/consts"
 import './index.less';
 import { stringToBase64Url, validateValue, getWeb3IpfsId, getContractAddress } from "../../../utils";
 import LoadingButton from "../../../components/LoadingButton";
@@ -150,7 +150,7 @@ const UcanDelegate = () => {
 
     writeContract({
       abi: fileCoinAbi,
-      address: getContractAddress(chain?.id || 0, 'powerVoting'),
+      address: getContractAddress(chain?.id || mainnetChainId, 'powerVoting'),
       functionName: 'ucanDelegate',
       args: [
         cid
@@ -260,7 +260,7 @@ const UcanDelegate = () => {
 
   const filecoinAuthorizeList = [
     {
-      name: t('content.ucatType'),
+      name: t('content.ucanType'),
       width: 100,
       hide: false,
       comp: (
@@ -347,7 +347,7 @@ const UcanDelegate = () => {
 
   const githubSignatureList = [
     {
-      name: t('content.ucatType'),
+      name: t('content.ucanType'),
       width: 100,
       hide: false,
       comp: (

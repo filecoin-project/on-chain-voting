@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-
 interface StoringCidState {
   storingCid: string[];
 }
@@ -22,7 +21,7 @@ export const useVotingList = create(set => ({
   setVotingList: (newData: any) => set({ votingData: newData }),
 }));
 
-export const usePropsalStatus = create(set => ({
+export const useProposalStatus = create(set => ({
   status: '',
   setStatusList: (status: 0) => set({ status: status }),
 }));

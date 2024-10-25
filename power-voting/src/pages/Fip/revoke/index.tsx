@@ -23,10 +23,10 @@ import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagm
 import fileCoinAbi from "../../../common/abi/power-voting.json";
 import {
   CAN_NOT_REVOKE_YOURSELF_MSG,
-  HAVE_REVOKED_MSG,
+  HAVE_REVOKED_MSG, mainnetChainId,
   STORING_DATA_MSG,
   web3AvatarUrl
-} from "../../../common/consts";
+} from "../../../common/consts"
 import { useCheckFipEditorAddress, useFipEditorProposalDataSet, useFipEditors, useRevokeProposalId } from "../../../common/hooks";
 import EllipsisMiddle from "../../../components/EllipsisMiddle";
 import Loading from "../../../components/Loading";
@@ -34,7 +34,7 @@ import { getContractAddress } from "../../../utils";
 import "./index.less";
 const FipEditorRevoke = () => {
   const {isConnected, address, chain} = useAccount();
-  const chainId = chain?.id || 0;
+  const chainId = chain?.id || mainnetChainId;
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
   const { t } = useTranslation();
@@ -100,7 +100,7 @@ const FipEditorRevoke = () => {
       title: t('content.status'),
       dataIndex: 'status',
       key: 'status',
-      render: (value: string) => value || '-'
+      render: (value: string) => value ? t(`content.revoked`) : '-'
     },
   ];
 
@@ -127,7 +127,7 @@ const FipEditorRevoke = () => {
       }
     },
     {
-      title: <div><div>{t('content.info')}</div></div>,
+      title: <div>{t('content.info')}</div>,
       dataIndex: 'info',
       key: 'info',
       ellipsis: { showTitle: false },
@@ -177,7 +177,7 @@ const FipEditorRevoke = () => {
               okText={t('content.yes')}
               cancelText={t('content.no')}
             >
-              <Button type='primary' className='w-[80px] h-[24px] flex justify-center items-center' loading={record.proposalId === currentProposalId && isLoading} disabled={disabled}>Revoke</Button>
+              <Button type='primary' className='w-[80px] h-[24px] flex justify-center items-center' loading={record.proposalId === currentProposalId && isLoading} disabled={disabled}>{t('content.revoke')}</Button>
             </Popconfirm>
           </a>
         )
@@ -261,7 +261,7 @@ const FipEditorRevoke = () => {
   }, [getFipEditorProposalIdSuccess]);
 
   useEffect(() => {
-    if (isConnected && !loading && !getRevokeProposalIdLoading && !getFipEditorProposalIdLoading) {
+    if (isConnected && !getRevokeProposalIdLoading && !getFipEditorProposalIdLoading) {
       initState();
     }
   }, [chain, page, address]);
@@ -303,7 +303,7 @@ const FipEditorRevoke = () => {
             return { address, status: obj.voters?.includes(address) ? 'Revoked' : '' }
           }).sort((a) => (a.status ? -1 : 1))
         });
-      }catch(e){
+      } catch(e){
         console.log(e)
       }
       
@@ -334,6 +334,7 @@ const FipEditorRevoke = () => {
           </div>
           <div className='px-8 pb-4 !mt-0'>
             <Table
+              loading={loading}
               className='mb-4'
               rowKey={(record: any) => record.proposalId}
               dataSource={fipProposalList}
