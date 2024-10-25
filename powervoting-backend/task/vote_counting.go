@@ -42,6 +42,9 @@ func VotingCountHandler() {
 	errList := make([]error, 0, len(config.Client.Network))
 	mu := &sync.Mutex{}
 
+	taskStartTime := time.Now().Format("2006-01-02 15:04:05")
+	zap.L().Info("VotingCountHandler start time: ", zap.String("start time", taskStartTime))
+
 	for _, network := range networkList {
 		network := network
 		ethClient, err := contract.GetClient(network.Id)
@@ -65,7 +68,8 @@ func VotingCountHandler() {
 	if len(errList) != 0 {
 		zap.L().Error("vote count with err:", zap.Errors("errors", errList))
 	}
-	zap.L().Info("vote count finished: ", zap.Int64("timestamp", time.Now().Unix()))
+
+	zap.L().Info("VotingCountHandler finished, start time: ", zap.String("start time", taskStartTime))
 }
 
 // bigIntDiv performs division operation on big integers and returns the result as a float64.
@@ -95,6 +99,7 @@ func VotingCount(ethClient model.GoEthClient, db db.DataRepo) error {
 		now = time.Now().Unix()
 		return err
 	}
+
 	proposals, err := db.GetProposalList(ethClient.Id, now)
 	zap.L().Info("proposal list: ", zap.Reflect("proposals", proposals))
 	if err != nil {
@@ -135,7 +140,7 @@ func VotingCount(ethClient model.GoEthClient, db db.DataRepo) error {
 			continue
 		}
 
-		zap.L().Info("voteList: ", zap.Reflect("voteList", voteList))
+		zap.L().Info("voteList: ", zap.Any("proposalId", proposal.ProposalId), zap.Reflect("voteList", voteList))
 
 		num, err := rand.Int(rand.Reader, big.NewInt(61))
 		if err != nil {
