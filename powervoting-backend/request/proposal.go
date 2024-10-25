@@ -4,6 +4,7 @@ type ProposalList struct {
 	PageReq
 	Status    int    `form:"status" binding:"oneof=0 1 2 3 4"`
 	SearchKey string `form:"searchKey"`
+	Network   int64  `form:"chainId"`
 }
 
 type PageReq struct {
