@@ -24,25 +24,25 @@ import (
 
 // Proposal represents the structure of a proposal.
 type Proposal struct {
-	Id           int64     `json:"id"`                                        // Unique identifier
-	ProposalId   int64     `json:"proposalId" gorm:"default:0;"`              // Proposal ID
-	Cid          string    `json:"cid" gorm:"not null;index:uniq_cid,unique"` // CID
-	ProposalType int64     `json:"proposalType" gorm:"not null,default:0"`    // Proposal type
-	Creator      string    `json:"creator" gorm:"not null"`                   // Creator address
-	StartTime    int64     `json:"startTime" gorm:"not null"`                 // Start time
-	ExpTime      int64     `json:"expTime" gorm:"not null"`                   // Expiry time
-	VoteCount    int64     `json:"voteCount" gorm:"not null,default:0"`       // Vote count
-	Status       int       `json:"status" gorm:"not null,default:0"`          // Proposal status
-	Network      int64     `json:"network" gorm:"not null"`                   // Network ID
-	Name         string    `json:"name" gorm:"not null,default:''"`           // Name
-	Timezone     string    `json:"timezone" gorm:"not null"`                  // Timezone
-	Descriptions string    `json:"descriptions" gorm:"not null,default:''"`   // Descriptions
-	GithubName   string    `json:"githubName" gorm:"not null,default:''"`     // Github name
-	GithubAvatar string    `json:"githubAvatar" gorm:"not null,default:''"`   // Github avatar
-	GMTOffset    string    `json:"gmtOffset" gorm:"not null,default:''"`      // GMT offset
-	CurrentTime  int64     `json:"currentTime" gorm:"not null,default:0"`     // Current time
-	CreatedAt    time.Time `json:"createdAt" gorm:"not null,autoCreateTime"`  // Created time
-	UpdatedAt    time.Time `json:"updatedAt" gorm:"not null,autoUpdateTime"`  // Updated time
+	Id           int64     `json:"id"`                                                    // Unique identifier
+	ProposalId   int64     `json:"proposalId" gorm:"default:0;"`                          // Proposal ID
+	Cid          string    `json:"cid" gorm:"not null;index:uniq_cid,unique"`             // CID
+	ProposalType int64     `json:"proposalType" gorm:"not null,default:0"`                // Proposal type
+	Creator      string    `json:"creator" gorm:"not null"`                               // Creator address
+	StartTime    int64     `json:"startTime" gorm:"not null"`                             // Start time
+	ExpTime      int64     `json:"expTime" gorm:"not null"`                               // Expiry time
+	VoteCount    int64     `json:"voteCount" gorm:"not null,default:0"`                   // Vote count
+	Status       int       `json:"status" gorm:"not null,default:0"`                      // Proposal status
+	Network      int64     `json:"network" gorm:"not null"`                               // Network ID
+	Name         string    `json:"name" gorm:"not null,default:''"`                       // Name
+	Timezone     string    `json:"timezone" gorm:"not null"`                              // Timezone
+	Descriptions string    `json:"descriptions" gorm:"not null,default:'';type:longtext"` // Descriptions
+	GithubName   string    `json:"githubName" gorm:"not null,default:''"`                 // Github name
+	GithubAvatar string    `json:"githubAvatar" gorm:"not null,default:''"`               // Github avatar
+	GMTOffset    string    `json:"gmtOffset" gorm:"not null,default:''"`                  // GMT offset
+	CurrentTime  int64     `json:"currentTime" gorm:"not null,default:0"`                 // Current time
+	CreatedAt    time.Time `json:"createdAt" gorm:"not null,autoCreateTime"`              // Created time
+	UpdatedAt    time.Time `json:"updatedAt" gorm:"not null,autoUpdateTime"`              // Updated time
 }
 
 type ProposalList struct {
@@ -58,7 +58,7 @@ type ProposalList struct {
 	Network      int64        `json:"network" gorm:"not null"`                  // Network ID
 	Name         string       `json:"name" gorm:"not null,default:''"`          // Name
 	Timezone     string       `json:"timezone" gorm:"not null"`                 // Timezone
-	Descriptions string       `json:"descriptions" gorm:"not null,default:''"`  // Descriptions
+	Descriptions string       `json:"descriptions" gorm:"not null,default:'';type:longtext"`  // Descriptions
 	GithubName   string       `json:"githubName" gorm:"not null,default:''"`    // Github name
 	GithubAvatar string       `json:"githubAvatar" gorm:"not null,default:''"`  // Github avatar
 	GMTOffset    string       `json:"gmtOffset" gorm:"not null,default:''"`     // GMT offset
@@ -95,27 +95,27 @@ type ProposalDetail struct {
 }
 
 type ProposalDraft struct {
-	Id           int64     `json:"id"`                                      // Unique identifier
-	Time         string    `json:"Time"`                                    // Time
-	Option       string    `json:"Option"`                                  // Options
-	Address      string    `json:"Address" binding:"required"`              // Address
-	ChainId      int64     `json:"ChainId" binding:"required"`              // Chain ID
-	ProposalId   int64     `json:"proposalId"`                              // Proposal ID
-	Cid          string    `json:"cid" gorm:"not null"`                     // CID
-	ProposalType int64     `json:"proposalType" gorm:"not null,default:0"`  // Proposal type
-	Creator      string    `json:"creator" gorm:"not null"`                 // Creator address
-	StartTime    int64     `json:"startTime" gorm:"not null"`               // Start time
-	ExpTime      int64     `json:"expTime" gorm:"not null"`                 // Expiry time
-	VoteCount    int64     `json:"voteCount" gorm:"not null"`               // Vote count
-	Status       int       `json:"status" gorm:"not null"`                  // Proposal status
-	Network      int64     `json:"network" gorm:"not null"`                 // Network ID
-	Name         string    `json:"name" gorm:"not null"`                    // Name
-	Timezone     string    `json:"timezone" gorm:"not null"`                // Timezone
-	Descriptions string    `json:"descriptions" gorm:"not null"`            // Descriptions
-	GithubName   string    `json:"githubName" gorm:"not null,default:''"`   // Github name
-	GithubAvatar string    `json:"githubAvatar" gorm:"not null,default:''"` // Github avatar
-	GMTOffset    string    `json:"gmtOffset" gorm:"not null,default:''"`    // GMT offset
-	CurrentTime  int64     `json:"currentTime" gorm:"not null"`             // Current time
-	CreatedAt    time.Time `json:"createdAt" gorm:"autoCreateTime"`         // Created time
-	UpdatedAt    time.Time `json:"updatedAt" gorm:"autoUpdateTime"`         // Updated time
+	Id           int64     `json:"id"`                                         // Unique identifier
+	Time         string    `json:"Time"`                                       // Time
+	Option       string    `json:"Option"`                                     // Options
+	Address      string    `json:"Address" binding:"required"`                 // Address
+	ChainId      int64     `json:"ChainId" binding:"required"`                 // Chain ID
+	ProposalId   int64     `json:"proposalId"`                                 // Proposal ID
+	Cid          string    `json:"cid" gorm:"not null"`                        // CID
+	ProposalType int64     `json:"proposalType" gorm:"not null,default:0"`     // Proposal type
+	Creator      string    `json:"creator" gorm:"not null"`                    // Creator address
+	StartTime    int64     `json:"startTime" gorm:"not null"`                  // Start time
+	ExpTime      int64     `json:"expTime" gorm:"not null"`                    // Expiry time
+	VoteCount    int64     `json:"voteCount" gorm:"not null"`                  // Vote count
+	Status       int       `json:"status" gorm:"not null"`                     // Proposal status
+	Network      int64     `json:"network" gorm:"not null"`                    // Network ID
+	Name         string    `json:"name" gorm:"not null"`                       // Name
+	Timezone     string    `json:"timezone" gorm:"not null"`                   // Timezone
+	Descriptions string    `json:"descriptions;type:longtext" gorm:"not null"` // Descriptions
+	GithubName   string    `json:"githubName" gorm:"not null,default:''"`      // Github name
+	GithubAvatar string    `json:"githubAvatar" gorm:"not null,default:''"`    // Github avatar
+	GMTOffset    string    `json:"gmtOffset" gorm:"not null,default:''"`       // GMT offset
+	CurrentTime  int64     `json:"currentTime" gorm:"not null"`                // Current time
+	CreatedAt    time.Time `json:"createdAt" gorm:"autoCreateTime"`            // Created time
+	UpdatedAt    time.Time `json:"updatedAt" gorm:"autoUpdateTime"`            // Updated time
 }
