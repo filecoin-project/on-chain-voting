@@ -23,7 +23,7 @@ import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagm
 import fileCoinAbi from "../../../common/abi/power-voting.json";
 import {
   CAN_NOT_REVOKE_YOURSELF_MSG,
-  HAVE_REVOKED_MSG, mainnetChainId,
+  HAVE_REVOKED_MSG, calibrationChainId,
   STORING_DATA_MSG,
   web3AvatarUrl
 } from "../../../common/consts"
@@ -34,7 +34,7 @@ import { getContractAddress } from "../../../utils";
 import "./index.less";
 const FipEditorRevoke = () => {
   const {isConnected, address, chain} = useAccount();
-  const chainId = chain?.id || mainnetChainId;
+  const chainId = chain?.id || calibrationChainId;
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
   const { t } = useTranslation();

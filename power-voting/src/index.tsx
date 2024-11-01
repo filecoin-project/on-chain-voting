@@ -52,10 +52,10 @@ const filecoinCalibrationChain = {
 const config = getDefaultConfig({
   appName: 'power-voting',
   projectId: walletConnectProjectId,
-  chains: [filecoin, filecoinCalibrationChain],
+  chains: [filecoinCalibrationChain, filecoin],
   transports: {
-    [filecoin.id]: http(),
     [filecoinCalibrationChain.id]: http(),
+    [filecoin.id]: http(),
   },
   wallets: [
     {

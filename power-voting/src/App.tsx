@@ -27,7 +27,7 @@ import { useLocation, useRoutes } from "react-router-dom";
 import "tailwindcss/tailwind.css";
 import { useAccount } from "wagmi";
 import timezones from '../public/json/timezons.json';
-import { mainnetChainId } from "./common/consts"
+import { calibrationChainId } from "./common/consts"
 import { useVoterInfoSet } from "./common/hooks"
 import { useCurrentTimezone, useVoterInfo } from "./common/store";
 import "./common/styles/reset.less";
@@ -42,7 +42,7 @@ dayjs.locale(lang === 'en' ? lang : "zh-cn");
 const App: React.FC = () => {
   // Destructure values from custom hooks
   const { chain, address} = useAccount();
-  const chainId = chain?.id || mainnetChainId;
+  const chainId = chain?.id || calibrationChainId;
   const prevAddressRef = useRef(address);
 
   const { i18n } = useTranslation();

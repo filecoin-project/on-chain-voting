@@ -26,7 +26,7 @@ import {
   FIP_APPROVE_ALREADY_MSG,
   FIP_APPROVE_SELF_MSG,
   FIP_EDITOR_APPROVE_TYPE,
-  FIP_EDITOR_REVOKE_TYPE, mainnetChainId,
+  FIP_EDITOR_REVOKE_TYPE, calibrationChainId,
   NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG,
   NO_FIP_EDITOR_APPROVE_ADDRESS_MSG,
   NO_FIP_EDITOR_REVOKE_ADDRESS_MSG,
@@ -40,7 +40,7 @@ import { getContractAddress, getWeb3IpfsId, hexToString } from "../../../utils";
 const FipEditorPropose = () => {
   const { isConnected, address, chain } = useAccount();
   const { t } = useTranslation();
-  const chainId = chain?.id || mainnetChainId;
+  const chainId = chain?.id || calibrationChainId;
 
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);

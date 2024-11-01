@@ -31,7 +31,7 @@ import {
   UCAN_GITHUB_STEP_2,
   OPERATION_CANCELED_MSG,
   STORING_DATA_MSG,
-  UPLOAD_DATA_FAIL_MSG, mainnetChainId
+  UPLOAD_DATA_FAIL_MSG, calibrationChainId
 } from "../../../common/consts"
 import { stringToBase64Url, validateValue, getWeb3IpfsId, getContractAddress } from '../../../utils';
 import './index.less';
@@ -174,7 +174,7 @@ const UcanDelegate = () => {
 
     writeContract({
       abi: fileCoinAbi,
-      address: getContractAddress(chain?.id || mainnetChainId, 'powerVoting'),
+      address: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
       functionName: 'ucanDelegate',
       args: [
         cid

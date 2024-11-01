@@ -84,6 +84,8 @@
         "isConfirmRevoke": "Are you sure to revoke?",
         "yes": "Yes",
         "no": "No",
+        "showMore": "Show More",
+        "showLess": "Show Less",
         "approveRatio": "Approve Ratio",
         "address": "Address",
         "approveFIPEditor": "Approve FIP editor",

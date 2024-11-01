@@ -27,7 +27,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import "tailwindcss/tailwind.css";
 import { useAccount } from "wagmi";
 import timezones from '../../public/json/timezons.json';
-import { mainnetChainId, STORING_DATA_MSG, VOTE_ALL_STATUS } from "../common/consts";
+import { calibrationChainId, STORING_DATA_MSG, VOTE_ALL_STATUS } from "../common/consts";
 import { useCheckFipEditorAddress, useVoterAddress, useVoterInfoSet } from "../common/hooks";
 import { useCurrentTimezone, useProposalStatus, useVoterInfo, useVotingList } from "../common/store";
 import "../common/styles/reset.less";
@@ -37,7 +37,7 @@ const Header = (props: any) => {
   const { changeLang } = props;
   // Destructure values from custom hooks
   const { chain, address, isConnected } = useAccount();
-  const chainId = chain?.id || mainnetChainId;
+  const chainId = chain?.id || calibrationChainId;
   const prevAddressRef = useRef(address);
   const { openConnectModal } = useConnectModal();
   const navigate = useNavigate();

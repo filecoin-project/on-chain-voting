@@ -22,7 +22,7 @@ import type { BaseError } from "wagmi";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import fileCoinAbi from "../../../common/abi/power-voting.json";
 import {
-  HAVE_APPROVED_MSG, mainnetChainId,
+  HAVE_APPROVED_MSG, calibrationChainId,
   STORING_DATA_MSG,
   web3AvatarUrl
 } from "../../../common/consts"
@@ -34,7 +34,7 @@ import "./index.less";
 const FipEditorApprove = () => {
   const { isConnected, address, chain } = useAccount();
   const { t } = useTranslation();
-  const chainId = chain?.id || mainnetChainId;
+  const chainId = chain?.id || calibrationChainId;
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
   const [messageApi, contextHolder] = message.useMessage();

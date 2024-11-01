@@ -22,7 +22,7 @@ import { filecoinCalibration } from "wagmi/chains";
 import oraclePowerAbi from "../../common/abi/oracle-powers.json";
 import fileCoinAbi from "../../common/abi/power-voting.json";
 import {
-  DUPLICATED_MINER_ID_MSG, mainnetChainId,
+  DUPLICATED_MINER_ID_MSG, calibrationChainId,
   STORING_DATA_MSG,
   WRONG_MINER_ID_MSG
 } from "../../common/consts"
@@ -33,7 +33,7 @@ import Table from '../../components/Table';
 import { getContractAddress, hasDuplicates } from "../../utils";
 const MinerId = () => {
   const { chain, isConnected, address } = useAccount();
-  const chainId = chain?.id || mainnetChainId;
+  const chainId = chain?.id || calibrationChainId;
   const navigate = useNavigate();
   const { t } = useTranslation();
   const prevAddressRef = useRef(address);
@@ -110,7 +110,7 @@ const MinerId = () => {
     const { value } = removeMinerIdPrefix(arr);
     const contracts = value.map((item: number) => {
       return {
-        address: getContractAddress(chain?.id || mainnetChainId, 'oraclePower'),
+        address: getContractAddress(chain?.id || calibrationChainId, 'oraclePower'),
         abi: oraclePowerAbi,
         functionName: 'getOwner',
         args: [item],
@@ -203,7 +203,7 @@ const MinerId = () => {
       } else {
         writeContract({
           abi: fileCoinAbi,
-          address: getContractAddress(chain?.id || mainnetChainId, 'powerVoting'),
+          address: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
           functionName: 'addMinerId',
           args: [
             value

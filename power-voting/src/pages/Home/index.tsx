@@ -24,7 +24,7 @@ import { useNavigate } from "react-router-dom";
 import VoteStatusBtn from "src/components/VoteStatusBtn";
 import { useAccount, useWaitForTransactionReceipt } from "wagmi";
 import {
-  IN_PROGRESS_STATUS, mainnetChainId,
+  IN_PROGRESS_STATUS, calibrationChainId,
   PENDING_STATUS,
   STORING_DATA_MSG,
   STORING_FAILED_MSG,
@@ -48,7 +48,7 @@ const Home = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { chain, address, isConnected } = useAccount();
-  const chainId = chain?.id || mainnetChainId;
+  const chainId = chain?.id || calibrationChainId;
 
   const { openConnectModal } = useConnectModal();
 

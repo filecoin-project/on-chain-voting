@@ -41,7 +41,7 @@ import {
   WRONG_START_TIME_MSG,
   githubApi,
   proposalDraftAddApi,
-  proposalDraftGetApi, mainnetChainId
+  proposalDraftGetApi, calibrationChainId
   // blockHeightGetApi
 } from "../../common/consts"
 import { useCheckFipEditorAddress } from "../../common/hooks";
@@ -59,7 +59,7 @@ const { RangePicker } = DatePicker;
 
 const CreateVote = () => {
   const { isConnected, address, chain } = useAccount();
-  const chainId = chain?.id || mainnetChainId;
+  const chainId = chain?.id || calibrationChainId;
   const { t } = useTranslation();
   const { openConnectModal } = useConnectModal();
   const prevAddressRef = useRef(address);
@@ -250,7 +250,7 @@ const CreateVote = () => {
         try {
           await writeContractAsync({
             abi: fileCoinAbi,
-            address: getContractAddress(chain?.id || mainnetChainId, 'powerVoting'),
+            address: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
             functionName: 'createProposal',
             args: [
               cid,

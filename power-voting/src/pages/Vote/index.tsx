@@ -32,7 +32,7 @@ import {
   UPLOAD_DATA_FAIL_MSG,
   VOTE_SUCCESS_MSG,
   WRONG_NET_STATUS,
-  web3AvatarUrl, mainnetChainId
+  web3AvatarUrl, calibrationChainId
 } from "../../common/consts"
 import { useCurrentTimezone } from "../../common/store";
 import type { ProposalList, ProposalOption } from "../../common/types";
@@ -43,7 +43,7 @@ import { getContractAddress, getWeb3IpfsId } from '../../utils';
 import "./index.less";
 const Vote = () => {
   const { chain, isConnected } = useAccount();
-  const chainId = chain?.id || mainnetChainId;
+  const chainId = chain?.id || calibrationChainId;
   const { id, cid } = useParams();
   const { t } = useTranslation();
   const [votingData, setVotingData] = useState({} as ProposalList);
@@ -188,7 +188,7 @@ const Vote = () => {
         try {
           writeContract({
             abi: fileCoinAbi,
-            address: getContractAddress(chain?.id || mainnetChainId, 'powerVoting'),
+            address: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
             functionName: 'vote',
             args: [
               Number(id),
