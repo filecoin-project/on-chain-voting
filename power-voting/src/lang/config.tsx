@@ -18,6 +18,8 @@ import { initReactI18next } from 'react-i18next';
 import zh from './zh.json';
 // English language pack
 import en from './en.json';
+
+const lang = localStorage.getItem("lang") || "en";
  
 const resources = {
   en: {
@@ -30,7 +32,7 @@ const resources = {
  
 i18n.use(initReactI18next).init({
   resources,
-  lng: 'en', //Set default language
+  lng: lang, //Set default language
   interpolation: {
     escapeValue: false
   }

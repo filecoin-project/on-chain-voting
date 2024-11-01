@@ -133,31 +133,6 @@ const VotingResults = () => {
     initState();
   }, [chain]);
 
-  // const handleVoteStatusTag = (status: number) => {
-  //   switch (status) {
-  //     case WRONG_NET_STATUS:
-  //       return {
-  //         name: 'Wrong network',
-  //         color: 'bg-red-700',
-  //       };
-  //     case VOTE_COUNTING_STATUS:
-  //       return {
-  //         name: 'Vote Counting',
-  //         color: 'bg-yellow-700',
-  //       };
-  //     case COMPLETED_STATUS:
-  //       return {
-  //         name: 'Completed',
-  //         color: 'bg-[#6D28D9]',
-  //       };
-  //     default:
-  //       return {
-  //         name: '',
-  //         color: '',
-  //       };
-  //   }
-  // }
-
   let href = '';
   let img = '';
   if (votingData?.githubName) {
@@ -280,7 +255,7 @@ const VotingResults = () => {
                         <div key={item.name + index}>
                           <div className='flex justify-between mb-1 text-skin-link'>
                             <div className='w-[150px] flex items-center overflow-hidden'>
-                              <span className='mr-1 truncate text-sm'>{item.name}</span>
+                              <span className='mr-1 truncate text-sm'>{item.name === "Approve" ? t("content.approve") : t("content.reject")}</span>
                             </div>
                             <div className='flex justify-end'>
                               <div className='space-x-2 text-sm font-medium'>

@@ -22,10 +22,10 @@ import type { BaseError } from "wagmi";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import fileCoinAbi from "../../../common/abi/power-voting.json";
 import {
-  HAVE_APPROVED_MSG,
+  HAVE_APPROVED_MSG, calibrationChainId,
   STORING_DATA_MSG,
-  web3AvatarUrl,
-} from "../../../common/consts";
+  web3AvatarUrl
+} from "../../../common/consts"
 import { useApproveProposalId, useCheckFipEditorAddress, useFipEditorProposalDataSet, useFipEditors } from "../../../common/hooks";
 import EllipsisMiddle from "../../../components/EllipsisMiddle";
 import Loading from "../../../components/Loading";
@@ -34,7 +34,7 @@ import "./index.less";
 const FipEditorApprove = () => {
   const { isConnected, address, chain } = useAccount();
   const { t } = useTranslation();
-  const chainId = chain?.id || 0;
+  const chainId = chain?.id || calibrationChainId;
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
   const [messageApi, contextHolder] = message.useMessage();
@@ -98,7 +98,7 @@ const FipEditorApprove = () => {
       title: t('content.status'),
       dataIndex: 'status',
       key: 'status',
-      render: (value: string) => value || '-'
+      render: (value: string) => value ? t(`content.approved`) : '-'
     },
   ]
 
@@ -165,7 +165,7 @@ const FipEditorApprove = () => {
       align: 'center' as const,
       width: 120,
       render: (_: any, record: any) => {
-        const disabled =  !!record.voteList.find((item: any) => item.address === address && item.status === 'Approved');
+        const disabled =  !!record.voteList.find((item: any) => item.address === address && item.status === "approved");
         return (
           <Popconfirm
             title={t('content.approveFIPEditor')}
@@ -206,6 +206,7 @@ const FipEditorApprove = () => {
   }, [error]);
 
   useEffect(() => {
+    console.log(writeContractError)
     if (writeContractError) {
       messageApi.open({
         type: 'error',
@@ -260,7 +261,7 @@ const FipEditorApprove = () => {
           voters: obj.voters,
           ratio: `${obj.voters?.length} / ${fipEditors?.length}`,
           voteList: fipEditors?.map((address: string) => {
-            return { address, status: obj.voters?.includes(address) ? 'Approved' : '' }
+            return { address, status: obj.voters?.includes(address) ? "approved" : '' }
           }).sort((a) => (a.status ? -1 : 1))
         });
       } catch (e) {

@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { QuestionCircleOutlined } from '@ant-design/icons';
 import type { ReactNode } from 'react';
 import React from 'react';
-import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { FILECOIN_AUTHORIZE_DOC, FILECOIN_DEAUTHORIZE_DOC, GITHUB_AUTHORIZE_DOC, GITHUB_DEAUTHORIZE_DOC } from "../common/consts";
 
 export default function Table({ title = '', link = {} as { type: string, action: string, href: string }, list = [] as { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode, }[], subTitle = null }) {
   const navigate = useNavigate();
@@ -25,9 +24,9 @@ export default function Table({ title = '', link = {} as { type: string, action:
   const handleJump = () => {
     let doc = '';
     if (type === 'filecoin') {
-      doc = action === 'authorize' ? FILECOIN_AUTHORIZE_DOC : FILECOIN_DEAUTHORIZE_DOC;
+      doc = action === 'authorize' ? 'filecion_authorize_doc' : 'filecion_deauthorize_doc';
     } else {
-      doc = action === 'authorize' ? GITHUB_AUTHORIZE_DOC : GITHUB_DEAUTHORIZE_DOC;
+      doc = action === 'authorize' ? 'github_authorize_doc' : 'github_deauthorize_doc';
     }
     navigate(href, {
       state: {
@@ -62,8 +61,8 @@ export default function Table({ title = '', link = {} as { type: string, action:
         </thead>
         <tbody className='divide-y divide-[#111111]'>
           {list.filter((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode }) => !item.hide).map((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode }) => (
-            <tr key={item.name} className='divide-x divide-[#313D4F] '>
-              <td className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} align-top pt-[12px] pb-[12px] pl-[24px] pr-[45px] `}>
+            <tr key={item.name} className='divide-x divide-[#313D4F]'>
+              <td className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} align-middle pt-[12px] pb-[12px] pl-[24px] pr-[45px] `}>
                 <div className='whitespace-nowrap text-base font-medium text-[#313D4F] '>{item.name}</div>
                 {item.desc && <div className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} text-sm font-sm whitespace-normal text-[#4B535B] mt-8`}>
                   {item.desc}

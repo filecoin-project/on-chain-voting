@@ -14,6 +14,7 @@
 
 import React, { useState, useEffect } from 'react';
 import MdEditor from 'react-markdown-editor-lite';
+import { useTranslation } from 'react-i18next';
 // @ts-ignore
 import markdownIt from 'markdown-it';
 // @ts-ignore
@@ -55,6 +56,7 @@ const slugify = (text: string) => {
     .replace(/^-+/, '') //Remove leading hyphens
     .replace(/-+$/, ''); // Remove trailing hyphens
 };
+
 const mdParser = markdownIt({
   html: true,
   linkify: true,
@@ -103,17 +105,17 @@ interface Props {
   };
 }
 
-const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
+const MDEditor: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
   const { moreButton = true, className = '', style = {}, readOnly = false, view = { menu: true, md: true, html: true, both: true, fullScreen: true, hideMenu: true } } = rest;
 
   const mdEditor: any = React.useRef(null);
+  const { t } = useTranslation();
   const handleEditorChange = () => mdEditor.current?.getMdValue();
   const [currentValue, setCurrentValue] = useState(value)
   const [showMore, setShowMore] = useState(false);
   const handleClickShowMore = () => {
     setShowMore(prev => !prev);
   };
-
   const handleInternalLinks = () => {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       anchor.addEventListener('click', (e) => {
@@ -130,7 +132,8 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
         }
       });
     });
-  }
+  };
+
   useEffect(() => {
     const timeId = setTimeout(() => {
       handleInternalLinks();
@@ -146,7 +149,7 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
           <div className={`absolute bottom-0 h-[200px] w-full bg-gradient-to-t from-[#F6F6F6] ${showMore ? 'flex' : 'hidden'}`} />
           <div className={`flex w-full justify-center  ${showMore ? 'absolute -bottom-[50px]' : ''}`}>
             <button className="focus:outline-none border-[#DFDFDF] hover:border-[#DFDFDF] border-[1px] border-solid text-[#575757] mt-4 self-center rounded-xl py-2 px-4 font-semibold" onClick={handleClickShowMore}>
-              {showMore ? "Show More" : "Show Less"}
+              {showMore ? t("content.showMore") : t("content.showLess")}
             </button>
           </div>
         </>
@@ -188,4 +191,4 @@ const Index: React.FC<Props> = ({ value = '', onChange, ...rest }) => {
   )
 }
 
-export default Index
+export default MDEditor;
