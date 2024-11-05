@@ -94,6 +94,13 @@ interface IOracle is IOracleError {
     function updateNodeAllowList(address nodeAddress, bool allow) external;
 
     /**
+     * @notice Updates the snapshot allow list by adding or removing a snapshot address.
+     * @param snapshotAddress Address of the snapshot to be added or removed.
+     * @param allow Boolean indicating whether to allow (true) or disallow (false) the snapshot address.
+     */
+    function updateSnapshotAllowList(address snapshotAddress, bool allow) external;
+
+    /**
      * @notice Removes a voter along with associated task information.
      * @param voterAddress Address of the voter to be removed.
      */
@@ -110,6 +117,14 @@ interface IOracle is IOracleError {
      * @param voter The address of the voter.
      */
     function getVoterInfo(address voter) external view returns(VoterInfo memory);
+
+    /**
+     * @notice Adds a snapshot by associating a date with a CID (Content Identifier).
+     * @param date The representing the date of the snapshot.
+     * @param cid The IPFS CID (Content Identifier) for storing the snapshot data.
+     * @dev The CID is stored on the blockchain and linked to the provided date.
+     */
+    function addSnapshot(string calldata date, string calldata cid) external;
 
     /**
      * @notice Event emitted when a delegate is created.
