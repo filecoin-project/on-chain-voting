@@ -17,7 +17,7 @@ import {
   ConnectButton,
   useConnectModal,
 } from "@rainbow-me/rainbowkit";
-import { Dropdown, Input, Modal } from 'antd';
+import { Dropdown, Input, Modal, message } from 'antd';
 import axios from "axios";
 import 'dayjs/locale/zh-cn';
 import React, { useEffect, useRef, useState } from "react";
@@ -25,11 +25,25 @@ import Countdown from 'react-countdown';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "tailwindcss/tailwind.css";
-import { useAccount } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import timezones from '../../public/json/timezons.json';
-import { calibrationChainId, STORING_DATA_MSG, VOTE_ALL_STATUS } from "../common/consts";
+import {
+  calibrationChainId,
+  STORING_DATA_MSG,
+  STORING_FAILED_MSG,
+  STORING_SUCCESS_MSG,
+  VOTE_ALL_STATUS
+} from "../common/consts";
 import { useCheckFipEditorAddress, useVoterAddress, useVoterInfoSet } from "../common/hooks";
-import { useCurrentTimezone, useProposalStatus, useVoterInfo, useVotingList } from "../common/store";
+import {
+  useCurrentTimezone,
+  useProposalStatus,
+  useStoringHash,
+  useVoterInfo,
+  useVotingList
+} from "../common/store";
+import fileCoinAbi from "../common/abi/power-voting.json";
+import { getContractAddress } from "../utils";
 import "../common/styles/reset.less";
 import '../lang/config';
 
@@ -40,6 +54,7 @@ const Header = (props: any) => {
   const chainId = chain?.id || calibrationChainId;
   const prevAddressRef = useRef(address);
   const { openConnectModal } = useConnectModal();
+  const [messageApi, contextHolder] = message.useMessage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -61,11 +76,16 @@ const Header = (props: any) => {
 
   const { isFipEditorAddress } = useCheckFipEditorAddress(chainId, address);
 
-  const { voterAddressSuccess } = useVoterAddress(chainId);
+  const { data: hash, writeContract, isSuccess } = useWriteContract();
+  const { voterAddress, voterAddressSuccess } = useVoterAddress(chainId);
 
   // Update voter information in state
   const setVoterInfo = useVoterInfo((state: any) => state.setVoterInfo);
   const setVotingList = useVotingList((state: any) => state.setVotingList);
+
+  const storingHash = useStoringHash((state: any) => state.storingHash);
+  const addStoringHash = useStoringHash((state: any) => state.addStoringHash);
+  const setStoringHash = useStoringHash((state: any) => state.setStoringHash);
 
   // Update current timezone in state
   const setTimezone = useCurrentTimezone((state: any) => state.setTimezone);
@@ -73,6 +93,33 @@ const Header = (props: any) => {
 
   const { pathname } = useLocation();
   const { t } = useTranslation();
+
+  const f4TaskHash = storingHash?.find((item: any) => item.address === address);
+  const { isFetched, isSuccess: isF4TaskSuccess, isError } = useWaitForTransactionReceipt({
+    hash: f4TaskHash
+  });
+
+  useEffect(() => {
+    if (isFetched) {
+      // If data is fetched, remove the target item from storingHash array
+      const filterHash = storingHash.filter((item: any) => item.address !== address);
+      setStoringHash(filterHash);
+      // If the transaction is successful, show a success message
+      if (isF4TaskSuccess) {
+        messageApi.open({
+          type: 'success',
+          content: t(STORING_SUCCESS_MSG)
+        });
+      }
+      // If the transaction fails, show an error message
+      if (isError) {
+        messageApi.open({
+          type: 'error',
+          content: t(STORING_FAILED_MSG)
+        })
+      }
+    }
+  }, [isFetched]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -275,106 +322,125 @@ const Header = (props: any) => {
     if (!isConnected) {
       searchKey();
     }
-    // if (isConnected && voterAddressSuccess && voterAddress) {
-    //   if (!voterAddress.includes(address)) {
-    //     writeContract({
-    //       abi: fileCoinAbi,
-    //       address: getContractAddress(chainId, 'powerVoting'),
-    //       functionName: 'addF4Task',
-    //     });
-    //   }
-    // }
-  }, [isConnected, voterAddressSuccess]);
+  }, [isConnected]);
+
+  useEffect(() => {
+    if (isConnected && voterAddressSuccess && voterAddress) {
+      if (!voterAddress.includes(address) && !f4TaskHash) {
+        writeContract({
+          abi: fileCoinAbi,
+          address: getContractAddress(chainId, 'powerVoting'),
+          functionName: 'addF4Task',
+        });
+      }
+    }
+  }, [voterAddressSuccess]);
+
+  useEffect(() => {
+    if (isSuccess) {
+      messageApi.open({
+        type: 'success',
+        content: t(STORING_DATA_MSG),
+      });
+      addStoringHash([{
+        address,
+        hash,
+      }]);
+    }
+  }, [isSuccess])
 
   return (
-    <header className='h-[96px] bg-[#ffffff] border-b border-solid border-[#DFDFDF]'>
-      <div className='w-full h-[88px] flex items-center' style={{ justifyContent: "space-evenly" }}>
-        <div className='flex items-center'>
-          <div className='flex-shrink-0'>
-            <Link to='/'>
-              <img className="logo" src="/images/logo.png" alt="" />
-            </Link>
-          </div>
-          <div className='ml-6 flex items-baseline space-x-20'>
-            <Link
-              to='/'
-              className='text-black text-2xl font-semibold hover:opacity-80'
-            >
-              {t('content.powerVoting')}
-            </Link>
-          </div>
-          {(location.pathname === '/home' || location.pathname === '/') &&
-            <div className="ml-6">
-              <Input
-                placeholder={t('content.searchProposals')}
-                size="large"
-                prefix={<SearchOutlined onClick={() => searchKey(searchValue)} className={`${isFocus ? "text-[#1677ff]" : "text-[#8b949e]"} text-xl hover:text-[#1677ff]`} />}
-                onClick={() => setIsFocus(true)}
-                onBlur={() => setIsFocus(false)}
-                onChange={(e) => setSearchValue(e.currentTarget.value)}
-                onPressEnter={() => searchKey(searchValue)}
-                value={searchValue}
-                className={`${isFocus ? 'w-[270px]' : "w-[180px]"} font-medium text-base item-center text-slate-800 bg-[#f7f7f7] rounded-lg`}
-              />
+    <>
+      {contextHolder}
+      <header className='h-[96px] bg-[#ffffff] border-b border-solid border-[#DFDFDF]'>
+        <div className='w-full h-[88px] flex items-center' style={{ justifyContent: "space-evenly" }}>
+          <div className='flex items-center'>
+            <div className='flex-shrink-0'>
+              <Link to='/'>
+                <img className="logo" src="/images/logo.png" alt="" />
+              </Link>
             </div>
-          }
+            <div className='ml-6 flex items-baseline space-x-20'>
+              <Link
+                to='/'
+                className='text-black text-2xl font-semibold hover:opacity-80'
+              >
+                {t('content.powerVoting')}
+              </Link>
+            </div>
+            {(location.pathname === '/home' || location.pathname === '/') &&
+              <div className="ml-6">
+                <Input
+                  placeholder={t('content.searchProposals')}
+                  size="large"
+                  prefix={<SearchOutlined onClick={() => searchKey(searchValue)} className={`${isFocus ? "text-[#1677ff]" : "text-[#8b949e]"} text-xl hover:text-[#1677ff]`} />}
+                  onClick={() => setIsFocus(true)}
+                  onBlur={() => setIsFocus(false)}
+                  onChange={(e) => setSearchValue(e.currentTarget.value)}
+                  onPressEnter={() => searchKey(searchValue)}
+                  value={searchValue}
+                  className={`${isFocus ? 'w-[270px]' : "w-[180px]"} font-medium text-base item-center text-slate-800 bg-[#f7f7f7] rounded-lg`}
+                />
+              </div>
+            }
 
-        </div>
-        <div className='flex items-center'>
-          <Dropdown
-            menu={{
-              items,
-            }}
-            placement="bottomLeft"
-            arrow
-          >
-            <button
-              className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-xl mr-4"
+          </div>
+          <div className='flex items-center'>
+            <Dropdown
+              menu={{
+                items,
+              }}
+              placement="bottomLeft"
+              arrow
             >
-              {t('content.tools')}
-            </button>
-          </Dropdown>
-          <div className="connect flex items-center">
-            <ConnectButton showBalance={false} label={t('content.connectWallet')}/>
-            <div className='px-4 py-2 h-full flex flex-nowrap text-sm'>
-              {languageOptions.map((item) => {
-                return (
-                  <div key={item.label} className={`h-full mr-1.5 cursor-pointer text-black font-semibold ${item.value === lang ? 'border-solid border-b-2 border-current' : 'border-none'}`} onClick={() => changeLanguage(item.value)}>
-                    <div className='h-5 leading-6 text-center my-*'>{item.label}</div>
-                  </div>
-                )
-              })
-              }
+              <button
+                className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-xl mr-4"
+              >
+                {t('content.tools')}
+              </button>
+            </Dropdown>
+            <div className="connect flex items-center">
+              <ConnectButton showBalance={false} label={t('content.connectWallet')}/>
+              <div className='px-4 py-2 h-full flex flex-nowrap text-sm'>
+                {languageOptions.map((item) => {
+                  return (
+                    <div key={item.label} className={`h-full mr-1.5 cursor-pointer text-black font-semibold ${item.value === lang ? 'border-solid border-b-2 border-current' : 'border-none'}`} onClick={() => changeLanguage(item.value)}>
+                      <div className='h-5 leading-6 text-center my-*'>{item.label}</div>
+                    </div>
+                  )
+                })
+                }
+              </div>
             </div>
           </div>
+          <Modal
+            width={520}
+            open={modalOpen}
+            title={false}
+            destroyOnClose={true}
+            closeIcon={false}
+            onCancel={() => { setModalOpen(false) }}
+            footer={false}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <p>{t(STORING_DATA_MSG)} {t('content.pleaseWait')}:&nbsp;
+              <Countdown
+                date={expirationTime}
+                renderer={({ minutes, seconds, completed }) => {
+                  if (completed) {
+                    // Render a completed state
+                    setModalOpen(false);
+                  } else {
+                    // Render a countdown
+                    return <span>{minutes}:{seconds}</span>;
+                  }
+                }}
+              />
+            </p>
+          </Modal>
         </div>
-        <Modal
-          width={520}
-          open={modalOpen}
-          title={false}
-          destroyOnClose={true}
-          closeIcon={false}
-          onCancel={() => { setModalOpen(false) }}
-          footer={false}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        >
-          <p>{t(STORING_DATA_MSG)} {t('content.pleaseWait')}:&nbsp;
-            <Countdown
-              date={expirationTime}
-              renderer={({ minutes, seconds, completed }) => {
-                if (completed) {
-                  // Render a completed state
-                  setModalOpen(false);
-                } else {
-                  // Render a countdown
-                  return <span>{minutes}:{seconds}</span>;
-                }
-              }}
-            />
-          </p>
-        </Modal>
-      </div>
-    </header>
+      </header>
+    </>
   )
 }
 

@@ -41,15 +41,16 @@ import {
   WRONG_START_TIME_MSG,
   githubApi,
   proposalDraftAddApi,
-  proposalDraftGetApi, calibrationChainId
-  // blockHeightGetApi
+  proposalDraftGetApi,
+  calibrationChainId,
+  blockHeightGetApi, WRONG_BLOCK_HEIGHT
 } from "../../common/consts"
 import { useCheckFipEditorAddress } from "../../common/hooks";
 import { useStoringCid, useVoterInfo, useVotingList } from "../../common/store";
 import Table from '../../components/CreateTable';
 import LoadingButton from "../../components/LoadingButton";
 import Editor from '../../components/MDEditor';
-import { getContractAddress, getWeb3IpfsId, validateValue } from '../../utils';
+import { getContractAddress, getWeb3IpfsId, validateValue } from "../../utils"
 import './index.less';
 import { UserRejectedRequestError } from "viem";
 dayjs.extend(utc);
@@ -173,6 +174,16 @@ const CreateVote = () => {
    */
   const onSubmit = async (values: any) => {
     setLoading(true);
+    const { data: { data } } = await axios.get(`${blockHeightGetApi}`, { params: { chainId } });
+    // Check if current time is after start time
+    if (data?.blockHeight === 0) {
+      messageApi.open({
+        type: 'warning',
+        content: t(WRONG_BLOCK_HEIGHT),
+      });
+      setLoading(false);
+      return false;
+    }
 
     // Calculate offset based on selected timezone
     const offset = dayjs().utcOffset() - dayjs().tz(values.timezone).utcOffset();
@@ -209,14 +220,13 @@ const CreateVote = () => {
       githubName: '',
       githubAvatar: ''
     }
+
     if (voterInfo && voterInfo[0]) {
       const githubName = voterInfo[0];
       const { data } = await axios.get(`${githubApi}/${githubName}`);
       githubObj.githubName = githubName;
       githubObj.githubAvatar = data.avatar_url;
     }
-
-    // const { data: { data: blockHeight } } = await axios.get(`${blockHeightGetApi}`, { params: { netId: chainId } });
 
     // Prepare values object with additional information
     const _values = {
@@ -229,7 +239,7 @@ const CreateVote = () => {
       option: VOTE_OPTIONS,
       address: address,
       chainId: chainId,
-      // day: blockHeight?.day,
+      day: data?.day,
       currentTime,
     };
     const cid = await getWeb3IpfsId(_values);
@@ -271,6 +281,8 @@ const CreateVote = () => {
             name: values.name,
             descriptions: values.descriptions,
             cid,
+            voteCountDay: data.day,
+            height: data.blockHeight,
             proposalId:  0
           }
           await axios.post('/api/proposal/add', params);
@@ -318,7 +330,6 @@ const CreateVote = () => {
         timezone: '',
         name: '',
         descriptions: '',
-        // GMTOffset,
         startTime: 0,
         expTime: 0,
         address: address,

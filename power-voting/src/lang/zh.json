@@ -31,6 +31,8 @@
         "checkID": "请检查您的Miner ID！",
         "expirationTime": "截止时间不得早于当前时间！",
         "startTimeLoss": "开始时间不得早于当前时间！",
+        "blockHeightLoss": "获取power区块高度获取失败！",
+        "gettingPower": "正在获取地址的权重，请等待!",
         "chooseVote": "请选择一个选项进行投票！",
         "voteSuccessful": "投票成功",
         "dataStoredFailed": "数据上链失败！",

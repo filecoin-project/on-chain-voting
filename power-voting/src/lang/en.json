@@ -31,6 +31,8 @@
         "checkID": "Please check your miner ID!",
         "expirationTime": "Expiration time can not be less than current time!",
         "startTimeLoss": "Start time can not be less than current time!",
+        "blockHeightLoss": "Get power block height fail！",
+        "gettingPower": "Getting the address power, please wait!",
         "chooseVote": "Please choose a option to vote!",
         "voteSuccessful": "Vote successful!",
         "dataStoredFailed": "Data stored on chain failed!",

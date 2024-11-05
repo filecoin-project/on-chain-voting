@@ -110,9 +110,9 @@ const VotingResults = () => {
         votePowers: historyData.votePowers
       }));
     }
-    let powerBlockHeight = 0
+    let powerBlockHeight = 0;
     if (voteList?.length) {
-      powerBlockHeight = voteList[0].powerBlockHeight
+      powerBlockHeight = voteList[0].powerBlockHeight;
     }
     // Set voting data state
     setVotingData({
@@ -126,7 +126,7 @@ const VotingResults = () => {
       // Sort voteList array by number of votes in descending order
       voteList: voteList?.sort((a: any, b: any) => b.votes - a.votes)
     })
-    setLoading(false)
+    setLoading(false);
   }
 
   useEffect(() => {

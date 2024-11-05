@@ -13,12 +13,13 @@
 // limitations under the License.
 
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
-import { message } from "antd";
+import { message, Popover, Table } from "antd";
 import axios from 'axios';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { InfoCircleOutlined } from '@ant-design/icons';
 import VoteStatusBtn from "src/components/VoteStatusBtn";
 import { Buffer, mainnetClient, roundAt, timelockEncrypt } from "tlock-js";
 import type { BaseError } from "wagmi";
@@ -32,21 +33,24 @@ import {
   UPLOAD_DATA_FAIL_MSG,
   VOTE_SUCCESS_MSG,
   WRONG_NET_STATUS,
-  web3AvatarUrl, calibrationChainId
+  web3AvatarUrl,
+  calibrationChainId,
+  votePowerGetApi, GETTING_POWER_MSG
 } from "../../common/consts"
-import { useCurrentTimezone } from "../../common/store";
+import { useCurrentTimezone, useStoringHash } from "../../common/store"
 import type { ProposalList, ProposalOption } from "../../common/types";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
 import LoadingButton from "../../components/LoadingButton";
 import MDEditor from "../../components/MDEditor";
-import { getContractAddress, getWeb3IpfsId } from '../../utils';
+import { bigNumberToFloat, convertBytes, getContractAddress, getWeb3IpfsId } from "../../utils";
 import "./index.less";
 const Vote = () => {
-  const { chain, isConnected } = useAccount();
+  const { chain, isConnected, address } = useAccount();
   const chainId = chain?.id || calibrationChainId;
   const { id, cid } = useParams();
   const { t } = useTranslation();
   const [votingData, setVotingData] = useState({} as ProposalList);
+  const [powerDetail, setPowerDetail] = useState();
   const { openConnectModal } = useConnectModal();
   const { openChainModal } = useChainModal();
 
@@ -58,6 +62,55 @@ const Vote = () => {
   const timezone = useCurrentTimezone((state: any) => state.timezone);
 
   const [messageApi, contextHolder] = message.useMessage();
+
+  const columns = [
+    {
+      title: t('content.role'),
+      dataIndex: 'role',
+      key: 'role',
+    },
+    {
+      title: t('content.power'),
+      dataIndex: 'power',
+      key: 'power',
+    },
+    {
+      title: t('content.blockHeight'),
+      dataIndex: 'blockHeight',
+      key: 'blockHeight',
+    },
+  ];
+
+  const storingHash = useStoringHash((state: any) => state.storingHash);
+
+  const getPowerData = (votePower: any) => {
+    return [
+      {
+        key: 'sp',
+        role: 'SP',
+        blockHeight: votePower?.blockHeight,
+        power: convertBytes(votePower?.spPower),
+      },
+      {
+        key: 'client',
+        role: 'Client',
+        blockHeight: votePower?.blockHeight,
+        power: convertBytes(Number(votePower?.clientPower) / (10 ** 18)),
+      },
+      {
+        key: 'developer',
+        role: 'Developer',
+        blockHeight: votePower?.blockHeight,
+        power: votePower?.developerPower,
+      },
+      {
+        key: 'tokenHolder',
+        role: 'TokenHolder',
+        blockHeight: votePower?.blockHeight,
+        power: bigNumberToFloat(votePower?.tokenHolderPower),
+      },
+    ];
+  }
 
   const {
     data: hash,
@@ -98,6 +151,8 @@ const Vote = () => {
     // Fetch data from the IPFS link using the provided CID
     const res = await axios.get(`https://${cid}.ipfs.w3s.link/`);
     const data = res.data;
+    const { data: { data: powerDetail } } = await axios.get(`${votePowerGetApi}`, { params: { chainId, address, day: data.day } });
+    setPowerDetail(powerDetail);
     let voteStatus = null;
     // Check if the chain ID from the fetched data matches the current chain ID
     if (data.chainId !== chainId) {
@@ -159,6 +214,16 @@ const Vote = () => {
   }
 
   const startVoting = async () => {
+    const item = storingHash.find((item: any) => item.address === address);
+    
+    if (item) {
+      messageApi.open({
+        type: 'warning',
+        content: t(GETTING_POWER_MSG),
+      });
+      return;
+    }
+
     // Check if a valid option is selected
     if (selectedOptionIndex < 0) {
       // If not, display a warning message
@@ -330,6 +395,16 @@ const Vote = () => {
                 <h4 className="font-medium">
                   {t('content.castVote')}
                 </h4>
+                <Popover content={
+                  <Table
+                    rowKey={(record: any) => record.key}
+                    dataSource={getPowerData(powerDetail)}
+                    columns={columns}
+                    pagination={false}
+                  />
+                }>
+                  <span className='text-[14px] text-[#273141] text-sm'><InfoCircleOutlined style={{ fontSize: 14 }} /></span>
+                </Popover>
               </div>
               <div className="p-4 text-center">
                 {
