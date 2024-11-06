@@ -102,4 +102,10 @@ interface IPowerVoting is IPowerVotingEvent, IPowerVotingError {
      * @param minerIds An array containing the miner IDs to be added.
      */
     function addMinerId(uint64[] memory minerIds) external;
+
+    /**
+     * @notice Adds a new F4 task.
+     * @dev This function should be implemented to trigger the addition of an F4 task.
+     */
+    function addF4Task() external;
 }
