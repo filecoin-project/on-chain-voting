@@ -18,4 +18,7 @@ type DataRepo interface {
 	CountProposal(filter map[string]any) (int64, error)
 	CreateProposal(in *model.Proposal) (int64, error)
 	UpdateProposal(in *model.Proposal) (int64, error)
+
+	GetSnapshotList(netId int64) ([]model.SnapshotByDay, error)
+	UpdateSnapshot(in model.SnapshotByDay) error
 }

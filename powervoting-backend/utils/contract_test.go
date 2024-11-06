@@ -16,10 +16,11 @@ package utils
 
 import (
 	"fmt"
-	"go.uber.org/zap"
 	"powervoting-server/config"
 	"powervoting-server/contract"
 	"testing"
+
+	"go.uber.org/zap"
 )
 
 func TestGetProposal(t *testing.T) {

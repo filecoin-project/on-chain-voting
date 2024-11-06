@@ -15,9 +15,10 @@
 package scheduler
 
 import (
+	"powervoting-server/task"
+
 	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
-	"powervoting-server/task"
 )
 
 // TaskScheduler initializes and starts the task scheduler.
@@ -36,23 +37,34 @@ func TaskScheduler() {
 	votingCountTask := task.VotingCountHandler
 	syncProposalTask := task.SyncProposalHandler
 	syncVoteTask := task.SyncVoteHandler
+	backupPowerTask := task.BackupPowerHandler
 
 	// 5 minutes
 	votingCountSpec := "0 0/5 * * * ?"
 	// 1 minutes
 	syncSpec := "0/30 * * * * ?"
 
+	backupSnapshot := "0 0/10 * * * ?"
+
 	_, err := crontab.AddFunc(syncSpec, syncProposalTask)
 	if err != nil {
 		zap.L().Error("add proposal sync task failed: ", zap.Error(err))
 		return
 	}
+
 	_, err = crontab.AddFunc(syncSpec, syncVoteTask)
 	if err != nil {
 		zap.L().Error("add vote sync task failed: ", zap.Error(err))
 		return
 	}
+
 	_, err = crontab.AddFunc(votingCountSpec, votingCountTask)
+	if err != nil {
+		zap.L().Error("add voting count task failed: ", zap.Error(err))
+		return
+	}
+
+	_, err = crontab.AddFunc(backupSnapshot, backupPowerTask)
 	if err != nil {
 		zap.L().Error("add voting count task failed: ", zap.Error(err))
 		return

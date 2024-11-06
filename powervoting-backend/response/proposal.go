@@ -26,4 +26,6 @@ type Proposal struct {
 	ShowTime     []string           `json:"showTime"`
 	Status       int                `json:"status"`
 	VoteCount    int64              `json:"voteCount"`
+	VoteCountDay string             `json:"voteCountDay"`
+	Height       int64              `json:"height"`
 }

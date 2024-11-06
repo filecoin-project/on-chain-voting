@@ -42,4 +42,8 @@ func InitRouters(r *gin.Engine) {
 	powerVotingRouter.GET("/proposal/draft/get", api.GetDraft)
 
 	powerVotingRouter.POST("/w3storage/upload", api.W3Upload)
+
+	powerVotingRouter.GET("/filecoin/height", api.GetHeight)
+
+	powerVotingRouter.GET("/power/getPower", api.GetPower)
 }

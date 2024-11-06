@@ -16,6 +16,9 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
+
+	"github.com/golang-module/carbon"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -50,6 +53,55 @@ func (s *Snapshot) GetAddressPower(ctx context.Context, req *pb.AddressPowerRequ
 		DeveloperPower:   m.DeveloperPower.String(),
 		BlockHeight:      m.BlockHeight,
 		DateStr:          m.DateStr,
+	}, nil
+}
+
+func (s *Snapshot) GetAddressPowerByDay(ctx context.Context, req *pb.AddressPowerByDayRequest) (*pb.AddressPowerResponse, error) {
+	day := req.GetDay()
+	dayTime := carbon.Parse(day).EndOfDay().ToStdTime()
+	m, err := s.querySrv.GetAddressPowerByDay(ctx, req.GetNetId(), req.GetAddress(), day, dayTime)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &pb.AddressPowerResponse{
+		Address:          m.Address,
+		SpPower:          m.SpPower.String(),
+		ClientPower:      m.ClientPower.String(),
+		TokenHolderPower: m.TokenHolderPower.String(),
+		DeveloperPower:   m.DeveloperPower.String(),
+		BlockHeight:      m.BlockHeight,
+		DateStr:          m.DateStr,
+	}, nil
+}
+
+func (s *Snapshot) GetDataHeight(_ context.Context, req *pb.DataHeightRequest) (*pb.DataHeightResponse, error) {
+	height, err := s.querySrv.GetDataHeight(context.Background(), req.GetNetId(), req.GetDay())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &pb.DataHeightResponse{
+		Day:    req.GetDay(),
+		Height: height,
+	}, nil
+}
+
+func (s *Snapshot) GetAllAddrPowerByDay(_ context.Context, req *pb.GetAllAddrPowerByDayRequest) (*pb.GetAllAddrPowerByDayResponse, error) {
+	addrPowers, err := s.querySrv.GetAllAddressPowerByDay(context.Background(), req.GetNetId(), req.GetDay())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	jsonRes, err := json.Marshal(addrPowers)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &pb.GetAllAddrPowerByDayResponse{
+		Day:   req.Day,
+		Info:  string(jsonRes),
+		NetId: req.NetId,
 	}, nil
 }
 
@@ -89,7 +141,7 @@ func (s *Snapshot) SyncAllDeveloperWeight(context.Context, *pb.SyncAllDeveloperW
 	return &pb.SyncAllDeveloperWeightResponse{}, nil
 }
 
-func (s *Snapshot) SyncDeveloperPower(ctx context.Context, req *pb.SyncDeveloperWeightRequest) (*pb.SyncDeveloperWeightResponse, error) {
+func (s *Snapshot) SyncDeveloperWeight(ctx context.Context, req *pb.SyncDeveloperWeightRequest) (*pb.SyncDeveloperWeightResponse, error) {
 	err := s.syncSrv.SyncDeveloperWeight(context.Background(), req.GetDateStr())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
