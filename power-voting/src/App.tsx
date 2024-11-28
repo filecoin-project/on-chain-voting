@@ -50,7 +50,7 @@ const App: React.FC = () => {
   // Render routes based on URL
   const element = useRoutes(routes);
 
-  const isLanding = false;//location.pathname === "/" || element?.props?.match?.route?.path === "*"
+  const isLanding = location.pathname === "/" || element?.props?.match?.route?.path === "*";
 
   // Get the user's timezone
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
