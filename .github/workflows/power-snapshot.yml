@@ -45,3 +45,15 @@ jobs:
         run: |
           cd ./power-snapshot
           go test -run '^TestGetPower$|^TestGetActorPower$|^TestGetMinerPower$TestIDFromAddress$|^TestWalletBalanceByHeight$|^TestGetMinerPowerByHeight$|^TestGetClientBalanceByHeight$|^TestGetNewestHeightAndTipset$|^TestGetBlockHeader$' ./...
+  deploy:
+    steps:
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /home/demo/on-chain-voting/test/build
+            sh snapshot.sh
+
