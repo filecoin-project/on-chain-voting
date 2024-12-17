@@ -56,6 +56,6 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /home/demo/on-chain-voting/test/build
+            cd ${{ vars.BUILD_PATH }}
             sh snapshot.sh
 

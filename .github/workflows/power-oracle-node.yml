@@ -61,5 +61,5 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           timeout: 10m
           script: |
-            cd /home/demo/on-chain-voting/test/build
+            cd ${{ vars.BUILD_PATH }}
             sh oraclenode.sh
