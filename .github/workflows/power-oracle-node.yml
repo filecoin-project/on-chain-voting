@@ -5,11 +5,11 @@ name: Power-oracle-node-test
 
 on:
   push:
-    branches: [ "feat/cd" ]
+    branches: [ "main" ]
     paths:
       - 'power-oracle-node/*'
   pull_request:
-    branches: [ "feat/cd" ]
+    branches: [ "main" ]
     paths:
       - 'power-oracle-node/*'
 
