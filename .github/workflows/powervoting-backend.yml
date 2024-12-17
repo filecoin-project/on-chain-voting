@@ -58,6 +58,7 @@ jobs:
           go test -v ./...
 
   deploy:
+    runs-on: ubuntu-latest
     steps:
       - name: Deploy on server
         uses: appleboy/ssh-action@v0.1.8
