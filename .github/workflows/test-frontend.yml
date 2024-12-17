@@ -38,3 +38,16 @@ jobs:
         run: |
           cd power-voting
           npm run test
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ${{ vars.BUILD_PATH }}
+            sh frontend.sh
