@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { QuestionCircleOutlined } from '@ant-design/icons';
 import type { ReactNode } from 'react';
 import React from 'react';
-import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { FILECOIN_AUTHORIZE_DOC, FILECOIN_DEAUTHORIZE_DOC, GITHUB_AUTHORIZE_DOC, GITHUB_DEAUTHORIZE_DOC } from "../common/consts";
 
 export default function Table({ title = '', link = {} as { type: string, action: string, href: string }, list = [] as { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode, }[], subTitle = <div /> }) {
   const navigate = useNavigate();
@@ -25,9 +24,9 @@ export default function Table({ title = '', link = {} as { type: string, action:
   const handleJump = () => {
     let doc = '';
     if (type === 'filecoin') {
-      doc = action === 'authorize' ? FILECOIN_AUTHORIZE_DOC : FILECOIN_DEAUTHORIZE_DOC;
+      doc = action === 'authorize' ? 'filecion_authorize_doc' : 'filecion_deauthorize_doc';
     } else {
-      doc = action === 'authorize' ? GITHUB_AUTHORIZE_DOC : GITHUB_DEAUTHORIZE_DOC;
+      doc = action === 'authorize' ? 'github_authorize_doc' : 'github_deauthorize_doc';
     }
     navigate(href, {
       state: {
