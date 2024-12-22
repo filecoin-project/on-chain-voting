@@ -41,7 +41,7 @@ const Index: FC = () => {
       </div>
       <MDEditor
         className="doc"
-        value={doc}
+        value={t(`content.${doc}`)}
         moreButton={false}
         readOnly={true}
         view={{ menu: false, md: false, html: true, both: false, fullScreen: true, hideMenu: false }}

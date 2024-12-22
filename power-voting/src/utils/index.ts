@@ -160,8 +160,28 @@ export const getWeb3IpfsId = async (params: object | string) => {
       },
     },
     );
-    return resp.data["data"]["root"]["/"];
+    return resp.data.data;
   } catch (e) {
     return ""
   }
+}
+
+// Converts hexadecimal to a string
+export const hexToString = (hex: any) => {
+  if(!hex){
+    return '';
+  }
+  let str = '';
+  if (hex.substring(1, 3) === '0x') {
+    str = hex.substring(3)
+  } else {
+    str = hex;
+  }
+  // Split a hexadecimal string by two characters
+  const pairs = str.match(/[\dA-Fa-f]{2}/g);
+  if (pairs == null) {
+    return '';
+  }
+  // Converts split hexadecimal numbers to characters and concatenates them
+  return pairs.map((pair: any) => String.fromCharCode(parseInt(pair, 16))).join('').replace(/[^\x20-\x7E]/g, '').trim();
 }

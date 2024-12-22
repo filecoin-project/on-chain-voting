@@ -42,6 +42,18 @@ export const useCheckFipEditorAddress = (chainId: number, address: `0x${string}`
   };
 }
 
+export const useVoterAddress = (chainId: number) => {
+  const { data, isSuccess: voterAddressSuccess } = useReadContract({
+    address: getContractAddress(chainId, 'oracle'),
+    abi: oracleAbi,
+    functionName: 'getVoterAddresses',
+  });
+  return {
+    voterAddress: data,
+    voterAddressSuccess
+  } as any;
+}
+
 export const useLatestId = (chainId: number, enabled: boolean) => {
   const { data: latestId, isLoading: getLatestIdLoading, refetch } = useReadContract({
     address: getContractAddress(chainId, 'powerVoting'),
