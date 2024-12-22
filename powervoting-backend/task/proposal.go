@@ -79,6 +79,8 @@ func SyncProposal(ethClient model.GoEthClient, db db.DataRepo) error {
 		zap.L().Error("get proposal latest id error: ", zap.Error(err))
 		return err
 	}
+
+	zap.L().Info("Sync proposal end: ", zap.Int("end", end))
 	for start <= end {
 		contractProposal, err := utils.GetProposal(ethClient, int64(start))
 		if err != nil {
@@ -86,6 +88,8 @@ func SyncProposal(ethClient model.GoEthClient, db db.DataRepo) error {
 			start++
 			break
 		}
+
+		zap.L().Info("contract proposal: ", zap.Any("contractProposal", contractProposal))
 		if len(contractProposal.Cid) == 0 {
 			start++
 			continue
@@ -102,7 +106,7 @@ func SyncProposal(ethClient model.GoEthClient, db db.DataRepo) error {
 			Status:       constant.ProposalStatusPending,
 		}
 
-		zap.L().Info("proposal: ", zap.Any("proposal", proposal))
+		zap.L().Info("update proposal info: ", zap.Any("proposal", proposal))
 
 		_, err = db.UpdateProposal(&proposal)
 		if err != nil {

@@ -103,7 +103,7 @@ func main() {
 		}()
 	}
 
-	querySrv := service.NewQueryService(baseRepo, queryRepo, syncSrv)
+	querySrv := service.NewQueryService(baseRepo, queryRepo, syncSrv, redisClient)
 	// init job
 	jobs := []scheduler.JobInfo{
 		{

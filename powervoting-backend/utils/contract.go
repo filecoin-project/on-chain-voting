@@ -17,13 +17,20 @@ package utils
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math/big"
 	"powervoting-server/model"
 	"strconv"
+	"sync"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"go.uber.org/zap"
+)
+
+var (
+	lock sync.Mutex
 )
 
 // GetTimestamp retrieves the current timestamp from the Ethereum blockchain using the provided Ethereum client.
@@ -160,4 +167,56 @@ func GetVoterToPowerStatus(address string, client model.GoEthClient) (model.Vote
 		return model.VoterToPowerStatus{}, err
 	}
 	return voterToPowerStatus, nil
+}
+
+func AddSnapshot(client model.GoEthClient, cid, day string) error {
+	lock.Lock()
+	defer lock.Unlock()
+
+	data, err := client.OracleAbi.Pack("addSnapshot", day, cid)
+	if err != nil {
+		zap.L().Error("AddSnapshot Pack method and param error: ", zap.Error(err))
+		return err
+	}
+
+	nonce, err := client.Client.PendingNonceAt(context.Background(), client.WalletAddress)
+	if err != nil {
+		zap.L().Error("addSnapshot pending nonce at abi  pack error", zap.Error(err))
+		return err
+	}
+
+	gasPrice, err := client.Client.SuggestGasPrice(context.Background())
+	if err != nil {
+		zap.L().Error("addSnapshot client suggest gas price  error", zap.Error(err))
+		return err
+	}
+	zap.L().Info("addSnapshot nonce", zap.Uint64("nonce", nonce))
+	zap.L().Info("addSnapshot gas price", zap.String("gas price", gasPrice.String()))
+
+	tx := types.NewTx(&types.LegacyTx{
+		Nonce:    nonce,
+		GasPrice: gasPrice,
+		Gas:      client.GasLimit,
+		To:       &client.OracleContract,
+		Value:    client.Amount,
+		Data:     data,
+	})
+
+	zap.L().Info("AddSnapshot data: ", zap.String("data", string(day)))
+
+	signedTx, err := types.SignTx(tx, types.LatestSignerForChainID(client.ChainID), client.PrivateKey)
+	if err != nil {
+		zap.L().Error("addSnapshot types  sign tx  error", zap.Error(err))
+		return err
+	}
+
+	err = client.Client.SendTransaction(context.Background(), signedTx)
+	if err != nil {
+		zap.L().Error("addSnapshot client send transaction  error", zap.Error(err))
+		return err
+	}
+
+	zap.S().Info(fmt.Sprintf("addSnapshot Successfully, network: %s, transaction id: %s", client.Name, signedTx.Hash().Hex()))
+
+	return nil
 }

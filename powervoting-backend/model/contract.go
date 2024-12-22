@@ -15,6 +15,9 @@
 package model
 
 import (
+	"crypto/ecdsa"
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -29,6 +32,11 @@ type GoEthClient struct {
 	OracleAbi           abi.ABI           // ABI for Oracle contract
 	PowerVotingContract common.Address    // Contract address for PowerVoting
 	OracleContract      common.Address    // Contract address for Oracle
+	ChainID             *big.Int          // Chain ID for Ethereum network.
+	PrivateKey          *ecdsa.PrivateKey // Private key for the wallet.
+	WalletAddress       common.Address    // Address of the wallet.
+	GasLimit            uint64            // Gas limit for transactions.
+	Amount              *big.Int          // Amount for transactions.
 }
 
 // ClientConfig represents the configuration for creating a GoEthClient instance.
@@ -40,4 +48,7 @@ type ClientConfig struct {
 	OracleContract      string // Contract address for Oracle
 	PowerVotingAbi      string // ABI for PowerVoting contract (as a string)
 	OracleAbi           string // ABI for Oracle contract (as a string)
+	GasLimit            int64  // Gas limit for transactions.
+	PrivateKey          string // Private key for the wallet.
+	WalletAddress       string // Address of the wallet.
 }
