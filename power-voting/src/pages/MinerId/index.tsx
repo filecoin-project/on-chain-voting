@@ -22,10 +22,10 @@ import { filecoinCalibration } from "wagmi/chains";
 import oraclePowerAbi from "../../common/abi/oracle-powers.json";
 import fileCoinAbi from "../../common/abi/power-voting.json";
 import {
-  DUPLICATED_MINER_ID_MSG,
+  DUPLICATED_MINER_ID_MSG, calibrationChainId,
   STORING_DATA_MSG,
   WRONG_MINER_ID_MSG
-} from "../../common/consts";
+} from "../../common/consts"
 import { useMinerIdSet, useOwnerDataSet } from "../../common/hooks";
 import Loading from "../../components/Loading";
 import LoadingButton from '../../components/LoadingButton';
@@ -33,7 +33,7 @@ import Table from '../../components/Table';
 import { getContractAddress, hasDuplicates } from "../../utils";
 const MinerId = () => {
   const { chain, isConnected, address } = useAccount();
-  const chainId = chain?.id || 0;
+  const chainId = chain?.id || calibrationChainId;
   const navigate = useNavigate();
   const { t } = useTranslation();
   const prevAddressRef = useRef(address);
@@ -110,7 +110,7 @@ const MinerId = () => {
     const { value } = removeMinerIdPrefix(arr);
     const contracts = value.map((item: number) => {
       return {
-        address: getContractAddress(chain?.id || 0, 'oraclePower'),
+        address: getContractAddress(chain?.id || calibrationChainId, 'oraclePower'),
         abi: oraclePowerAbi,
         functionName: 'getOwner',
         args: [item],
@@ -177,7 +177,6 @@ const MinerId = () => {
     const { value, hasError } = removeMinerIdPrefix(minerIds);
     // Remove prefix from miner IDs and check for errors
     if (hasError) {
-      console.log(hasError)
       messageApi.open({
         type: 'warning',
         content: t(WRONG_MINER_ID_MSG),
@@ -204,7 +203,7 @@ const MinerId = () => {
       } else {
         writeContract({
           abi: fileCoinAbi,
-          address: getContractAddress(chain?.id || 0, 'powerVoting'),
+          address: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
           functionName: 'addMinerId',
           args: [
             value

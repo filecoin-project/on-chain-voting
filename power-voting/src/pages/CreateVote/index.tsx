@@ -42,15 +42,17 @@ import {
   githubApi,
   proposalDraftAddApi,
   proposalDraftGetApi,
-  worldTimeApi
-} from '../../common/consts';
+  calibrationChainId,
+  blockHeightGetApi, WRONG_BLOCK_HEIGHT
+} from "../../common/consts"
 import { useCheckFipEditorAddress } from "../../common/hooks";
-import { useStoringCid, useVoterInfo } from "../../common/store";
+import { useStoringCid, useVoterInfo, useVotingList } from "../../common/store";
 import Table from '../../components/CreateTable';
 import LoadingButton from "../../components/LoadingButton";
 import Editor from '../../components/MDEditor';
-import { getContractAddress, getWeb3IpfsId, validateValue } from '../../utils';
+import { getContractAddress, getWeb3IpfsId, validateValue } from "../../utils"
 import './index.less';
+import { UserRejectedRequestError } from "viem";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -58,7 +60,7 @@ const { RangePicker } = DatePicker;
 
 const CreateVote = () => {
   const { isConnected, address, chain } = useAccount();
-  const chainId = chain?.id || 0;
+  const chainId = chain?.id || calibrationChainId;
   const { t } = useTranslation();
   const { openConnectModal } = useConnectModal();
   const prevAddressRef = useRef(address);
@@ -66,6 +68,7 @@ const CreateVote = () => {
 
   const voterInfo = useVoterInfo((state: any) => state.voterInfo);
   const addStoringCid = useStoringCid((state: any) => state.addStoringCid);
+  const setVotingList = useVotingList((state: any) => state.setVotingList);
 
   const {
     register,
@@ -93,8 +96,7 @@ const CreateVote = () => {
 
   const {
     data: hash,
-    writeContract,
-    error,
+    writeContractAsync,
     isPending: writeContractPending,
     isSuccess: writeContractSuccess,
     reset
@@ -102,8 +104,9 @@ const CreateVote = () => {
 
   const [cid, setCid] = useState('');
   const [loading, setLoading] = useState<boolean>(writeContractPending);
-  const [isDraftSave, setDraftSave] = useState(false)
-  const [hasDraft, setHasDraft] = useState(false)
+  const [isDraftSave, setDraftSave] = useState(false);
+  const [hasDraft, setHasDraft] = useState(false);
+
   useEffect(() => {
     if (!isConnected) {
       navigate("/home");
@@ -118,26 +121,16 @@ const CreateVote = () => {
     }
   }, [address]);
 
-  useEffect(() => {
-    if (error) {
-      messageApi.open({
-        type: 'error',
-        content: (error as BaseError)?.shortMessage || error?.message,
-      });
-    }
-    reset();
-  }, [error]);
-
-  const OPTION_SPLIT_TAG = "&%"
+  const OPTION_SPLIT_TAG = "&%";
   const loadDraft = async () => {
     try {
       const resp = await axios.get(proposalDraftGetApi, {
         params: {
           chainId: chainId,
           address: address
-
         }
-      })
+      });
+
       if (resp.data != null && resp.data.data?.length) {
         const result = (resp.data.data as ProposalDraft[])[0]
         setValue("descriptions", result.descriptions)
@@ -153,11 +146,11 @@ const CreateVote = () => {
     } catch (e) {
       console.log(e)
     }
-
   }
+
   useEffect(() => {
-    loadDraft()
-  }, [])
+    loadDraft();
+  }, []);
 
   useEffect(() => {
     if (writeContractSuccess) {
@@ -181,12 +174,23 @@ const CreateVote = () => {
    */
   const onSubmit = async (values: any) => {
     setLoading(true);
+    const { data: { data } } = await axios.get(`${blockHeightGetApi}`, { params: { chainId } });
+    // Check if current time is after start time
+    if (data?.blockHeight === 0) {
+      messageApi.open({
+        type: 'warning',
+        content: t(WRONG_BLOCK_HEIGHT),
+      });
+      setLoading(false);
+      return false;
+    }
+
     // Calculate offset based on selected timezone
     const offset = dayjs().utcOffset() - dayjs().tz(values.timezone).utcOffset();
     const startTimestamp = dayjs(values.time[0]).add(offset, 'minute').unix();
     const expTimestamp = dayjs(values.time[1]).add(offset, 'minute').unix();
-    const { data } = await axios.get(worldTimeApi);
-    const currentTime = data?.unixtime;
+    const currentTime = Math.floor(Date.now() / 1000);
+
     // Check if current time is after start time
     if (currentTime > startTimestamp) {
       messageApi.open({
@@ -216,12 +220,14 @@ const CreateVote = () => {
       githubName: '',
       githubAvatar: ''
     }
+
     if (voterInfo && voterInfo[0]) {
       const githubName = voterInfo[0];
       const { data } = await axios.get(`${githubApi}/${githubName}`);
       githubObj.githubName = githubName;
       githubObj.githubAvatar = data.avatar_url;
     }
+
     // Prepare values object with additional information
     const _values = {
       ...values,
@@ -233,6 +239,7 @@ const CreateVote = () => {
       option: VOTE_OPTIONS,
       address: address,
       chainId: chainId,
+      day: data?.day,
       currentTime,
     };
     const cid = await getWeb3IpfsId(_values);
@@ -250,17 +257,62 @@ const CreateVote = () => {
       // Check if user is a FIP editor
       if (isFipEditorAddress) {
         // Create voting using dynamic contract API
-        writeContract({
-          abi: fileCoinAbi,
-          address: getContractAddress(chain?.id || 0, 'powerVoting'),
-          functionName: 'createProposal',
-          args: [
+        try {
+          await writeContractAsync({
+            abi: fileCoinAbi,
+            address: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
+            functionName: 'createProposal',
+            args: [
+              cid,
+              startTimestamp,
+              expTimestamp,
+              1
+            ],
+          });
+          const params = {
+            ...githubObj,
+            GMTOffset,
+            startTime: startTimestamp,
+            expTime: expTimestamp,
+            address: address,
+            chainId: chainId,
+            currentTime,
+            timezone: values.timezone,
+            name: values.name,
+            descriptions: values.descriptions,
             cid,
-            startTimestamp,
-            expTimestamp,
-            1
-          ],
-        });
+            voteCountDay: data.day,
+            height: data.blockHeight,
+            proposalId:  0
+          }
+          await axios.post('/api/proposal/add', params);
+          //clear draft
+          if (hasDraft) {
+            clearDraft()
+          }
+          const listParams = {
+            chainId,
+            page: 1,
+            pageSize: 5,
+            status: 0,
+          }
+          const { data: { data: votingData } } = await axios.get('/api/proposal/list', { params: listParams });
+          setVotingList({ votingList: votingData?.list || [], totalPage: votingData?.total, searchKey: '' });
+        } catch (error: any) {
+          if (error as UserRejectedRequestError) {
+            messageApi.open({
+              type: 'warning',
+              content: t('content.dataStoredFailed'),
+            });
+          } else {
+            messageApi.open({
+              type: 'error',
+              content: (error as BaseError)?.shortMessage || error?.message,
+            });
+          }
+          reset();
+        }
+
       } else {
         messageApi.open({
           type: 'warning',
@@ -270,25 +322,6 @@ const CreateVote = () => {
     } else {
       openConnectModal && openConnectModal();
     }
-    const params = {
-      ...githubObj,
-      GMTOffset,
-      startTime: startTimestamp,
-      expTime: expTimestamp,
-      address: address,
-      chainId: chainId,
-      currentTime,
-      timezone: values.timezone,
-      name: values.name,
-      descriptions: values.descriptions,
-      cid,
-      proposalId: ''
-    }
-    await axios.post('/api/proposal/add', params);
-    //clear draft
-    if (hasDraft) {
-      clearDraft()
-    }
     setLoading(false);
   }
   const clearDraft = async () => {
@@ -297,15 +330,14 @@ const CreateVote = () => {
         timezone: '',
         name: '',
         descriptions: '',
-        // GMTOffset,
-        startTime: '',
-        expTime: '',
+        startTime: 0,
+        expTime: 0,
         address: address,
         chainId: chainId,
-        currentTime:''
+        currentTime: 0
       }
       await axios.post(proposalDraftAddApi, data)
-      setHasDraft(false)
+      setHasDraft(false);
     } catch (e) {
       console.log(e)
     }
@@ -344,16 +376,11 @@ const CreateVote = () => {
       githubObj.githubName = githubName;
       githubObj.githubAvatar = data.avatar_url;
     }
-    const { data: timeData } = await axios.get(worldTimeApi);
-    const currentTime = timeData?.unixtime;
+    const currentTime = Math.floor(Date.now() / 1000);
     const offset = dayjs().utcOffset() - dayjs().tz(values.timezone).utcOffset();
     const startTimestamp = dayjs(values.time[0]).add(offset, 'minute').unix();
     const expTimestamp = dayjs(values.time[1]).add(offset, 'minute').unix();
-    // Get text for timezone array
-    // const text = timezoneOption?.find((item: any) => item.value === values.value)?.text || '';
-    // Extract GMT offset from text using regex
-    // const regex = /(?<=\().*?(?=\))/g;
-    // const GMTOffset = text.match(regex);
+
     const data = {
       timezone: values.timezone,
       name: values.name,

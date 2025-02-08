@@ -1,5 +1,43 @@
 [
 	{
+		"inputs": [],
+		"name": "acceptOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "voter",
+				"type": "address"
+			}
+		],
+		"name": "addF4Task",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint64[]",
+				"name": "minerIds",
+				"type": "uint64[]"
+			},
+			{
+				"internalType": "address",
+				"name": "voter",
+				"type": "address"
+			}
+		],
+		"name": "addMinerIds",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "address",
@@ -9,6 +47,37 @@
 		],
 		"name": "AddressEmptyCode",
 		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "date",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "cid",
+				"type": "string"
+			}
+		],
+		"name": "addSnapshot",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "ucanCid",
+				"type": "string"
+			}
+		],
+		"name": "addTask",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
 		"inputs": [
@@ -28,8 +97,15 @@
 	},
 	{
 		"inputs": [],
-		"name": "FailedInnerCall",
+		"name": "FailedCall",
 		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "initialize",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
 		"inputs": [],
@@ -128,6 +204,62 @@
 		"inputs": [
 			{
 				"indexed": false,
+				"internalType": "address",
+				"name": "voterAddress",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint64[]",
+				"name": "actorIds",
+				"type": "uint64[]"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "github",
+				"type": "string"
+			}
+		],
+		"name": "CreateDelegate",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "voterAddress",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint64[]",
+				"name": "actorIds",
+				"type": "uint64[]"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint64[]",
+				"name": "minerIds",
+				"type": "uint64[]"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "github",
+				"type": "string"
+			}
+		],
+		"name": "DeleteDelegate",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
 				"internalType": "uint64",
 				"name": "version",
 				"type": "uint64"
@@ -175,6 +307,139 @@
 		"type": "event"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "voterAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "taskId",
+				"type": "uint256"
+			}
+		],
+		"name": "removeVoter",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint64[]",
+						"name": "actorIds",
+						"type": "uint64[]"
+					},
+					{
+						"internalType": "uint64[]",
+						"name": "minerIds",
+						"type": "uint64[]"
+					},
+					{
+						"internalType": "string",
+						"name": "githubAccount",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "ethAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "ucanCid",
+						"type": "string"
+					}
+				],
+				"internalType": "struct IOracle.VoterInfo",
+				"name": "voterInfoParam",
+				"type": "tuple"
+			},
+			{
+				"internalType": "uint256",
+				"name": "taskId",
+				"type": "uint256"
+			}
+		],
+		"name": "taskCallback",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "voterAddress",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint64[]",
+				"name": "minerIds",
+				"type": "uint64[]"
+			}
+		],
+		"name": "UpdateMinerId",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "nodeAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "allow",
+				"type": "bool"
+			}
+		],
+		"name": "updateNodeAllowList",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "powerVotingAddress",
+				"type": "address"
+			}
+		],
+		"name": "updatePowerVotingContract",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -188,23 +453,21 @@
 		"type": "event"
 	},
 	{
-		"inputs": [],
-		"name": "UPGRADE_INTERFACE_VERSION",
-		"outputs": [
+		"inputs": [
 			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
+				"internalType": "address",
+				"name": "newImplementation",
+				"type": "address"
+			},
+			{
+				"internalType": "bytes",
+				"name": "data",
+				"type": "bytes"
 			}
 		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "acceptOwnership",
+		"name": "upgradeToAndCall",
 		"outputs": [],
-		"stateMutability": "nonpayable",
+		"stateMutability": "payable",
 		"type": "function"
 	},
 	{
@@ -229,45 +492,20 @@
 	{
 		"inputs": [
 			{
-				"internalType": "address",
-				"name": "voter",
-				"type": "address"
-			}
-		],
-		"name": "addF4Task",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint64[]",
-				"name": "minerIds",
-				"type": "uint64[]"
-			},
-			{
-				"internalType": "address",
-				"name": "voter",
-				"type": "address"
-			}
-		],
-		"name": "addMinerIds",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
 				"internalType": "string",
-				"name": "ucanCid",
+				"name": "",
 				"type": "string"
 			}
 		],
-		"name": "addTask",
-		"outputs": [],
-		"stateMutability": "nonpayable",
+		"name": "dateToCid",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -394,13 +632,6 @@
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "initialize",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"inputs": [
 			{
 				"internalType": "address",
@@ -475,31 +706,6 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "voterAddress",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "taskId",
-				"type": "uint256"
-			}
-		],
-		"name": "removeVoter",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "renounceOwnership",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
 				"name": "addr",
 				"type": "address"
 			}
@@ -513,51 +719,6 @@
 			}
 		],
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint64[]",
-						"name": "actorIds",
-						"type": "uint64[]"
-					},
-					{
-						"internalType": "uint64[]",
-						"name": "minerIds",
-						"type": "uint64[]"
-					},
-					{
-						"internalType": "string",
-						"name": "githubAccount",
-						"type": "string"
-					},
-					{
-						"internalType": "address",
-						"name": "ethAddress",
-						"type": "address"
-					},
-					{
-						"internalType": "string",
-						"name": "ucanCid",
-						"type": "string"
-					}
-				],
-				"internalType": "struct IOracle.VoterInfo",
-				"name": "voterInfoParam",
-				"type": "tuple"
-			},
-			{
-				"internalType": "uint256",
-				"name": "taskId",
-				"type": "uint256"
-			}
-		],
-		"name": "taskCallback",
-		"outputs": [],
-		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -580,65 +741,16 @@
 		"type": "function"
 	},
 	{
-		"inputs": [
+		"inputs": [],
+		"name": "UPGRADE_INTERFACE_VERSION",
+		"outputs": [
 			{
-				"internalType": "address",
-				"name": "newOwner",
-				"type": "address"
+				"internalType": "string",
+				"name": "",
+				"type": "string"
 			}
 		],
-		"name": "transferOwnership",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "nodeAddress",
-				"type": "address"
-			},
-			{
-				"internalType": "bool",
-				"name": "allow",
-				"type": "bool"
-			}
-		],
-		"name": "updateNodeAllowList",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "powerVotingAddress",
-				"type": "address"
-			}
-		],
-		"name": "updatePowerVotingContract",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "newImplementation",
-				"type": "address"
-			},
-			{
-				"internalType": "bytes",
-				"name": "data",
-				"type": "bytes"
-			}
-		],
-		"name": "upgradeToAndCall",
-		"outputs": [],
-		"stateMutability": "payable",
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{

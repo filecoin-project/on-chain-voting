@@ -120,18 +120,22 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
       }
     });
 
-    arr.forEach((item, index) => {
-      // Check if it's not the last item in the array
-      if (index < arr.length - 1) {
-        // Append percent value and count with a plus sign
-        totalPercent += `${item} / ${count} + `;
-      } else {
-        // Append percent value and count without a plus sign
-        totalPercent += `${item} / ${count}`;
-      }
-    });
-    // Append the final vote percentage
-    totalPercent += `= ${votes}%`;
+    if (arr.length) {
+      arr.forEach((item, index) => {
+        // Check if it's not the last item in the array
+        if (index < arr.length - 1) {
+          // Append percent value and count with a plus sign
+          totalPercent += `${item} / ${count} + `;
+        } else {
+          // Append percent value and count without a plus sign
+          totalPercent += `${item} / ${count}`;
+        }
+      });
+      // Append the final vote percentage
+      totalPercent += `= ${votes}%`;
+    } else {
+      totalPercent += '0%';
+    }
 
     return <div>{totalPercent}</div>;
   }
