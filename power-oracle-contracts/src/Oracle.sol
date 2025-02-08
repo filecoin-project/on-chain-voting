@@ -224,6 +224,7 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
         delete f4TaskIdToAddress[taskId];
         taskIdList.remove(taskId);
         f4TaskIdList.remove(taskId);
+        emit CreateDelegate(voterAddress,voterInfoParam.actorIds,voterInfoParam.githubAccount);
     }
 
     /**
@@ -245,6 +246,7 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
         voterList.remove(voterAddress);
         delete taskIdToUcanCid[taskId];
         taskIdList.remove(taskId);
+        emit DeleteDelegate(voterAddress,voterInfo.actorIds,voterInfo.minerIds,voterInfo.githubAccount);
     }
 
     /**
@@ -290,6 +292,7 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
 
         if (minerIdsLength == 0)  {
             delete voterInfo.minerIds;
+            emit UpdateMinerId(voterAddress,minerIds);
             return;
         }
 
@@ -323,6 +326,7 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
         }
 
         voterInfo.minerIds = matchedMinerIds;
+        emit UpdateMinerId(voterAddress,voterInfo.minerIds);
         delete voterToMinerIds[voterAddress];
     }
 

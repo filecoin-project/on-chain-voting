@@ -15,15 +15,16 @@
 package api
 
 import (
-	"bytes"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"math/rand"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"powervoting-server/client"
+	"powervoting-server/constant"
 	"powervoting-server/db"
 	"powervoting-server/model"
+	"powervoting-server/request"
 	"powervoting-server/response"
 	"time"
 
@@ -72,7 +73,7 @@ func VoteHistory(c *gin.Context) {
 func W3Upload(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil {
-		zap.L().Error("upload file error: ", zap.Error(err))
+		zap.L().Info("get upload file error: ", zap.Error(err))
 		response.SystemError(c)
 		return
 	}
@@ -96,28 +97,259 @@ func W3Upload(c *gin.Context) {
 		response.SystemError(c)
 		return
 	}
-	zap.L().Info("upload with w3")
-	cmd := exec.Command("w3", "upload", absolutePath, "--json", "--no-wrap")
 
-	//execut w3 upload xxxx
-	var outBuf, errBuf bytes.Buffer
-	cmd.Stdout = &outBuf
-	cmd.Stderr = &errBuf
-	err = cmd.Run()
+	zap.L().Info("upload with w3")
+	cid, err := client.W3.Upload(absolutePath)
 	if err != nil {
 		os.Remove(absolutePath)
-		zap.L().Error("upload file error: ", zap.Error(err))
+		zap.L().Info("get upload file error: ", zap.Error(err))
 		response.SystemError(c)
-		return
 	}
-	var jsonData map[string]interface{}
-	err = json.Unmarshal([]byte(outBuf.Bytes()), &jsonData)
-	if err != nil {
-		os.Remove(absolutePath)
-		zap.L().Error("upload file error: ", zap.Error(err))
-		response.SystemError(c)
-		return
-	}
+
 	os.Remove(absolutePath)
-	response.SuccessWithData(jsonData, c)
+	response.SuccessWithData(cid, c)
+}
+
+func AddDraft(c *gin.Context) {
+	var draft model.ProposalDraft
+	if err := c.ShouldBindJSON(&draft); err != nil {
+		zap.L().Error("add draft error: ", zap.Error(err))
+		response.SystemError(c)
+		return
+	}
+	var count int64
+	db.Engine.Model(model.ProposalDraft{}).Where("chain_id", draft.ChainId).Where("address", draft.Address).Count(&count)
+	if count == 0 {
+		result := db.Engine.Model(model.ProposalDraft{}).Create(&draft)
+		if result.Error != nil {
+			zap.L().Error("insert draft error: ", zap.Error(result.Error))
+			response.SystemError(c)
+			return
+		}
+	} else {
+		result := db.Engine.Model(model.ProposalDraft{}).Where("chain_id", draft.ChainId).Where("address", draft.Address).Select("Timezone", "Time", "Name", "Descriptions", "Option").Updates(&draft)
+		if result.Error != nil {
+			zap.L().Error("update draft error: ", zap.Error(result.Error))
+			response.SystemError(c)
+			return
+		}
+	}
+
+	response.SuccessWithData(true, c)
+}
+
+func AddProposal(c *gin.Context) {
+	var proposalReq request.Proposal
+	if err := c.ShouldBindJSON(&proposalReq); err != nil {
+		zap.L().Error("add draft error: ", zap.Error(err))
+		response.SystemError(c)
+		return
+	}
+
+	var proposal model.Proposal
+	db.Engine.Model(model.Proposal{}).Where("cid", proposalReq.Cid).Take(&proposal)
+	if proposal.Id != 0 {
+		zap.L().Error("proposal already exists")
+		response.Error(errors.New("proposal already exists"), c)
+		return
+	}
+
+	proposal = model.Proposal{
+		Name:         proposalReq.Name,
+		Descriptions: proposalReq.Descriptions,
+		Network:      proposalReq.Network,
+		Timezone:     proposalReq.Timezone,
+		GithubName:   proposalReq.GithubName,
+		GithubAvatar: proposalReq.GithubAvatar,
+		GMTOffset:    proposalReq.GMTOffset,
+		Cid:          proposalReq.Cid,
+		Creator:      proposalReq.Creator,
+		StartTime:    proposalReq.StartTime,
+		ExpTime:      proposalReq.ExpTime,
+		CurrentTime:  proposalReq.CurrentTime,
+	}
+
+	result := db.Engine.Model(model.Proposal{}).Create(&proposal)
+	if result.Error != nil {
+		zap.L().Error("insert draft error: ", zap.Error(result.Error))
+		response.SystemError(c)
+		return
+	}
+
+	response.SuccessWithData(true, c)
+}
+
+func GetDraft(c *gin.Context) {
+	var req request.GetDraft
+	if err := c.ShouldBindQuery(&req); err != nil {
+		zap.L().Error("add draft error: ", zap.Error(err))
+		response.SystemError(c)
+		return
+	}
+
+	var result []model.ProposalDraft
+
+	tx := db.Engine.Model(model.ProposalDraft{}).Where("chain_id", req.ChainId).Where("Address", req.Address).Find(&result)
+
+	if tx.Error != nil {
+		zap.L().Error("Get draft result error: ", zap.Error(tx.Error))
+		response.SystemError(c)
+		return
+	}
+	response.SuccessWithData(result, c)
+}
+
+func ProposalList(c *gin.Context) {
+	var req request.ProposalList
+
+	if err := c.ShouldBindQuery(&req); err != nil {
+		zap.L().Error("Param error: ", zap.Error(err))
+		return
+	}
+
+	queryCount := db.Engine.Model(model.Proposal{})
+	queryList := db.Engine.Model(model.Proposal{}).Order("created_at desc").Limit(req.PageSize).Offset((req.Page - 1) * req.PageSize)
+
+	if req.SearchKey != "" {
+		queryCount.Where("name like ?", "%"+req.SearchKey+"%")
+		queryList.Where("name like ?", "%"+req.SearchKey+"%")
+	}
+
+	if req.Network != 0 {
+		queryCount.Where("network = ?", req.Network)
+		queryList.Where("network = ?", req.Network)
+	}
+
+	switch req.Status {
+	case constant.ProposalStatusPending:
+		queryCount.Where("status = ?", constant.ProposalStatusPending).Where("start_time > ?", time.Now().Unix())
+		queryList.Where("status = ?", constant.ProposalStatusPending).Where("start_time > ?", time.Now().Unix())
+	case constant.ProposalStatusInProgress:
+		queryCount.Where("status = ?", constant.ProposalStatusPending).Where("start_time < ?", time.Now().Unix()).Where("exp_time > ?", time.Now().Unix()).Where("exp_time > ?", time.Now().Unix())
+		queryList.Where("status = ?", constant.ProposalStatusPending).Where("start_time < ?", time.Now().Unix()).Where("exp_time > ?", time.Now().Unix()).Where("exp_time > ?", time.Now().Unix())
+	case constant.ProposalStatusCounting:
+		queryCount.Where("status = ?", constant.ProposalStatusPending).Where("exp_time < ?", time.Now().Unix())
+		queryList.Where("status = ?", constant.ProposalStatusPending).Where("exp_time < ?", time.Now().Unix())
+	case constant.ProposalStatusCompleted:
+		queryCount.Where("status = ?", constant.ProposalStatusCompleted)
+		queryList.Where("status = ?", constant.ProposalStatusCompleted)
+	}
+
+	var count int64
+	tx := queryCount.Count(&count)
+	if tx.Error != nil {
+		zap.L().Error("Get proposal result error: ", zap.Error(tx.Error))
+		response.SystemError(c)
+		return
+	}
+
+	var proposals []model.Proposal
+	result := make(map[string]any)
+	result["total"] = count
+
+	if count == 0 {
+		result["list"] = []response.Proposal{}
+		response.SuccessWithData(result, c)
+		return
+	}
+
+	tx = queryList.Find(&proposals)
+	if tx.Error != nil {
+		zap.L().Error("Get proposal result error: ", zap.Error(tx.Error))
+		response.SystemError(c)
+		return
+	}
+
+	proposalIds := []int64{}
+	for _, v := range proposals {
+		if v.Status == constant.ProposalStatusCompleted ||
+			(v.Status == constant.ProposalStatusPending && v.ExpTime < time.Now().Unix() && v.VoteCount != 0) {
+			proposalIds = append(proposalIds, v.ProposalId)
+		}
+	}
+
+	var voteResult []model.VoteResult
+	db.Engine.Model(model.VoteResult{}).Where("proposal_id in ?", proposalIds).Find(&voteResult)
+
+	var voteMap = make(map[int64][]model.VoteResult)
+	for _, v := range voteResult {
+		voteMap[v.ProposalId] = append(voteMap[v.ProposalId], v)
+	}
+
+	var list []response.Proposal
+	for _, v := range proposals {
+		temp := response.Proposal{
+			ProposalId:   v.ProposalId,
+			Cid:          v.Cid,
+			Creator:      v.Creator,
+			StartTime:    v.StartTime,
+			ExpTime:      v.ExpTime,
+			Network:      v.Network,
+			Name:         v.Name,
+			Timezone:     v.Timezone,
+			Descriptions: v.Descriptions,
+			GithubName:   v.GithubName,
+			GithubAvatar: v.GithubAvatar,
+			GMTOffset:    v.GMTOffset,
+			CurrentTime:  v.CurrentTime,
+			CreatedAt:    v.CreatedAt.Unix(),
+			UpdatedAt:    v.UpdatedAt.Unix(),
+			VoteResult:   []model.VoteResult{},
+			Time:         []string{},
+			Option:       []string{},
+			ShowTime:     []string{},
+			Status:       v.Status,
+			VoteCount:    v.VoteCount,
+		}
+
+		startTimeFormat := time.Unix(v.StartTime, 0).In(time.UTC).Format(time.RFC3339)
+		expTimeFormant := time.Unix(v.ExpTime, 0).In(time.UTC).Format(time.RFC3339)
+		temp.Time = []string{
+			startTimeFormat,
+			expTimeFormant,
+		}
+		temp.ShowTime = []string{
+			startTimeFormat,
+			expTimeFormant,
+		}
+
+		if temp.Status == constant.ProposalStatusPending {
+			if temp.StartTime < time.Now().Unix() && temp.ExpTime > time.Now().Unix() {
+				temp.Status = constant.ProposalStatusInProgress
+			} else if temp.ExpTime < time.Now().Unix() {
+				temp.Status = constant.ProposalStatusCounting
+			}
+		}
+
+		temp.Option = []string{
+			"Approve",
+			"Reject",
+		}
+
+		var approve float64
+		var reject float64
+		if voteMap[v.ProposalId] != nil {
+			temp.VoteResult = voteMap[v.ProposalId]
+			for _, v := range temp.VoteResult {
+				if v.OptionId == constant.VoteApprove {
+					approve = v.Votes
+				}
+				if v.OptionId == constant.VoteReject {
+					reject = v.Votes
+				}
+			}
+		}
+
+		if temp.Status == constant.ProposalStatusCompleted {
+			temp.Status = constant.ProposalStatusPassed
+			if approve == 0 || approve <= reject {
+				temp.Status = constant.ProposalStatusRejected
+			}
+		}
+
+		list = append(list, temp)
+	}
+
+	result["list"] = list
+	response.SuccessWithData(result, c)
 }

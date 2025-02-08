@@ -134,7 +134,7 @@ const FipEditorRevoke = () => {
       render: (value: string) => {
         return (
           value ? <Tooltip  overlayClassName="custom-tooltip" color="#ffffff" placement="topLeft" title={value}>
-           {value}
+            {value}
           </Tooltip> : '-'
         )
       }
@@ -306,7 +306,7 @@ const FipEditorRevoke = () => {
       } catch(e){
         console.log(e)
       }
-      
+
     }));
     // Remove current address
     setFipProposalList(list);
@@ -343,15 +343,15 @@ const FipEditorRevoke = () => {
             />
             {
               !!revokeProposalId?.length && <Row justify='end'>
-                    <Pagination
-                        simple
-                        showSizeChanger={false}
-                        current={page}
-                        pageSize={pageSize}
-                        total={revokeProposalId.length}
-                        onChange={handlePageChange}
-                    />
-                </Row>
+                <Pagination
+                  simple
+                  showSizeChanger={false}
+                  current={page}
+                  pageSize={pageSize}
+                  total={revokeProposalId.length}
+                  onChange={handlePageChange}
+                />
+              </Row>
             }
           </div>
         </div>

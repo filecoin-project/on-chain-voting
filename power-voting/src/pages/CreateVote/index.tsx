@@ -485,7 +485,7 @@ const CreateVote = () => {
       desc: <div className="text-red">
         <span className="text-sm">
           {t('content.describeFIPObjectives')} <a target="_blank"
-            rel="noopener" href="" className="text-sm" style={{ color: "blue" }}>{t('content.here')}↗</a>.
+                                                  rel="noopener" href="" className="text-sm" style={{ color: "blue" }}>{t('content.here')}↗</a>.
           <br /> {t('content.markdownFormattingInField')}.
         </span>
 
@@ -606,7 +606,7 @@ const CreateVote = () => {
         <div className='flow-root space-y-8'>
           <Table title={t('content.createProposal')} subTitle={<div className="text-base font-normal">
             {t('content.proposalsClear')} <a target="_blank"
-              rel="noopener" href="" style={{ color: "blue" }}>{t('content.codePractices')}↗</a>.
+                                             rel="noopener" href="" style={{ color: "blue" }}>{t('content.codePractices')}↗</a>.
           </div>} list={list} />
 
           <div className="flex justify-center items-center text-center ">

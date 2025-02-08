@@ -1,0 +1,15 @@
+version: '3'
+services:
+  redis:
+    image: redislabs/redistimeseries
+    restart: always
+    ports:
+      - 6379:6379
+    volumes:
+      - ./redis.conf:/etc/redis/redis.conf
+      - /mnt/local/filcoin/redis:/data
+    command:
+      - redis-server
+      - /etc/redis/redis.conf
+      - --loadmodule
+      - /usr/lib/redis/modules/redistimeseries.so

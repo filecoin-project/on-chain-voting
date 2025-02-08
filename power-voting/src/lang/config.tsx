@@ -20,7 +20,7 @@ import zh from './zh.json';
 import en from './en.json';
 
 const lang = localStorage.getItem("lang") || "en";
- 
+
 const resources = {
   en: {
     translation: en
@@ -29,7 +29,7 @@ const resources = {
     translation: zh
   }
 };
- 
+
 i18n.use(initReactI18next).init({
   resources,
   lng: lang, //Set default language
@@ -37,5 +37,5 @@ i18n.use(initReactI18next).init({
     escapeValue: false
   }
 });
- 
+
 export default i18n;

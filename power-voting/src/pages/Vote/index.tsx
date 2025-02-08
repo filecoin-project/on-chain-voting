@@ -181,105 +181,105 @@ const Vote = () => {
    * timelock encrypt
    * @param value
    */
-  // const handleEncrypt = async (value: string[][]) => {
-  //   // Convert value to a JSON string and encode it as a Buffer
-  //   const payload = Buffer.from(JSON.stringify(value));
+    // const handleEncrypt = async (value: string[][]) => {
+    //   // Convert value to a JSON string and encode it as a Buffer
+    //   const payload = Buffer.from(JSON.stringify(value));
 
-  //   // Get chain information from the mainnet client
-  //   const chainInfo = await mainnetClient().chain().info();
+    //   // Get chain information from the mainnet client
+    //   const chainInfo = await mainnetClient().chain().info();
 
-  //   // Calculate time for the voting expiration, or set to 0 if not available
-  //   const time = votingData?.expTime ? new Date(votingData.expTime * 1000).valueOf() : 0;
+    //   // Calculate time for the voting expiration, or set to 0 if not available
+    //   const time = votingData?.expTime ? new Date(votingData.expTime * 1000).valueOf() : 0;
 
-  //   // Determine the round number based on the time and chain information
-  //   const roundNumber = roundAt(time, chainInfo);
+    //   // Determine the round number based on the time and chain information
+    //   const roundNumber = roundAt(time, chainInfo);
 
-  //   // Encrypt the payload using timelock encryption
-  //   const ciphertext = await timelockEncrypt(
-  //     roundNumber,
-  //     payload,
-  //     mainnetClient()
-  //   )
+    //   // Encrypt the payload using timelock encryption
+    //   const ciphertext = await timelockEncrypt(
+    //     roundNumber,
+    //     payload,
+    //     mainnetClient()
+    //   )
 
-  //   return ciphertext;
-  // }
+    //   return ciphertext;
+    // }
 
-  // const startVoting = async () => {
-  //   const item = storingHash.find((item: any) => item.address === address);
-    
-  //   if (item) {
-  //     messageApi.open({
-  //       type: 'warning',
-  //       content: t(GETTING_POWER_MSG),
-  //     });
-  //     return;
-  //   }
+    // const startVoting = async () => {
+    //   const item = storingHash.find((item: any) => item.address === address);
 
-  //   // Check if a valid option is selected
-  //   if (selectedOptionIndex < 0) {
-  //     // If not, display a warning message
-  //     messageApi.open({
-  //       type: 'warning',
-  //       content: t(CHOOSE_VOTE_MSG),
-  //     });
-  //   } else {
-  //     // If a valid option is selected, proceed with voting
-  //     setLoading(true);
-  //     // Encrypt the selected option index and weight using handleEncrypt function
-  //     const encryptValue = await handleEncrypt([[`${selectedOptionIndex}`, `100`]]);
-  //     // Get the IPFS ID for the encrypted value
-  //     const optionId = await getWeb3IpfsId(encryptValue);
+    //   if (item) {
+    //     messageApi.open({
+    //       type: 'warning',
+    //       content: t(GETTING_POWER_MSG),
+    //     });
+    //     return;
+    //   }
 
-  //     if (!cid?.length) {
-  //       setLoading(false);
-  //       messageApi.open({
-  //         type: 'warning',
-  //         content: t(UPLOAD_DATA_FAIL_MSG),
-  //       });
-  //       return;
-  //     }
+    //   // Check if a valid option is selected
+    //   if (selectedOptionIndex < 0) {
+    //     // If not, display a warning message
+    //     messageApi.open({
+    //       type: 'warning',
+    //       content: t(CHOOSE_VOTE_MSG),
+    //     });
+    //   } else {
+    //     // If a valid option is selected, proceed with voting
+    //     setLoading(true);
+    //     // Encrypt the selected option index and weight using handleEncrypt function
+    //     const encryptValue = await handleEncrypt([[`${selectedOptionIndex}`, `100`]]);
+    //     // Get the IPFS ID for the encrypted value
+    //     const optionId = await getWeb3IpfsId(encryptValue);
 
-  //     // Check if user is connected to the network
-  //     if (isConnected) {
-  //       try {
-  //         writeContract({
-  //           abi: fileCoinAbi,
-  //           address: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
-  //           functionName: 'vote',
-  //           args: [
-  //             Number(id),
-  //             optionId,
-  //           ],
-  //         });
-  //       } catch (error: any) {
-  //         if (error as UserRejectedRequestError) {
-  //           messageApi.open({
-  //             type: 'warning',
-  //             content: t('content.rejectedSignature'),
-  //           });
-  //         } else {
-  //           messageApi.open({
-  //             type: 'error',
-  //             content: (error as BaseError)?.shortMessage || error?.message,
-  //           });
-  //         }
-  //       }
-  //       setLoading(false);
-  //     } else {
-  //       // If user is not connected, prompt to connect
-  //       openConnectModal && openConnectModal();
-  //     }
-  //   }
-  // }
+    //     if (!cid?.length) {
+    //       setLoading(false);
+    //       messageApi.open({
+    //         type: 'warning',
+    //         content: t(UPLOAD_DATA_FAIL_MSG),
+    //       });
+    //       return;
+    //     }
 
-  // const handleOptionClick = (index: number) => {
-  //   setSelectedOptionIndex(index);
-  // }
+    //     // Check if user is connected to the network
+    //     if (isConnected) {
+    //       try {
+    //         writeContract({
+    //           abi: fileCoinAbi,
+    //           address: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
+    //           functionName: 'vote',
+    //           args: [
+    //             Number(id),
+    //             optionId,
+    //           ],
+    //         });
+    //       } catch (error: any) {
+    //         if (error as UserRejectedRequestError) {
+    //           messageApi.open({
+    //             type: 'warning',
+    //             content: t('content.rejectedSignature'),
+    //           });
+    //         } else {
+    //           messageApi.open({
+    //             type: 'error',
+    //             content: (error as BaseError)?.shortMessage || error?.message,
+    //           });
+    //         }
+    //       }
+    //       setLoading(false);
+    //     } else {
+    //       // If user is not connected, prompt to connect
+    //       openConnectModal && openConnectModal();
+    //     }
+    //   }
+    // }
 
-  // const { isLoading: transactionLoading } =
-  //   useWaitForTransactionReceipt({
-  //     hash,
-  //   })
+    // const handleOptionClick = (index: number) => {
+    //   setSelectedOptionIndex(index);
+    // }
+
+    // const { isLoading: transactionLoading } =
+    //   useWaitForTransactionReceipt({
+    //     hash,
+    //   })
 
   let href = '';
   let img = '';
@@ -301,7 +301,7 @@ const Vote = () => {
               <Link to="/home" className="flex items-center">
                 <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
                   <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                    d="m11 17l-5-5m0 0l5-5m-5 5h12"></path>
+                        d="m11 17l-5-5m0 0l5-5m-5 5h12"></path>
                 </svg>
                 {t('content.back')}
               </Link>

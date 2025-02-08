@@ -26,6 +26,19 @@ For deployment instructions, please refer to this document: [Deployment Guide](I
 
 Once the Oracle node is up and running, it continuously fetches data from specified sources, verifies the data, and transmits it to the blockchain. Smart contracts can then access this data and execute based on predefined conditions.
 
+1. **Configure `configuration.yaml`**: 
+
+   Edit the `configuration.yaml` file according to your environment settings.
+
+   ![Edit Configuration](img/1.png)
+
+2. **Run Tests**:
+
+   ```
+   cd /on-chain-voting/power-oracle-node/backend
+   go test ./...
+   ```
+
 ## Author
 
 The Oracle Node is developed by StorSwift Inc.

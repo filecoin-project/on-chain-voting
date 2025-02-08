@@ -20,30 +20,30 @@ import (
 
 // Vote including its ID, proposal ID, voter address, vote information, and network.
 type Vote struct {
-	Id         int64  `json:"id"`                             // Unique identifier
-	ProposalId int64  `gorm:"constraint:off" gorm:"not null"` // Proposal ID
-	Address    string `json:"address" gorm:"not null"`        // Voter address
-	VoteInfo   string `json:"voteInfo" gorm:"not null"`       // Vote information
-	Network    int64  `json:"network" gorm:"not null"`        // Network ID
+	Id         int64  `json:"id"`                       // Unique identifier
+	ProposalId int64  `gorm:"constraint:off;not null"`  // Proposal ID
+	Address    string `json:"address" gorm:"not null"`  // Voter address
+	VoteInfo   string `json:"voteInfo" gorm:"not null"` // Vote information
+	Network    int64  `json:"network" gorm:"not null"`  // Network ID
 }
 
 // VoteResult represents the result of a vote for a particular option of a proposal.
 type VoteResult struct {
-	Id         int64   `json:"id"`                       // Unique identifier
-	ProposalId int64   `gorm:"constraint:off;not null"`  // Proposal ID
-	OptionId   int64   `json:"optionId" gorm:"not null"` // Option ID
-	Votes      float64 `json:"votes" gorm:"not null"`    // Number of votes
-	Network    int64   `json:"network" gorm:"not null"`  // Network ID
+	Id         int64   `json:"id"`                                                        // Unique identifier
+	ProposalId int64   `gorm:"constraint:off;not null;uniqueIndex:uniq_proposal_option"`  // Proposal ID
+	OptionId   int64   `gorm:"uniqueIndex:uniq_proposal_option;not null" json:"optionId"` // Option ID
+	Votes      float64 `json:"votes" gorm:"not null"`                                     // Number of votes
+	Network    int64   `json:"network" gorm:"not null"`                                   // Network ID
 }
 
 // VoteHistory records the history of each vote cast for a proposal option.
 type VoteHistory struct {
-	Id         int64   `json:"id"`                             // Unique identifier
-	ProposalId int64   `gorm:"constraint:off" gorm:"not null"` // Proposal ID
-	Address    string  `json:"address" gorm:"not null"`        // Voter address
-	OptionId   int64   `json:"optionId" gorm:"not null"`       // Option ID
-	Votes      float64 `json:"votes" gorm:"not null"`          // Number of votes
-	Network    int64   `json:"network" gorm:"not null"`        // Network ID
+	Id         int64   `json:"id"`                       // Unique identifier
+	ProposalId int64   `gorm:"constraint:off;not null"`  // Proposal ID
+	Address    string  `json:"address" gorm:"not null"`  // Voter address
+	OptionId   int64   `json:"optionId" gorm:"not null"` // Option ID
+	Votes      float64 `json:"votes" gorm:"not null"`    // Number of votes
+	Network    int64   `json:"network" gorm:"not null"`  // Network ID
 }
 
 // VoteCompleteHistory contains the complete history of votes for a proposal, including power information for each voter.

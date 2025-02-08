@@ -45,7 +45,6 @@ func SyncProposalHandler() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			zap.L().Info("sync proposal start:", zap.Int64("networkId", network.Id))
 			if err := SyncProposal(ethClient, db.Engine); err != nil {
 				mu.Lock()
 				errList = append(errList, err)
@@ -72,6 +71,9 @@ func SyncProposal(ethClient model.GoEthClient, db db.DataRepo) error {
 		zap.L().Error("Translate string to int error: ", zap.Error(err))
 		return err
 	}
+
+	zap.L().Info("Sync proposal start: ", zap.Int("start", start))
+
 	end, err := utils.GetProposalLatestId(ethClient)
 	if err != nil {
 		zap.L().Error("get proposal latest id error: ", zap.Error(err))
@@ -88,25 +90,21 @@ func SyncProposal(ethClient model.GoEthClient, db db.DataRepo) error {
 			start++
 			continue
 		}
-		count, err := db.CountProposal(map[string]any{"cid": contractProposal.Cid})
-		if err != nil {
-			return err
-		}
-		if count > 0 {
-			start++
-			continue
-		}
 		proposal := model.Proposal{
-			Cid:          contractProposal.Cid,
 			ProposalId:   int64(start),
+			Cid:          contractProposal.Cid,
 			ProposalType: contractProposal.ProposalType.Int64(),
 			Creator:      contractProposal.Creator.String(),
 			StartTime:    contractProposal.StartTime.Int64(),
 			ExpTime:      contractProposal.ExpTime.Int64(),
 			VoteCount:    contractProposal.VotesCount.Int64(),
 			Network:      ethClient.Id,
+			Status:       constant.ProposalStatusPending,
 		}
-		_, err = db.CreateProposal(&proposal)
+
+		zap.L().Info("proposal: ", zap.Any("proposal", proposal))
+
+		_, err = db.UpdateProposal(&proposal)
 		if err != nil {
 			return err
 		}

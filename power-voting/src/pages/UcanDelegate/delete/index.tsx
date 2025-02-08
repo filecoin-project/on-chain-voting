@@ -495,7 +495,7 @@ const UcanDelegate = () => {
             <button
               className={`h-[40px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-6 rounded-xl disabled:opacity-50 mr-8 ${loading && 'cursor-not-allowed'}`}
               type='button' onClick={() => { setGithubStep(UCAN_GITHUB_STEP_1) }}>
-                {t('content.previous')}
+              {t('content.previous')}
             </button>
             <LoadingButton className='!bg-red-500 !hover:bg-red-700' text={t('content.deauthorize')} loading={loading || writeContractPending || transactionLoading} />
           </div>
@@ -528,7 +528,7 @@ const UcanDelegate = () => {
             <Link to="/home" className="flex items-center">
               <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
                 <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                  d="m11 17l-5-5m0 0l5-5m-5 5h12" />
+                      d="m11 17l-5-5m0 0l5-5m-5 5h12" />
               </svg>
               {t('content.back')}
             </Link>

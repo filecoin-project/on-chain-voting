@@ -138,7 +138,7 @@ const UcanDelegate = () => {
 
   /**
    * create ucan
-    * @param values
+   * @param values
    * @param githubStep
    */
   const onSubmit = (values: any, githubStep?: number) => {
@@ -549,7 +549,7 @@ const UcanDelegate = () => {
       <form onSubmit={handleSubmit(value => { onSubmit(value, UCAN_GITHUB_STEP_2) })}>
         <div className='flow-root space-y-8'>
           <Table
-           title={t('content.ucanDelegatesAuthorize')}
+            title={t('content.ucanDelegatesAuthorize')}
             link={{
               type: 'github',
               action: 'authorize',
@@ -599,7 +599,7 @@ const UcanDelegate = () => {
             <Link to="/home" className="flex items-center">
               <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
                 <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                  d="m11 17l-5-5m0 0l5-5m-5 5h12"></path>
+                      d="m11 17l-5-5m0 0l5-5m-5 5h12"></path>
               </svg>
               {t('content.back')}
             </Link>
