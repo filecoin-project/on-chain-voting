@@ -95,7 +95,7 @@ const Footer = () => {
           <h4 className='text-xl text-[#ffffff] mb-[12px]'>{t('content.partners')}</h4>
           <div className='justify-center text-xs'>
             {resources.map((partner, index) => (
-              <a key={index} className='flex items-center hover:text-blue-300 mt-[16px] text-[#989898]' href={partner.href} target='_blank' rel="noreferrer" >
+              <a key={index} className='flex items-center hover:text-blue-300 mt-[16px] text-[#989898]' href={partner.href} target='_blank' rel="noreferrer">
                 {partner.text}
               </a>
             ))}

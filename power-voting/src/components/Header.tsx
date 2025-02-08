@@ -59,7 +59,7 @@ const Header = (props: any) => {
   const location = useLocation();
 
   // State variables
-  const [expirationTime, setExpirationTime] = useState(0);
+  // const [expirationTime, setExpirationTime] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [isFocus, setIsFocus] = useState<boolean>(false); // Determine whether the mouse has clicked on the search box
   const [searchValue, setSearchValue] = useState<string>(); // Stores the value of the search box
@@ -151,75 +151,75 @@ const Header = (props: any) => {
   /**
    * Handle delegation action
    */
-  const handleDelegate = async () => {
-    // Prompt user to connect if not already connected
-    if (!isConnected) {
-      openConnectModal && openConnectModal();
-      return;
-    }
+  // const handleDelegate = async () => {
+  //   // Prompt user to connect if not already connected
+  //   if (!isConnected) {
+  //     openConnectModal && openConnectModal();
+  //     return;
+  //   }
 
-    // Retrieve ucanStorageData from localStorage
-    const ucanStorageData = JSON.parse(localStorage.getItem('ucanStorage') || '[]');
-    const ucanIndex = ucanStorageData?.findIndex((item: any) => item.address === address);
+  //   // Retrieve ucanStorageData from localStorage
+  //   const ucanStorageData = JSON.parse(localStorage.getItem('ucanStorage') || '[]');
+  //   const ucanIndex = ucanStorageData?.findIndex((item: any) => item.address === address);
 
-    if (ucanIndex > -1) {
-      if (Date.now() < ucanStorageData[ucanIndex].timestamp) {
-        setModalOpen(true);
-        setExpirationTime(ucanStorageData[ucanIndex].timestamp);
-        // Data has not expired
-        return;
-      } else {
-        // Data has expired
-        setExpirationTime(0);
-        ucanStorageData?.splice(ucanIndex, 1);
-        localStorage.setItem('ucanStorage', JSON.stringify(ucanStorageData));
-      }
-    }
+  //   if (ucanIndex > -1) {
+  //     if (Date.now() < ucanStorageData[ucanIndex].timestamp) {
+  //       setModalOpen(true);
+  //       setExpirationTime(ucanStorageData[ucanIndex].timestamp);
+  //       // Data has not expired
+  //       return;
+  //     } else {
+  //       // Data has expired
+  //       setExpirationTime(0);
+  //       ucanStorageData?.splice(ucanIndex, 1);
+  //       localStorage.setItem('ucanStorage', JSON.stringify(ucanStorageData));
+  //     }
+  //   }
 
-    if (!voterInfo) {
-      navigate('/ucanDelegate/add');
-      return
-    }
-    // Determine if the user has a GitHub account
-    const isGithubType = !!voterInfo[0];
-    if (voterInfo[2]) {
-      // Fetch data from IPFS using voter's identifier
-      const { data } = await axios.get(`https://${voterInfo[2]}.ipfs.w3s.link/`);
-      if (isGithubType) {
-        // Process GitHub data and navigate to appropriate page
-        const regex = /\/([^/]+)\/([^/]+)\/git\/blobs\/(\w+)/;
-        const result = data.match(regex);
-        const aud = result[1];
-        navigate('/ucanDelegate/delete', {
-          state: {
-            params: {
-              isGithubType,
-              aud,
-              prf: ''
-            }
-          }
-        });
-      }
-      else {
-        // Process non-GitHub data and navigate to appropriate page
-        const decodeString = atob(data.split('.')[1]);
-        const payload = JSON.parse(decodeString);
-        const { aud, prf } = payload;
-        navigate('/ucanDelegate/delete', {
-          state: {
-            params: {
-              isGithubType,
-              aud,
-              prf
-            }
-          }
-        });
-      }
-    } else {
-      // Navigate to add delegate page if no voter information is available
-      navigate('/ucanDelegate/add');
-    }
-  }
+  //   if (!voterInfo) {
+  //     navigate('/ucanDelegate/add');
+  //     return
+  //   }
+  //   // Determine if the user has a GitHub account
+  //   const isGithubType = !!voterInfo[0];
+  //   if (voterInfo[2]) {
+  //     // Fetch data from IPFS using voter's identifier
+  //     const { data } = await axios.get(`https://${voterInfo[2]}.ipfs.w3s.link/`);
+  //     if (isGithubType) {
+  //       // Process GitHub data and navigate to appropriate page
+  //       const regex = /\/([^/]+)\/([^/]+)\/git\/blobs\/(\w+)/;
+  //       const result = data.match(regex);
+  //       const aud = result[1];
+  //       navigate('/ucanDelegate/delete', {
+  //         state: {
+  //           params: {
+  //             isGithubType,
+  //             aud,
+  //             prf: ''
+  //           }
+  //         }
+  //       });
+  //     }
+  //     else {
+  //       // Process non-GitHub data and navigate to appropriate page
+  //       const decodeString = atob(data.split('.')[1]);
+  //       const payload = JSON.parse(decodeString);
+  //       const { aud, prf } = payload;
+  //       navigate('/ucanDelegate/delete', {
+  //         state: {
+  //           params: {
+  //             isGithubType,
+  //             aud,
+  //             prf
+  //           }
+  //         }
+  //       });
+  //     }
+  //   } else {
+  //     // Navigate to add delegate page if no voter information is available
+  //     navigate('/ucanDelegate/add');
+  //   }
+  // }
 
   const handleJump = (route: string) => {
     if (!isConnected) {
@@ -230,26 +230,26 @@ const Header = (props: any) => {
   }
 
   const items: any = [
-    {
-      key: 'ucan',
-      label: (
-        <a
-          onClick={handleDelegate}
-        >
-          {t('content.UCANDelegates')}
-        </a>
-      ),
-    },
-    {
-      key: 'minerId',
-      label: (
-        <a
-          onClick={() => { handleJump('/minerid') }}
-        >
-          {t('content.minerIDsManagement')}
-        </a>
-      ),
-    },
+    // {
+    //   key: 'ucan',
+    //   label: (
+    //     <a
+    //       onClick={handleDelegate}
+    //     >
+    //       {t('content.UCANDelegates')}
+    //     </a>
+    //   ),
+    // },
+    // {
+    //   key: 'minerId',
+    //   label: (
+    //     <a
+    //       onClick={() => { handleJump('/minerid') }}
+    //     >
+    //       {t('content.minerIDsManagement')}
+    //     </a>
+    //   ),
+    // },
   ];
 
   if (isFipEditorAddress) {
@@ -313,7 +313,7 @@ const Header = (props: any) => {
   }
 
   useEffect(() => {
-    if(!chain) return
+    if (!chain) return
     setSearchValue('');
     searchKey();
   }, [chain]);
@@ -334,7 +334,7 @@ const Header = (props: any) => {
         });
       }
     }
-  }, [voterAddressSuccess]);
+  }, [voterAddressSuccess, chainId]);
 
   useEffect(() => {
     if (isSuccess) {
@@ -400,7 +400,7 @@ const Header = (props: any) => {
               </button>
             </Dropdown>
             <div className="connect flex items-center">
-              <ConnectButton showBalance={false} label={t('content.connectWallet')}/>
+              <ConnectButton showBalance={false} label={t('content.connectWallet')} />
               <div className='px-4 py-2 h-full flex flex-nowrap text-sm'>
                 {languageOptions.map((item) => {
                   return (
@@ -425,7 +425,7 @@ const Header = (props: any) => {
           >
             <p>{t(STORING_DATA_MSG)} {t('content.pleaseWait')}:&nbsp;
               <Countdown
-                date={expirationTime}
+                // date={expirationTime}
                 renderer={({ minutes, seconds, completed }) => {
                   if (completed) {
                     // Render a completed state
