@@ -1,0 +1,37 @@
+server:
+  port: :<PORT>
+
+snapshot:
+  rpc: <SNAPSHOT_IP>:<PORT>
+
+drand:
+  url:
+    - "https://api.drand.secureweb3.com:6875"
+    - "https://api.drand.sh/"
+    - "https://api2.drand.sh/"
+    - "https://api3.drand.sh/"
+    - "https://drand.cloudflare.com/"
+  chainHash: "52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971"
+
+mysql:
+  url: <MYSQL_IP>:<POST>
+  username: root
+  password: <MYSQL_ROOT_PASSWORD>
+
+network:
+  - id: <CHAIN_ID>
+    name: <CHAIN_NAME>
+    rpc: <CHAIN_RPC>
+    powerVotingAbi: /dist/power-voting.json
+    oracleAbi: /dist/oracle.json
+    powerVotingContract: <POWERVoting_Contract_ADDRESS>
+    oracleContract: <ORACLE_Contract_ADDRESS>
+    privateKey: <PRIVATE_Key>
+    walletAddress: <WALLET_ADDRESS>
+    gasLimit: 500000000
+
+w3client:
+  did: <DID>
+  privateKey: <PRIVATE_Key>
+  proof: ./proof.ucan
+  space: <SPACE>
