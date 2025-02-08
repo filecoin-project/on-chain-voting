@@ -13,110 +13,101 @@
 // limitations under the License.
 
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
-import { message, Popover, Table } from "antd";
+import { message } from "antd";
 import axios from 'axios';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { InfoCircleOutlined } from '@ant-design/icons';
 import VoteStatusBtn from "src/components/VoteStatusBtn";
-import { Buffer, mainnetClient, roundAt, timelockEncrypt } from "tlock-js";
 import type { BaseError } from "wagmi";
-import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
-import { UserRejectedRequestError } from "viem";
-import fileCoinAbi from "../../common/abi/power-voting.json";
+import { useAccount, useWriteContract } from "wagmi";
 import {
-  CHOOSE_VOTE_MSG,
+  calibrationChainId,
   IN_PROGRESS_STATUS,
   PENDING_STATUS,
-  UPLOAD_DATA_FAIL_MSG,
   VOTE_SUCCESS_MSG,
-  WRONG_NET_STATUS,
   web3AvatarUrl,
-  calibrationChainId,
-  votePowerGetApi, GETTING_POWER_MSG
-} from "../../common/consts"
-import { useCurrentTimezone, useStoringHash } from "../../common/store"
-import type { ProposalList, ProposalOption } from "../../common/types";
+  WRONG_NET_STATUS
+} from "../../common/consts";
+import { useCurrentTimezone } from "../../common/store";
+import type { ProposalList } from "../../common/types";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
-import LoadingButton from "../../components/LoadingButton";
 import MDEditor from "../../components/MDEditor";
-import { bigNumberToFloat, convertBytes, getContractAddress, getWeb3IpfsId } from "../../utils";
 import "./index.less";
 const Vote = () => {
-  const { chain, isConnected, address } = useAccount();
+  const { chain, isConnected } = useAccount();
   const chainId = chain?.id || calibrationChainId;
   const { id, cid } = useParams();
   const { t } = useTranslation();
   const [votingData, setVotingData] = useState({} as ProposalList);
-  const [powerDetail, setPowerDetail] = useState();
+  // const [powerDetail, setPowerDetail] = useState();
   const { openConnectModal } = useConnectModal();
   const { openChainModal } = useChainModal();
 
   const navigate = useNavigate();
-  const [options, setOptions] = useState([] as ProposalOption[]);
-  const [selectedOptionIndex, setSelectedOptionIndex] = useState(-1);
+  // const [options, setOptions] = useState([] as ProposalOption[]);
+  // const [selectedOptionIndex, setSelectedOptionIndex] = useState(-1);
 
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const timezone = useCurrentTimezone((state: any) => state.timezone);
 
   const [messageApi, contextHolder] = message.useMessage();
 
-  const columns = [
-    {
-      title: t('content.role'),
-      dataIndex: 'role',
-      key: 'role',
-    },
-    {
-      title: t('content.power'),
-      dataIndex: 'power',
-      key: 'power',
-    },
-    {
-      title: t('content.blockHeight'),
-      dataIndex: 'blockHeight',
-      key: 'blockHeight',
-    },
-  ];
+  // const columns = [
+  //   {
+  //     title: t('content.role'),
+  //     dataIndex: 'role',
+  //     key: 'role',
+  //   },
+  //   {
+  //     title: t('content.power'),
+  //     dataIndex: 'power',
+  //     key: 'power',
+  //   },
+  //   {
+  //     title: t('content.blockHeight'),
+  //     dataIndex: 'blockHeight',
+  //     key: 'blockHeight',
+  //   },
+  // ];
 
-  const storingHash = useStoringHash((state: any) => state.storingHash);
+  // const storingHash = useStoringHash((state: any) => state.storingHash);
 
-  const getPowerData = (votePower: any) => {
-    return [
-      {
-        key: 'sp',
-        role: 'SP',
-        blockHeight: votePower?.blockHeight,
-        power: convertBytes(votePower?.spPower),
-      },
-      {
-        key: 'client',
-        role: 'Client',
-        blockHeight: votePower?.blockHeight,
-        power: convertBytes(Number(votePower?.clientPower) / (10 ** 18)),
-      },
-      {
-        key: 'developer',
-        role: 'Developer',
-        blockHeight: votePower?.blockHeight,
-        power: votePower?.developerPower,
-      },
-      {
-        key: 'tokenHolder',
-        role: 'TokenHolder',
-        blockHeight: votePower?.blockHeight,
-        power: bigNumberToFloat(votePower?.tokenHolderPower),
-      },
-    ];
-  }
+  // const getPowerData = (votePower: any) => {
+  //   return [
+  //     {
+  //       key: 'sp',
+  //       role: 'SP',
+  //       blockHeight: votePower?.blockHeight,
+  //       power: convertBytes(votePower?.spPower),
+  //     },
+  //     {
+  //       key: 'client',
+  //       role: 'Client',
+  //       blockHeight: votePower?.blockHeight,
+  //       power: convertBytes(Number(votePower?.clientPower) / (10 ** 18)),
+  //     },
+  //     {
+  //       key: 'developer',
+  //       role: 'Developer',
+  //       blockHeight: votePower?.blockHeight,
+  //       power: votePower?.developerPower,
+  //     },
+  //     {
+  //       key: 'tokenHolder',
+  //       role: 'TokenHolder',
+  //       blockHeight: votePower?.blockHeight,
+  //       power: bigNumberToFloat(votePower?.tokenHolderPower),
+  //     },
+  //   ];
+  // }
 
   const {
-    data: hash,
-    writeContract,
+    // data: hash,
+    // writeContract,
     error,
-    isPending: writeContractPending,
+    // isPending: writeContractPending,
     isSuccess: writeContractSuccess,
     reset
   } = useWriteContract();
@@ -151,8 +142,8 @@ const Vote = () => {
     // Fetch data from the IPFS link using the provided CID
     const res = await axios.get(`https://${cid}.ipfs.w3s.link/`);
     const data = res.data;
-    const { data: { data: powerDetail } } = await axios.get(`${votePowerGetApi}`, { params: { chainId, address, day: data.day } });
-    setPowerDetail(powerDetail);
+    // const { data: { data: powerDetail } } = await axios.get(`${votePowerGetApi}`, { params: { chainId, address, day: data.day } });
+    // setPowerDetail(powerDetail);
     let voteStatus = null;
     // Check if the chain ID from the fetched data matches the current chain ID
     if (data.chainId !== chainId) {
@@ -183,112 +174,112 @@ const Vote = () => {
       option,
       voteStatus,
     });
-    setOptions(option);
+    // setOptions(option);
   }
 
   /**
    * timelock encrypt
    * @param value
    */
-  const handleEncrypt = async (value: string[][]) => {
-    // Convert value to a JSON string and encode it as a Buffer
-    const payload = Buffer.from(JSON.stringify(value));
+  // const handleEncrypt = async (value: string[][]) => {
+  //   // Convert value to a JSON string and encode it as a Buffer
+  //   const payload = Buffer.from(JSON.stringify(value));
 
-    // Get chain information from the mainnet client
-    const chainInfo = await mainnetClient().chain().info();
+  //   // Get chain information from the mainnet client
+  //   const chainInfo = await mainnetClient().chain().info();
 
-    // Calculate time for the voting expiration, or set to 0 if not available
-    const time = votingData?.expTime ? new Date(votingData.expTime * 1000).valueOf() : 0;
+  //   // Calculate time for the voting expiration, or set to 0 if not available
+  //   const time = votingData?.expTime ? new Date(votingData.expTime * 1000).valueOf() : 0;
 
-    // Determine the round number based on the time and chain information
-    const roundNumber = roundAt(time, chainInfo);
+  //   // Determine the round number based on the time and chain information
+  //   const roundNumber = roundAt(time, chainInfo);
 
-    // Encrypt the payload using timelock encryption
-    const ciphertext = await timelockEncrypt(
-      roundNumber,
-      payload,
-      mainnetClient()
-    )
+  //   // Encrypt the payload using timelock encryption
+  //   const ciphertext = await timelockEncrypt(
+  //     roundNumber,
+  //     payload,
+  //     mainnetClient()
+  //   )
 
-    return ciphertext;
-  }
+  //   return ciphertext;
+  // }
 
-  const startVoting = async () => {
-    const item = storingHash.find((item: any) => item.address === address);
+  // const startVoting = async () => {
+  //   const item = storingHash.find((item: any) => item.address === address);
     
-    if (item) {
-      messageApi.open({
-        type: 'warning',
-        content: t(GETTING_POWER_MSG),
-      });
-      return;
-    }
+  //   if (item) {
+  //     messageApi.open({
+  //       type: 'warning',
+  //       content: t(GETTING_POWER_MSG),
+  //     });
+  //     return;
+  //   }
 
-    // Check if a valid option is selected
-    if (selectedOptionIndex < 0) {
-      // If not, display a warning message
-      messageApi.open({
-        type: 'warning',
-        content: t(CHOOSE_VOTE_MSG),
-      });
-    } else {
-      // If a valid option is selected, proceed with voting
-      setLoading(true);
-      // Encrypt the selected option index and weight using handleEncrypt function
-      const encryptValue = await handleEncrypt([[`${selectedOptionIndex}`, `100`]]);
-      // Get the IPFS ID for the encrypted value
-      const optionId = await getWeb3IpfsId(encryptValue);
+  //   // Check if a valid option is selected
+  //   if (selectedOptionIndex < 0) {
+  //     // If not, display a warning message
+  //     messageApi.open({
+  //       type: 'warning',
+  //       content: t(CHOOSE_VOTE_MSG),
+  //     });
+  //   } else {
+  //     // If a valid option is selected, proceed with voting
+  //     setLoading(true);
+  //     // Encrypt the selected option index and weight using handleEncrypt function
+  //     const encryptValue = await handleEncrypt([[`${selectedOptionIndex}`, `100`]]);
+  //     // Get the IPFS ID for the encrypted value
+  //     const optionId = await getWeb3IpfsId(encryptValue);
 
-      if (!cid?.length) {
-        setLoading(false);
-        messageApi.open({
-          type: 'warning',
-          content: t(UPLOAD_DATA_FAIL_MSG),
-        });
-        return;
-      }
+  //     if (!cid?.length) {
+  //       setLoading(false);
+  //       messageApi.open({
+  //         type: 'warning',
+  //         content: t(UPLOAD_DATA_FAIL_MSG),
+  //       });
+  //       return;
+  //     }
 
-      // Check if user is connected to the network
-      if (isConnected) {
-        try {
-          writeContract({
-            abi: fileCoinAbi,
-            address: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
-            functionName: 'vote',
-            args: [
-              Number(id),
-              optionId,
-            ],
-          });
-        } catch (error: any) {
-          if (error as UserRejectedRequestError) {
-            messageApi.open({
-              type: 'warning',
-              content: t('content.rejectedSignature'),
-            });
-          } else {
-            messageApi.open({
-              type: 'error',
-              content: (error as BaseError)?.shortMessage || error?.message,
-            });
-          }
-        }
-        setLoading(false);
-      } else {
-        // If user is not connected, prompt to connect
-        openConnectModal && openConnectModal();
-      }
-    }
-  }
+  //     // Check if user is connected to the network
+  //     if (isConnected) {
+  //       try {
+  //         writeContract({
+  //           abi: fileCoinAbi,
+  //           address: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
+  //           functionName: 'vote',
+  //           args: [
+  //             Number(id),
+  //             optionId,
+  //           ],
+  //         });
+  //       } catch (error: any) {
+  //         if (error as UserRejectedRequestError) {
+  //           messageApi.open({
+  //             type: 'warning',
+  //             content: t('content.rejectedSignature'),
+  //           });
+  //         } else {
+  //           messageApi.open({
+  //             type: 'error',
+  //             content: (error as BaseError)?.shortMessage || error?.message,
+  //           });
+  //         }
+  //       }
+  //       setLoading(false);
+  //     } else {
+  //       // If user is not connected, prompt to connect
+  //       openConnectModal && openConnectModal();
+  //     }
+  //   }
+  // }
 
-  const handleOptionClick = (index: number) => {
-    setSelectedOptionIndex(index);
-  }
+  // const handleOptionClick = (index: number) => {
+  //   setSelectedOptionIndex(index);
+  // }
 
-  const { isLoading: transactionLoading } =
-    useWaitForTransactionReceipt({
-      hash,
-    })
+  // const { isLoading: transactionLoading } =
+  //   useWaitForTransactionReceipt({
+  //     hash,
+  //   })
 
   let href = '';
   let img = '';
@@ -388,49 +379,49 @@ const Vote = () => {
           </div>
         </div>
         {
-          votingData?.voteStatus === IN_PROGRESS_STATUS &&
-          <div className='mt-5'>
-            <div className="border-[#313D4F] mt-6 border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border border-solid">
-              <div className="group flex h-[57px] !border-[#eeeeee] justify-between items-center border-b px-4 pb-[12px] pt-3 border-solid">
-                <h4 className="font-medium">
-                  {t('content.castVote')}
-                </h4>
-                <Popover content={
-                  <Table
-                    rowKey={(record: any) => record.key}
-                    dataSource={getPowerData(powerDetail)}
-                    columns={columns}
-                    pagination={false}
-                  />
-                }>
-                  <span className='text-[14px] text-[#273141] text-sm'><InfoCircleOutlined style={{ fontSize: 14 }} /></span>
-                </Popover>
-              </div>
-              <div className="p-4 text-center">
-                {
-                  options.map((item: ProposalOption, index: number) => {
-                    return (
-                      <div className="mb-4 space-y-3 leading-10" key={item.name + index} onClick={() => { handleOptionClick(index) }}>
-                        <div
-                          className={`w-full h-[45px] border-[#eeeeee] ${selectedOptionIndex === index ? 'border-[#0190FF] bg-[#F3FAFF]' : ''} hover:border-[#0190FF] flex justify-between items-center pl-8 pr-4 md:border border-solid rounded-full cursor-pointer`}
-                        >
-                          <div className="text-ellipsis h-[100%] overflow-hidden">{item.name === "Approve" ?  t("content.approve") : t("content.reject")}</div>
-                          {
-                            selectedOptionIndex === index &&
-                            <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-md text-[#0190FF]">
-                              <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
-                                strokeWidth="2" d="m5 13l4 4L19 7" />
-                            </svg>
-                          }
-                        </div>
-                      </div>
-                    )
-                  })
-                }
-                <LoadingButton text={t('content.vote')} isFull={true} loading={loading || writeContractPending || transactionLoading} handleClick={startVoting} />
-              </div>
-            </div>
-          </div>
+          // votingData?.voteStatus === IN_PROGRESS_STATUS &&
+          // <div className='mt-5'>
+          //   <div className="border-[#313D4F] mt-6 border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border border-solid">
+          //     <div className="group flex h-[57px] !border-[#eeeeee] justify-between items-center border-b px-4 pb-[12px] pt-3 border-solid">
+          //       <h4 className="font-medium">
+          //         {t('content.castVote')}
+          //       </h4>
+          //       <Popover content={
+          //         <Table
+          //           rowKey={(record: any) => record.key}
+          //           dataSource={getPowerData(powerDetail)}
+          //           columns={columns}
+          //           pagination={false}
+          //         />
+          //       }>
+          //         <span className='text-[14px] text-[#273141] text-sm'><InfoCircleOutlined style={{ fontSize: 14 }} /></span>
+          //       </Popover>
+          //     </div>
+          //     <div className="p-4 text-center">
+          //       {
+          //         options.map((item: ProposalOption, index: number) => {
+          //           return (
+          //             <div className="mb-4 space-y-3 leading-10" key={item.name + index} onClick={() => { handleOptionClick(index) }}>
+          //               <div
+          //                 className={`w-full h-[45px] border-[#eeeeee] ${selectedOptionIndex === index ? 'border-[#0190FF] bg-[#F3FAFF]' : ''} hover:border-[#0190FF] flex justify-between items-center pl-8 pr-4 md:border border-solid rounded-full cursor-pointer`}
+          //               >
+          //                 <div className="text-ellipsis h-[100%] overflow-hidden">{item.name === "Approve" ?  t("content.approve") : t("content.reject")}</div>
+          //                 {
+          //                   selectedOptionIndex === index &&
+          //                   <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-md text-[#0190FF]">
+          //                     <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
+          //                       strokeWidth="2" d="m5 13l4 4L19 7" />
+          //                   </svg>
+          //                 }
+          //               </div>
+          //             </div>
+          //           )
+          //         })
+          //       }
+          //       <LoadingButton text={t('content.vote')} isFull={true} loading={loading || writeContractPending || transactionLoading} handleClick={startVoting} />
+          //     </div>
+          //   </div>
+          // </div>
         }
       </div>
     </div>

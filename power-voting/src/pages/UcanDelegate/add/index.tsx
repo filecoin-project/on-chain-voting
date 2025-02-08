@@ -225,9 +225,8 @@ const UcanDelegate = () => {
         }
         // Define signature parameters
         const signatureParams = {
-          iss: address,
-          aud,
-          prf: '',
+          address,
+          githubId: aud,
           act: 'add',
         }
         // Create a new Web3Provider using the current Ethereum provider

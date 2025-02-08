@@ -37,15 +37,63 @@ const Landing = () => {
         },
         {
             title: t('content.question3'),
-            answer: t('content.answer3'),
+            answer: <div>
+                <p>{t('content.answer3_1')}</p>
+                <p>&nbsp;&nbsp;<span className="font-bold">{t('content.answer4_2')}: </span>{t('content.answer3_2')}</p>
+                <p>&nbsp;&nbsp;<span className="font-bold">{t('content.answer4_3')}: </span>{t('content.answer3_3')}</p>
+                <p>&nbsp;&nbsp;<span className="font-bold">{t('content.answer4_4')}: </span>{t('content.answer3_4')}</p>
+                <p>&nbsp;&nbsp;<span className="font-bold">{t('content.answer4_5')}: </span>{t('content.answer3_5')}</p>
+                <p>{t('content.answer3_6')}</p>
+            </div>,
         },
         {
             title: t('content.question4'),
-            answer: t('content.answer4'),
+            answer: <div>
+                <p>{t('content.answer4_1')}</p>
+                <p>&nbsp;&nbsp;{t('content.answer4_2')}.</p>
+                <p>&nbsp;&nbsp;{t('content.answer4_3')}.</p>
+                <p>&nbsp;&nbsp;{t('content.answer4_4')}.</p>
+                <p>&nbsp;&nbsp;{t('content.answer4_5')}.</p>
+                <p>{t('content.answer4_6')}</p>
+            </div>,
         },
         {
             title: t('content.question5'),
             answer: t('content.answer5'),
+        },
+        {
+            title: t('content.question6'),
+            answer: t('content.answer6'),
+        },
+        {
+            title: t('content.question7'),
+            answer: t('content.answer7'),
+        },
+        {
+            title: t('content.question8'),
+            answer: t('content.answer8'),
+        },
+        {
+            title: t('content.question9'),
+            answer: t('content.answer9'),
+        },
+        {
+            title: t('content.question10'),
+            answer: <div>
+                <p>{t('content.answer10_1')}</p>
+                <p>&nbsp;&nbsp;● <span>{t('content.answer10_2')}</span></p>
+                <p>&nbsp;&nbsp;● <span>{t('content.answer10_3')}</span></p>
+                <p>&nbsp;&nbsp;● <span>{t('content.answer10_4')}</span></p>
+                <p>&nbsp;&nbsp;● <span>{t('content.answer10_5')}</span></p>
+            </div>,
+        },
+        {
+            title: t('content.question11'),
+            answer: <span>{t('content.answer11')}&nbsp;<a className="hover:underline" href="https://github.com/filecoin-project/on-chain-voting" style={{ color: 'blue' }}>GitHub repository</a>.</span>,
+        },
+        {
+            title: t('content.question12'),
+            answer: t('content.answer12'),
         }
     ]
     const navigate = useNavigate();

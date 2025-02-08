@@ -227,9 +227,9 @@ const Home = () => {
 
           </div>
           <div className="relative mb-4 line-clamp-2 break-words break-all text-lg pr-[80px] leading-7 cursor-pointer"
-               onClick={() => {
-                 handleJump(item);
-               }}>
+            onClick={() => {
+              handleJump(item);
+            }}>
             <h3 className="inline pr-2 text-2xl font-semibold text-[#313D4F]">
               {item.name}
             </h3>
@@ -267,7 +267,7 @@ const Home = () => {
                           ((maxOption.votes === 50 && option.optionId === 1) || (maxOption.votes > 50 && option.votes > 0 && option.votes === maxOption.votes)) &&
                           <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-sm">
                             <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
-                                  strokeWidth="2" d="m5 13l4 4L19 7" />
+                              strokeWidth="2" d="m5 13l4 4L19 7" />
                           </svg>
                         }
                         {option.optionId === 0 ? t('content.approve') : t('content.rejected')}
