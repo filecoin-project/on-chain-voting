@@ -25,6 +25,7 @@ import FipEditorPropose from "../pages/Fip/propose";
 import FipEditorApprove from "../pages/Fip/approve";
 import FipEditorRevoke from "../pages/Fip/revoke";
 import Landing from "src/pages/Landing";
+import FipEditorList from "src/pages/Fip/fipEditorList";
 
 const routes = [
   {
@@ -54,6 +55,10 @@ const routes = [
   {
     path: "/fip-editor/revoke",
     element: <FipEditorRevoke />,
+  },
+  {
+    path: "/fip-editor/fipEditorList",
+    element: <FipEditorList />,
   },
   {
     path: "/ucanDelegate/add",
