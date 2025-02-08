@@ -250,6 +250,16 @@ const Header = (props: any) => {
     //     </a>
     //   ),
     // },
+    {
+      key: 'fipEditorList',
+      label: (
+        <a
+          onClick={() => { handleJump('/fip-editor/fipEditorList') }}
+        >
+          {t('content.fipEditorList')}
+        </a>
+      ),
+    },
   ];
 
   if (isFipEditorAddress) {
