@@ -21,31 +21,32 @@ import type { Chain } from "viem";
 import type { ProposalHistory } from "../../common/types";
 import './index.less';
 import { bigNumberToFloat, convertBytes } from "../../utils";
-
+import { useTranslation } from 'react-i18next';
 interface Props {
   voteList: ProposalHistory[];
   chain?: Chain;
 }
 
 const VoteList: React.FC<Props> = ({ voteList, chain }) => {
+  const { t } = useTranslation();
   const columns = [
     {
-      title: 'Role',
+      title: t('content.role'),
       dataIndex: 'role',
       key: 'role',
     },
     {
-      title: 'Power',
+      title: t('content.power'),
       dataIndex: 'power',
       key: 'power',
     },
     {
-      title: 'Total Power',
+      title: t('content.totalPower'),
       dataIndex: 'total',
       key: 'total',
     },
     {
-      title: 'Percent',
+      title: t('content.percent'),
       dataIndex: 'percent',
       key: 'percent',
       render: (text: string, record: any) => {
@@ -53,7 +54,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
       }
     },
     {
-      title: 'Block Height',
+      title: t('content.blockHeight'),
       dataIndex: 'powerBlockHeight',
       key: 'powerBlockHeight',
     },
@@ -103,7 +104,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
    */
   const renderFooter = (data: any[], votes: number) => {
     // Initialize the string for total percent calculation
-    let totalPercent = "Total Percent = ";
+    let totalPercent = `${t('content.totalPercent')} = `;
     // Initialize count for non-zero total values
     let count = 0;
     // Initialize an array to store non-zero percent values
@@ -119,18 +120,22 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
       }
     });
 
-    arr.forEach((item, index) => {
-      // Check if it's not the last item in the array
-      if (index < arr.length - 1) {
-        // Append percent value and count with a plus sign
-        totalPercent += `${item} / ${count} + `;
-      } else {
-        // Append percent value and count without a plus sign
-        totalPercent += `${item} / ${count}`;
-      }
-    });
-    // Append the final vote percentage
-    totalPercent += `= ${votes}%`;
+    if (arr.length) {
+      arr.forEach((item, index) => {
+        // Check if it's not the last item in the array
+        if (index < arr.length - 1) {
+          // Append percent value and count with a plus sign
+          totalPercent += `${item} / ${count} + `;
+        } else {
+          // Append percent value and count without a plus sign
+          totalPercent += `${item} / ${count}`;
+        }
+      });
+      // Append the final vote percentage
+      totalPercent += `= ${votes}%`;
+    } else {
+      totalPercent += '0%';
+    }
 
     return <div>{totalPercent}</div>;
   }
@@ -138,7 +143,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
     <div className="border-y border-skin-border bg-skin-block-bg text-base md:rounded-xl md:border mt-[20px] mb-[20px]">
       <div className="group flex h-[57px] justify-between rounded-t-none border-b border-skin-border px-6 pb-[12px] pt-3 md:rounded-t-lg">
         <h4 className="flex items-center">
-          <div className="font-medium">Votes</div>
+          <div className="font-medium">{t('content.votes')}</div>
         </h4>
         <div className="flex items-center" />
       </div>
@@ -208,7 +213,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
                       <div className="flex truncate px-2 text-skin-link ">
                         <div className="pr-[20px] text-right w-[100px] text-c truncate text-skin-link text-xs font-medium" style={{ color: isApprove ? "green" : "red" }}>
                           {isApprove ? <CheckCircleOutlined style={{ fontSize: 14, marginRight: "4px" }} /> : <CloseCircleOutlined style={{ fontSize: 14, marginRight: "4px" }} />}
-                          {isApprove ? "Approved" : "Rejected"}</div>
+                          {isApprove ? t('content.approved') : t('content.rejected')}</div>
                       </div>
                     </div>
                   </div>
@@ -219,7 +224,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
           <Empty
             className='my-12'
             description={
-              <span className='text-[#313D4F]'>No Data</span>
+              <span className='text-[#313D4F]'>{t('content.noData')}</span>
             }
           />
       }

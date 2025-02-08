@@ -15,8 +15,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import {
-  lightTheme,
-  RainbowKitProvider,
   getDefaultConfig,
 } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
@@ -29,6 +27,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 
 const queryClient = new QueryClient();
+
 
 const filecoinCalibrationChain = {
   id: 314159,
@@ -53,10 +52,10 @@ const filecoinCalibrationChain = {
 const config = getDefaultConfig({
   appName: 'power-voting',
   projectId: walletConnectProjectId,
-  chains: [filecoin, filecoinCalibrationChain],
+  chains: [filecoinCalibrationChain, filecoin],
   transports: {
-    [filecoin.id]: http(),
     [filecoinCalibrationChain.id]: http(),
+    [filecoin.id]: http(),
   },
   wallets: [
     {
@@ -82,16 +81,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <BrowserRouter>
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider
-          locale="en-US"
-          theme={lightTheme({
-            accentColor: "#7b3fe4",
-            accentColorForeground: "white",
-          })}
-          modalSize="compact"
-        >
-          <App />
-        </RainbowKitProvider>
+        <App />
       </QueryClientProvider>
     </WagmiProvider>
   </BrowserRouter>

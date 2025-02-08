@@ -12,27 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { message, Popover, Table, Tooltip, Popconfirm, Button, Row, Pagination } from "antd";
 import { InfoCircleOutlined } from '@ant-design/icons';
+import { Button, Pagination, Popconfirm, Popover, Row, Table, Tooltip, message } from "antd";
 import axios from "axios";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from 'react-i18next';
+import { Link, useNavigate } from "react-router-dom";
 import type { BaseError } from "wagmi";
-import "./index.less";
-import {
-  HAVE_APPROVED_MSG,
-  STORING_DATA_MSG,
-  web3AvatarUrl,
-} from "../../../common/consts";
-import Loading from "../../../components/Loading";
-import EllipsisMiddle from "../../../components/EllipsisMiddle";
-import { useFipEditors, useApproveProposalId, useFipEditorProposalDataSet, useCheckFipEditorAddress } from "../../../common/hooks";
+import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import fileCoinAbi from "../../../common/abi/power-voting.json";
+import {
+  HAVE_APPROVED_MSG, calibrationChainId,
+  STORING_DATA_MSG,
+  web3AvatarUrl
+} from "../../../common/consts"
+import { useApproveProposalId, useCheckFipEditorAddress, useFipEditorProposalDataSet, useFipEditors } from "../../../common/hooks";
+import EllipsisMiddle from "../../../components/EllipsisMiddle";
+import Loading from "../../../components/Loading";
 import { getContractAddress } from "../../../utils";
+import "./index.less";
 const FipEditorApprove = () => {
   const { isConnected, address, chain } = useAccount();
-  const chainId = chain?.id || 0;
+  const { t } = useTranslation();
+  const chainId = chain?.id || calibrationChainId;
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
   const [messageApi, contextHolder] = message.useMessage();
@@ -72,7 +74,7 @@ const FipEditorApprove = () => {
 
   const popoverColumns = [
     {
-      title: 'FIP Editor',
+      title: t('content.FIPEditor'),
       dataIndex: 'address',
       key: 'address',
       width: 280,
@@ -93,16 +95,16 @@ const FipEditorApprove = () => {
       }
     },
     {
-      title: 'Status',
+      title: t('content.status'),
       dataIndex: 'status',
       key: 'status',
-      render: (value: string) => value || '-'
+      render: (value: string) => value ? t(`content.approved`) : '-'
     },
   ]
 
   const columns = [
     {
-      title: 'Address',
+      title: t('content.address'),
       dataIndex: 'address',
       key: 'address',
       width: 280,
@@ -123,7 +125,7 @@ const FipEditorApprove = () => {
       }
     },
     {
-      title: <div><div>Info</div></div>,
+      title: <div><div>{t('content.info')}</div></div>,
       dataIndex: 'info',
       key: 'info',
       ellipsis: { showTitle: false },
@@ -136,7 +138,7 @@ const FipEditorApprove = () => {
       }
     },
     {
-      title: 'Approve Ratio',
+      title: t('content.approveRatio'),
       dataIndex: 'ratio',
       key: 'ratio',
       render: (value: string, record: any) => {
@@ -158,20 +160,25 @@ const FipEditorApprove = () => {
       }
     },
     {
-      title: 'Action',
+      title: t('content.action'),
       key: 'total',
       align: 'center' as const,
       width: 120,
-      render: (_: any, record: any) =>
-        <Popconfirm
-          title="Approve FIP editor"
-          description="Are you sure to approve?"
-          onConfirm={() => { confirm(record) }}
-          okText="Yes"
-          cancelText="No"
-        >
-          <Button type='primary' className='w-[80px] h-[24px] flex justify-center items-center' loading={record.proposalId === currentProposalId && isLoading} >Approve</Button>
-        </Popconfirm>
+      render: (_: any, record: any) => {
+        const disabled =  !!record.voteList.find((item: any) => item.address === address && item.status === "approved");
+        return (
+          <Popconfirm
+            title={t('content.approveFIPEditor')}
+            description={t('content.isConfirmApprove')}
+            onConfirm={() => { confirm(record) }}
+            okText={t('content.yes')}
+            cancelText={t('content.no')}
+          >
+            <Button type='primary' className='w-[80px] h-[24px] flex justify-center items-center' loading={record.proposalId === currentProposalId && isLoading} disabled={disabled}>{t('content.approve')}</Button>
+          </Popconfirm>
+        )
+      }
+
     },
   ];
 
@@ -199,6 +206,7 @@ const FipEditorApprove = () => {
   }, [error]);
 
   useEffect(() => {
+    console.log(writeContractError)
     if (writeContractError) {
       messageApi.open({
         type: 'error',
@@ -224,7 +232,7 @@ const FipEditorApprove = () => {
     if (writeContractSuccess) {
       messageApi.open({
         type: 'success',
-        content: STORING_DATA_MSG,
+        content: t(STORING_DATA_MSG),
       });
       setTimeout(() => {
         navigate("/home")
@@ -253,7 +261,7 @@ const FipEditorApprove = () => {
           voters: obj.voters,
           ratio: `${obj.voters?.length} / ${fipEditors?.length}`,
           voteList: fipEditors?.map((address: string) => {
-            return { address, status: obj.voters?.includes(address) ? 'Approved' : '' }
+            return { address, status: obj.voters?.includes(address) ? "approved" : '' }
           }).sort((a) => (a.status ? -1 : 1))
         });
       } catch (e) {
@@ -272,7 +280,7 @@ const FipEditorApprove = () => {
     if (record.voters.includes(address)) {
       messageApi.open({
         type: 'warning',
-        content: HAVE_APPROVED_MSG,
+        content: t(HAVE_APPROVED_MSG),
       });
       return;
     }
@@ -298,14 +306,14 @@ const FipEditorApprove = () => {
               <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                 d="m11 17l-5-5m0 0l5-5m-5 5h12" />
             </svg>
-            Back
+            {t('content.back')}
           </Link>
         </div>
       </button>
       <div className='min-w-full bg-[#ffffff] text-left rounded-xl border-[1px] border-solid border-[#DFDFDF] overflow-hidden'>
         <div className='flow-root space-y-4'>
           <div className='font-normal text-black px-8 py-7 text-2xl border-b border-[#eeeeee] flex items-center'>
-            <span>FIP Editor Approve</span>
+            <span>{t('content.fipEditorApprove')}</span>
           </div>
           <div className='px-8 pb-4 !mt-0'>
             <Table

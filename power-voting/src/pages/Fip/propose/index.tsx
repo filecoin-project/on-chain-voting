@@ -12,34 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, { useState, useEffect, useRef } from "react";
-import { message } from "antd";
-import { Link, useNavigate } from "react-router-dom";
 import { RadioGroup } from '@headlessui/react';
+import { message } from "antd";
 import classNames from 'classnames';
-import Table from '../../../components/Table';
-import LoadingButton from '../../../components/LoadingButton';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from 'react-i18next';
+import { Link, useNavigate } from "react-router-dom";
 import type { BaseError } from "wagmi";
-import { useApproveProposalId, useCheckFipEditorAddress, useFipEditorProposalDataSet, useFipEditors, useRevokeProposalId } from "../../../common/hooks"
+import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import fileCoinAbi from "../../../common/abi/power-voting.json";
-import { getContractAddress, getWeb3IpfsId } from "../../../utils";
 import {
   FIP_ALREADY_EXECUTE_MSG,
   FIP_APPROVE_ALREADY_MSG,
   FIP_APPROVE_SELF_MSG,
   FIP_EDITOR_APPROVE_TYPE,
-  FIP_EDITOR_REVOKE_TYPE,
+  FIP_EDITOR_REVOKE_TYPE, calibrationChainId,
   NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG,
   NO_FIP_EDITOR_APPROVE_ADDRESS_MSG,
   NO_FIP_EDITOR_REVOKE_ADDRESS_MSG,
   STORING_DATA_MSG,
-  UPLOAD_DATA_FAIL_MSG,
-} from "../../../common/consts";
-
+  UPLOAD_DATA_FAIL_MSG
+} from "../../../common/consts"
+import {  useCheckFipEditorAddress, useFipEditors, useRevokeProposalId, useApproveProposalId, useFipEditorProposalDataSet } from "../../../common/hooks";
+import LoadingButton from '../../../components/LoadingButton';
+import Table from '../../../components/Table';
+import { getContractAddress, getWeb3IpfsId, hexToString } from "../../../utils";
 const FipEditorPropose = () => {
   const { isConnected, address, chain } = useAccount();
-  const chainId = chain?.id || 0;
+  const { t } = useTranslation();
+  const chainId = chain?.id || calibrationChainId;
 
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
@@ -55,7 +56,7 @@ const FipEditorPropose = () => {
   const { fipEditors } = useFipEditors(chainId);
 
 
-  //load revoke proposa
+  //load revoke proposal
   const { revokeProposalId } = useRevokeProposalId(chainId);
   const revokeResult = useFipEditorProposalDataSet({
     chainId,
@@ -64,7 +65,7 @@ const FipEditorPropose = () => {
     pageSize: revokeProposalId?.length ?? 0,
   });
 
-  //load approve
+  //load approve proposal
   const { approveProposalId } = useApproveProposalId(chainId);
   const approveResult = useFipEditorProposalDataSet({
     chainId,
@@ -79,7 +80,7 @@ const FipEditorPropose = () => {
     error,
     isPending: writeContractPending,
     isSuccess: writeContractSuccess,
-    reset
+    reset,
   } = useWriteContract();
 
   const [loading, setLoading] = useState(writeContractPending);
@@ -102,7 +103,7 @@ const FipEditorPropose = () => {
     if (writeContractSuccess) {
       messageApi.open({
         type: 'success',
-        content: STORING_DATA_MSG,
+        content: t(STORING_DATA_MSG),
       });
       setTimeout(() => {
         navigate("/home")
@@ -112,9 +113,14 @@ const FipEditorPropose = () => {
 
   useEffect(() => {
     if (error) {
+      // Get error cause
+      const errorStr = JSON.stringify(error);
+      // Intercepts the first hexadecimal in the string
+      const reg = /revert reason:\s*0x[0-9A-Fa-f]+/;
+      const match = errorStr.match(reg) || [];
       messageApi.open({
         type: 'error',
-        content: (error as BaseError)?.shortMessage || error?.message,
+        content: hexToString(match[0]) || (error as BaseError)?.shortMessage,
       });
     }
     reset();
@@ -139,7 +145,7 @@ const FipEditorPropose = () => {
       messageApi.open({
         type: 'warning',
         // Prompt user to fill required fields
-        content: NO_FIP_EDITOR_APPROVE_ADDRESS_MSG,
+        content: t(NO_FIP_EDITOR_APPROVE_ADDRESS_MSG),
       });
       return;
     }
@@ -148,7 +154,7 @@ const FipEditorPropose = () => {
       messageApi.open({
         type: 'warning',
         // Prompt user to fill required fields
-        content: NO_FIP_EDITOR_REVOKE_ADDRESS_MSG,
+        content: t(NO_FIP_EDITOR_REVOKE_ADDRESS_MSG),
       });
       return;
     }
@@ -157,7 +163,7 @@ const FipEditorPropose = () => {
       messageApi.open({
         type: 'warning',
         // must more than 2
-        content: NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG,
+        content: t(NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG),
       });
       return;
     }
@@ -169,7 +175,7 @@ const FipEditorPropose = () => {
       if (find) {
         messageApi.open({
           type: 'warning',
-          content: FIP_ALREADY_EXECUTE_MSG,
+          content: t(FIP_ALREADY_EXECUTE_MSG),
         });
         return;
       }
@@ -179,7 +185,7 @@ const FipEditorPropose = () => {
       if (find) {
         messageApi.open({
           type: 'warning',
-          content: FIP_ALREADY_EXECUTE_MSG,
+          content: t(FIP_ALREADY_EXECUTE_MSG),
         });
         return;
       }
@@ -188,7 +194,7 @@ const FipEditorPropose = () => {
     if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && fipAddress === address) {
       messageApi.open({
         type: 'warning',
-        content: FIP_APPROVE_SELF_MSG,
+        content: t(FIP_APPROVE_SELF_MSG),
       });
       return;
     }
@@ -197,7 +203,7 @@ const FipEditorPropose = () => {
     if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && fipEditors.includes(fipAddress)) {
       messageApi.open({
         type: 'warning',
-        content: FIP_APPROVE_ALREADY_MSG,
+        content: t(FIP_APPROVE_ALREADY_MSG),
       });
       return;
     }
@@ -209,12 +215,11 @@ const FipEditorPropose = () => {
     // Get the IPFS CID for the proposal information
     const cid = await getWeb3IpfsId(fipInfo);
 
-
-    if(!cid?.length){
+    if (!cid?.length) {
       setLoading(false);
       messageApi.open({
         type: 'warning',
-        content: UPLOAD_DATA_FAIL_MSG,
+        content: t(UPLOAD_DATA_FAIL_MSG),
       });
       return;
     }
@@ -234,7 +239,6 @@ const FipEditorPropose = () => {
       functionName: 'createFipEditorProposal',
       args: proposalArgs,
     });
-
     setLoading(false);
   }
 
@@ -242,7 +246,6 @@ const FipEditorPropose = () => {
     useWaitForTransactionReceipt({
       hash,
     })
-
   const isLoading = loading || writeContractPending || transactionLoading;
 
   return (
@@ -256,16 +259,16 @@ const FipEditorPropose = () => {
                 <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                   d="m11 17l-5-5m0 0l5-5m-5 5h12" />
               </svg>
-              Back
+              {t('content.back')}
             </Link>
           </div>
         </button>
         <div className='flow-root space-y-8'>
           <Table
-            title='FIP Editor Propose'
+            title={t('content.fipEditorPropose')}
             list={[
               {
-                name: 'Propose Type',
+                name: t('content.proposeType'),
                 width: 100,
                 comp: (
                   <RadioGroup className='flex h-[30px] mt-[-5px]' value={fipProposalType} onChange={handleProposeTypeChange}>
@@ -298,7 +301,7 @@ const FipEditorPropose = () => {
                                 checked ? 'text-black' : 'text-[#8896AA]'
                               }
                             >
-                              Approve
+                              {t('content.approve')}
                             </RadioGroup.Label>
                           </span>
                         </>
@@ -333,7 +336,7 @@ const FipEditorPropose = () => {
                                 checked ? 'text-black' : 'text-[#8896AA]'
                               }
                             >
-                              Revoke
+                              {t('content.revoke')}
                             </RadioGroup.Label>
                           </span>
                         </>
@@ -343,20 +346,18 @@ const FipEditorPropose = () => {
                 )
               },
               {
-                name: 'Editor Address',
-                width: 100,
+                name: t('content.editorAddress'),
                 hide: fipProposalType === FIP_EDITOR_REVOKE_TYPE,
                 comp: (
                   <input
-                    placeholder='Input editor address'
+                    placeholder={t('content.inputEditorAddress')}
                     className='form-input w-[520px] rounded bg-[#ffffff] border border-[#eeeeee] text-black'
                     onChange={(e) => { handleChange('fipAddress', e.target.value) }}
                   />
                 )
               },
               {
-                name: 'FIP Editor Address',
-                width: 100,
+                name: t('content.fipEditorAddress'),
                 hide: fipProposalType === FIP_EDITOR_APPROVE_TYPE,
                 comp: (
                   <select
@@ -380,13 +381,13 @@ const FipEditorPropose = () => {
                 )
               },
               {
-                name: 'Propose Info',
+                name: t('content.proposeInfo'),
                 width: 100,
                 comp: (
                   <textarea
                     value={fipInfo}
                     maxLength={300}
-                    placeholder='Input propose info'
+                    placeholder={t('content.inputProposeInfo')}
                     className='form-input h-[320px] w-full rounded bg-[#ffffff] border border-[#eeeeee] text-black'
                     onChange={(e) => { handleChange('fipInfo', e.target.value) }}
                   />
@@ -396,7 +397,7 @@ const FipEditorPropose = () => {
           />
 
           <div className='text-center'>
-            <LoadingButton text='Submit' loading={isLoading} handleClick={onSubmit} />
+            <LoadingButton text={t('content.submit')} loading={isLoading} handleClick={onSubmit} />
           </div>
         </div>
       </div>

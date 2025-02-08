@@ -31,13 +31,13 @@ import {
   UCAN_GITHUB_STEP_2,
   OPERATION_CANCELED_MSG,
   STORING_DATA_MSG,
-  UPLOAD_DATA_FAIL_MSG,
-} from '../../../common/consts';
+  UPLOAD_DATA_FAIL_MSG, calibrationChainId
+} from "../../../common/consts"
 import { stringToBase64Url, validateValue, getWeb3IpfsId, getContractAddress } from '../../../utils';
 import './index.less';
 import LoadingButton from "../../../components/LoadingButton";
 import fileCoinAbi from "../../../common/abi/power-voting.json";
-
+import { useTranslation } from 'react-i18next';
 const UcanDelegate = () => {
   const { chain, isConnected, address } = useAccount();
   const { signMessageAsync } = useSignMessage();
@@ -79,7 +79,7 @@ const UcanDelegate = () => {
     reset: resetWriteContract
   } = useWriteContract();
   const [loading, setLoading] = useState<boolean>(writeContractPending);
-
+  const { t } = useTranslation();
   useEffect(() => {
     renderForm();
   }, [githubStep]);
@@ -93,7 +93,7 @@ const UcanDelegate = () => {
 
   useEffect(() => {
     if (writeContractSuccess) {
-      
+
       // save data to localStorage and set validity period to three minutes
       const ucanStorageData = JSON.parse(localStorage.getItem('ucanStorage') || '[]');
       // Calculate expiration time (three minutes from now)
@@ -105,7 +105,7 @@ const UcanDelegate = () => {
 
       messageApi.open({
         type: 'success',
-        content: STORING_DATA_MSG,
+        content: t(STORING_DATA_MSG),
       });
       setTimeout(() => {
         navigate("/home");
@@ -163,23 +163,24 @@ const UcanDelegate = () => {
   const setUcan = async (ucan: string) => {
     // Get the IPFS ID for the provided UCAN
     const cid = await getWeb3IpfsId(ucan);
-    if(!cid?.length){
+    if (!cid?.length) {
       setLoading(false);
       messageApi.open({
         type: 'warning',
-        content: UPLOAD_DATA_FAIL_MSG,
+        content: t(UPLOAD_DATA_FAIL_MSG),
       });
       return;
     }
 
     writeContract({
       abi: fileCoinAbi,
-      address: getContractAddress(chain?.id || 0, 'powerVoting'),
+      address: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
       functionName: 'ucanDelegate',
       args: [
         cid
       ],
     });
+
     setLoading(false);
   }
 
@@ -203,7 +204,7 @@ const UcanDelegate = () => {
     } catch (e) {
       messageApi.open({
         type: 'error',
-        content: OPERATION_CANCELED_MSG,
+        content: t(OPERATION_CANCELED_MSG),
       });
       setLoading(false);
       return;
@@ -224,9 +225,8 @@ const UcanDelegate = () => {
         }
         // Define signature parameters
         const signatureParams = {
-          iss: address,
-          aud,
-          prf: '',
+          address,
+          githubId: aud,
           act: 'add',
         }
         // Create a new Web3Provider using the current Ethereum provider
@@ -241,7 +241,7 @@ const UcanDelegate = () => {
         } catch (e) {
           messageApi.open({
             type: 'error',
-            content: OPERATION_CANCELED_MSG,
+            content: t(OPERATION_CANCELED_MSG),
           });
           setLoading(false);
           return;
@@ -271,16 +271,20 @@ const UcanDelegate = () => {
 
   const filecoinAuthorizeList = [
     {
-      name: 'UCAN Type',
+      name: t('content.ucanType'),
       width: 100,
       hide: false,
       comp: (
         <RadioGroup className='flex h-[30px] mt-[-5px]' value={ucanType} onChange={handleUcanTypeChange}>
-          {[...UCAN_TYPE_FILECOIN_OPTIONS, ...UCAN_TYPE_GITHUB_OPTIONS].map(item => (
+          {[...(UCAN_TYPE_FILECOIN_OPTIONS.map((item) => {
+            return {
+              label: t(item.label), value: item.value
+            }
+          })), ...UCAN_TYPE_GITHUB_OPTIONS].map(item => (
             <RadioGroup.Option
               key={item.label}
               value={item.value}
-              className='relative flex items-center cursor-pointer p-4 focus:outline-none'
+              className='relative flex items-center align-middle cursor-pointer p-4 focus:outline-none'
             >
               {({ active, checked }) => (
                 <>
@@ -316,19 +320,19 @@ const UcanDelegate = () => {
       )
     },
     {
-      name: 'Issuer',
+      name: t('content.issuer'),
       width: 100,
       comp: (
         <input
           disabled
           value={address}
-          placeholder='Your Filecoin address.'
+          placeholder={t('content.filecoinAddress')}
           className='form-input w-[520px] rounded bg-[#ffffff] border border-[#eeeeee] text-[#4B535B] cursor-not-allowed'
         />
       )
     },
     {
-      name: 'Audience',
+      name: t('content.audience'),
       width: 100,
       comp: (
         <>
@@ -344,13 +348,13 @@ const UcanDelegate = () => {
             />}
           />
           {errors.aud && (
-            <p className='text-red-500 mt-1'>Aud is required</p>
+            <p className='text-red-500 mt-1'>{t('content.audRequired')}</p>
           )}
         </>
       )
     },
     {
-      name: 'Proof',
+      name: t('content.proof'),
       width: 100,
       comp: (
         <>
@@ -358,7 +362,7 @@ const UcanDelegate = () => {
             name="prf"
             control={control}
             render={() => <textarea
-              placeholder='The full UCAN content (include header, payload and signature) signed by your Filecoin private key.'
+              placeholder={`${t('content.proofDes')}`}
               className={classNames(
                 'form-input h-[320px] w-full rounded bg-[#ffffff] border border-[#eeeeee] text-[#4B535B]',
                 errors.prf && 'border-red-500 focus:border-red-500'
@@ -367,7 +371,7 @@ const UcanDelegate = () => {
             />}
           />
           {errors.prf && (
-            <p className='text-red-500 mt-1'>Proof is required</p>
+            <p className='text-red-500 mt-1'>{t('content.proofRequired')}</p>
           )}
         </>
       )
@@ -376,12 +380,16 @@ const UcanDelegate = () => {
 
   const githubSignatureList = [
     {
-      name: 'UCAN Type',
+      name: t('content.ucanType'),
       width: 100,
       hide: false,
       comp: (
-        <RadioGroup className='flex h-[30px] mt-[-5px]' value={ucanType} onChange={handleUcanTypeChange}>
-          {[...UCAN_TYPE_FILECOIN_OPTIONS, ...UCAN_TYPE_GITHUB_OPTIONS].map(item => (
+        <RadioGroup className='flex' value={ucanType} onChange={handleUcanTypeChange}>
+          {[...(UCAN_TYPE_FILECOIN_OPTIONS.map((item) => {
+            return {
+              label: t(item.label), value: item.value
+            }
+          })), ...UCAN_TYPE_GITHUB_OPTIONS].map(item => (
             <RadioGroup.Option
               key={item.label}
               value={item.value}
@@ -421,7 +429,7 @@ const UcanDelegate = () => {
       )
     },
     {
-      name: 'Issuer',
+      name: t('content.issuer'),
       width: 100,
       comp: (
         <input
@@ -432,7 +440,7 @@ const UcanDelegate = () => {
       )
     },
     {
-      name: 'Audience',
+      name: t('content.audience'),
       width: 100,
       comp: (
         <>
@@ -440,7 +448,7 @@ const UcanDelegate = () => {
             name="aud"
             control={control}
             render={() => <input
-              placeholder='Your github account.'
+              placeholder={t('content.yourGithubAccount')}
               className={classNames(
                 'form-input w-[520px] rounded bg-[#FFFFFF] border border-[#EEEEEE] text-[#4B535B]',
                 errors.aud && 'border-red-500 focus:border-red-500'
@@ -449,7 +457,7 @@ const UcanDelegate = () => {
             />}
           />
           {errors.aud && (
-            <p className='text-red-500 mt-1'>Aud is required</p>
+            <p className='text-red-500 mt-1'>{t('content.audRequired')}</p>
           )}
         </>
       )
@@ -458,7 +466,7 @@ const UcanDelegate = () => {
 
   const githubAuthorizeList = [
     {
-      name: 'Signature',
+      name: t('content.signature'),
       width: 100,
       comp: (
         <textarea
@@ -485,7 +493,7 @@ const UcanDelegate = () => {
             />}
           />
           {errors.url && (
-            <p className='text-red-500 mt-1'>URL is required</p>
+            <p className='text-red-500 mt-1'>{t('content.uRLRequired')}</p>
           )}
         </>
       )
@@ -497,7 +505,7 @@ const UcanDelegate = () => {
       <form onSubmit={handleSubmit(value => { onSubmit(value) })}>
         <div className='flow-root space-y-8'>
           <Table
-            title='UCAN Delegates (Authorize)'
+            title={t('content.ucanDelegatesAuthorize')}
             link={{
               type: 'filecoin',
               action: 'authorize',
@@ -507,7 +515,7 @@ const UcanDelegate = () => {
           />
 
           <div className='text-center'>
-            <LoadingButton text='Authorize' loading={loading || writeContractPending || transactionLoading} />
+            <LoadingButton text={t('content.authorize')} loading={loading || writeContractPending || transactionLoading} />
           </div>
         </div>
       </form>
@@ -519,7 +527,7 @@ const UcanDelegate = () => {
       <form onSubmit={handleSubmit(value => { onSubmit(value, UCAN_GITHUB_STEP_1) })}>
         <div className='flow-root space-y-8'>
           <Table
-            title='UCAN Delegates (Authorize)'
+            title={t('content.ucanDelegatesAuthorize')}
             link={{
               type: 'github',
               action: 'authorize',
@@ -529,7 +537,7 @@ const UcanDelegate = () => {
           />
 
           <div className='text-center'>
-            <LoadingButton text='Sign' loading={loading || writeContractPending || transactionLoading} />
+            <LoadingButton text={t('content.sign')} loading={loading || writeContractPending || transactionLoading} />
           </div>
         </div>
       </form>
@@ -541,7 +549,7 @@ const UcanDelegate = () => {
       <form onSubmit={handleSubmit(value => { onSubmit(value, UCAN_GITHUB_STEP_2) })}>
         <div className='flow-root space-y-8'>
           <Table
-            title='UCAN Delegates (Authorize)'
+           title={t('content.ucanDelegatesAuthorize')}
             link={{
               type: 'github',
               action: 'authorize',
@@ -554,9 +562,9 @@ const UcanDelegate = () => {
             <button
               className={`h-[40px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-6 rounded-xl disabled:opacity-50 mr-8 ${loading && 'cursor-not-allowed'}`}
               type='button' onClick={() => { setGithubStep(UCAN_GITHUB_STEP_1) }}>
-              Previous
+              {t('content.previous')}
             </button>
-            <LoadingButton text='Authorize' loading={loading || writeContractPending || transactionLoading} />
+            <LoadingButton text={t('content.authorize')} loading={loading || writeContractPending || transactionLoading} />
           </div>
         </div>
       </form>
@@ -593,7 +601,7 @@ const UcanDelegate = () => {
                 <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                   d="m11 17l-5-5m0 0l5-5m-5 5h12"></path>
               </svg>
-              Back
+              {t('content.back')}
             </Link>
           </div>
         </button>
