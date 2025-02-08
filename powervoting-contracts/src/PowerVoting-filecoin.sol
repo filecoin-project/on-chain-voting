@@ -344,7 +344,7 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
             proposal.voterInfoCid,
             proposal.voters.values()
         );
-    }
+   }
 
     /**
     * @notice Get the list of IDs of all approved proposals.
@@ -398,7 +398,6 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
         if(proposal.expTime <= block.timestamp){
             revert TimeError("Proposal expiration time reached.");
         }
-        _addF4Task();
         // increment votesCount
         uint256 vid = ++proposal.votesCount;
         // use votesCount as vote id
@@ -421,6 +420,14 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
     }
 
     /**
+    * @notice Adds a new F4 task.
+    * @dev This function is a wrapper to call the internal _addF4Task function.
+    */
+    function addF4Task() override external {
+        _addF4Task();
+    }
+
+    /**Ï
      * @notice Adds an F4 task for the caller if necessary.
      * @dev This function is called internally to check whether the caller needs to have an F4 task added.
      */

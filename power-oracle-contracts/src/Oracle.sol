@@ -37,6 +37,9 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     // oracle node allow list
     mapping(address => bool) public nodeAllowList;
 
+    // snapshot allow list
+    mapping(address => bool) public snapshotAllowList;
+
     // address status map, key: voter address value: block height
     mapping(address => uint256) public voterAddressToBlockHeight;
 
@@ -67,12 +70,22 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     // github account list
     mapping(string => bool) public githubAccountList;
 
+    // date to cid
+    mapping(string => string) public dateToCid;
+
     /**
      * @dev Modifier that allows a function to be called only by addresses in the node allow list.
      */
     modifier onlyInAllowList(){
         if (!nodeAllowList[msg.sender]) {
             revert PermissionError("Not in allow list error.");
+        }
+        _;
+    }
+
+    modifier onlyInSnapshotAllowList(){
+        if (!snapshotAllowList[msg.sender]) {
+            revert PermissionError("Not in  snapshot allow list error.");
         }
         _;
     }
@@ -259,6 +272,15 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
     }
 
     /**
+     * @notice Updates the snapshot allow list by adding or removing a snapshot address.
+     * @param snapshotAddress Address of the snapshot to be added or removed.
+     * @param allow Boolean indicating whether to allow (true) or disallow (false) the snapshot address.
+     */
+    function updateSnapshotAllowList(address snapshotAddress, bool allow) external override onlyOwner nonZeroAddress(snapshotAddress) {
+        snapshotAllowList[snapshotAddress] = allow;
+    }
+
+    /**
      * @notice Retrieves the list of voter addresses.
      * @return An array containing the addresses of all voters.
      */
@@ -273,6 +295,16 @@ contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
      */
     function getVoterInfo(address voter) external override view returns(VoterInfo memory){
         return voterToInfo[voter];
+    }
+
+    /**
+     * @notice Adds a snapshot for a specific date with its associated IPFS CID.
+     * @param date The date associated with the snapshot.
+     * @param cid The IPFS CID corresponding to the snapshot.
+     * @dev Only addresses in the snapshot allow list can call this function.
+     */
+    function addSnapshot(string calldata date, string calldata cid) external override onlyInSnapshotAllowList  {
+        dateToCid[date] = cid;
     }
 
     /**
