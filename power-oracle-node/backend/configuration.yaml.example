@@ -1,0 +1,16 @@
+server:
+  port: <PORT>
+
+network:
+  - id: <CHAIN_ID>
+    name: <CHAIN_NAME>
+    rpc: <CHAIN_RPC>
+    abiPath: /dist/oracle_abi.json
+    contractAddress: <CONTRACT_Address>
+    privateKey: <PRIVATE_Key>
+    walletAddress: <WALLET_Address>
+    gasLimit: 500000000
+
+github:
+  githubToken: <GITHUB_TOKEN>
+  graphql: https://api.github.com/graphql

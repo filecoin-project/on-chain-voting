@@ -14,13 +14,11 @@ WORKDIR /build
 COPY . .
 
 # go build
+RUN go mod tidy
 RUN go build -o app .
 
-
-#requires Node 18 or higher
 FROM node:22
 
-# 
 RUN npm install -g @web3-storage/w3cli
 
 # move to /dist
@@ -33,7 +31,7 @@ RUN cp --from=backend-builder /build/abi/power-voting.json .
 RUN cp --from=backend-builder /build/abi/oracle.json .
 
 # expose server port
-EXPOSE 9999
+EXPOSE 18007
 
 # run
 CMD ["/dist/app"]

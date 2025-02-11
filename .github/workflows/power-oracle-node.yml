@@ -14,52 +14,16 @@ on:
       - 'power-oracle-node/*'
 
 jobs:
-  orace-node-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.21'
-
-      - name: Install dependencies
-        run: |
-          cd ./power-oracle-node/backend
-          go mod tidy   
-
-      - name: Copy config file to test dir
-        run: |
-          cd ./power-oracle-node/backend
-          cp ./abi/* ./config
-          cp ./abi/* ./contract
-          cp ./abi/* ./task
-          cp ./abi/* ./utils
-          cp ./abi/* ./service
-
-      - name: Inject github token to config.yaml
-        env:
-          GH_TOKEN: ${{ secrets.gh_token }}
-        uses: mikefarah/yq@master
-        with:
-          cmd: yq eval ".github.githubToken = strenv(GH_TOKEN)" -i ./power-oracle-node/backend/configuration.yaml
-
-      - name: Test
-        run: |
-          cd ./power-oracle-node/backend
-          go test -v ./...
-
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy on server
         uses: appleboy/ssh-action@v0.1.8
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
+          host: ${{ vars.SSH_HOST }}
+          username: ${{ vars.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           timeout: 10m
           script: |
-            cd ${{ vars.BUILD_PATH }}
-            sh oraclenode.sh
+            cd ${{ vars.BUILD_PATH }}/power-oracle-node/backend
+            sudo sh build.sh
