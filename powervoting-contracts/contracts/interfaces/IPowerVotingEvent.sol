@@ -8,14 +8,15 @@
 // http://www.apache.org/licenses/LICENSE-2.0
 
 // Unless required by applicable law or agreed to in writing, software
+
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import {Proposal} from "../types.sol";
+import {ProposalEventInfo} from "../types.sol";
 
 interface IPowerVotingEvent {
     /**
@@ -31,5 +32,5 @@ interface IPowerVotingEvent {
      * @param id The ID of the newly created proposal.
      * @param proposal The details of the created proposal.
      */
-    event ProposalCreate(uint256 id, Proposal proposal);
+    event ProposalCreate(uint256 id, ProposalEventInfo proposal);
 }
