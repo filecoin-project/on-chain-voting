@@ -13,23 +13,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-struct Proposal {
-    // proposal cid
-    string cid;
-    // proposal type
-    uint256 proposalType;
+struct ProposalEventInfo {
     // proposal creator
     address creator;
     // proposal start timestamp
-    uint248 startTime;
+    uint256 startTime;
     // proposal expiration timestamp, second
-    uint248 expTime;
-    // votes count
-    uint256 votesCount;
+    uint256 endTime;
+    //proposal create timestamp
+    uint256 timestamp;
+     //snapshot timestamp
+    uint256 snapshotTimestamp;
+    //proposal content
+    string content;
+    //proposal title
+    string title;
+    //all percentage
+    uint16  tokenHolderPercentage;
+    uint16  spPercentage;
+    uint16  clientPercentage;
+    uint16  developerPercentage;
+}
+struct Proposal {
+    // proposal creator
+    address creator;
+    // proposal start timestamp
+    uint256 startTime;
+    // proposal expiration timestamp, second
+    uint256 endTime;
 }
 
 struct VoteInfo {
@@ -56,8 +71,8 @@ struct FipEditorProposal {
     uint256 proposalId;        
     // Address of the FIP editor
     address fipEditorAddress;   
-    // CID (Content Identifier) of the voter's information
-    string voterInfoCid;        
+    // the voter's information
+    string voterInfo;        
     // Array containing addresses of voters
     EnumerableSet.AddressSet voters;           
 }
