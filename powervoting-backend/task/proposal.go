@@ -15,114 +15,66 @@
 package task
 
 import (
-	"fmt"
-	"powervoting-server/config"
-	"powervoting-server/constant"
-	"powervoting-server/contract"
-	"powervoting-server/db"
-	"powervoting-server/model"
-	"powervoting-server/utils"
-	"strconv"
 	"sync"
-	"time"
 
 	"go.uber.org/zap"
+
+	"powervoting-server/config"
+	"powervoting-server/data"
+	"powervoting-server/service"
 )
 
-// SyncProposalHandler asynchronously synchronizes proposals across multiple networks.
-func SyncProposalHandler() {
+// SyncEventHandler handles the synchronization of contract events across multiple networks.
+// It initializes a goroutine for each network to subscribe to and process contract events.
+// Errors encountered during synchronization are collected and logged at the end.
+//
+// Parameters:
+//   - syncService: The sync service used to manage synchronization operations.
+func SyncEventHandler(syncService *service.SyncService) {
+	// Use a WaitGroup to wait for all goroutines to finish
 	wg := sync.WaitGroup{}
+	// Use a slice to collect errors from all goroutines
 	errList := make([]error, 0, len(config.Client.Network))
+	// Use a mutex to safely append errors from multiple goroutines
 	mu := &sync.Mutex{}
 
+	// Iterate over each network configuration
 	for _, network := range config.Client.Network {
-		network := network
-		ethClient, err := contract.GetClient(network.Id)
+		network := network // Create a local copy of the network variable for the goroutine
+
+		// Get the Ethereum client for the current network
+		ethClient, err := data.GetClient(syncService, network.ChainId)
 		if err != nil {
 			zap.L().Error("get go-eth client error:", zap.Error(err))
-			continue
+			continue // Skip this network if the client cannot be initialized
 		}
+
+		// Increment the WaitGroup counter for the new goroutine
 		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			if err := SyncProposal(ethClient, db.Engine); err != nil {
+		go func(network config.Network) {
+			defer wg.Done() // Decrement the WaitGroup counter when the goroutine completes
+
+			// Create an event handler for the current network
+			var syncEvent = &Event{
+				SyncService: syncService,
+				Network:     &network,
+				Client:      ethClient,
+			}
+
+			// Subscribe to contract events for the current network
+			if err := syncEvent.SubscribeEvent(); err != nil {
 				mu.Lock()
-				errList = append(errList, err)
+				errList = append(errList, err) // Append the error to the error list
 				mu.Unlock()
 			}
-		}()
+		}(network) // Pass the local copy of the network to the goroutine
 	}
 
+	// Wait for all goroutines to finish
 	wg.Wait()
+
+	// Log any errors encountered during synchronization
 	if len(errList) != 0 {
 		zap.L().Error("sync finished with err:", zap.Errors("errors", errList))
 	}
-	zap.L().Info("sync proposal finished: ", zap.Int64("timestamp", time.Now().Unix()))
-}
-
-// SyncProposal syncs proposals for a given Ethereum client.
-func SyncProposal(ethClient model.GoEthClient, db db.DataRepo) error {
-	dict, err := db.GetDict(constant.ProposalStartKey)
-	if err != nil {
-		return err
-	}
-	start, err := strconv.Atoi(dict.Value)
-	if err != nil {
-		zap.L().Error("Translate string to int error: ", zap.Error(err))
-		return err
-	}
-
-	zap.L().Info("Sync proposal start: ", zap.Int("start", start))
-
-	end, err := utils.GetProposalLatestId(ethClient)
-	if err != nil {
-		zap.L().Error("get proposal latest id error: ", zap.Error(err))
-		return err
-	}
-	for start <= end {
-		contractProposal, err := utils.GetProposal(ethClient, int64(start))
-		if err != nil {
-			zap.L().Error("Get proposal error: ", zap.Error(err))
-			start++
-			break
-		}
-		if len(contractProposal.Cid) == 0 {
-			start++
-			continue
-		}
-		proposal := model.Proposal{
-			ProposalId:   int64(start),
-			Cid:          contractProposal.Cid,
-			ProposalType: contractProposal.ProposalType.Int64(),
-			Creator:      contractProposal.Creator.String(),
-			StartTime:    contractProposal.StartTime.Int64(),
-			ExpTime:      contractProposal.ExpTime.Int64(),
-			VoteCount:    contractProposal.VotesCount.Int64(),
-			Network:      ethClient.Id,
-			Status:       constant.ProposalStatusPending,
-		}
-
-		zap.L().Info("proposal: ", zap.Any("proposal", proposal))
-
-		_, err = db.UpdateProposal(&proposal)
-		if err != nil {
-			return err
-		}
-		inDict := &model.Dict{
-			Name:  fmt.Sprintf("%s-%d", constant.VoteStartKey, proposal.ProposalId),
-			Value: "1",
-		}
-		_, err = db.CreateDict(inDict)
-		if err != nil {
-			return err
-		}
-		start++
-	}
-	err = db.UpdateDict(constant.ProposalStartKey, strconv.Itoa(start))
-	if err != nil {
-		zap.L().Error("update proposal start key error: ", zap.Error(err))
-		return err
-	}
-
-	return nil
 }

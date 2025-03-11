@@ -18,37 +18,30 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"powervoting-server/config"
-	"powervoting-server/model"
-	"strconv"
 	"strings"
 
 	"github.com/drand/tlock"
 	drandhttp "github.com/drand/tlock/networks/http"
 	"go.uber.org/zap"
+
+	"powervoting-server/config"
 )
 
-// DecodeVoteList decodes the vote information retrieved from IPFS.
 // It decrypts the encrypted data, unmarshals it into a structured format,
 // and constructs a list of vote counts for each option.
 // The function returns the decoded vote list or an error if the decoding fails.
-func DecodeVoteList(voteInfo model.Vote) ([]model.Vote4Counting, error) {
-	var voteList []model.Vote4Counting
-	ipfs, err := GetIpfs(voteInfo.VoteInfo)
-	if err != nil {
-		zap.L().Error("get vote info from IPFS error: ", zap.Error(err))
-		return voteList, err
-	}
-	zap.L().Info("vote info", zap.String("ipfs", ipfs))
+func DecodeVoteResult(voteInfo string) (string, error) {
+	var (
+		decrypt []byte
+		err     error
+	)
 	retry_times := 5
-	var decrypt []byte
+
 	for i := 0; i < retry_times; i++ {
-		decrypt, err = Decrypt(ipfs)
+		decrypt, err = Decrypt(voteInfo)
 		if i == retry_times-1 && err != nil {
 			zap.L().Error("decrypt error:", zap.Error(err))
-			return voteList, err
+			return "", err
 		}
 		if err != nil {
 			zap.L().Warn(fmt.Sprintf("Decrypt failed: %v, retry times: %d\n", err, i))
@@ -56,62 +49,27 @@ func DecodeVoteList(voteInfo model.Vote) ([]model.Vote4Counting, error) {
 		}
 		break
 	}
-	var mapData [][]string
-	err = json.Unmarshal(decrypt, &mapData)
+	var parsedResult [][]string
+	err = json.Unmarshal(decrypt, &parsedResult)
 	if err != nil {
 		zap.L().Error("unmarshal error：", zap.Error(err))
-		return voteList, err
-	}
-
-	for _, value := range mapData {
-		optionId, err := strconv.Atoi(value[0])
-		if err != nil {
-			zap.L().Error("string to int error: ", zap.Error(err))
-			return voteList, err
-		}
-		optionValue, err := strconv.Atoi(value[1])
-		if err != nil {
-			zap.L().Error("string to int error: ", zap.Error(err))
-			return voteList, err
-		}
-		vote := model.Vote4Counting{
-			OptionId: int64(optionId),
-			Votes:    int64(optionValue),
-			Address:  voteInfo.Address,
-		}
-		voteList = append(voteList, vote)
-	}
-	return voteList, nil
-}
-
-// GetIpfs retrieves data from IPFS using the provided votInfo.
-// It constructs the IPFS URL and sends an HTTP GET request to fetch the data.
-// The function returns the retrieved data or an error if the operation fails.
-func GetIpfs(votInfo string) (string, error) {
-	zap.L().Info("get vote info from IPFS: ", zap.String("votInfo", votInfo))
-	url := fmt.Sprintf("https://%s.ipfs.w3s.link/", votInfo)
-	resp, err := http.Get(url)
-	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-
+	if len(parsedResult) == 0 && len(parsedResult[0]) == 0 {
+		return "", fmt.Errorf("no vote information")
 	}
 
-	return string(body), err
+	return parsedResult[0][0], nil
 }
 
 // Decrypt decrypts the IPFS data using the T-lock encryption scheme.
 // It replaces escape characters in the IPFS string, constructs a drand network,
 // and decrypts the data using T-lock encryption.
 // The function returns the decrypted data or an error if decryption fails.
-func Decrypt(ipfs string) ([]byte, error) {
+func Decrypt(decStr string) ([]byte, error) {
 	// Construct a network that can talk to a drand network. Example using the mainnet fastnet network.
-	replace := strings.ReplaceAll(ipfs, "\\n", "\n")
+	replace := strings.ReplaceAll(decStr, "\\n", "\n")
 	replace2 := strings.ReplaceAll(replace, "\"", "")
 
 	var network *drandhttp.Network
@@ -138,22 +96,4 @@ func Decrypt(ipfs string) ([]byte, error) {
 		return nil, err
 	}
 	return data, nil
-}
-
-// GetOptions retrieves the options of a proposal from IPFS.
-// It takes the CID of the proposal as input and returns the options or an error if retrieval fails.
-func GetOptions(cid string) ([]string, error) {
-	ipfs, err := GetIpfs(cid)
-	if err != nil {
-		zap.L().Error("get ipfs error: ", zap.Error(err))
-		return nil, err
-	}
-	zap.L().Info("options ipfs", zap.String("ipfs", ipfs))
-	var proposalDetail model.ProposalDetail
-	err = json.Unmarshal([]byte(ipfs), &proposalDetail)
-	if err != nil {
-		zap.L().Error("json unmarshal error: ", zap.Error(err))
-		return nil, err
-	}
-	return proposalDetail.Option, nil
 }

@@ -21,16 +21,12 @@ mysql:
   password: root
 
 network:
-  - id: 314159
+  - chainId: 314159
     name: FileCoin-Calibration
     rpc: http://203.160.91.77:27924/rpc/v1
     powerVotingAbi: power-voting.json
-    oracleAbi: oracle.json
     powerVotingContract:
     oracleContract:
 
-w3client:
-  did: 
-  privateKey: 
-   # proof.ucan path
-  proof: 
+abiPath:
+  powerVoting: /dist/power-voting.json

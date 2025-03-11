@@ -12,35 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config
+package utils
 
-import (
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
-)
+import "powervoting-server/model"
 
-// export client
-var Client Config
 
-// InitConfig initializes the configuration by reading from a YAML file located at the specified path.
-func InitConfig(path string) {
-	// configuration file name
-	viper.SetConfigName("configuration")
 
-	viper.AddConfigPath(path)
-
-	viper.SetConfigType("yaml")
-
-	err := viper.ReadInConfig()
-	if err != nil {
-		zap.L().Error("read config file error:", zap.Error(err))
-		return
+// PowersInfoToMap converts a slice of AddrPower structs into a map where the key is the address
+// and the value is the corresponding AddrPower struct.
+func PowersInfoToMap(powers []model.AddrPower) map[string]model.AddrPower {
+	powerMap := make(map[string]model.AddrPower, len(powers))
+	for i := range powers {
+		powerMap[powers[i].Address] = powers[i]
 	}
 
-	err = viper.Unmarshal(&Client)
-	if err != nil {
-		zap.L().Error("unmarshal error:", zap.Error(err))
-		return
-	}
-
+	return powerMap
 }

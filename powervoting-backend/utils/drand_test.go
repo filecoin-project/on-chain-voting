@@ -17,23 +17,23 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
-	"powervoting-server/config"
 	"testing"
+
+	"go.uber.org/zap"
+
+	"powervoting-server/config"
 )
 
 func TestGetIpfsAndDecrypt(t *testing.T) {
 	config.InitConfig("../")
-	ipfs, err := GetIpfs("bafkreic2hs32eeortzls7utl5bu3yjxieb64k2q3afqn2l7enofeamvqjq")
-	if err != nil {
-		zap.L().Error("get ipfs error: ", zap.Error(err))
-		return
-	}
-	decrypt, err := Decrypt(ipfs)
+	decStr := "bafkreic2hs32eeortzls7utl5bu3yjxieb64k2q3afqn2l7enofeamvqjq"
+
+	decrypt, err := Decrypt(decStr)
 	if err != nil {
 		zap.L().Error("decrypt error: ", zap.Error(err))
 		return
 	}
+
 	fmt.Println("decrypt string: ", string(decrypt))
 	var mapData [][]string
 	err = json.Unmarshal(decrypt, &mapData)
@@ -41,16 +41,7 @@ func TestGetIpfsAndDecrypt(t *testing.T) {
 		zap.L().Error("unmarshal error：", zap.Error(err))
 		return
 	}
+	
 	fmt.Println("Map data: ", mapData)
 }
 
-func TestGetOptions(t *testing.T) {
-	config.InitConfig("../")
-	options, err := GetOptions("bafkreihmdncwpk2kgos7ddzhu2tznirmjhevukhmvonvtspkeomsgxvsty")
-	if err != nil {
-		zap.L().Error("get option error: ", zap.Error(err))
-		return
-	}
-	fmt.Println(options)
-	fmt.Println(len(options))
-}
