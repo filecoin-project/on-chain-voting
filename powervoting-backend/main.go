@@ -16,14 +16,16 @@ package main
 
 import (
 	"net/http"
-	"powervoting-server/client"
-	"powervoting-server/config"
-	"powervoting-server/db"
-	"powervoting-server/routers"
-	"powervoting-server/scheduler"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+
+	"powervoting-server/config"
+	"powervoting-server/data"
+	"powervoting-server/repo"
+	"powervoting-server/router"
+	"powervoting-server/service"
+	"powervoting-server/task"
 )
 
 func main() {
@@ -32,16 +34,22 @@ func main() {
 	// initialization logger
 	config.InitLogger()
 	// initialization mysql
-	db.InitMysql()
+	mydb := data.NewMysql()
 
-	client.InitW3Client()
+	proposalRepoImpl := repo.NewProposalRepo(mydb)
+	voteRepoImpl := repo.NewVoteRepo(mydb)
+	syncRepoImpl := repo.NewSyncRepo(mydb)
+
+	proposalService := service.NewProposalService(proposalRepoImpl)
+	voteService := service.NewVoteService(voteRepoImpl)
+	syncService := service.NewSyncService(syncRepoImpl, voteRepoImpl, proposalRepoImpl)
 	// initialization scheduled task
-	go scheduler.TaskScheduler()
+	go task.TaskScheduler(syncService)
 
 	// default gin web
 	r := gin.Default()
 	r.Use(Cors())
-	routers.InitRouters(r)
+	router.InitRouters(r, proposalService, voteService)
 	err := r.Run(config.Client.Server.Port)
 	if err != nil {
 		zap.L().Error("start web server failed: ", zap.Error(err))

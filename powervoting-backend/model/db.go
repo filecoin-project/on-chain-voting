@@ -12,35 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config
 
-import (
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
-)
+package model
 
-// export client
-var Client Config
+import "time"
 
-// InitConfig initializes the configuration by reading from a YAML file located at the specified path.
-func InitConfig(path string) {
-	// configuration file name
-	viper.SetConfigName("configuration")
-
-	viper.AddConfigPath(path)
-
-	viper.SetConfigType("yaml")
-
-	err := viper.ReadInConfig()
-	if err != nil {
-		zap.L().Error("read config file error:", zap.Error(err))
-		return
-	}
-
-	err = viper.Unmarshal(&Client)
-	if err != nil {
-		zap.L().Error("unmarshal error:", zap.Error(err))
-		return
-	}
-
+// BaseField is the base field for all database models
+type BaseField struct {
+	ID        int64    `gorm:"primary_key;auto_increment;column:id;not null" json:"id"`
+	CreatedAt time.Time `json:"created_at" gorm:"not null,autoUpdateTime"`
+	UpdatedAt time.Time `json:"updated_at" gorm:"not null,autoUpdateTime"`
 }

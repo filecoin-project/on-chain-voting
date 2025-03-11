@@ -15,52 +15,83 @@
 package task
 
 import (
-	"crypto/rand"
-	"math/big"
-	"powervoting-server/client"
-	"powervoting-server/config"
-	"powervoting-server/constant"
-	"powervoting-server/contract"
-	"powervoting-server/db"
-	"powervoting-server/model"
-	"powervoting-server/utils"
-	"strconv"
+	"context"
+	"fmt"
 	"sync"
-	"time"
 
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
+
+	"powervoting-server/config"
+	"powervoting-server/constant"
+	"powervoting-server/data"
+	"powervoting-server/model"
+	"powervoting-server/service"
+	"powervoting-server/snapshot"
+	"powervoting-server/utils"
 )
+
+type TotalPower struct {
+	spPower           decimal.Decimal
+	clientPower       decimal.Decimal
+	tokenPower        decimal.Decimal
+	developerPower    decimal.Decimal
+	totalPowerWeight  decimal.Decimal
+	approvePercentage decimal.Decimal
+	rejectPercentage  decimal.Decimal
+}
+
+var oneHundred = decimal.NewFromInt(100)
+
+type VoteCount struct {
+	EthClient   *model.GoEthClient
+	SyncService *service.SyncService
+}
 
 // VotingCountHandler initiates the voting count process.
 // It iterates through the network configurations and retrieves the Ethereum client for each network.
 // It then launches a goroutine to handle the voting count for each network.
 // Any errors encountered during the retrieval of the Ethereum client are logged.
-func VotingCountHandler() {
+func VotingCountHandler(syncService *service.SyncService) {
 	networkList := config.Client.Network
 	wg := sync.WaitGroup{}
 	errList := make([]error, 0, len(config.Client.Network))
 	mu := &sync.Mutex{}
 
-	taskStartTime := time.Now().Format("2006-01-02 15:04:05")
-	zap.L().Info("VotingCountHandler start time: ", zap.String("start time", taskStartTime))
-
 	for _, network := range networkList {
 		network := network
-		ethClient, err := contract.GetClient(network.Id)
+		ethClient, err := data.GetClient(syncService, network.ChainId)
 		if err != nil {
 			zap.L().Error("get go-eth client error:", zap.Error(err))
+			continue
+		}
+
+		voteCount := &VoteCount{
+			EthClient:   ethClient,
+			SyncService: syncService,
+		}
+
+		syncEventInfo, err := syncService.GetSyncEventInfo(context.Background(), network.PowerVotingContract)
+		if err != nil {
+			zap.L().Error("get sync event info error:", zap.Error(err))
 			continue
 		}
 
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := VotingCount(ethClient, db.Engine); err != nil {
+
+			if err := voteCount.voteCounting(syncEventInfo.SyncedHeight); err != nil {
 				mu.Lock()
 				errList = append(errList, err)
 				mu.Unlock()
 			}
+
+			zap.L().Info(
+				"voting count finished",
+				zap.String("network name", network.Name),
+				zap.Int64("network id", network.ChainId),
+			)
 		}()
 	}
 
@@ -68,263 +99,246 @@ func VotingCountHandler() {
 	if len(errList) != 0 {
 		zap.L().Error("vote count with err:", zap.Errors("errors", errList))
 	}
-
-	zap.L().Info("VotingCountHandler finished, start time: ", zap.String("start time", taskStartTime))
 }
 
-// bigIntDiv performs division operation on big integers and returns the result as a float64.
-// Parameters x and y are pointers to big integers representing the dividend and divisor respectively.
-// The return value z represents the division result as a float64.
-// If the divisor is zero, it returns 0 to avoid division by zero error.
-func bigIntDiv(x *big.Int, y *big.Int) decimal.Decimal {
-	xd := decimal.NewFromBigInt(x, 0)
-	yd := decimal.NewFromBigInt(y, 0)
-	if yd.IsZero() {
-		return decimal.Zero
-	}
-
-	// align precision
-	return xd.Div(yd).Round(5)
-}
-
-// VotingCount performs the vote counting process for proposals.
-// It retrieves the current timestamp from the blockchain or the local system in case of an error.
-// Then, it fetches the list of proposals from the database based on the provided Ethereum client ID and timestamp.
-// For each proposal, it synchronizes the votes from the blockchain, calculates the voting power, and aggregates the results.
-// Finally, it saves the voting history, vote results, and updates the status of the proposals in the database.
-func VotingCount(ethClient model.GoEthClient, db db.DataRepo) error {
-	now, err := utils.GetTimestamp(ethClient)
+// voteCounting is the main function that handles the voting count process.
+// It retrieves pending proposals and processes them concurrently.
+// Returns an error if any proposal processing fails.
+func (vc *VoteCount) voteCounting(syncedHeight int64) error {
+	syncedTimestamp, err := utils.GetBlockTime(vc.EthClient, syncedHeight)
 	if err != nil {
-		zap.L().Error("get timestamp on chain error: ", zap.Error(err))
-		now = time.Now().Unix()
-		return err
+		return fmt.Errorf("failed to get latest block timestamp: %w", err)
 	}
 
-	proposals, err := db.GetProposalList(ethClient.Id, now)
-	zap.L().Info("proposal list: ", zap.Reflect("proposals", proposals))
+	zap.L().Info("synced timestamp", zap.Int64("timestamp", syncedTimestamp))
+	// Get pending proposals
+	proposals, err := vc.SyncService.UncountedProposalList(context.Background(), vc.EthClient.ChainId, syncedTimestamp)
 	if err != nil {
-		zap.L().Error("get proposal from db error:", zap.Error(err))
-		return err
+		zap.L().Error("get pending proposals error:", zap.Error(err))
+		return fmt.Errorf("failed to get proposal list: %w", err)
 	}
 
-	for _, proposal := range proposals {
+	// Parallel handling of proposals
+	errList := make([]error, 0, len(proposals))
 
-		zap.L().Info("single vote counting, proposal: ", zap.Any("proposalId", proposal.ProposalId), zap.Reflect("proposal", proposal))
-		hasErr := false
-
-		err := SyncVote(ethClient, proposal.ProposalId, db)
-		if err != nil {
-			zap.L().Error("sync vote error:", zap.Any("proposalId", proposal.ProposalId), zap.Error(err))
+	for _, p := range proposals {
+		if err := vc.processCounting(vc.EthClient, p); err != nil {
+			errList = append(errList, fmt.Errorf("count voted failed: %w, proposal ID %d ", err, p.ProposalId))
 		}
-
-		voteInfos, err := db.GetVoteList(ethClient.Id, proposal.ProposalId)
-		if err != nil {
-			zap.L().Error("get vote info from db error:", zap.Any("proposalId", proposal.ProposalId), zap.Error(err))
-			continue
-		}
-
-		var voteList []model.Vote4Counting
-		zap.L().Info("voteInfos: ", zap.Any("proposalId", proposal.ProposalId), zap.Reflect("voteInfos", voteInfos))
-		for _, voteInfo := range voteInfos {
-			list, err := utils.DecodeVoteList(voteInfo)
-			if err != nil {
-				zap.L().Error("get vote info from IPFS or decrypt error: ", zap.Error(err))
-				hasErr = true
-				break
-			}
-			voteList = append(voteList, list...)
-		}
-
-		if hasErr {
-			zap.L().Info("single vote counting end : ", zap.Any("proposalId", proposal.ProposalId))
-			continue
-		}
-
-		zap.L().Info("voteList: ", zap.Any("proposalId", proposal.ProposalId), zap.Reflect("voteList", voteList))
-
-		num, err := rand.Int(rand.Reader, big.NewInt(61))
-		if err != nil {
-			zap.L().Error("Generate random number error: ", zap.Error(err))
-			zap.L().Info("single vote counting end : ", zap.Any("proposalId", proposal.ProposalId))
-			continue
-		}
-
-		var votePowerList []model.VotePower
-		// calc total power
-		totalSpPower := new(big.Int)
-		totalClientPower := new(big.Int)
-		totalTokenPower := new(big.Int)
-		totalDeveloperPower := new(big.Int)
-		powerMap := make(map[string]model.Power)
-		addressIsCount := make(map[string]bool)
-		for _, vote := range voteList {
-			power, err := client.GetAddressPower(ethClient.Id, vote.Address, int32(num.Int64()))
-			if err != nil {
-				zap.L().Error("get power error: ", zap.Error(err))
-				hasErr = true
-				break
-			}
-
-			zap.L().Info("address and power", zap.Reflect("address", vote.Address), zap.Reflect("power", power))
-			if !addressIsCount[vote.Address] {
-				powerMap[vote.Address] = power
-				totalSpPower.Add(totalSpPower, power.SpPower)
-				totalClientPower.Add(totalClientPower, power.ClientPower)
-				totalTokenPower.Add(totalTokenPower, power.TokenHolderPower)
-				totalDeveloperPower.Add(totalDeveloperPower, power.DeveloperPower)
-				addressIsCount[vote.Address] = true
-			}
-		}
-		if hasErr {
-			zap.L().Info("single vote counting end : ", zap.Any("proposalId", proposal.ProposalId))
-			continue
-		}
-
-		zap.L().Info("total data",
-			zap.String("totalSpPower", totalSpPower.String()),
-			zap.String("totalClientPower", totalClientPower.String()),
-			zap.String("totalTokenPower", totalTokenPower.String()),
-			zap.String("totalDeveloperPower", totalDeveloperPower.String()))
-
-		// vote counting
-		var result = make(map[int64]decimal.Decimal, 5) // max 5 options
-		var resultPercent = make(map[int64]float64, 5)
-		decimalOneHundred := decimal.NewFromFloat(100.0)
-
-		for _, vote := range voteList {
-			power := powerMap[vote.Address]
-			var votes decimal.Decimal
-			if vote.Votes != 0 {
-				var spPercent decimal.Decimal
-				var clientPercent decimal.Decimal
-				var tokenPercent decimal.Decimal
-				var developerPercent decimal.Decimal
-
-				// The vote consists of 4 parts,
-				// If any value of part is zero, it will not be included in the votePercent calculation
-				validOption := int64(0)
-				if totalSpPower.Cmp(big.NewInt(0)) != 0 {
-					spPercent = bigIntDiv(power.SpPower, totalSpPower)
-					validOption += 1
-				}
-				if totalClientPower.Cmp(big.NewInt(0)) != 0 {
-					clientPercent = bigIntDiv(power.ClientPower, totalClientPower)
-					validOption += 1
-				}
-				if totalTokenPower.Cmp(big.NewInt(0)) != 0 {
-					tokenPercent = bigIntDiv(power.TokenHolderPower, totalTokenPower)
-					validOption += 1
-				}
-				if totalDeveloperPower.Cmp(big.NewInt(0)) != 0 {
-					developerPercent = bigIntDiv(power.DeveloperPower, totalDeveloperPower)
-					validOption += 1
-				}
-
-				zap.L().Info("percent data",
-					zap.String("spPercent", spPercent.StringFixed(7)),
-					zap.String("clientPercent", clientPercent.StringFixed(7)),
-					zap.String("tokenPercent", tokenPercent.StringFixed(7)),
-					zap.String("developerPercent", developerPercent.StringFixed(7)))
-
-				if validOption == 0 {
-					votes = decimal.NewFromInt(0)
-				} else {
-					votes = spPercent.
-						Add(clientPercent).
-						Add(tokenPercent).
-						Add(developerPercent).
-						Div(decimal.NewFromInt(validOption))
-				}
-
-				votePower := model.VotePower{
-					HistoryId:               proposal.ProposalId,
-					Address:                 vote.Address,
-					OptionId:                vote.OptionId,
-					Votes:                   votes.Mul(decimalOneHundred).Round(2).InexactFloat64(),
-					SpPower:                 power.SpPower.String(),
-					ClientPower:             power.ClientPower.String(),
-					TokenHolderPower:        power.TokenHolderPower.String(),
-					DeveloperPower:          power.DeveloperPower.String(),
-					SpPowerPercent:          spPercent.Mul(decimalOneHundred).Round(2).InexactFloat64(),
-					ClientPowerPercent:      clientPercent.Mul(decimalOneHundred).Round(2).InexactFloat64(),
-					TokenHolderPowerPercent: tokenPercent.Mul(decimalOneHundred).Round(2).InexactFloat64(),
-					DeveloperPowerPercent:   developerPercent.Mul(decimalOneHundred).Round(2).InexactFloat64(),
-					PowerBlockHeight:        int64(power.BlockHeight.Uint64()),
-				}
-				votePowerList = append(votePowerList, votePower)
-			}
-			result[vote.OptionId] = result[vote.OptionId].Add(votes)
-		}
-
-		// Ensure totals add up to 100% , we need to add an offset = (1 - approveVotes - rejectVotes)
-		// And ensure that this operation does not disrupt the final result.
-		// it would be: if approveVotes > rejectVotes then approveVotes + offset > rejectVotes
-		// so:
-		// approveVotes > rejectVotes -> approveVotes + offset
-		// approveVotes == rejectVotes -> approveVotes = rejectVotes = 0.5
-		// approveVotes < rejectVotes -> rejectVotes + offset
-		if len(voteList) != 0 {
-			approveVotes := result[constant.VoteApprove]
-			rejectVotes := result[constant.VoteReject]
-			offset := decimal.NewFromFloat(1.0).Sub(approveVotes).Sub(rejectVotes)
-			if offset.IsPositive() && !offset.IsZero() {
-				if approveVotes.GreaterThan(rejectVotes) {
-					approveVotes = approveVotes.Add(offset)
-				} else if approveVotes.LessThan(rejectVotes) {
-					rejectVotes = rejectVotes.Add(offset)
-				} else {
-					approveVotes = decimal.NewFromFloat(0.5)
-					rejectVotes = decimal.NewFromFloat(0.5)
-				}
-
-				zap.L().Info("approve and reject",
-					zap.String("approve", approveVotes.StringFixed(5)),
-					zap.String("reject", rejectVotes.StringFixed(5)))
-			}
-			// round five decimal place to four decimal places and recalculate
-			if approveVotes.GreaterThan(rejectVotes) {
-				approveVotes = approveVotes.Round(4)
-				rejectVotes = decimal.NewFromFloat(1.0).Sub(approveVotes)
-			} else if approveVotes.LessThan(rejectVotes) {
-				rejectVotes = rejectVotes.Round(4)
-				approveVotes = decimal.NewFromFloat(1.0).Sub(rejectVotes)
-			}
-			resultPercent[constant.VoteApprove] = approveVotes.Mul(decimalOneHundred).InexactFloat64()
-			resultPercent[constant.VoteReject] = rejectVotes.Mul(decimalOneHundred).InexactFloat64()
-
-			zap.L().Info("result percent",
-				zap.Float64("approve", resultPercent[constant.VoteApprove]),
-				zap.Float64("reject", resultPercent[constant.VoteReject]))
-		}
-
-		voteHistory := model.VoteCompleteHistory{
-			ProposalId:            proposal.ProposalId,
-			Network:               proposal.Network,
-			TotalSpPower:          totalSpPower.String(),
-			TotalClientPower:      totalClientPower.String(),
-			TotalTokenHolderPower: totalTokenPower.String(),
-			TotalDeveloperPower:   totalDeveloperPower.String(),
-			VotePowers:            votePowerList,
-		}
-		var voteResultList []model.VoteResult
-		options, err := utils.GetOptions(proposal.Cid)
-		if err != nil {
-			zap.L().Error("get options error: ", zap.Error(err))
-			zap.L().Info("single vote counting end : ", zap.Any("proposalId", proposal.ProposalId))
-			continue
-		}
-		for i := 0; i < len(options); i++ {
-			voteResult := model.VoteResult{
-				ProposalId: proposal.ProposalId,
-				OptionId:   int64(i),
-				Votes:      resultPercent[int64(i)],
-				Network:    ethClient.Id,
-			}
-			voteResultList = append(voteResultList, voteResult)
-		}
-		// Save vote history and vote result to database and update status
-		zap.L().Info("save vote history and vote result", zap.String("proposal id", strconv.FormatInt(proposal.Id, 10)))
-		db.VoteResult(proposal.Id, voteHistory, voteResultList)
 	}
+
+	if len(errList) > 0 {
+		return fmt.Errorf("completed processing but encountered %d error: %+v", len(errList), errList)
+	}
+
 	return nil
+}
+
+// processCounting handles the vote counting for a single proposal.
+// It retrieves all uncounted votes for the proposal, calculates the total voting power,
+// processes individual votes, and persists the results to the database.
+//
+// Parameters:
+//   - ethClient: The Ethereum client used to interact with the blockchain.
+//   - proposal: The proposal for which votes are being counted.
+//
+// Returns:
+//   - error: An error if any step in the process fails; otherwise, nil.
+func (vc *VoteCount) processCounting(ethClient *model.GoEthClient, proposal model.ProposalTbl) error {
+	// Retrieve all uncounted votes for the proposal
+	votesInfo, err := vc.SyncService.GetUncountedVotedList(context.Background(), ethClient.ChainId, proposal.ProposalId)
+	if err != nil {
+		return fmt.Errorf("get vote info for proposal %d: %w", proposal.ProposalId, err)
+	}
+
+	// Retrieve the snapshot of voting power for all addresses at the specified block height
+	allPowers, err := snapshot.GetAllAddressPowerByDay(ethClient.ChainId, proposal.SnapshotDay)
+	if err != nil {
+		return fmt.Errorf("get address power for proposal %d: %w", proposal.ProposalId, err)
+	}
+
+	// Convert the address power information to a map for quick lookup
+	powersMap := utils.PowersInfoToMap(allPowers.AddrPower)
+
+	// Calculate the total voting power and update the vote list with weights
+	totalPower, voteList := vc.calculateVoteWeight(proposal.ProposalId, powersMap, votesInfo, proposal.Percentage, ethClient.ChainId)
+	zap.L().Info("total power calculated",
+		zap.String("sp power", totalPower.spPower.String()),
+		zap.String("client power", totalPower.clientPower.String()),
+		zap.String("token power", totalPower.tokenPower.String()),
+		zap.String("developer power", totalPower.developerPower.String()))
+
+	// Calculate the final approval and rejection percentages
+	resultPercent := vc.calculateFinalPercentages(totalPower.approvePercentage, totalPower.rejectPercentage, len(voteList))
+	zap.L().Info("Final percentages",
+		zap.Int64("proposal ID", proposal.ProposalId),
+		zap.Float64(constant.VoteApprove, resultPercent[constant.VoteApprove]),
+		zap.Float64(constant.VoteReject, resultPercent[constant.VoteReject]))
+
+	// Update the proposal with the calculated results
+	proposal.Counted = constant.ProposalCounted
+	proposal.ProposalResult.ApprovePercentage = resultPercent[constant.VoteApprove]
+	proposal.ProposalResult.RejectPercentage = resultPercent[constant.VoteReject]
+	proposal.TotalSpPower = totalPower.spPower.String()
+	proposal.TotalClientPower = totalPower.clientPower.String()
+	proposal.TotalTokenHolderPower = totalPower.tokenPower.String()
+	proposal.TotalDeveloperPower = totalPower.developerPower.String()
+
+	// Persist the updated proposal to the database
+	if err := vc.SyncService.UpdateProposal(context.Background(), &proposal); err != nil {
+		return fmt.Errorf("update proposal %d: %w", proposal.ProposalId, err)
+	}
+	zap.L().Info(
+		"Proposal voted completed",
+		zap.Int64("proposal ID", proposal.ProposalId),
+		zap.Any("result", proposal.ProposalResult),
+	)
+
+	// Batch update the vote records in the database
+	if err := vc.SyncService.BatchUpdateVotes(context.Background(), voteList); err != nil {
+		return fmt.Errorf("batch update vote: %w", err)
+	}
+	zap.L().Info("Batch update vote completed", zap.Any("vote power number", len(voteList)))
+
+	return nil
+}
+
+// calculateVoteWeight calculates the voting weight and percentages for a given proposal.
+// It aggregates the voting power of all participants and computes the approval and rejection percentages.
+//
+// Parameters:
+//   - proposalId: The ID of the proposal being calculated.
+//   - voteInfos: A list of vote records for the proposal.
+//   - proposalPercentage: The percentage distribution of voting power among different roles.
+//   - chainId: The chain ID associated with the proposal.
+//   - snapshotBlockHeight: The block height at which the snapshot of voting power was taken.
+//
+// Returns:
+//   - *TotalPower: A struct containing the total voting power and calculated percentages.
+//   - []model.VoteTbl: A list of updated vote records with calculated voting weights.
+func (vc *VoteCount) calculateVoteWeight(proposalId int64, powersMap map[string]model.AddrPower, voteInfos []model.VoteTbl, proposalPercentage model.Percentage, chainId int64) (*TotalPower, []model.VoteTbl) {
+	// Initialize the total power struct with zero values
+	totalPower := &TotalPower{
+		spPower:          decimal.Zero,
+		clientPower:      decimal.Zero,
+		tokenPower:       decimal.Zero,
+		developerPower:   decimal.Zero,
+		totalPowerWeight: decimal.Zero,
+	}
+
+	var (
+		voteResultMap = make(map[string]decimal.Decimal) // Map to store vote results and their percentages
+		voteList      []model.VoteTbl                    // List to store updated vote records
+	)
+
+	// Iterate over each vote record
+	for _, voteInfo := range voteInfos {
+		// Retrieve the voting power for the current address
+		power, exists := powersMap[voteInfo.Address]
+		if !exists {
+			zap.L().Error(
+				"address power not found",
+				zap.String("address", voteInfo.Address),
+				zap.Int64("chainId", chainId),
+				zap.Int64("proposalId", voteInfo.ProposalId),
+			)
+			continue
+		}
+
+		// Accumulate the total voting power for each role
+		totalPower.spPower = totalPower.spPower.Add(decimal.NewFromBigInt(power.SpPower, 0))
+		totalPower.clientPower = totalPower.clientPower.Add(decimal.NewFromBigInt(power.ClientPower, 0))
+		totalPower.tokenPower = totalPower.tokenPower.Add(decimal.NewFromBigInt(power.TokenHolderPower, 0))
+		totalPower.developerPower = totalPower.developerPower.Add(decimal.NewFromBigInt(power.DeveloperPower, 0))
+
+		// Decode the encrypted vote result
+		voteResult, err := utils.DecodeVoteResult(voteInfo.VoteEncrypted)
+		if err != nil {
+			zap.L().Error("Decode vote info error", zap.Error(err))
+			continue
+		}
+
+		// Calculate the vote percentage based on the voting power and proposal percentage distribution
+		vote, votePercentage := vc.calculateVotePercentage(power, proposalPercentage)
+		voteResultMap[voteResult] = voteResultMap[voteResult].Add(votePercentage)
+
+		// Update the vote record with the calculated values
+		vote.ProposalId = proposalId
+		vote.Address = voteInfo.Address
+		vote.VoteResult = voteResult
+		voteList = append(voteList, vote)
+	}
+
+	// Calculate the weighted voting power for each role
+	spPowerWeight := totalPower.spPower.Mul(decimal.NewFromInt(int64(proposalPercentage.SpPercentage)))
+	clientPowerWeight := totalPower.clientPower.Mul(decimal.NewFromInt(int64(proposalPercentage.ClientPercentage)))
+	tokenPowerWeight := totalPower.tokenPower.Mul(decimal.NewFromInt(int64(proposalPercentage.TokenHolderPercentage)))
+	developerPowerWeight := totalPower.developerPower.Mul(decimal.NewFromInt(int64(proposalPercentage.DeveloperPercentage)))
+
+	// Calculate the total weighted voting power
+	totalPower.totalPowerWeight = spPowerWeight.Add(clientPowerWeight).Add(tokenPowerWeight).Add(developerPowerWeight)
+
+	// Calculate the approval and rejection percentages
+	totalPower.approvePercentage = voteResultMap[constant.VoteApprove].Div(totalPower.totalPowerWeight).Mul(oneHundred)
+	totalPower.rejectPercentage = voteResultMap[constant.VoteReject].Div(totalPower.totalPowerWeight).Mul(oneHundred)
+
+	// Log the calculated percentages
+	zap.L().Info(
+		"calculate proposal voted percentage",
+		zap.Int64("proposalId", proposalId),
+		zap.String("approvePercentage", totalPower.approvePercentage.String()),
+		zap.String("rejectPercentage", totalPower.rejectPercentage.String()),
+	)
+
+	return totalPower, voteList
+}
+
+// calculateVotePercentage calculates the contribution of a single vote.
+// It considers the voter's power distribution across different dimensions
+// and applies the configured weight percentages.
+func (vc *VoteCount) calculateVotePercentage(power model.AddrPower, proposalPercentage model.Percentage) (model.VoteTbl, decimal.Decimal) {
+	// power * percentage
+	spPowerWeight := decimal.NewFromBigInt(power.SpPower, 0).Mul(decimal.NewFromInt(int64(proposalPercentage.SpPercentage)))
+	clientPowerWeight := decimal.NewFromBigInt(power.ClientPower, 0).Mul(decimal.NewFromInt(int64(proposalPercentage.ClientPercentage)))
+	tokenPowerWeight := decimal.NewFromBigInt(power.TokenHolderPower, 0).Mul(decimal.NewFromInt(int64(proposalPercentage.TokenHolderPercentage)))
+	developerPowerWeight := decimal.NewFromBigInt(power.DeveloperPower, 0).Mul(decimal.NewFromInt(int64(proposalPercentage.DeveloperPercentage)))
+
+	voterPowerWeight := spPowerWeight.Add(clientPowerWeight).Add(tokenPowerWeight).Add(developerPowerWeight)
+
+	return model.VoteTbl{
+		SpPower:          power.SpPower.String(),
+		ClientPower:      power.ClientPower.String(),
+		TokenHolderPower: power.TokenHolderPower.String(),
+		DeveloperPower:   power.DeveloperPower.String(),
+	}, voterPowerWeight
+}
+
+// calculateFinalPercentages calculates the final voting percentages and handles precision.
+// It ensures the total percentage adds up to 100% by distributing any remainder.
+func (vc *VoteCount) calculateFinalPercentages(approve, reject decimal.Decimal, totalVotes int) map[string]float64 {
+	if totalVotes == 0 {
+		return map[string]float64{
+			constant.VoteApprove: 0,
+			constant.VoteReject:  0,
+		}
+	}
+
+	offset := decimal.NewFromInt(1).Sub(approve).Sub(reject)
+
+	// Process remainder allocation
+	switch {
+	case approve.GreaterThan(reject):
+		approve = approve.Add(offset)
+	case reject.GreaterThan(approve):
+		reject = reject.Add(offset)
+	default:
+		approve = decimal.NewFromFloat(0.5)
+		reject = decimal.NewFromFloat(0.5)
+	}
+
+	// Rounding process
+	return map[string]float64{
+		constant.VoteApprove: approve.Mul(oneHundred).Round(2).InexactFloat64(),
+		constant.VoteReject:  reject.Mul(oneHundred).Round(2).InexactFloat64(),
+	}
 }

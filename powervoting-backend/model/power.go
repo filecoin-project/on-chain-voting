@@ -14,7 +14,11 @@
 
 package model
 
-import "math/big"
+import (
+	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
+)
 
 // Power represents the power information.
 type Power struct {
@@ -25,17 +29,31 @@ type Power struct {
 	BlockHeight      *big.Int `json:"blockHeight"`      // Block height
 }
 
-// ContractPower represents the contract power information.
-type ContractPower struct {
-	DeveloperPower   *big.Int `json:"developerPower"`   // Developer power
-	SpPower          [][]byte `json:"spPower"`          // SP power
-	ClientPower      [][]byte `json:"clientPower"`      // Client power
-	TokenHolderPower *big.Int `json:"tokenHolderPower"` // Token holder power
-	BlockHeight      *big.Int `json:"blockHeight"`      // Block height
+type VoterInfo struct {
+	ActorIds      interface{}    `json:"actorIds"`      // Actor IDs
+	MinerIds      interface{}    `json:"minerIds"`      // Miner IDs
+	GithubAccount string         `json:"githubAccount"` // Github account name
+	EthAddress    common.Address `json:"ethAddress"`    // Ethereum address
 }
 
-// VoterToPowerStatus represents the voter's power status.
-type VoterToPowerStatus struct {
-	DayId        *big.Int `json:"dayId"`        // Day ID
-	HasFullRound *big.Int `json:"hasFullRound"` // Has full round
+type AddrPower struct {
+	Address          string   `json:"address"`
+	DateStr          string   `json:"dateStr"`
+	GithubAccount    string   `json:"githubAccount"`    // Github account name
+	DeveloperPower   *big.Int `json:"developerPower"`   // Developer power
+	SpPower          *big.Int `json:"spPower"`          // SP power
+	ClientPower      *big.Int `json:"clientPower"`      // Client power
+	TokenHolderPower *big.Int `json:"tokenHolderPower"` // Token holder power
+	BlockHeight      int64    `json:"blockHeight"`      // Block height
+}
+
+// All computing power data structures obtained from snapshot service
+type SnapshotAllPower struct {
+	AddrPower []AddrPower `json:"addrPower"`
+	DevPower  any         `json:"devPower"`
+}
+
+type SnapshotHeight struct {
+	Height int64  `json:"height"`
+	Day    string `json:"day"`
 }

@@ -12,35 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config
+package api
 
 import (
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
+	"powervoting-server/constant"
+	"powervoting-server/model/api"
+	"powervoting-server/service"
 )
 
-// export client
-var Client Config
+type VoteHandler struct {
+	voteServer service.IVoteService
+}
 
-// InitConfig initializes the configuration by reading from a YAML file located at the specified path.
-func InitConfig(path string) {
-	// configuration file name
-	viper.SetConfigName("configuration")
+func NewVoteHandler(ps service.IVoteService) *VoteHandler {
+	return &VoteHandler{
+		voteServer: ps,
+	}
+}
 
-	viper.AddConfigPath(path)
-
-	viper.SetConfigType("yaml")
-
-	err := viper.ReadInConfig()
-	if err != nil {
-		zap.L().Error("read config file error:", zap.Error(err))
+// GetCountedVotesInfo returns the counted votes info
+func (h *VoteHandler) GetCountedVotesInfo(c *constant.Context) {
+	var req api.ProposalReq
+	if err := c.BindAndValidate(&req); err != nil {
+		ParamError(c.Context)
 		return
 	}
 
-	err = viper.Unmarshal(&Client)
+	res, err := h.voteServer.GetCountedVotedList(c.Request.Context(), req.ChainId, req.ProposalId)
 	if err != nil {
-		zap.L().Error("unmarshal error:", zap.Error(err))
+		SystemError(c.Context)
 		return
 	}
 
+	SuccessWithData(c.Context, res)
 }
