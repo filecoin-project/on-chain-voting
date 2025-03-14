@@ -286,7 +286,7 @@ const Home = () => {
                           ((maxOption.count === 50 && option.name === VOTE_OPTIONS[1]) || (maxOption.count > 50 && option.count > 0 && option.count === maxOption.count)) &&
                           <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-sm">
                             <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
-                              strokeWidth="2" d="m5 13l4 4L19 7" />
+                                  strokeWidth="2" d="m5 13l4 4L19 7" />
                           </svg>
                         }
                         {option.name == VOTE_OPTIONS[0] ? t('content.approve') : t('content.rejected')}

@@ -13,16 +13,3 @@
 [submodule "power-oracle-contracts/lib/filecoin-solidity"]
 	path = power-oracle-contracts/lib/filecoin-solidity
 	url = https://github.com/filecoin-project/filecoin-solidity
-
-[submodule "powervoting-contracts/lib/openzeppelin-contracts"]
-	path = powervoting-contracts/lib/openzeppelin-contracts
-	url = https://github.com/OpenZeppelin/openzeppelin-contracts
-[submodule "powervoting-contracts/lib/openzeppelin-contracts-upgradeable"]
-	path = powervoting-contracts/lib/openzeppelin-contracts-upgradeable
-	url = https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable
-[submodule "powervoting-contracts/lib/solidity-cborutils"]
-	path = powervoting-contracts/lib/solidity-cborutils
-	url = https://github.com/smartcontractkit/solidity-cborutils
-[submodule "powervoting-contracts/lib/forge-std"]
-	path = powervoting-contracts/lib/forge-std
-	url = https://github.com/foundry-rs/forge-std

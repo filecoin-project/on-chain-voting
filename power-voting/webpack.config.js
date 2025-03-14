@@ -4,7 +4,6 @@ const { DefinePlugin, ProvidePlugin, ProgressPlugin } = require('webpack');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const dotenv = require('dotenv');
-const TerserPlugin = require('terser-webpack-plugin');
 
 // Load different configuration files based on the NODE_ENV environment variable
 const envFile = process.env.NODE_ENV === 'production' ? '.env.example' : '.env';

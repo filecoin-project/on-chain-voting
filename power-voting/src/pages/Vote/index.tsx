@@ -280,7 +280,7 @@ const Vote = () => {
               <Link to="/home" className="flex items-center">
                 <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
                   <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                    d="m11 17l-5-5m0 0l5-5m-5 5h12"></path>
+                        d="m11 17l-5-5m0 0l5-5m-5 5h12"></path>
                 </svg>
                 {t('content.back')}
               </Link>
@@ -393,7 +393,7 @@ const Vote = () => {
                             selectedOptionIndex === index &&
                             <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-md text-[#0190FF]">
                               <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
-                                strokeWidth="2" d="m5 13l4 4L19 7" />
+                                    strokeWidth="2" d="m5 13l4 4L19 7" />
                             </svg>
                           }
                         </div>
