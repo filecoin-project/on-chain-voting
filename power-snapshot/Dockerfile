@@ -14,6 +14,7 @@ WORKDIR /build
 COPY . .
 
 # go build
+RUN go mod tidy
 RUN go build -o app .
 
 # move to /dist
