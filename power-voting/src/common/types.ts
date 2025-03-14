@@ -28,13 +28,29 @@ export interface ProposalOption {
 export interface ProposalResult {
   id: number
   proposalId: number
-  optionId: number
   optionName?: string
-  votes: number
+  votes: number,
+  vote_result: string,
 }
 
-export interface ProposalHistory extends ProposalResult {
-  address: string
+export interface ProposalVotes extends ProposalResult {
+  voterAddress: string,
+  votedResult: string,
+  blockHeight: string,
+  percentage: string,
+  clientPower: string,
+  developerPower: string,
+  tokenHolderPower: string,
+  spPower: string,
+  votedTime: string,
+  totalSpPower: string,
+  totalClientPower: string,
+  totalDeveloperPower: string,
+  totalTokenHolderPower: string,
+  spPowerPercent: number,
+  clientPowerPercent: number,
+  developerPowerPercent: number,
+  tokenHolderPowerPercent: number
 }
 
 export interface ProposalData {
@@ -50,49 +66,63 @@ export interface ProposalData {
 
 export interface ProposalList extends ProposalData {
   option: ProposalOption[]
-  name: string
+  title: string
   address: string
   githubName: string
   currentTime: number
   githubAvatar: string
-  descriptions: string
+  content: string
   proposalStatus: number
   showTime: string
   GMTOffset: string[]
   voteStatus?: number
-  subStatus: number
+  subStatus: number,
+  endTime: number,
+  startTime: number,
+  snapshotInfo: {
+    snapshotHeight: number,
+    snapshotDay: string
+  }
 }
 
 export interface ProposalDraft {
   timezone: string
   Time: string
-  name: string
-  descriptions: string
-  Option: string
-  Address: string
-  ChainId: number,
-  startTime:number,
+  title: string
+  content: string
+  chainId: number,
+  startTime: number,
+  endTime: number,
+  spPercentage: number,
+  clientPercentage: number,
+  developerPercentage: number,
+  tokenHolderPercentage: number
 }
-export interface VotingList{
-  proposalId: number, 
-  cid: string, 
-  address: string, 
-  startTime: number, 
-  expTime: number, 
-  chainId: number, 
-  name: string, 
-  timezone: string, 
-  descriptions: string, 
-  githubName: string, 
-  githubAvatar: string, 
-  gmtOffset: string, 
-  currentTime: number, 
-  createdAt: number, 
-  updatedAt: number, 
-  voteResult: Array<any>, 
-  time: Array<any>, 
-  option: Array<string>, 
-  showTime: Array<any>, 
-  status: number, 
-  voteCount: number 
+export interface VotingList {
+  proposalId: number,
+  cid: string,
+  address: string,
+  startTime: number,
+  endTime: number,
+  chainId: number,
+  title: string,
+  timezone: string,
+  content: string,
+  githubName: string,
+  githubAvatar: string,
+  gmtOffset: string,
+  height: number,
+  createdAt: number,
+  updatedAt: number,
+  voteResult: Array<any>,
+  time: Array<any>,
+  option: Array<string>,
+  showTime: Array<any>,
+  status: number,
+  voteCount: number,
+  voteCountDay: string
+  votePercentage: {
+    approve: number,
+    reject: number
+  }
 }

@@ -17,33 +17,25 @@ import {
   ConnectButton,
   useConnectModal,
 } from "@rainbow-me/rainbowkit";
-import { Dropdown, Input, Modal, message } from 'antd';
-import axios from "axios";
+import { Dropdown, Input, Modal } from 'antd';
 import 'dayjs/locale/zh-cn';
 import React, { useEffect, useRef, useState } from "react";
 import Countdown from 'react-countdown';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "tailwindcss/tailwind.css";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount } from "wagmi";
 import timezones from '../../public/json/timezons.json';
 import {
   calibrationChainId,
-  STORING_DATA_MSG,
-  STORING_FAILED_MSG,
-  STORING_SUCCESS_MSG,
-  VOTE_ALL_STATUS
+  STORING_DATA_MSG
 } from "../common/consts";
-import { useCheckFipEditorAddress, useVoterAddress, useVoterInfoSet } from "../common/hooks";
+import { useCheckFipEditorAddress, useVoterInfoSet } from "../common/hooks";
 import {
   useCurrentTimezone,
-  useProposalStatus,
-  useStoringHash,
-  useVoterInfo,
-  useVotingList
+  useSearchValue,
+  useVoterInfo
 } from "../common/store";
-import fileCoinAbi from "../common/abi/power-voting.json";
-import { getContractAddress } from "../utils";
 import "../common/styles/reset.less";
 import '../lang/config';
 
@@ -54,7 +46,6 @@ const Header = (props: any) => {
   const chainId = chain?.id || calibrationChainId;
   const prevAddressRef = useRef(address);
   const { openConnectModal } = useConnectModal();
-  const [messageApi, contextHolder] = message.useMessage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -62,7 +53,7 @@ const Header = (props: any) => {
   const [expirationTime, setExpirationTime] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [isFocus, setIsFocus] = useState<boolean>(false); // Determine whether the mouse has clicked on the search box
-  const [searchValue, setSearchValue] = useState<string>(); // Stores the value of the search box
+  // const [searchValue, setSearchValue] = useState<string>(); // Stores the value of the search box
   // Get the user's timezone
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const text = timezones.find((item: any) => item.value === timezone)?.text;
@@ -76,50 +67,20 @@ const Header = (props: any) => {
 
   const { isFipEditorAddress } = useCheckFipEditorAddress(chainId, address);
 
-  const { data: hash, writeContract, isSuccess } = useWriteContract();
-  const { voterAddress, voterAddressSuccess } = useVoterAddress(chainId);
 
   // Update voter information in state
   const setVoterInfo = useVoterInfo((state: any) => state.setVoterInfo);
-  const setVotingList = useVotingList((state: any) => state.setVotingList);
+  const searchValue = useSearchValue((state: any) => state.searchValue);
+  const setSearchValue = useSearchValue((state: any) => state.setSearchValue);
 
-  const storingHash = useStoringHash((state: any) => state.storingHash);
-  const addStoringHash = useStoringHash((state: any) => state.addStoringHash);
-  const setStoringHash = useStoringHash((state: any) => state.setStoringHash);
 
   // Update current timezone in state
   const setTimezone = useCurrentTimezone((state: any) => state.setTimezone);
-  const status = useProposalStatus((state: any) => state.status);
 
   const { pathname } = useLocation();
   const { t } = useTranslation();
 
-  const f4TaskHash = storingHash?.find((item: any) => item.address === address);
-  const { isFetched, isSuccess: isF4TaskSuccess, isError } = useWaitForTransactionReceipt({
-    hash: f4TaskHash
-  });
 
-  useEffect(() => {
-    if (isFetched) {
-      // If data is fetched, remove the target item from storingHash array
-      const filterHash = storingHash.filter((item: any) => item.address !== address);
-      setStoringHash(filterHash);
-      // If the transaction is successful, show a success message
-      if (isF4TaskSuccess) {
-        messageApi.open({
-          type: 'success',
-          content: t(STORING_SUCCESS_MSG)
-        });
-      }
-      // If the transaction fails, show an error message
-      if (isError) {
-        messageApi.open({
-          type: 'error',
-          content: t(STORING_FAILED_MSG)
-        })
-      }
-    }
-  }, [isFetched]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -158,43 +119,39 @@ const Header = (props: any) => {
       return;
     }
 
-    // Retrieve ucanStorageData from localStorage
-    const ucanStorageData = JSON.parse(localStorage.getItem('ucanStorage') || '[]');
-    const ucanIndex = ucanStorageData?.findIndex((item: any) => item.address === address);
+    // Retrieve gistStorageData from localStorage
+    const gistStorageData = JSON.parse(localStorage.getItem('gistStorage') || '[]');
+    const gistIndex = gistStorageData?.findIndex((item: any) => item.address === address);
 
-    if (ucanIndex > -1) {
-      if (Date.now() < ucanStorageData[ucanIndex].timestamp) {
+    if (gistIndex > -1) {
+      if (Date.now() < gistStorageData[gistIndex].timestamp) {
         setModalOpen(true);
-        setExpirationTime(ucanStorageData[ucanIndex].timestamp);
+        setExpirationTime(gistStorageData[gistIndex].timestamp);
         // Data has not expired
         return;
       } else {
         // Data has expired
         setExpirationTime(0);
-        ucanStorageData?.splice(ucanIndex, 1);
-        localStorage.setItem('ucanStorage', JSON.stringify(ucanStorageData));
+        gistStorageData?.splice(gistIndex, 1);
+        localStorage.setItem('gistStorage', JSON.stringify(gistStorageData));
       }
     }
 
     if (!voterInfo) {
-      navigate('/ucanDelegate/add');
+      navigate('/gistDelegate/add');
       return
     }
     // Determine if the user has a GitHub account
-    const isGithubType = !!voterInfo[0];
+    // const isGithubType = !!voterInfo[0];
+    const isGithubType = true; //only display github
     if (voterInfo[2]) {
-      // Fetch data from IPFS using voter's identifier
-      const { data } = await axios.get(`https://${voterInfo[2]}.ipfs.w3s.link/`);
       if (isGithubType) {
         // Process GitHub data and navigate to appropriate page
-        const regex = /\/([^/]+)\/([^/]+)\/git\/blobs\/(\w+)/;
-        const result = data.match(regex);
-        const aud = result[1];
-        navigate('/ucanDelegate/delete', {
+        navigate('/gistDelegate/delete', {
           state: {
             params: {
               isGithubType,
-              aud,
+              // aud,
               prf: ''
             }
           }
@@ -202,22 +159,22 @@ const Header = (props: any) => {
       }
       else {
         // Process non-GitHub data and navigate to appropriate page
-        const decodeString = atob(data.split('.')[1]);
-        const payload = JSON.parse(decodeString);
-        const { aud, prf } = payload;
-        navigate('/ucanDelegate/delete', {
+        // const decodeString = atob(data.split('.')[1]);
+        // const payload = JSON.parse(decodeString);
+        // const { aud, prf } = payload;
+        navigate('/gistDelegate/delete', {
           state: {
             params: {
               isGithubType,
-              aud,
-              prf
+              // aud,
+              // prf
             }
           }
         });
       }
     } else {
       // Navigate to add delegate page if no voter information is available
-      navigate('/ucanDelegate/add');
+      navigate('/gistDelegate/add');
     }
   }
 
@@ -231,12 +188,12 @@ const Header = (props: any) => {
 
   const items: any = [
     {
-      key: 'ucan',
+      key: 'github',
       label: (
         <a
           onClick={handleDelegate}
         >
-          {t('content.UCANDelegates')}
+          {t('content.GithubDelegates')}
         </a>
       ),
     },
@@ -247,6 +204,16 @@ const Header = (props: any) => {
           onClick={() => { handleJump('/minerid') }}
         >
           {t('content.minerIDsManagement')}
+        </a>
+      ),
+    },
+    {
+      key: 'fipEditorList',
+      label: (
+        <a
+          onClick={() => { handleJump('/fip-editor/fipEditorList') }}
+        >
+          {t('content.fipEditorList')}
         </a>
       ),
     },
@@ -263,7 +230,7 @@ const Header = (props: any) => {
             <a
               onClick={() => { handleJump('/fip-editor/propose') }}
             >
-              {t('content.propose')}
+              {t('content.createProposals')}
             </a>
           ),
         },
@@ -273,7 +240,7 @@ const Header = (props: any) => {
             <a
               onClick={() => { handleJump('/fip-editor/approve') }}
             >
-              {t('content.approve')}
+              {t('content.approveList')}
             </a>
           ),
         },
@@ -283,7 +250,7 @@ const Header = (props: any) => {
             <a
               onClick={() => { handleJump('/fip-editor/revoke') }}
             >
-              {t('content.revoke')}
+              {t('content.revokeList')}
             </a>
           ),
         },
@@ -300,58 +267,14 @@ const Header = (props: any) => {
   const changeLanguage = (value: string) => {
     changeLang(value);
   };
-  const searchKey = async (value?: string) => {
-    const params = {
-      chainId,
-      page: 1,
-      pageSize: 5,
-      searchKey: value?.trim(),
-      status: status === VOTE_ALL_STATUS ? 0 : status
-    }
-    const { data: { data: votingData } } = await axios.get('/api/proposal/list', { params });
-    setVotingList({ votingList: votingData?.list || [], totalPage: votingData?.total || 0, searchKey: value });
-  }
-
   useEffect(() => {
-    if(!chain) return
+    if (!chain || !isConnected) return
     setSearchValue('');
-    searchKey();
   }, [chain]);
 
-  useEffect(() => {
-    if (!isConnected) {
-      searchKey();
-    }
-  }, [isConnected]);
-
-  useEffect(() => {
-    if (isConnected && voterAddressSuccess && voterAddress) {
-      if (!voterAddress.includes(address) && !f4TaskHash) {
-        writeContract({
-          abi: fileCoinAbi,
-          address: getContractAddress(chainId, 'powerVoting'),
-          functionName: 'addF4Task',
-        });
-      }
-    }
-  }, [voterAddressSuccess]);
-
-  useEffect(() => {
-    if (isSuccess) {
-      messageApi.open({
-        type: 'success',
-        content: t(STORING_DATA_MSG),
-      });
-      addStoringHash([{
-        address,
-        hash,
-      }]);
-    }
-  }, [isSuccess])
 
   return (
     <>
-      {contextHolder}
       <header className='h-[96px] bg-[#ffffff] border-b border-solid border-[#DFDFDF]'>
         <div className='w-full h-[88px] flex items-center' style={{ justifyContent: "space-evenly" }}>
           <div className='flex items-center'>
@@ -373,11 +296,11 @@ const Header = (props: any) => {
                 <Input
                   placeholder={t('content.searchProposals')}
                   size="large"
-                  prefix={<SearchOutlined onClick={() => searchKey(searchValue)} className={`${isFocus ? "text-[#1677ff]" : "text-[#8b949e]"} text-xl hover:text-[#1677ff]`} />}
+                  prefix={<SearchOutlined onClick={() => setSearchValue(searchValue)} className={`${isFocus ? "text-[#1677ff]" : "text-[#8b949e]"} text-xl hover:text-[#1677ff]`} />}
                   onClick={() => setIsFocus(true)}
                   onBlur={() => setIsFocus(false)}
                   onChange={(e) => setSearchValue(e.currentTarget.value)}
-                  onPressEnter={() => searchKey(searchValue)}
+                  onPressEnter={() => setSearchValue(searchValue)}
                   value={searchValue}
                   className={`${isFocus ? 'w-[270px]' : "w-[180px]"} font-medium text-base item-center text-slate-800 bg-[#f7f7f7] rounded-lg`}
                 />
@@ -400,7 +323,7 @@ const Header = (props: any) => {
               </button>
             </Dropdown>
             <div className="connect flex items-center">
-              <ConnectButton showBalance={false} label={t('content.connectWallet')}/>
+              <ConnectButton showBalance={false} label={t('content.connectWallet')} />
               <div className='px-4 py-2 h-full flex flex-nowrap text-sm'>
                 {languageOptions.map((item) => {
                   return (

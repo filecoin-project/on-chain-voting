@@ -22,7 +22,7 @@ import { full as emoji } from 'markdown-it-emoji';
 // @ts-ignore
 import footnote from 'markdown-it-footnote';
 // @ts-ignore
-import mdKatex from '@iktakahiro/markdown-it-katex';
+// import mdKatex from '@iktakahiro/markdown-it-katex';
 // @ts-ignore
 import subscript from 'markdown-it-sub';
 // @ts-ignore
@@ -62,7 +62,7 @@ const mdParser = markdownIt({
   linkify: true,
   typographer: true,
 })
-  .use(mdKatex)
+  // .use(mdKatex)
   .use(emoji)
   .use(footnote)
   .use(subscript)

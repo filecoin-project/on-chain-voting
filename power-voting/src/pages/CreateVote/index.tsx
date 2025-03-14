@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { DatePicker, message } from "antd";
+import { DatePicker, InputNumber, message } from "antd";
 import axios from 'axios';
 import classNames from 'classnames';
 import dayjs from "dayjs";
@@ -24,35 +24,34 @@ import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from "react-router-dom";
 import { ProposalDraft } from "src/common/types";
+import { UserRejectedRequestError } from "viem";
 import type { BaseError } from "wagmi";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
-import timezoneOption from '../../../public/json/timezons.json';
 import fileCoinAbi from "../../common/abi/power-voting.json";
+
+import CreateTable from "src/components/CreateTable";
+import timezoneOption from '../../../public/json/timezons.json';
 import {
+  calibrationChainId,
   DEFAULT_TIMEZONE,
+  githubApi,
   NOT_FIP_EDITOR_MSG,
+  proposalDraftAddApi,
+  proposalDraftGetApi,
   SAVE_DRAFT_FAIL,
   SAVE_DRAFT_SUCCESS,
   SAVE_DRAFT_TOO_LARGE,
   STORING_DATA_MSG,
-  UPLOAD_DATA_FAIL_MSG,
-  VOTE_OPTIONS,
   WRONG_EXPIRATION_TIME_MSG,
-  WRONG_START_TIME_MSG,
-  githubApi,
-  proposalDraftAddApi,
-  proposalDraftGetApi,
-  calibrationChainId,
-  blockHeightGetApi, WRONG_BLOCK_HEIGHT
-} from "../../common/consts"
+  WRONG_START_TIME_MSG
+} from "../../common/consts";
 import { useCheckFipEditorAddress } from "../../common/hooks";
-import { useStoringCid, useVoterInfo, useVotingList } from "../../common/store";
-import Table from '../../components/CreateTable';
+import { useSearchValue, useStoringCid, useVoterInfo } from "../../common/store";
 import LoadingButton from "../../components/LoadingButton";
 import Editor from '../../components/MDEditor';
-import { getContractAddress, getWeb3IpfsId, validateValue } from "../../utils"
+import { getContractAddress, hexToString, validateValue } from "../../utils";
 import './index.less';
-import { UserRejectedRequestError } from "viem";
+
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -65,11 +64,9 @@ const CreateVote = () => {
   const { openConnectModal } = useConnectModal();
   const prevAddressRef = useRef(address);
   const [messageApi, contextHolder] = message.useMessage();
-
+  const setSearchValue = useSearchValue((state: any) => state.setSearchValue);
   const voterInfo = useVoterInfo((state: any) => state.voterInfo);
   const addStoringCid = useStoringCid((state: any) => state.addStoringCid);
-  const setVotingList = useVotingList((state: any) => state.setVotingList);
-
   const {
     register,
     handleSubmit,
@@ -83,6 +80,12 @@ const CreateVote = () => {
       time: [] as string[],
       name: '',
       descriptions: '',
+      percent: {
+        spPercentage: 25,
+        clientPercentage: 25,
+        developerPercentage: 25,
+        tokenHolderPercentage: 25,
+      },
       option: [
         { value: '' },
         { value: '' }
@@ -96,20 +99,42 @@ const CreateVote = () => {
 
   const {
     data: hash,
-    writeContractAsync,
+    writeContract,
     isPending: writeContractPending,
     isSuccess: writeContractSuccess,
+    error,
     reset
   } = useWriteContract();
-
-  const [cid, setCid] = useState('');
+  // const [cid, setCid] = useState('');
   const [loading, setLoading] = useState<boolean>(writeContractPending);
   const [isDraftSave, setDraftSave] = useState(false);
   const [hasDraft, setHasDraft] = useState(false);
+  useEffect(() => {
+    if (error) {
+      const errorStr = JSON.stringify(error);
+      // Get error cause
+      if (error as UserRejectedRequestError) {
+        messageApi.open({
+          type: 'warning',
+          content: t('content.rejectedSignature'),
+        });
 
+      } else {
+        // Intercepts the first hexadecimal in the string
+        const reg = /revert reason:\s*0x[0-9A-Fa-f]+/;
+        const match = errorStr.match(reg) || [];
+        messageApi.open({
+          type: 'error',
+          content: hexToString(match[0]) || (error as BaseError)?.shortMessage,
+        });
+      }
+    }
+    reset()
+  }, [error])
   useEffect(() => {
     if (!isConnected) {
       navigate("/home");
+      setSearchValue('')
       return;
     }
   }, []);
@@ -118,10 +143,10 @@ const CreateVote = () => {
     const prevAddress = prevAddressRef.current;
     if (prevAddress !== address) {
       navigate("/home");
+      setSearchValue('')
     }
   }, [address]);
-
-  const OPTION_SPLIT_TAG = "&%";
+  // const OPTION_SPLIT_TAG = "&%";
   const loadDraft = async () => {
     try {
       const resp = await axios.get(proposalDraftGetApi, {
@@ -130,17 +155,23 @@ const CreateVote = () => {
           address: address
         }
       });
-
-      if (resp.data != null && resp.data.data?.length) {
-        const result = (resp.data.data as ProposalDraft[])[0]
-        setValue("descriptions", result.descriptions)
-        setValue("name", result.name)
-        if (result.Time.length) {
-          setValue("time", result.Time.split(OPTION_SPLIT_TAG) ?? [])
+      if (resp.data != null && resp.data.data) {
+        const result = (resp.data.data as ProposalDraft)
+        setValue("descriptions", result.content)
+        setValue("name", result.title)
+        if (result.startTime && result.endTime) {
+          setValue("time", [dayjs(result.startTime * 1000).toString(), dayjs(result.endTime * 1000).toString()])
         }
         if (result.timezone) {
           setValue("timezone", result.timezone)
         }
+        setValue("percent", {
+          spPercentage: result?.spPercentage,
+          clientPercentage: result?.clientPercentage,
+          developerPercentage: result?.developerPercentage,
+          tokenHolderPercentage: result?.tokenHolderPercentage,
+        })
+
         setHasDraft(true)
       }
     } catch (e) {
@@ -160,7 +191,6 @@ const CreateVote = () => {
       });
       addStoringCid([{
         hash,
-        cid
       }]);
       setTimeout(() => {
         navigate("/home")
@@ -174,23 +204,21 @@ const CreateVote = () => {
    */
   const onSubmit = async (values: any) => {
     setLoading(true);
-    const { data: { data } } = await axios.get(`${blockHeightGetApi}`, { params: { chainId } });
-    // Check if current time is after start time
-    if (data?.blockHeight === 0) {
-      messageApi.open({
-        type: 'warning',
-        content: t(WRONG_BLOCK_HEIGHT),
-      });
-      setLoading(false);
-      return false;
-    }
 
     // Calculate offset based on selected timezone
     const offset = dayjs().utcOffset() - dayjs().tz(values.timezone).utcOffset();
     const startTimestamp = dayjs(values.time[0]).add(offset, 'minute').unix();
     const expTimestamp = dayjs(values.time[1]).add(offset, 'minute').unix();
     const currentTime = Math.floor(Date.now() / 1000);
-
+    // Check if the role proportion is equal to 100
+    if (values.percent.clientPercentage + values.percent.developerPercentage + values.percent.spPercentage + values.percent.tokenHolderPercentage !== 100) {
+      messageApi.open({
+        type: "warning",
+        content: t('content.infoPercentage'),
+      });
+      setLoading(false);
+      return false;
+    }
     // Check if current time is after start time
     if (currentTime > startTimestamp) {
       messageApi.open({
@@ -200,6 +228,7 @@ const CreateVote = () => {
       setLoading(false);
       return false;
     }
+
     // Check if current time is after expiration time
     if (currentTime > expTimestamp) {
       messageApi.open({
@@ -209,12 +238,6 @@ const CreateVote = () => {
       setLoading(false);
       return false;
     }
-
-    // Get text for timezone array
-    const text = timezoneOption?.find((item: any) => item.value === values.value)?.text || '';
-    // Extract GMT offset from text using regex
-    const regex = /(?<=\().*?(?=\))/g;
-    const GMTOffset = text.match(regex);
 
     const githubObj = {
       githubName: '',
@@ -228,90 +251,33 @@ const CreateVote = () => {
       githubObj.githubAvatar = data.avatar_url;
     }
 
-    // Prepare values object with additional information
-    const _values = {
-      ...values,
-      ...githubObj,
-      GMTOffset,
-      startTime: startTimestamp,
-      expTime: expTimestamp,
-      showTime: values.time,
-      option: VOTE_OPTIONS,
-      address: address,
-      chainId: chainId,
-      day: data?.day,
-      currentTime,
-    };
-    const cid = await getWeb3IpfsId(_values);
-    if (!cid?.length) {
-      messageApi.open({
-        type: 'warning',
-        content: t(UPLOAD_DATA_FAIL_MSG),
-      });
-      setLoading(false);
-      return
-    }
-
-    setCid(cid);
     if (isConnected) {
       // Check if user is a FIP editor
       if (isFipEditorAddress) {
         // Create voting using dynamic contract API
-        try {
-          await writeContractAsync({
-            abi: fileCoinAbi,
-            address: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
-            functionName: 'createProposal',
-            args: [
-              cid,
-              startTimestamp,
-              expTimestamp,
-              1
-            ],
-          });
-          const params = {
-            ...githubObj,
-            GMTOffset,
-            startTime: startTimestamp,
-            expTime: expTimestamp,
-            address: address,
-            chainId: chainId,
-            currentTime,
-            timezone: values.timezone,
-            name: values.name,
-            descriptions: values.descriptions,
-            cid,
-            voteCountDay: data.day,
-            height: data.blockHeight,
-            proposalId:  0
-          }
-          await axios.post('/api/proposal/add', params);
-          //clear draft
-          if (hasDraft) {
-            clearDraft()
-          }
-          const listParams = {
-            chainId,
-            page: 1,
-            pageSize: 5,
-            status: 0,
-          }
-          const { data: { data: votingData } } = await axios.get('/api/proposal/list', { params: listParams });
-          setVotingList({ votingList: votingData?.list || [], totalPage: votingData?.total, searchKey: '' });
-        } catch (error: any) {
-          if (error as UserRejectedRequestError) {
-            messageApi.open({
-              type: 'warning',
-              content: t('content.dataStoredFailed'),
-            });
-          } else {
-            messageApi.open({
-              type: 'error',
-              content: (error as BaseError)?.shortMessage || error?.message,
-            });
-          }
-          reset();
+        writeContract({
+          abi: fileCoinAbi,
+          address: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
+          functionName: 'createProposal',
+          args: [
+            startTimestamp,
+            expTimestamp,
+            // data.blockHeight,
+            values.percent.tokenHolderPercentage * 100,
+            values.percent.spPercentage * 100,
+            values.percent.clientPercentage * 100,
+            values.percent.developerPercentage * 100,
+            values.descriptions,
+            values.name,
+          ],
+        });
+
+        //clear draft
+        if (hasDraft) {
+          clearDraft()
         }
+
+        setSearchValue('')
 
       } else {
         messageApi.open({
@@ -327,14 +293,17 @@ const CreateVote = () => {
   const clearDraft = async () => {
     try {
       const data = {
-        timezone: '',
-        name: '',
-        descriptions: '',
+        creator: address,
+        title: '',
+        content: '',
         startTime: 0,
-        expTime: 0,
-        address: address,
+        endTime: 0,
         chainId: chainId,
-        currentTime: 0
+        spPercentage: 25,
+        clientPercentage: 25,
+        developerPercentage: 25,
+        tokenHolderPercentage: 25,
+        timezone: DEFAULT_TIMEZONE,
       }
       await axios.post(proposalDraftAddApi, data)
       setHasDraft(false);
@@ -365,6 +334,13 @@ const CreateVote = () => {
       });
       return
     }
+    if (values.percent.clientPercentage + values.percent.developerPercentage + values.percent.spPercentage + values.percent.tokenHolderPercentage !== 100) {
+      messageApi.open({
+        type: "warning",
+        content: t('content.infoPercentage'),
+      });
+      return
+    }
     setDraftSave(true);
     const githubObj = {
       githubName: '',
@@ -376,27 +352,29 @@ const CreateVote = () => {
       githubObj.githubName = githubName;
       githubObj.githubAvatar = data.avatar_url;
     }
-    const currentTime = Math.floor(Date.now() / 1000);
     const offset = dayjs().utcOffset() - dayjs().tz(values.timezone).utcOffset();
     const startTimestamp = dayjs(values.time[0]).add(offset, 'minute').unix();
     const expTimestamp = dayjs(values.time[1]).add(offset, 'minute').unix();
-
     const data = {
-      timezone: values.timezone,
-      name: values.name,
-      descriptions: values.descriptions,
-      ...githubObj,
+      creator: address,
+      title: values.name,
+      content: values.descriptions,
+      // ...githubObj,
       // GMTOffset,
       startTime: startTimestamp,
-      expTime: expTimestamp,
-      address: address,
+      endTime: expTimestamp,
       chainId: chainId,
-      currentTime,
-      Time: (values.time ?? []).join(OPTION_SPLIT_TAG),
+      // currentTime,
+      // Time: (values.time ?? []).join(OPTION_SPLIT_TAG),
+      spPercentage: values.percent.spPercentage,
+      clientPercentage: values.percent.clientPercentage,
+      developerPercentage: values.percent.developerPercentage,
+      tokenHolderPercentage: values.percent.tokenHolderPercentage,
+      timezone: values.timezone,
     }
     try {
       const res = await axios.post(proposalDraftAddApi, data)
-      if (res.data != null && res.data.data == true) {
+      if (res.data != null && res.data.code === 0) {
         messageApi.open({
           type: "success",
           content: t(SAVE_DRAFT_SUCCESS),
@@ -458,25 +436,31 @@ const CreateVote = () => {
     {
       name: t('content.proposalTitle'),
       comp: (
-        <>
-          <Controller
-            name="name"
-            control={control}
+        <Controller
+          name="name"
+          control={control}
 
-            render={() => <input
-              className={classNames(
-                'form-input w-full rounded !bg-[#ffffff] border-1 border-[#EEEEEE] text-[#4B535B]',
-                errors.name && 'border-red-500 focus:border-red-500'
-              )}
-              placeholder={t('content.proposalTitle')}
+          render={({ field: { value } }) => {
+            return (
+              <>
+                <input
+                  className={classNames(
+                    'form-input w-full rounded !bg-[#ffffff] border-1 border-[#EEEEEE] text-[#4B535B]',
+                    errors.name && 'border-red-500 focus:border-red-500'
+                  )}
+                  placeholder={t('content.proposalTitle')}
+                  {...register('name', { required: true, validate: (v) => validateValue(v) && v.length <= 60 })}
+                />
+                {errors.name && (
+                  value.length > 60 ? <p className='text-red-500 mt-1 text-sm'>{t('content.proposalTitleLengthValid')}</p> :
+                    <p className='text-red-500 mt-1 text-sm'>{t('content.proposalTitleRequired')}</p>
+                )}
+              </>
+            )
+          }
+          }
+        />
 
-              {...register('name', { required: true, validate: validateValue })}
-            />}
-          />
-          {errors.name && (
-            <p className='text-red-500 mt-1'>{t('content.proposalTitleRequired')}</p>
-          )}
-        </>
       )
     },
     {
@@ -496,7 +480,7 @@ const CreateVote = () => {
           control={control}
           rules={{
             required: true,
-            validate: validateValue
+            validate: (v) => validateValue(v) && v.length < 10000
           }}
           render={({ field: { onChange, value } }) => {
             return (
@@ -504,12 +488,115 @@ const CreateVote = () => {
                 <Editor
                   style={{ height: 500 }} value={value} onChange={onChange} />
                 {errors.descriptions && (
-                  <p className='text-red-500 mt-2'>{t('content.proposalDescriptionRequired')}</p>
+                  value.length >= 10000 ? <p className='text-red-500 mt-1 text-sm'>{t('content.proposalDescriptionLengthValid')}</p> :
+                    <p className='text-red-500 mt-1 text-sm'>{t('content.proposalDescriptionRequired')}</p>
                 )}
               </>
             )
           }}
         />
+    },
+    {
+      name: t('content.powerPercentage'),
+      comp: (
+        <div className='flex items-center'>
+          <div className='mr-2.5'>
+            <Controller
+              name='percent'
+              control={control}
+              rules={{
+                required: true,
+                validate: (v) => !!v.clientPercentage && !!v.developerPercentage && !!v.spPercentage && !!v.tokenHolderPercentage
+              }}
+              render={({ field: { onChange, value: data } }) => {
+                return (
+                  <div className="gap-[10px] flex">
+                    <div>
+                      <p className="text-[#4B535B] text-sm mb-[1px]">SP</p>
+                      <InputNumber
+                        className={classNames(
+                          !data.spPercentage && '!border-red-500 focus:!border-red-500'
+                        )}
+                        value={data.spPercentage}
+                        style={{ width: '148px', border: '1px solid #EEEEEE' }}
+                        min={0}
+                        max={100}
+                        placeholder={'SP'}
+                        suffix="%"
+                        onChange={(v) => onChange({ ...data, spPercentage: v })}
+                        precision={2}
+                      />
+                      {errors.percent && !data.spPercentage && (
+                        <p className='text-red-500 mt-2 text-sm'>{t('content.percentageRequired')}</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-[#4B535B] text-sm mb-[1px]">Client</p>
+                      <InputNumber
+                        className={classNames(
+                          !data.clientPercentage && '!border-red-500 focus:!border-red-500'
+                        )}
+                        value={data.clientPercentage}
+                        type="number"
+                        style={{ width: '148px' }}
+                        min={0}
+                        max={100}
+                        placeholder={'Client'}
+                        suffix="%"
+                        onChange={(v) => onChange({ ...data, clientPercentage: v })}
+                        precision={2}
+                      />
+                      {errors.percent && !data.clientPercentage && (
+                        <p className='text-red-500 mt-2 text-sm'>{t('content.percentageRequired')}</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-[#4B535B] text-sm mb-[1px]">Developer</p>
+                      <InputNumber
+                        className={classNames(
+                          !data.developerPercentage && '!border-red-500 focus:!border-red-500'
+                        )}
+                        value={data.developerPercentage}
+                        type="number"
+                        style={{ width: '148px' }}
+                        min={0}
+                        max={100}
+                        placeholder={'Developer'}
+                        suffix="%"
+                        onChange={(v) => onChange({ ...data, developerPercentage: v })}
+                        precision={2}
+                      />
+                      {errors.percent && !data.developerPercentage && (
+                        <p className='text-red-500 mt-2 text-sm'>{t('content.percentageRequired')}</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-[#4B535B] text-sm mb-[1px]">TokenHolder</p>
+                      <InputNumber
+                        className={classNames(
+                          !data.tokenHolderPercentage && '!border-red-500 focus:!border-red-500'
+                        )}
+                        type="number"
+                        value={data.tokenHolderPercentage}
+                        style={{ width: '148px' }}
+                        min={0}
+                        max={100}
+                        placeholder={'TokenHolder'}
+                        suffix="%"
+                        onChange={(v) => onChange({ ...data, tokenHolderPercentage: v })}
+                        precision={2}
+                      />
+                      {errors.percent && !data.tokenHolderPercentage && (
+                        <p className='text-red-500 mt-2 text-sm'>{t('content.percentageRequired')}</p>
+                      )}
+                    </div>
+                  </div>
+                )
+              }}
+            />
+          </div>
+        </div>
+      )
     },
     {
       name: t('content.votingTime'),
@@ -538,7 +625,7 @@ const CreateVote = () => {
                       )}
                     />
                     {errors.time && (
-                      <p className='text-red-500 mt-2'>{t('content.proposalTimeRequired')}</p>
+                      <p className='text-red-500 mt-2 text-sm'>{t('content.proposalTimeRequired')}</p>
                     )}
                   </>
                 )
@@ -604,7 +691,7 @@ const CreateVote = () => {
       </div>
       <form onSubmit={handleSubmit(onSubmit)} >
         <div className='flow-root space-y-8'>
-          <Table title={t('content.createProposal')} subTitle={<div className="text-base font-normal">
+          <CreateTable title={t('content.createProposal')} subTitle={<div className="text-base font-normal">
             {t('content.proposalsClear')} <a target="_blank"
               rel="noopener" href="" style={{ color: "blue" }}>{t('content.codePractices')}↗</a>.
           </div>} list={list} />

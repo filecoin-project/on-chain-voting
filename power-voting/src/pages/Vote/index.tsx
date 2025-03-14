@@ -1,65 +1,53 @@
-// Copyright (C) 2023-2024 StorSwift Inc.
-// This file is part of the PowerVoting library.
-
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at:
-// http://www.apache.org/licenses/LICENSE-2.0
-
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
+import { InfoCircleOutlined } from '@ant-design/icons';
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
 import { message, Popover, Table } from "antd";
 import axios from 'axios';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from "react";
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { Link, useParams } from "react-router-dom";
 import VoteStatusBtn from "src/components/VoteStatusBtn";
 import { Buffer, mainnetClient, roundAt, timelockEncrypt } from "tlock-js";
-import type { BaseError } from "wagmi";
-import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { UserRejectedRequestError } from "viem";
+import type { BaseError } from "wagmi";
+import { useAccount, useWriteContract } from "wagmi";
 import fileCoinAbi from "../../common/abi/power-voting.json";
 import {
+  calibrationChainId,
   CHOOSE_VOTE_MSG,
+  GETTING_POWER_MSG,
+  getVoteDetail,
+  githubApi,
   IN_PROGRESS_STATUS,
   PENDING_STATUS,
-  UPLOAD_DATA_FAIL_MSG,
   VOTE_SUCCESS_MSG,
-  WRONG_NET_STATUS,
+  votePowerGetApi,
   web3AvatarUrl,
-  calibrationChainId,
-  votePowerGetApi, GETTING_POWER_MSG
-} from "../../common/consts"
-import { useCurrentTimezone, useStoringHash } from "../../common/store"
+  WRONG_NET_STATUS
+} from "../../common/consts";
+import { useCurrentTimezone, useStoringHash } from "../../common/store";
 import type { ProposalList, ProposalOption } from "../../common/types";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
 import LoadingButton from "../../components/LoadingButton";
 import MDEditor from "../../components/MDEditor";
-import { bigNumberToFloat, convertBytes, getContractAddress, getWeb3IpfsId } from "../../utils";
+import { bigNumberToFloat, convertBytes, getContractAddress } from "../../utils";
 import "./index.less";
 const Vote = () => {
   const { chain, isConnected, address } = useAccount();
   const chainId = chain?.id || calibrationChainId;
-  const { id, cid } = useParams();
+  const { id } = useParams();
   const { t } = useTranslation();
   const [votingData, setVotingData] = useState({} as ProposalList);
-  const [powerDetail, setPowerDetail] = useState();
+  const [powerDetail, setPowerDetail] = useState<any>();
   const { openConnectModal } = useConnectModal();
   const { openChainModal } = useChainModal();
 
-  const navigate = useNavigate();
   const [options, setOptions] = useState([] as ProposalOption[]);
   const [selectedOptionIndex, setSelectedOptionIndex] = useState(-1);
 
   const [loading, setLoading] = useState(false);
   const timezone = useCurrentTimezone((state: any) => state.timezone);
+  const [userInfo, setUserInfo] = useState<{ href: string, img: string }>({ href: '', img: '' })
 
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -75,7 +63,7 @@ const Vote = () => {
       key: 'power',
     },
     {
-      title: t('content.blockHeight'),
+      title: t('content.snapshotBlockHeight'),
       dataIndex: 'blockHeight',
       key: 'blockHeight',
     },
@@ -88,32 +76,30 @@ const Vote = () => {
       {
         key: 'sp',
         role: 'SP',
-        blockHeight: votePower?.blockHeight,
+        blockHeight: votingData?.snapshotInfo?.snapshotHeight,
         power: convertBytes(votePower?.spPower),
       },
       {
         key: 'client',
         role: 'Client',
-        blockHeight: votePower?.blockHeight,
+        blockHeight: votingData?.snapshotInfo?.snapshotHeight,
         power: convertBytes(Number(votePower?.clientPower) / (10 ** 18)),
       },
       {
         key: 'developer',
         role: 'Developer',
-        blockHeight: votePower?.blockHeight,
+        blockHeight: votingData?.snapshotInfo?.snapshotHeight,
         power: votePower?.developerPower,
       },
       {
         key: 'tokenHolder',
         role: 'TokenHolder',
-        blockHeight: votePower?.blockHeight,
+        blockHeight: votingData?.snapshotInfo?.snapshotHeight,
         power: bigNumberToFloat(votePower?.tokenHolderPower),
       },
     ];
   }
-
   const {
-    data: hash,
     writeContract,
     error,
     isPending: writeContractPending,
@@ -131,31 +117,32 @@ const Vote = () => {
         type: 'success',
         content: t(VOTE_SUCCESS_MSG),
       });
-      setTimeout(() => {
-        navigate("/home");
-      }, 3000);
     }
   }, [writeContractSuccess])
 
   useEffect(() => {
     if (error) {
-      messageApi.open({
-        type: 'error',
-        content: (error as BaseError)?.shortMessage || error?.message,
-      });
+      if (error as UserRejectedRequestError) {
+        messageApi.open({
+          type: 'warning',
+          content: t('content.rejectedSignature'),
+        });
+      } else {
+        messageApi.open({
+          type: 'error',
+          content: (error as BaseError)?.shortMessage || error?.message,
+        });
+      }
     }
     reset();
   }, [error]);
 
   const initState = async () => {
-    // Fetch data from the IPFS link using the provided CID
-    const res = await axios.get(`https://${cid}.ipfs.w3s.link/`);
-    const data = res.data;
-    const { data: { data: powerDetail } } = await axios.get(`${votePowerGetApi}`, { params: { chainId, address, day: data.day } });
-    setPowerDetail(powerDetail);
+    const { data: { data: voteDetail } } = await axios.get(`${getVoteDetail}`, { params: { chainId, proposalId: id } });
+
     let voteStatus = null;
     // Check if the chain ID from the fetched data matches the current chain ID
-    if (data.chainId !== chainId) {
+    if (voteDetail.chainId !== chainId) {
       // If not, set the vote status to indicate wrong network status
       voteStatus = WRONG_NET_STATUS;
       // If user is connected, open the chain modal to prompt for network switch
@@ -166,24 +153,30 @@ const Vote = () => {
       }
     } else {
       // If chain ID matches, determine the vote status based on current time and start time
-      voteStatus = Math.floor(Date.now() / 1000) < data?.startTime ? PENDING_STATUS : IN_PROGRESS_STATUS;
+      voteStatus = Math.floor(Date.now() / 1000) < voteDetail?.startTime ? PENDING_STATUS : IN_PROGRESS_STATUS;
     }
     // Map each option from the fetched data to include count initialized to 0
-    const option = data.option?.map((item: string) => {
-      return {
-        name: item,
+    const option = [
+      {
+        name: "Approve",
         count: 0,
-      };
-    });
+      },
+      {
+        name: "Reject",
+        count: 0,
+      }
+    ]
     // Set the voting data state with the fetched data and additional properties
     setVotingData({
-      ...data,
+      ...voteDetail,
       id,
-      cid,
       option,
       voteStatus,
     });
     setOptions(option);
+
+    const { data: { data: powerDetail } } = await axios.get(`${votePowerGetApi}`, { params: { chainId, address, powerDay: voteDetail.snapshotInfo.snapshotDay } });
+    setPowerDetail(powerDetail);
   }
 
   /**
@@ -198,7 +191,7 @@ const Vote = () => {
     const chainInfo = await mainnetClient().chain().info();
 
     // Calculate time for the voting expiration, or set to 0 if not available
-    const time = votingData?.expTime ? new Date(votingData.expTime * 1000).valueOf() : 0;
+    const time = votingData?.endTime ? new Date(votingData.endTime * 1000).valueOf() : 0;
 
     // Determine the round number based on the time and chain information
     const roundNumber = roundAt(time, chainInfo);
@@ -215,7 +208,7 @@ const Vote = () => {
 
   const startVoting = async () => {
     const item = storingHash.find((item: any) => item.address === address);
-    
+
     if (item) {
       messageApi.open({
         type: 'warning',
@@ -235,44 +228,19 @@ const Vote = () => {
       // If a valid option is selected, proceed with voting
       setLoading(true);
       // Encrypt the selected option index and weight using handleEncrypt function
-      const encryptValue = await handleEncrypt([[`${selectedOptionIndex}`, `100`]]);
-      // Get the IPFS ID for the encrypted value
-      const optionId = await getWeb3IpfsId(encryptValue);
-
-      if (!cid?.length) {
-        setLoading(false);
-        messageApi.open({
-          type: 'warning',
-          content: t(UPLOAD_DATA_FAIL_MSG),
-        });
-        return;
-      }
+      const encryptValue = await handleEncrypt([[`${selectedOptionIndex === 0 ? 'approve' : 'reject'}`]]);
 
       // Check if user is connected to the network
       if (isConnected) {
-        try {
-          writeContract({
-            abi: fileCoinAbi,
-            address: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
-            functionName: 'vote',
-            args: [
-              Number(id),
-              optionId,
-            ],
-          });
-        } catch (error: any) {
-          if (error as UserRejectedRequestError) {
-            messageApi.open({
-              type: 'warning',
-              content: t('content.rejectedSignature'),
-            });
-          } else {
-            messageApi.open({
-              type: 'error',
-              content: (error as BaseError)?.shortMessage || error?.message,
-            });
-          }
-        }
+        writeContract({
+          abi: fileCoinAbi,
+          address: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
+          functionName: 'vote',
+          args: [
+            Number(id),
+            encryptValue,
+          ],
+        });
         setLoading(false);
       } else {
         // If user is not connected, prompt to connect
@@ -285,21 +253,23 @@ const Vote = () => {
     setSelectedOptionIndex(index);
   }
 
-  const { isLoading: transactionLoading } =
-    useWaitForTransactionReceipt({
-      hash,
-    })
-
-  let href = '';
-  let img = '';
-  if (votingData?.githubName) {
-    href = `https://github.com/${votingData.githubName}`;
-    img = `${votingData?.githubAvatar}`;
-  } else {
-    href = `${chain?.blockExplorers?.default.url}/address/${votingData?.address}`;
-    img = `${web3AvatarUrl}:${votingData?.address}`
+  const getUserInfo = async () => {
+    let href = '';
+    let img = '';
+    if (votingData?.githubName) {
+      href = `https://github.com/${votingData.githubName}`;
+      const { data } = await axios.get(`${githubApi}/${votingData.githubName}`);
+      const githubAvatar = data.avatar_url;
+      img = `${githubAvatar}`;
+    } else {
+      href = `${chain?.blockExplorers?.default.url}/address/${votingData?.address}`;
+      img = `${web3AvatarUrl}:${votingData?.address}`
+    }
+    setUserInfo({ href, img })
   }
-
+  useEffect(() => {
+    getUserInfo()
+  }, [votingData])
   return (
     <div className="flex voting">
       {contextHolder}
@@ -319,7 +289,7 @@ const Vote = () => {
         </div>
         <div className="px-3 md:px-0 ">
           <h1 className="mb-6 text-2xl text-[#313D4F] break-words break-all leading-12" style={{ overflowWrap: 'break-word' }}>
-            {votingData?.name}
+            {votingData?.title}
           </h1>
           {
             (votingData?.voteStatus || votingData?.voteStatus === 0) &&
@@ -330,12 +300,12 @@ const Vote = () => {
                 <div className="flex items-center justify-center ml-[12px]">
                   <div className='text-[#4B535B] text-[14px]'>{t('content.createdby')}</div>
                   <div className='ml-[8px] flex items-center justify-center bg-[#F5F5F5] rounded-full p-[5px]'>
-                    <img className="w-[20px] h-[20px] rounded-full mr-[4px]" src={img} alt="" />
+                    <img className="w-[20px] h-[20px] rounded-full mr-[4px]" src={userInfo?.img} alt="" />
                     <a
                       className="text-[#313D4F]"
                       target="_blank"
                       rel="noreferrer"
-                      href={href}
+                      href={userInfo?.href}
                     >
                       {votingData?.githubName || EllipsisMiddle({ suffixCount: 4, children: votingData?.address })}
                     </a>
@@ -349,7 +319,7 @@ const Vote = () => {
               className="border-none rounded-[16px] bg-transparent"
               style={{ height: 'auto' }}
               moreButton={true}
-              value={votingData?.descriptions}
+              value={votingData?.content}
               readOnly={true}
               view={{ menu: false, md: false, html: true, both: false, fullScreen: true, hideMenu: false }}
               onChange={() => {
@@ -377,11 +347,15 @@ const Vote = () => {
                 </div>
                 <div className='flex justify-between'>
                   <div>{t('content.endTime')}</div>
-                  <span className='text-[#313D4F] text-sm font-normal'>{votingData?.expTime && dayjs(votingData.expTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
+                  <span className='text-[#313D4F] text-sm font-normal'>{votingData?.endTime && dayjs(votingData.endTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
                 </div>
                 <div className='flex justify-between'>
                   <div>{t('content.timezone')}</div>
                   <span className='text-[#313D4F] text-sm font-normal'>{timezone}</span>
+                </div>
+                <div className='flex justify-between'>
+                  <div className='text-sm font-medium'>{t('content.snapshotBlockHeight')}</div>
+                  <span className='text-[#313D4F] font-normal'>{votingData.snapshotInfo?.snapshotHeight || '-'}</span>
                 </div>
               </div>
             </div>
@@ -414,7 +388,7 @@ const Vote = () => {
                         <div
                           className={`w-full h-[45px] border-[#eeeeee] ${selectedOptionIndex === index ? 'border-[#0190FF] bg-[#F3FAFF]' : ''} hover:border-[#0190FF] flex justify-between items-center pl-8 pr-4 md:border border-solid rounded-full cursor-pointer`}
                         >
-                          <div className="text-ellipsis h-[100%] overflow-hidden">{item.name === "Approve" ?  t("content.approve") : t("content.reject")}</div>
+                          <div className="text-ellipsis h-[100%] overflow-hidden">{item.name === "Approve" ? t("content.approve") : t("content.reject")}</div>
                           {
                             selectedOptionIndex === index &&
                             <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-md text-[#0190FF]">
@@ -427,7 +401,7 @@ const Vote = () => {
                     )
                   })
                 }
-                <LoadingButton text={t('content.vote')} isFull={true} loading={loading || writeContractPending || transactionLoading} handleClick={startVoting} />
+                <LoadingButton text={t('content.vote')} isFull={true} loading={loading || writeContractPending} handleClick={startVoting} />
               </div>
             </div>
           </div>

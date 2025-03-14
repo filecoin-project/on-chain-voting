@@ -13,18 +13,18 @@
 // limitations under the License.
 
 import React from "react";
-import Home from "../pages/Home";
+import FipEditorList from "src/pages/Fip/fipEditorList";
+import Landing from "src/pages/Landing";
 import CreateVote from "../pages/CreateVote";
-import UcanDelegateAdd from "../pages/UcanDelegate/add/index";
-import UcanDelegateDelete from "../pages/UcanDelegate/delete/index";
-import UcanDelegateHelp from "../pages/UcanDelegate/help/index";
+import FipEditorApprove from "../pages/Fip/approve";
+import FipEditorPropose from "../pages/Fip/propose";
+import FipEditorRevoke from "../pages/Fip/revoke";
+import Home from "../pages/Home";
+import MinerId from "../pages/MinerId";
+import GistDelegateAdd from "../pages/GistDelegate/add/index";
+import GistDelegateDelete from "../pages/GistDelegate/delete/index";
 import Vote from "../pages/Vote";
 import VotingResults from "../pages/VotingResults";
-import MinerId from "../pages/MinerId";
-import FipEditorPropose from "../pages/Fip/propose";
-import FipEditorApprove from "../pages/Fip/approve";
-import FipEditorRevoke from "../pages/Fip/revoke";
-import Landing from "src/pages/Landing";
 
 const routes = [
   {
@@ -56,23 +56,23 @@ const routes = [
     element: <FipEditorRevoke />,
   },
   {
-    path: "/ucanDelegate/add",
-    element: <UcanDelegateAdd />,
+    path: "/fip-editor/fipEditorList",
+    element: <FipEditorList />,
   },
   {
-    path: "/ucanDelegate/delete",
-    element: <UcanDelegateDelete />,
+    path: "/gistDelegate/add",
+    element: <GistDelegateAdd />,
   },
   {
-    path: "/ucanDelegate/help",
-    element: <UcanDelegateHelp />,
+    path: "/gistDelegate/delete",
+    element: <GistDelegateDelete />,
   },
   {
-    path: "/vote/:id/:cid",
+    path: "/vote/:id",
     element: <Vote />,
   },
   {
-    path: "/votingResults/:id/:cid",
+    path: "/votingResults/:id",
     element: <VotingResults />,
   },
   {
