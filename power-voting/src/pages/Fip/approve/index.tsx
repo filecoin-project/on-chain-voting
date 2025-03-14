@@ -14,18 +14,18 @@
 
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Button, Pagination, Popconfirm, Popover, Row, Table, Tooltip, message } from "antd";
-import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from "react-router-dom";
 import type { BaseError } from "wagmi";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
-import fileCoinAbi from "../../../common/abi/power-voting.json";
+import votingFipeditorAbi from "../../../common/abi/power-voting-fipeditor.json";
 import {
-  HAVE_APPROVED_MSG, calibrationChainId,
+  HAVE_APPROVED_MSG,
   STORING_DATA_MSG,
+  calibrationChainId,
   web3AvatarUrl
-} from "../../../common/consts"
+} from "../../../common/consts";
 import { useApproveProposalId, useCheckFipEditorAddress, useFipEditorProposalDataSet, useFipEditors } from "../../../common/hooks";
 import EllipsisMiddle from "../../../components/EllipsisMiddle";
 import Loading from "../../../components/Loading";
@@ -45,11 +45,11 @@ const FipEditorApprove = () => {
   const [loading, setLoading] = useState(false);
   const [currentProposalId, setCurrentProposalId] = useState(null);
 
-  const { isFipEditorAddress, checkFipEditorAddressSuccess } = useCheckFipEditorAddress(chainId, address);
+  const { isFipEditorAddress,fetchStatus: checkFipFetchStatus } = useCheckFipEditorAddress(chainId, address);
   const { fipEditors } = useFipEditors(chainId);
-  const { approveProposalId, getApproveProposalLoading } = useApproveProposalId(chainId);
+  const { approveProposalId } = useApproveProposalId(chainId);
 
-  const { fipEditorProposalData, getFipEditorProposalIdLoading, getFipEditorProposalIdSuccess, error } = useFipEditorProposalDataSet({
+  const { fipEditorProposalData, error, status } = useFipEditorProposalDataSet({
     chainId,
     idList: approveProposalId,
     page,
@@ -165,7 +165,7 @@ const FipEditorApprove = () => {
       align: 'center' as const,
       width: 120,
       render: (_: any, record: any) => {
-        const disabled =  !!record.voteList.find((item: any) => item.address === address && item.status === "approved");
+        const disabled = !!record.voteList.find((item: any) => item.address === address && item.status === "approved");
         return (
           <Popconfirm
             title={t('content.approveFIPEditor')}
@@ -174,7 +174,7 @@ const FipEditorApprove = () => {
             okText={t('content.yes')}
             cancelText={t('content.no')}
           >
-            <Button type='primary' className='w-[80px] h-[24px] flex justify-center items-center' loading={record.proposalId === currentProposalId && isLoading} disabled={disabled}>{t('content.approve')}</Button>
+            <Button type='primary' className='w-[80px] h-[24px] flex justify-center items-center' loading={record.proposalId === currentProposalId && isLoading} disabled={disabled}>{disabled ? t('content.approved') : t('content.approve')}</Button>
           </Popconfirm>
         )
       }
@@ -183,11 +183,11 @@ const FipEditorApprove = () => {
   ];
 
   useEffect(() => {
-    if (!isConnected || (checkFipEditorAddressSuccess && !isFipEditorAddress)) {
+    if (!isConnected || (checkFipFetchStatus !=='fetching' && !isFipEditorAddress)) {
       navigate("/home");
       return;
     }
-  }, [isConnected, checkFipEditorAddressSuccess, isFipEditorAddress]);
+  }, [isConnected, checkFipFetchStatus, isFipEditorAddress]);
 
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
@@ -206,7 +206,6 @@ const FipEditorApprove = () => {
   }, [error]);
 
   useEffect(() => {
-    console.log(writeContractError)
     if (writeContractError) {
       messageApi.open({
         type: 'error',
@@ -217,16 +216,15 @@ const FipEditorApprove = () => {
   }, [writeContractError]);
 
   useEffect(() => {
-    if (getFipEditorProposalIdSuccess) {
+    if (status === "pending") {
+      setLoading(true);
+    } else if (status === "success") {
       initState();
+      setLoading(false);
+    } else {
+      setLoading(false);
     }
-  }, [getFipEditorProposalIdSuccess]);
-
-  useEffect(() => {
-    if (isConnected && !loading && !getApproveProposalLoading && !getFipEditorProposalIdLoading) {
-      initState();
-    }
-  }, [chain, page, address]);
+  }, [chain, page, address, status]);
 
   useEffect(() => {
     if (writeContractSuccess) {
@@ -241,7 +239,6 @@ const FipEditorApprove = () => {
   }, [writeContractSuccess]);
 
   const initState = async () => {
-    setLoading(true);
     const list: any = [];
     await Promise.all(fipEditorProposalData.map(async (item: any) => {
       try {
@@ -249,15 +246,13 @@ const FipEditorApprove = () => {
         const obj = {
           proposalId: result[0],
           fipEditorAddress: result[1],
-          voterInfoCid: result[2],
+          voterInfo: result[2],
           voters: result[3],
         }
-        const url = `https://${obj.voterInfoCid}.ipfs.w3s.link/`;
-        const { data } = await axios.get(url);
         list.push({
           proposalId: obj.proposalId,
           address: obj.fipEditorAddress,
-          info: data,
+          info: obj.voterInfo,
           voters: obj.voters,
           ratio: `${obj.voters?.length} / ${fipEditors?.length}`,
           voteList: fipEditors?.map((address: string) => {
@@ -269,7 +264,6 @@ const FipEditorApprove = () => {
       }
     }));
     setFipProposalList(list);
-    setLoading(false);
   }
 
   const handlePageChange = (page: number) => {
@@ -285,8 +279,8 @@ const FipEditorApprove = () => {
       return;
     }
     writeContract({
-      abi: fileCoinAbi,
-      address: getContractAddress(chainId, 'powerVoting'),
+      abi: votingFipeditorAbi,
+      address: getContractAddress(chainId, 'powerVotingFip'),
       functionName: 'approveFipEditor',
       args: [
         record.address,
@@ -297,7 +291,7 @@ const FipEditorApprove = () => {
   };
 
   return (
-    loading ? <Loading /> : <div className="px-3 mb-6 md:px-0">
+    <div className="px-3 mb-6 md:px-0">
       {contextHolder}
       <button>
         <div className="inline-flex items-center mb-8 gap-1 text-skin-text hover:text-skin-link">
@@ -315,27 +309,28 @@ const FipEditorApprove = () => {
           <div className='font-normal text-black px-8 py-7 text-2xl border-b border-[#eeeeee] flex items-center'>
             <span>{t('content.fipEditorApprove')}</span>
           </div>
-          <div className='px-8 pb-4 !mt-0'>
-            <Table
-              className='mb-4'
-              rowKey={(record: any) => record.proposalId}
-              dataSource={fipProposalList}
-              columns={columns}
-              pagination={false}
-            />
-            {
-              !!approveProposalId?.length && <Row justify='end'>
-                <Pagination
-                  simple
-                  showSizeChanger={false}
-                  current={page}
-                  pageSize={pageSize}
-                  total={approveProposalId.length}
-                  onChange={handlePageChange}
-                />
-              </Row>
-            }
-          </div>
+          {loading ? <Loading /> :
+            <div className='px-8 pb-4 !mt-0'>
+              <Table
+                className='mb-4'
+                rowKey={(record: any) => record.proposalId}
+                dataSource={fipProposalList}
+                columns={columns}
+                pagination={false}
+              />
+              {
+                approveProposalId && approveProposalId?.length > 0 && <Row justify='end'>
+                  <Pagination
+                    simple
+                    current={page}
+                    pageSize={pageSize}
+                    total={approveProposalId.length}
+                    onChange={handlePageChange}
+                  />
+                </Row>
+              }
+            </div>
+          }
         </div>
       </div>
     </div>

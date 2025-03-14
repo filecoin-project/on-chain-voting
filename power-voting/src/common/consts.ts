@@ -19,15 +19,16 @@ export const oraclePowerMainNetContractAddress = process.env.ORACLE_POWER_MAINNE
 export const powerVotingCalibrationContractAddress = process.env.POWER_VOTING_CALIBRATION_CONTRACT_ADDRESS || '';
 export const oracleCalibrationContractAddress = process.env.ORACLE_CALIBRATION_CONTRACT_ADDRESS || '';
 export const oraclePowerCalibrationContractAddress = process.env.ORACLE_POWER_CALIBRATION_CONTRACT_ADDRESS || '';
+export const powerVotingFipMainNetContractAddress = process.env.POWER_VOTING_FIP_MAINNET_CONTRACT_ADDRESS || '';
+export const powerVotingFipCalibrationContractAddress = process.env.POWER_VOTING_FIP_CALIBRATION_CONTRACT_ADDRESS || '';
+
 export const walletConnectProjectId = process.env.WALLET_CONNECT_ID || '';
 export const githubApi = 'https://api.github.com/users';
-export const proposalResultApi = '/api/proposal/result';
-export const uploadApi = '/api/w3storage/upload';
-export const proposalHistoryApi = '/api/proposal/history';
+export const proposalVoteDataApi = '/api/proposal/votes';
 export const proposalDraftAddApi = '/api/proposal/draft/add';
 export const proposalDraftGetApi = '/api/proposal/draft/get';
-export const blockHeightGetApi = '/api/filecoin/height';
 export const votePowerGetApi = '/api/power/getPower';
+export const getVoteDetail = '/api/proposal/details';
 export const IN_PROGRESS_STATUS = 2;
 export const COMPLETED_STATUS = 4;
 export const PENDING_STATUS = 1;
@@ -129,31 +130,26 @@ export const VOTE_FILTER_LIST = [
     value: COMPLETED_STATUS
   }
 ];
-export const UCAN_TYPE_FILECOIN = 1;
-export const UCAN_TYPE_GITHUB = 2;
 
-export const UCAN_TYPE_FILECOIN_OPTIONS = [
-  {
-    label: 'content.filecoin',
-    value: UCAN_TYPE_FILECOIN
-  },
-];
 
-export const UCAN_TYPE_GITHUB_OPTIONS = [
+export const GITHUB_OPTIONS = [
   {
     label: 'Github',
-    value: UCAN_TYPE_GITHUB
+    value: 2
   }
 ];
-
-export const UCAN_GITHUB_STEP_1 = 1;
-export const UCAN_GITHUB_STEP_2 = 2;
+export const VoteOptionItem: { [key: string]: string } = {
+  'approve': 'Approve',
+  'reject': 'Reject',
+}
+export const GITHUB_STEP_1 = 1;
+export const GITHUB_STEP_2 = 2;
 export const FIP_EDITOR_REVOKE_TYPE = 0;
 export const FIP_EDITOR_APPROVE_TYPE = 1;
 export const DEFAULT_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 export const web3AvatarUrl = 'https://cdn.stamp.fyi/avatar/eth';
 
-export const UCAN_JWT_HEADER = {
+export const JWT_HEADER = {
   alg: 'ecdsa',
   type: 'JWT',
   version: '0.0.1'
@@ -180,7 +176,8 @@ export const FIP_APPROVE_ALREADY_MSG = "content.addressEditor"
 export const HAVE_APPROVED_MSG = 'content.alreadyApproved';
 export const HAVE_REVOKED_MSG = 'content.alreadyRevoked';
 export const CAN_NOT_REVOKE_YOURSELF_MSG = 'content.revokeYourself';
-export const SAVE_DRAFT_SUCCESS = "content.saveSuccess"
-export const SAVE_DRAFT_TOO_LARGE = "content.savedDescriptionCharacters"
-export const SAVE_DRAFT_FAIL = "content.saveFail"
-export const UPLOAD_DATA_FAIL_MSG = "content.saveDataFail"
+export const SAVE_DRAFT_SUCCESS = "content.saveSuccess";
+export const SAVE_DRAFT_TOO_LARGE = "content.savedDescriptionCharacters";
+export const SAVE_DRAFT_FAIL = "content.saveFail";
+export const UPLOAD_DATA_FAIL_MSG = "content.saveDataFail";
+export const NO_FIP_INfO_MSG = "content.inputFipInfo"

@@ -18,6 +18,7 @@ import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useParams } from 'react-router-dom';
+import { useCurrentTimezone } from "src/common/store";
 import Loading from 'src/components/Loading';
 import VoteStatusBtn from 'src/components/VoteStatusBtn';
 import { useAccount } from "wagmi";
@@ -25,41 +26,42 @@ import {
   COMPLETED_STATUS,
   PASSED_STATUS,
   REJECTED_STATUS,
-  VOTE_COUNTING_STATUS,
   VOTE_OPTIONS,
+  VoteOptionItem,
   WRONG_NET_STATUS,
-  proposalHistoryApi,
-  proposalResultApi,
-  web3AvatarUrl,
+  calibrationChainId,
+  getVoteDetail,
+  githubApi,
+  proposalVoteDataApi,
+  web3AvatarUrl
 } from "../../common/consts";
-import { useCurrentTimezone } from "../../common/store";
-import type { ProposalHistory, ProposalOption, ProposalResult } from "../../common/types";
+import type { ProposalOption, ProposalVotes } from "../../common/types";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
 import MDEditor from '../../components/MDEditor';
 import VoteList from "../../components/VoteList";
+
 const VotingResults = () => {
   const { chain, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
   const { openChainModal } = useChainModal();
-  const { id, cid } = useParams();
+  const { id } = useParams();
   const { state } = useLocation() || null;
   const { t } = useTranslation();
   const [votingData, setVotingData] = useState(state);
   const timezone = useCurrentTimezone((state: any) => state.timezone);
   const [loading, setLoading] = useState(true);
+  const [userInfo, setUserInfo] = useState<{ href: string, img: string }>({ href: '', img: '' })
 
   const initState = async () => {
-    const option: ProposalOption[] = [];
+    let option: ProposalOption[] = [];
     let voteList: any[] = [];
     let voteStatus = null;
     let subStatus = 0;
     const params = {
       proposalId: Number(id),
-      network: chain?.id
+      chainId: chain?.id
     }
-
-    // Fetch proposal data from IPFS
-    const { data: proposalData } = await axios.get(`https://${cid}.ipfs.w3s.link/`);
+    const { data: { data: proposalData } } = await axios.get(`${getVoteDetail}`, { params: { chainId: chain?.id || calibrationChainId, proposalId: id } });
     // Check if the proposal chain ID matches the current chain ID
     if (proposalData.chainId !== chain?.id) {
       // If not, set vote status to wrong network status
@@ -70,21 +72,20 @@ const VotingResults = () => {
         openConnectModal && openConnectModal();
       }
     } else {
-      // If proposal chain ID matches, proceed with fetching voting data
-      const { data: { data: resultData } } = await axios.get(proposalResultApi, {
-        params,
-      })
-      // Determine vote status based on whether votes have been counted
-      voteStatus = resultData.length > 0 ? COMPLETED_STATUS : VOTE_COUNTING_STATUS;
 
-      // Map result data to populate option array
-      resultData.map((_: any, index: number) => {
-        const voteItem = resultData.find((vote: ProposalResult) => vote.optionId === index);
-        option.push({
-          name: proposalData.option[voteItem.optionId],
-          count: voteItem?.votes ? Number(voteItem.votes) : 0
-        })
-      })
+      // Determine vote status based on whether votes have been counted
+      voteStatus = proposalData.status;
+
+      option = [
+        {
+          name: VOTE_OPTIONS[0],
+          count: proposalData.votePercentage.approve
+        },
+        {
+          name: VOTE_OPTIONS[1],
+          count: proposalData.votePercentage.reject
+        }
+      ]
       if (voteStatus == COMPLETED_STATUS) {//
         const passedOption = option?.find((v: any) => { return v.name === VOTE_OPTIONS[0] })
         const rejectOption = option?.find((v: any) => { return v.name === VOTE_OPTIONS[1] })
@@ -94,38 +95,36 @@ const VotingResults = () => {
           subStatus = REJECTED_STATUS
         }
       }
-      // Fetch voting history data
-      const { data: { data: historyData } } = await axios.get(proposalHistoryApi, {
+      // Fetch voting history data  `
+      const { data: { data: voteData } } = await axios.get(proposalVoteDataApi, {
         params,
       });
       // Map history data to populate voteList array
-      voteList = historyData?.votePowers?.map((item: ProposalHistory) => ({
+      voteList = voteData?.map((item: ProposalVotes) => ({
         ...item,
-        optionName: proposalData.option[item.optionId],
-        address: item.address?.substring(0, 42),
-        totalClientPower: historyData.totalClientPower,
-        totalDeveloperPower: historyData.totalDeveloperPower,
-        totalSpPower: historyData.totalSpPower,
-        totalTokenHolderPower: historyData.totalTokenHolderPower,
-        votePowers: historyData.votePowers
+        optionName: VoteOptionItem[item.votedResult],
+        address: item.voterAddress?.substring(0, 42),
+        totalClientPower: proposalData.totalPower.clientPower,
+        totalDeveloperPower: proposalData.totalPower.developerPower,
+        totalSpPower: proposalData.totalPower.spPower,
+        totalTokenHolderPower: proposalData.totalPower.tokenHolderPower,
+        votes: Number(item.percentage) * 100,
+        spPowerPercent: Number(proposalData.totalPower.spPower) !== 0 ? (Number(item.spPower) / Number(proposalData.totalPower.spPower)) * 100 : 0,
+        clientPowerPercent: Number(proposalData.totalPower.clientPower) !== 0 ? (Number(item.clientPower) / Number(proposalData.totalPower.clientPower)) * 100 : 0,
+        developerPowerPercent: Number(proposalData.totalPower.developerPower) !== 0 ? (Number(item.developerPower) / Number(proposalData.totalPower.developerPower)) * 100 : 0,
+        tokenHolderPowerPercent: Number(proposalData.totalPower.tokenHolderPower) !== 0 ? (Number(item.tokenHolderPower) / Number(proposalData.totalPower.tokenHolderPower)) * 100 : 0
       }));
-    }
-    let powerBlockHeight = 0;
-    if (voteList?.length) {
-      powerBlockHeight = voteList[0].powerBlockHeight;
     }
     // Set voting data state
     setVotingData({
       ...proposalData,
       id,
-      cid,
       option,
       voteStatus,
       subStatus,
-      powerBlockHeight,
       // Sort voteList array by number of votes in descending order
       voteList: voteList?.sort((a: any, b: any) => b.votes - a.votes)
-    })
+    });
     setLoading(false);
   }
 
@@ -133,15 +132,23 @@ const VotingResults = () => {
     initState();
   }, [chain]);
 
-  let href = '';
-  let img = '';
-  if (votingData?.githubName) {
-    href = `https://github.com/${votingData.githubName}`;
-    img = `${votingData?.githubAvatar}`;
-  } else {
-    href = `${chain?.blockExplorers?.default.url}/address/${votingData?.address}`;
-    img = `${web3AvatarUrl}:${votingData?.address}`
+  const getUserInfo = async () => {
+    let href = '';
+    let img = '';
+    if (votingData?.githubName) {
+      href = `https://github.com/${votingData.githubName}`;
+      const { data } = await axios.get(`${githubApi}/${votingData.githubName}`);
+      const githubAvatar = data.avatar_url;
+      img = `${githubAvatar}`;
+    } else {
+      href = `${chain?.blockExplorers?.default.url}/address/${votingData?.address}`;
+      img = `${web3AvatarUrl}:${votingData?.address}`
+    }
+    setUserInfo({ href, img })
   }
+  useEffect(() => {
+    getUserInfo()
+  }, [votingData])
   if (loading) {
     return (
       <Loading />
@@ -162,7 +169,7 @@ const VotingResults = () => {
         </div>
         <div className='px-3 md:px-0'>
           <h1 className='mb-6 text-2xl font-semibold text-[#313D4F] break-words break-all leading-12'>
-            {votingData?.name}
+            {votingData?.title}
           </h1>
           {
             (votingData?.voteStatus || votingData?.voteStatus === 0) &&
@@ -172,12 +179,12 @@ const VotingResults = () => {
                 <div className="flex items-center justify-center ml-[12px]">
                   <div className='text-[#4B535B] text-[14px]'>{t('content.createdby')}</div>
                   <div className='p-[5px] ml-[8px] flex items-center justify-center bg-[#F5F5F5] rounded-full'>
-                    <img className="w-[20px] h-[20px] rounded-full mr-[4px]" src={img} alt="" />
+                    <img className="w-[20px] h-[20px] rounded-full mr-[4px]" src={userInfo?.img} alt="" />
                     <a
                       className="text-[#313D4F]"
                       target="_blank"
                       rel="noreferrer"
-                      href={href}
+                      href={userInfo?.href}
                     >
                       {votingData?.githubName || EllipsisMiddle({ suffixCount: 4, children: votingData?.address })}
                     </a>
@@ -190,7 +197,7 @@ const VotingResults = () => {
             <MDEditor
               className="border-none rounded-[16px] bg-transparent"
               style={{ height: 'auto' }}
-              value={votingData?.descriptions}
+              value={votingData?.content}
               moreButton
               readOnly={true}
               view={{ menu: false, md: false, html: true, both: false, fullScreen: true, hideMenu: false }}
@@ -198,7 +205,17 @@ const VotingResults = () => {
             />
           </div>
           {
-            votingData?.voteStatus === COMPLETED_STATUS && <VoteList voteList={votingData?.voteList} chain={chain} />
+            votingData?.voteStatus === COMPLETED_STATUS && (
+              <VoteList
+                voteList={votingData?.voteList}
+                chain={chain}
+                powerPercent={{
+                  sp_percentage: votingData.percentage.spPercentage,
+                  client_percentage: votingData.percentage.clientPercentage,
+                  developer_percentage: votingData.percentage.developerPercentage,
+                  token_holder_percentage: votingData.percentage.tokenHolderPercentage
+                }} />
+            )
           }
         </div>
       </div>
@@ -221,20 +238,17 @@ const VotingResults = () => {
                 </div>
                 <div className='flex justify-between'>
                   <div>{t('content.endTime')}</div>
-                  <span className='text-[#313D4F] text-sm font-normal'>{votingData?.expTime && dayjs(votingData.expTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
+                  <span className='text-[#313D4F] text-sm font-normal'>{votingData?.endTime && dayjs(votingData.endTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
                 </div>
                 <div className='flex justify-between'>
                   <div>{t('content.timezone')}</div>
                   <span className='text-[#313D4F] text-sm font-normal'>{timezone}</span>
                 </div>
-                {
-                  votingData?.powerBlockHeight > 0 && (<div className='flex justify-between'>
-                    <div className='text-sm font-medium'>{t('content.blockHeight')}</div>
-                    <span className='text-[#313D4F] font-normal'>{votingData?.powerBlockHeight}</span>
-                  </div>)
-                }
+                <div className='flex justify-between'>
+                  <div className='text-sm font-medium'>{t('content.blockHeight')}</div>
+                  <span className='text-[#313D4F] font-normal'>{votingData.snapshotInfo?.snapshotHeight || '-'}</span>
+                </div>
               </div>
-
             </div>
           </div>
           {
@@ -255,7 +269,7 @@ const VotingResults = () => {
                         <div key={item.name + index}>
                           <div className='flex justify-between mb-1 text-skin-link'>
                             <div className='w-[150px] flex items-center overflow-hidden'>
-                              <span className='mr-1 truncate text-sm'>{item.name === "Approve" ? t("content.approve") : t("content.reject")}</span>
+                              <span className='mr-1 truncate text-sm'>{item.name === VOTE_OPTIONS[0] ? t("content.approve") : t("content.reject")}</span>
                             </div>
                             <div className='flex justify-end'>
                               <div className='space-x-2 text-sm font-medium'>

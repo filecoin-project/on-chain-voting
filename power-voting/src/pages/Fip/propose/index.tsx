@@ -18,25 +18,27 @@ import classNames from 'classnames';
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from "react-router-dom";
+import { isAddress } from 'viem';
 import type { BaseError } from "wagmi";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
-import fileCoinAbi from "../../../common/abi/power-voting.json";
+import votingFipeditorAbi from "../../../common/abi/power-voting-fipeditor.json";
 import {
+  calibrationChainId,
   FIP_ALREADY_EXECUTE_MSG,
   FIP_APPROVE_ALREADY_MSG,
   FIP_APPROVE_SELF_MSG,
   FIP_EDITOR_APPROVE_TYPE,
-  FIP_EDITOR_REVOKE_TYPE, calibrationChainId,
+  FIP_EDITOR_REVOKE_TYPE,
   NO_ENOUGH_FIP_EDITOR_REVOKE_ADDRESS_MSG,
   NO_FIP_EDITOR_APPROVE_ADDRESS_MSG,
   NO_FIP_EDITOR_REVOKE_ADDRESS_MSG,
-  STORING_DATA_MSG,
-  UPLOAD_DATA_FAIL_MSG
-} from "../../../common/consts"
-import {  useCheckFipEditorAddress, useFipEditors, useRevokeProposalId, useApproveProposalId, useFipEditorProposalDataSet } from "../../../common/hooks";
+  NO_FIP_INfO_MSG,
+  STORING_DATA_MSG
+} from "../../../common/consts";
+import { useApproveProposalId, useCheckFipEditorAddress, useFipEditorProposalDataSet, useFipEditors, useRevokeProposalId } from "../../../common/hooks";
 import LoadingButton from '../../../components/LoadingButton';
 import Table from '../../../components/Table';
-import { getContractAddress, getWeb3IpfsId, hexToString } from "../../../utils";
+import { getContractAddress, hexToString } from "../../../utils";
 const FipEditorPropose = () => {
   const { isConnected, address, chain } = useAccount();
   const { t } = useTranslation();
@@ -52,7 +54,7 @@ const FipEditorPropose = () => {
   const [fipInfo, setFipInfo] = useState('');
   const [fipProposalType, setFipEditorProposeType] = useState(FIP_EDITOR_APPROVE_TYPE);
 
-  const { isFipEditorAddress, checkFipEditorAddressSuccess } = useCheckFipEditorAddress(chainId, address);
+  const { isFipEditorAddress, fetchStatus: checkFipFetchStatus } = useCheckFipEditorAddress(chainId, address);
   const { fipEditors } = useFipEditors(chainId);
 
 
@@ -86,11 +88,11 @@ const FipEditorPropose = () => {
   const [loading, setLoading] = useState(writeContractPending);
 
   useEffect(() => {
-    if (!isConnected || (checkFipEditorAddressSuccess && !isFipEditorAddress)) {
+    if (!isConnected || (checkFipFetchStatus !== 'fetching' && !isFipEditorAddress)) {
       navigate("/home");
       return;
     }
-  }, [isConnected, checkFipEditorAddressSuccess, isFipEditorAddress]);
+  }, [isConnected, checkFipFetchStatus, isFipEditorAddress]);
 
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
@@ -149,7 +151,14 @@ const FipEditorPropose = () => {
       });
       return;
     }
-
+    if (fipProposalType === FIP_EDITOR_APPROVE_TYPE && !isAddress(fipAddress)) {
+      messageApi.open({
+        type: 'warning',
+        // Prompt user to fill required fields
+        content: t('content.inputValidAddress'),
+      });
+      return
+    }
     if (fipProposalType === FIP_EDITOR_REVOKE_TYPE && !selectedAddress) {
       messageApi.open({
         type: 'warning',
@@ -158,7 +167,14 @@ const FipEditorPropose = () => {
       });
       return;
     }
-
+    if (!fipInfo || !fipInfo.trim()) {
+      messageApi.open({
+        type: 'warning',
+        // Prompt user to fill required fields
+        content: t(NO_FIP_INfO_MSG),
+      });
+      return;
+    }
     if (fipProposalType === FIP_EDITOR_REVOKE_TYPE && fipEditors.length <= 2) {
       messageApi.open({
         type: 'warning',
@@ -212,30 +228,19 @@ const FipEditorPropose = () => {
     // Set loading state to true while submitting proposal
     setLoading(true);
 
-    // Get the IPFS CID for the proposal information
-    const cid = await getWeb3IpfsId(fipInfo);
-
-    if (!cid?.length) {
-      setLoading(false);
-      messageApi.open({
-        type: 'warning',
-        content: t(UPLOAD_DATA_FAIL_MSG),
-      });
-      return;
-    }
-
     // Construct the arguments and call the writeContract function to create the proposal
     const proposalArgs = [
       // Use appropriate address based on proposal type
       fipProposalType === FIP_EDITOR_APPROVE_TYPE ? fipAddress : selectedAddress,
-      cid,
+      fipInfo,
       fipProposalType, // Proposal type (approve or revoke)
     ];
 
     // Write the contract based on the proposal type
+    //TODO
     writeContract({
-      abi: fileCoinAbi,
-      address: getContractAddress(chainId, 'powerVoting'),
+      abi: votingFipeditorAbi,
+      address: getContractAddress(chainId, 'powerVotingFip'),
       functionName: 'createFipEditorProposal',
       args: proposalArgs,
     });

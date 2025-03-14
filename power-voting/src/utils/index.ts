@@ -18,10 +18,9 @@ import {
   oraclePowerCalibrationContractAddress,
   powerVotingCalibrationContractAddress,
   powerVotingMainNetContractAddress,
-  uploadApi
+  powerVotingFipMainNetContractAddress,
+  powerVotingFipCalibrationContractAddress
 } from "../common/consts";
-import axios from 'axios';
-
 export const stringToBase64Url = (str: string) => {
   const base64 = btoa(str);
 
@@ -132,6 +131,10 @@ const contractAddresses: any = {
     [filecoin.id]: oraclePowerCalibrationContractAddress,
     [filecoinCalibration.id]: oraclePowerCalibrationContractAddress,
   },
+  powerVotingFip: {
+    [filecoin.id]: powerVotingFipMainNetContractAddress,
+    [filecoinCalibration.id]: powerVotingFipCalibrationContractAddress,
+  },
 };
 
 /**
@@ -144,31 +147,10 @@ export const getContractAddress = (chainId: number, type: string) => {
   return chainContracts[chainId];
 };
 
-/**
- * Store data into web3.storage
- * @param params for the data
- */
-export const getWeb3IpfsId = async (params: object | string) => {
-  try {
-    const json = JSON.stringify(params);
-    const file = new Blob([json]);
-    const formData = new FormData();
-    formData.append('file', file);
-    const resp = await axios.post(uploadApi, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      },
-    },
-    );
-    return resp.data.data;
-  } catch (e) {
-    return ""
-  }
-}
 
 // Converts hexadecimal to a string
 export const hexToString = (hex: any) => {
-  if(!hex){
+  if (!hex) {
     return '';
   }
   let str = '';
@@ -185,3 +167,7 @@ export const hexToString = (hex: any) => {
   // Converts split hexadecimal numbers to characters and concatenates them
   return pairs.map((pair: any) => String.fromCharCode(parseInt(pair, 16))).join('').replace(/[^\x20-\x7E]/g, '').trim();
 }
+
+
+
+

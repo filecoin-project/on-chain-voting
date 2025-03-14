@@ -12,22 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
-import { Empty, Table, Popover } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import EllipsisMiddle from "../EllipsisMiddle";
-import { VOTE_OPTIONS, web3AvatarUrl } from "../../common/consts";
-import type { Chain } from "viem";
-import type { ProposalHistory } from "../../common/types";
-import './index.less';
-import { bigNumberToFloat, convertBytes } from "../../utils";
+import { Empty, Popover, Table } from 'antd';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+import type { Chain } from "viem";
+import { VOTE_OPTIONS, web3AvatarUrl } from "../../common/consts";
+import type { ProposalVotes } from "../../common/types";
+import { bigNumberToFloat, convertBytes } from "../../utils";
+import EllipsisMiddle from "../EllipsisMiddle";
+import './index.less';
 interface Props {
-  voteList: ProposalHistory[];
+  voteList: ProposalVotes[];
   chain?: Chain;
+  powerPercent: {
+    sp_percentage: number,
+    client_percentage: number,
+    developer_percentage: number,
+    token_holder_percentage: number
+  }
 }
 
-const VoteList: React.FC<Props> = ({ voteList, chain }) => {
+const VoteList: React.FC<Props> = ({ voteList, chain, powerPercent }) => {
   const { t } = useTranslation();
   const columns = [
     {
@@ -59,40 +65,43 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
       key: 'powerBlockHeight',
     },
   ];
-
-  const getPowerData = (votePower: any) => {
+  const getPowerData = (votePower: ProposalVotes) => {
     return [
       {
         key: 'sp',
         role: 'SP',
-        powerBlockHeight: votePower.powerBlockHeight,
+        powerBlockHeight: votePower.blockHeight,
         power: convertBytes(votePower.spPower),
         total: convertBytes(votePower.totalSpPower),
-        percent: `${votePower.spPowerPercent}%`,
+        percent: votePower.spPowerPercent === 0 ? '0%' : `${votePower.spPowerPercent.toFixed(2)}%`,
+        powerPercent: powerPercent.sp_percentage
       },
       {
         key: 'client',
         role: 'Client',
-        powerBlockHeight: votePower.powerBlockHeight,
+        powerBlockHeight: votePower.blockHeight,
         power: convertBytes(Number(votePower.clientPower) / (10 ** 18)),
         total: convertBytes(Number(votePower.totalClientPower) / (10 ** 18)),
-        percent: `${votePower.clientPowerPercent}%`,
+        percent: votePower.clientPowerPercent === 0 ? '0%' : `${votePower.clientPowerPercent.toFixed(2)}%`,
+        powerPercent: powerPercent.client_percentage
       },
       {
         key: 'developer',
         role: 'Developer',
-        powerBlockHeight: votePower.powerBlockHeight,
+        powerBlockHeight: votePower.blockHeight,
         power: votePower.developerPower,
         total: votePower.totalDeveloperPower,
-        percent: `${votePower.developerPowerPercent}%`,
+        percent: votePower.developerPowerPercent === 0 ? '0%' : `${votePower.developerPowerPercent.toFixed(2)}%`,
+        powerPercent: powerPercent.developer_percentage
       },
       {
         key: 'tokenHolder',
         role: 'TokenHolder',
-        powerBlockHeight: votePower.powerBlockHeight,
+        powerBlockHeight: votePower.blockHeight,
         power: bigNumberToFloat(votePower.tokenHolderPower),
         total: bigNumberToFloat(votePower.totalTokenHolderPower),
-        percent: `${votePower.tokenHolderPowerPercent}%`
+        percent: votePower.tokenHolderPowerPercent === 0 ? '0%' : `${votePower.tokenHolderPowerPercent.toFixed(2)}%`,
+        powerPercent: powerPercent.token_holder_percentage
       },
     ];
   }
@@ -106,33 +115,33 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
     // Initialize the string for total percent calculation
     let totalPercent = `${t('content.totalPercent')} = `;
     // Initialize count for non-zero total values
-    let count = 0;
     // Initialize an array to store non-zero percent values
-    const arr: string[] = [];
-
+    const arr: any[] = [];
 
     data.forEach(item => {
-      const { total, percent } = item;
+      const { total, percent, power } = item;
       // Check if total is not '0'
       if (total !== '0') {
-        arr.push(percent);
-        count++;
+        arr.push({ percent, total, power });
       }
     });
-
+    let total = 0;
+    let power = 0
     if (arr.length) {
       arr.forEach((item, index) => {
         // Check if it's not the last item in the array
+        total += Number(item.total);
+        power += Number(item.power);
         if (index < arr.length - 1) {
           // Append percent value and count with a plus sign
-          totalPercent += `${item} / ${count} + `;
+
         } else {
           // Append percent value and count without a plus sign
-          totalPercent += `${item} / ${count}`;
+          // totalPercent += `${item.total} * ${item.percent}`;
         }
       });
       // Append the final vote percentage
-      totalPercent += `= ${votes}%`;
+      totalPercent += `${power} / ${total} = ${votes.toFixed(2)}%`;
     } else {
       totalPercent += '0%';
     }
@@ -152,12 +161,11 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
           <div className="voteList leading-5 sm:leading-6 overflow-auto">
             {
               voteList?.map((item: any, index: number) => {
-
                 const powers = []
-                if (item.tokenHolderPower > 0 ) {
+                if (item.tokenHolderPower > 0) {
                   powers.push("TokenHolder")
                 }
-                if (item.spPower > 0 ) {
+                if (item.spPower > 0) {
                   powers.push("Sp")
                 }
                 if (item.developerPower > 0) {
@@ -203,10 +211,10 @@ const VoteList: React.FC<Props> = ({ voteList, chain }) => {
                             dataSource={getPowerData(item)}
                             columns={columns}
                             pagination={false}
-                            footer={(currentData: any) => renderFooter(currentData, item.votes)}
+                            footer={(currentData: any) => renderFooter(currentData, item.tokenHolderPowerPercent)}
                           />
                         }>
-                          <span className='text-[14px] text-[#273141] text-sm'>{item.votes}% <InfoCircleOutlined style={{ fontSize: 14 }} /></span>
+                          <span className='text-[14px] text-[#273141] text-sm'>{item.tokenHolderPowerPercent.toFixed(2)}% <InfoCircleOutlined style={{ fontSize: 14 }} /></span>
                         </Popover>
                       </div>
 

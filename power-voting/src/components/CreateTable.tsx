@@ -17,7 +17,7 @@ import type { ReactNode } from 'react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-export default function Table({ title = '', link = {} as { type: string, action: string, href: string }, list = [] as { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode, }[], subTitle = <div /> }) {
+export default function Table({ title = '', link = {} as { type: string, action: string, href: string }, list = [] as { name: string | ReactNode, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode, }[], subTitle = <div /> }) {
   const navigate = useNavigate();
   const { type, action, href } = link;
 
@@ -60,8 +60,8 @@ export default function Table({ title = '', link = {} as { type: string, action:
           </tr>
         </thead>
         <tbody className='divide-y divide-[#111111]'>
-          {list.filter((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode }) => !item.hide).map((item: { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode }) => (
-            <tr key={item.name} className='divide-x divide-[#313D4F] '>
+          {list.filter((item: { name: string | ReactNode, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode }) => !item.hide).map((item: { name: string | ReactNode, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode }, index: number) => (
+            <tr key={index} className='divide-x divide-[#313D4F] '>
               <td className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} align-top py-[12px] pl-[24px] pr-[45px] `}>
                 <div className='whitespace-nowrap text-base font-medium text-[#313D4F] '>{item.name}</div>
                 {item.desc && <div className={`${item.width ? `w-[${item.width}px]` : 'w-[280px]'} text-sm font-sm whitespace-normal text-[#4B535B] mt-8`}>
