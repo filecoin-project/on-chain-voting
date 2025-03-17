@@ -18,7 +18,7 @@
     "@tailwindcss/forms": "latest",
     "@tanstack/react-query": "^5.35.1",
     "antd": "5.17.3",
-    "axios": "^1.7.4",
+    "axios": "^1.8.2",
     "classnames": "latest",
     "cross-env": "^7.0.3",
     "dayjs": "^1.11.9",
