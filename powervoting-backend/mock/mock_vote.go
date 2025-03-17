@@ -17,6 +17,7 @@ package mock
 import (
 	"context"
 	"errors"
+
 	"powervoting-server/model"
 	"powervoting-server/service"
 )

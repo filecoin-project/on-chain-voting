@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package mock
 
 import (
@@ -40,9 +41,11 @@ func (m *MockProposalService) CreateProposalDraft(ctx context.Context, in *model
 }
 
 // GetProposalById implements service.ProposalRepo.
-func (m *MockProposalService) GetProposalById(ctx context.Context, req api.ProposalReq) (*model.ProposalTbl, error) {
-	return &model.ProposalTbl{
-		ProposalId: 1,
+func (m *MockProposalService) GetProposalById(ctx context.Context, req api.ProposalReq) (*model.ProposalWithVoted, error) {
+	return &model.ProposalWithVoted{
+		ProposalTbl: model.ProposalTbl{
+			ProposalId: 1,
+		},
 	}, nil
 }
 
@@ -58,10 +61,12 @@ func (m *MockProposalService) GetProposalDraftByAddress(ctx context.Context, req
 }
 
 // GetProposalListWithPagination implements service.ProposalRepo.
-func (m *MockProposalService) GetProposalListWithPagination(ctx context.Context, req api.ProposalListReq) ([]model.ProposalTbl, int64, error) {
-	return []model.ProposalTbl{
+func (m *MockProposalService) GetProposalListWithPagination(ctx context.Context, req api.ProposalListReq) ([]model.ProposalWithVoted, int64, error) {
+	return []model.ProposalWithVoted{
 		{
-			ProposalId: 1,
+			ProposalTbl: model.ProposalTbl{
+				ProposalId: 1,
+			},
 		},
 	}, 1, nil
 }
