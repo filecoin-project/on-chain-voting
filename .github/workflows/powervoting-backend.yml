@@ -48,7 +48,7 @@ jobs:
       - name: Copy config file to test dir
         run: |
           cd ./powervoting-backend
-          cp ./abi/* ./contract
+          cp ./abi/* ./task/event
           cp ./abi/* ./task
           cp ./abi/* ./utils
 
