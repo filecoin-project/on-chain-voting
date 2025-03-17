@@ -41,7 +41,7 @@ type ProposalRepo interface {
 	//   - []model.ProposalTbl: A list of proposals matching the criteria.
 	//   - int64: The total number of proposals matching the criteria (for pagination).
 	//   - error: An error if the query operation fails; otherwise, nil.
-	GetProposalListWithPagination(ctx context.Context, req api.ProposalListReq) ([]model.ProposalTbl, int64, error)
+	GetProposalListWithPagination(ctx context.Context, req api.ProposalListReq) ([]model.ProposalWithVoted, int64, error)
 
 	// GetProposalById retrieves the details of a single proposal by its ID.
 	//
@@ -52,7 +52,7 @@ type ProposalRepo interface {
 	// Returns:
 	//   - *model.ProposalTbl: The proposal details if found.
 	//   - error: An error if the query operation fails; otherwise, nil.
-	GetProposalById(ctx context.Context, req api.ProposalReq) (*model.ProposalTbl, error)
+	GetProposalById(ctx context.Context, req api.ProposalReq) (*model.ProposalWithVoted, error)
 
 	// CreateProposalDraft creates a new proposal draft.
 	// A creator can only have one draft proposal at a time; creating a new draft overwrites the existing one.
@@ -164,9 +164,11 @@ func (p *ProposalService) ProposalList(ctx context.Context, req api.ProposalList
 		temp := api.ProposalRep{
 			ProposalId: proposal.ProposalId,
 			ChainId:    proposal.ChainId,
+			GithubName: proposal.GithubName,
 			Content:    proposal.Content,
 			StartTime:  proposal.StartTime,
 			EndTime:    proposal.EndTime,
+			Voted:      proposal.Voted != nil,
 			Creator:    proposal.Creator,
 			Title:      proposal.Title,
 			Status:     constant.ProposalStatusPending,
@@ -238,12 +240,14 @@ func (p *ProposalService) ProposalDetail(ctx context.Context, req api.ProposalRe
 		ProposalId: proposal.ProposalId,
 		ChainId:    proposal.ChainId,
 		Content:    proposal.Content,
+		GithubName: proposal.GithubName,
 		StartTime:  proposal.StartTime,
 		EndTime:    proposal.EndTime,
 		Creator:    proposal.Creator,
 		Title:      proposal.Title,
 		Status:     status,
 		CreatedAt:  proposal.CreatedAt.Unix(),
+		Voted:      proposal.Voted != nil,
 		UpdatedAt:  proposal.UpdatedAt.Unix(),
 		VotePercentage: api.ProposalVotePercentage{
 			Approve: proposal.ApprovePercentage,
@@ -262,7 +266,7 @@ func (p *ProposalService) ProposalDetail(ctx context.Context, req api.ProposalRe
 			DeveloperPower:   proposal.TotalDeveloperPower,
 		},
 		SnapshotInfo: api.SnapshotInfo{
-			SnapshotHeight: proposal.SnapshotHeight,
+			SnapshotHeight: proposal.SnapshotBlockHeight,
 			SnapshotDay:    proposal.SnapshotDay,
 		},
 	}, nil
@@ -283,6 +287,7 @@ func (p *ProposalService) AddDraft(ctx context.Context, req *api.AddProposalDraf
 		Creator:   req.Creator,
 		StartTime: req.StartTime,
 		EndTime:   req.EndTime,
+		Timezone:  req.Timezone,
 		ChainId:   req.ChainId,
 		Title:     req.Title,
 		Content:   req.Content,
@@ -331,6 +336,7 @@ func (p *ProposalService) GetDraft(ctx context.Context, req api.GetDraftReq) (*a
 		Content:               res.Content,
 		StartTime:             res.StartTime,
 		EndTime:               res.EndTime,
+		Timezone:              res.Timezone,
 		Title:                 res.Title,
 		SpPercentage:          res.SpPercentage,
 		TokenHolderPercentage: res.TokenHolderPercentage,

@@ -14,6 +14,11 @@
 
 package model
 
+type ProposalWithVoted struct {
+	ProposalTbl
+	Voted *bool `json:"voted,omitempty" gorm:"column:voted"` // Virtual field indicating whether to vote
+}
+
 // proposal table
 type ProposalTbl struct {
 	BaseField
@@ -25,11 +30,12 @@ type ProposalTbl struct {
 	Timestamp           int64  `json:"timestamp" gorm:"not null"`                                               // Proposal create time
 	Counted             int    `json:"counted" gorm:"not null,default:0"`                                       // Whether the proposal has been counted. [0: false, 1: true] 0 is not counted, 1 is counted
 	ChainId             int64  `json:"chain_id" gorm:"not null;uniqueIndex:idx_proposal_chain_id"`              // Chain ID
-	Title               string `json:"title" gorm:"not null,default:''"`                                        // Name
-	Content             string `json:"content" gorm:"not null,default:''"`                                      // Descriptions
+	Title               string `json:"title" gorm:"type:longtext;not null,default:''"`                          // Name
+	Content             string `json:"content" gorm:"type:longtext;not null,default:''"`                        // Descriptions
 	BlockNumber         int64  `json:"block_number" gorm:"not null"`                                            // Proposal created block number
 	SnapshotDay         string `json:"snapshot_day" gorm:"not null"`                                            // Snapshot day
-	SnapshotHeight      int64  `json:"snapshot_height" gorm:"not null"`                                         // Snapshot height
+	SnapshotBlockHeight int64  `json:"snapshot_block_height" gorm:"not null,default:0"`                         // Snapshot height
+	SnapshotTimestamp   int64  `json:"snapshot_timestamp" gorm:"not null,default:0"`
 	ProposalResult
 	Percentage
 	TotalPower
@@ -63,6 +69,7 @@ type ProposalDraftTbl struct {
 	Creator   string `json:"creator" gorm:"not null;unique"`     // Creator address
 	StartTime int64  `json:"start_time" gorm:"not null"`         // Start time
 	EndTime   int64  `json:"end_time" gorm:"not null"`           // Expiry time
+	Timezone  string `json:"timezone" gorm:"not null"`           // Proposal timezone
 	ChainId   int64  `json:"chain_id" gorm:"not null"`           // Network ID
 	Title     string `json:"title" gorm:"not null,default:''"`   // Name
 	Content   string `json:"content" gorm:"not null,default:''"` // Descriptions

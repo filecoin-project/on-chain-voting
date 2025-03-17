@@ -41,7 +41,7 @@ func init() {
 
 // GetClient retrieves a GoEthClient instance associated with the specified ID.
 // it initializes a new client instance with configuration from the network list and returns it.
-func GetClient(syncService *service.SyncService, chainId int64) (*model.GoEthClient, error) {
+func GetClient(syncService service.ISyncService, chainId int64) (*model.GoEthClient, error) {
 	lock.Lock()
 	defer lock.Unlock()
 	client, ok := instanceMap[chainId]

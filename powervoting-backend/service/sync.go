@@ -61,6 +61,18 @@ type SyncRepo interface {
 	GetSyncEventInfo(ctx context.Context, addr string) (*model.SyncEventTbl, error)
 }
 
+type ISyncService interface {
+	UpdateSyncEventInfo(ctx context.Context, addr string, height int64) error
+	GetSyncEventInfo(ctx context.Context, addr string) (*model.SyncEventTbl, error)
+	CreateSyncEventInfo(ctx context.Context, in *model.SyncEventTbl) error
+	AddProposal(ctx context.Context, in *model.ProposalTbl) error
+	UpdateProposal(ctx context.Context, in *model.ProposalTbl) error
+	UncountedProposalList(ctx context.Context, chainId, endTime int64) ([]model.ProposalTbl, error)
+	BatchUpdateVotes(ctx context.Context, votes []model.VoteTbl) error
+	AddVote(ctx context.Context, in *model.VoteTbl) error
+	GetUncountedVotedList(ctx context.Context, chainId, proposalId int64) ([]model.VoteTbl, error)
+}
+
 // SyncService provides functionality for synchronizing data across repositories.
 // It encapsulates dependencies required for synchronization operations,
 // including access to sync, vote, and proposal repositories.
@@ -250,4 +262,3 @@ func (s *SyncService) GetUncountedVotedList(ctx context.Context, chainId, propos
 
 	return res, nil
 }
-

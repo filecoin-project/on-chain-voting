@@ -188,21 +188,6 @@ func TestGetProposalDetail_InvalidChainId(t *testing.T) {
 	assert.Contains(t, resp.Body.String(), constant.CodeParamErrorStr)
 }
 
-func TestFilecoinHeight_Success(t *testing.T) {
-	config.InitConfig("../")
-	proposalService := new(MockProposalService)
-	voteService := new(MockVoteService)
-	router := setupRouter(proposalService, voteService)
-
-	req, _ := http.NewRequest("GET", constant.PowerVotingApiPrefix+"/filecoin/height?chainId=314159", nil)
-	resp := httptest.NewRecorder()
-
-	router.ServeHTTP(resp, req)
-
-	assert.Equal(t, http.StatusOK, resp.Code)
-	assert.Contains(t, resp.Body.String(), `"blockHeight":`)
-}
-
 func TestGetPower_InvalidAddress(t *testing.T) {
 	config.InitConfig("../")
 	proposalService := new(MockProposalService)

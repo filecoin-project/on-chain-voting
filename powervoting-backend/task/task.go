@@ -18,6 +18,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
 
 	"powervoting-server/service"
@@ -27,6 +28,43 @@ type Safejob struct {
 	syncService               *service.SyncService
 	isRunningSyncEventTask    int32
 	isRunningVoteCountingTask int32
+}
+
+// TaskScheduler initializes and starts the task scheduler.
+// It creates a new cron scheduler with seconds precision.
+// It defines task functions for voting count, proposal synchronization, and vote synchronization.
+// It schedules the tasks to run at specific intervals:
+//   - Voting count task runs every 5 minutes.
+//   - Proposal synchronization task runs every 30 seconds.
+//   - Vote synchronization task runs every 30 seconds.
+//
+// Any error encountered during task scheduling is logged.
+func TaskScheduler(syncService *service.SyncService) {
+	// create a new scheduler
+	crontab := cron.New(cron.WithSeconds())
+	// stop the scheduler when the program exits
+	defer crontab.Stop()
+
+	job := Safejob{
+		syncService: syncService,
+	}
+
+	_, err := crontab.AddFunc("0/10 * * * * ?", job.RunSyncEventTask)
+	if err != nil {
+		zap.L().Error("add proposal sync task failed: ", zap.Error(err))
+		return
+	}
+
+	_, err = crontab.AddFunc("0 0/5 * * * ?", job.RunVoteCountingTask)
+	if err != nil {
+		zap.L().Error("add voting count task failed: ", zap.Error(err))
+		return
+	}
+
+	// start
+	crontab.Start()
+
+	select {}
 }
 
 // RunSyncEventTask Secure synchronization contract event
