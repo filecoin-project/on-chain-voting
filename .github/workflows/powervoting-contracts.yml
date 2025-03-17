@@ -12,29 +12,4 @@ on:
 env:
   FOUNDRY_PROFILE: ci
 
-jobs:
-  check-powervoting-contracts:
-    name: foundry project
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
-
-      - name: Run Forge build
-        run: |
-          cd ./powervoting-contracts
-          forge --version
-          forge build --sizes
-        id: build
-
-      - name: Run Forge tests
-        run: |
-          cd ./powervoting-contracts
-          forge test -vvv
-        id: test

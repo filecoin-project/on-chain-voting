@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { Table } from "antd";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from "react-router-dom";
 import { useAccount } from "wagmi";
@@ -22,15 +22,23 @@ import {
   web3AvatarUrl
 } from "../../../common/consts";
 import { useFipEditors } from "../../../common/hooks";
+import Loading from "src/components/Loading";
 const FipEditorList = () => {
   const { isConnected, address, chain } = useAccount();
   const { t } = useTranslation();
   const chainId = chain?.id || calibrationChainId;
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
+  const [loading, setLoading] = useState<boolean>(false)
+  const { fipEditors, fetchStatus } = useFipEditors(chainId);
+  useEffect(() => {
+    if (fetchStatus === "fetching") {
+      setLoading(true)
+    } else {
+      setLoading(false)
+    }
 
-  const { fipEditors } = useFipEditors(chainId);
-
+  }, [fetchStatus])
   const columns = [
     {
       title: t('content.FIPEditor'),
@@ -71,7 +79,7 @@ const FipEditorList = () => {
           <Link to="/home" className="flex items-center">
             <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
               <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                d="m11 17l-5-5m0 0l5-5m-5 5h12" />
+                    d="m11 17l-5-5m0 0l5-5m-5 5h12" />
             </svg>
             {t('content.back')}
           </Link>
@@ -83,13 +91,16 @@ const FipEditorList = () => {
             <span>{t('content.fipEditorList')}</span>
           </div>
           <div className='px-8 pb-4 !mt-0'>
-            <Table
-              className='mb-4'
-              rowKey={(record: any) => record.proposalId}
-              dataSource={fipEditors}
-              columns={columns}
-              pagination={false}
-            />
+            {loading ? <Loading /> : (
+              <Table
+                className='mb-4'
+                rowKey={(record: any) => record.proposalId}
+                dataSource={fipEditors}
+                columns={columns}
+                pagination={false}
+              />
+            )
+            }
           </div>
         </div>
       </div>

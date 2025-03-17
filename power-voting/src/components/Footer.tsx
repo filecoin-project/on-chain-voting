@@ -16,13 +16,7 @@ import React from "react";
 import { useTranslation } from 'react-i18next';
 const Footer = () => {
   const { t } = useTranslation();
-  // const partners = [
-  //   {
-  //     href: 'https://protocol.ai',
-  //     text: 'Protocol Labs',
-  //     icon: '/images/protocol.svg',
-  //   },
-  // ];
+
   const resources = [
     {
       href: "",

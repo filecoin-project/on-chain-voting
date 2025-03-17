@@ -14,26 +14,26 @@
 
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Button, Pagination, Popconfirm, Popover, Row, Table, Tooltip, message } from 'antd';
-import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from "react-router-dom";
 import type { BaseError } from "wagmi";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
-import fileCoinAbi from "../../../common/abi/power-voting.json";
+import votingFipeditorAbi from "../../../common/abi/power-voting-fipeditor.json";
 import {
   CAN_NOT_REVOKE_YOURSELF_MSG,
-  HAVE_REVOKED_MSG, calibrationChainId,
+  HAVE_REVOKED_MSG,
   STORING_DATA_MSG,
+  calibrationChainId,
   web3AvatarUrl
-} from "../../../common/consts"
+} from "../../../common/consts";
 import { useCheckFipEditorAddress, useFipEditorProposalDataSet, useFipEditors, useRevokeProposalId } from "../../../common/hooks";
 import EllipsisMiddle from "../../../components/EllipsisMiddle";
 import Loading from "../../../components/Loading";
 import { getContractAddress } from "../../../utils";
 import "./index.less";
 const FipEditorRevoke = () => {
-  const {isConnected, address, chain} = useAccount();
+  const { isConnected, address, chain } = useAccount();
   const chainId = chain?.id || calibrationChainId;
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
@@ -47,11 +47,11 @@ const FipEditorRevoke = () => {
   const [loading, setLoading] = useState(false);
   const [currentProposalId, setCurrentProposalId] = useState(null);
 
-  const { isFipEditorAddress, checkFipEditorAddressSuccess } = useCheckFipEditorAddress(chainId, address);
+  const { isFipEditorAddress, fetchStatus: checkFipFetchStatus } = useCheckFipEditorAddress(chainId, address);
   const { fipEditors } = useFipEditors(chainId);
 
-  const { revokeProposalId, getRevokeProposalIdLoading } = useRevokeProposalId(chainId);
-  const { fipEditorProposalData, getFipEditorProposalIdLoading, getFipEditorProposalIdSuccess, error } = useFipEditorProposalDataSet({
+  const { revokeProposalId } = useRevokeProposalId(chainId);
+  const { fipEditorProposalData, error, status } = useFipEditorProposalDataSet({
     chainId,
     idList: revokeProposalId,
     page,
@@ -133,8 +133,8 @@ const FipEditorRevoke = () => {
       ellipsis: { showTitle: false },
       render: (value: string) => {
         return (
-          value ? <Tooltip  overlayClassName="custom-tooltip" color="#ffffff" placement="topLeft" title={value}>
-           {value}
+          value ? <Tooltip overlayClassName="custom-tooltip" color="#ffffff" placement="topLeft" title={value}>
+            {value}
           </Tooltip> : '-'
         )
       }
@@ -167,7 +167,7 @@ const FipEditorRevoke = () => {
       align: 'center' as const,
       width: 120,
       render: (_: any, record: any) => {
-        const disabled =  !!record.voteList.find((item: any) => item.address === address && item.status === 'Revoked');
+        const disabled = !!record.voteList.find((item: any) => item.address === address && item.status === 'Revoked');
         return (
           <a className='hover:text-black flex justify-center' onClick={() => handleRevoke(record)}>
             <Popconfirm
@@ -177,7 +177,7 @@ const FipEditorRevoke = () => {
               okText={t('content.yes')}
               cancelText={t('content.no')}
             >
-              <Button type='primary' className='w-[80px] h-[24px] flex justify-center items-center' loading={record.proposalId === currentProposalId && isLoading} disabled={disabled}>{t('content.revoke')}</Button>
+              <Button type='primary' className='w-[80px] h-[24px] flex justify-center items-center' loading={record.proposalId === currentProposalId && isLoading} disabled={disabled}>{disabled ? t('content.revoked') : t('content.revoke')}</Button>
             </Popconfirm>
           </a>
         )
@@ -210,8 +210,8 @@ const FipEditorRevoke = () => {
     }
 
     writeContract({
-      abi: fileCoinAbi,
-      address: getContractAddress(chainId, 'powerVoting'),
+      abi: votingFipeditorAbi,
+      address: getContractAddress(chainId, 'powerVotingFip'),
       functionName: 'revokeFipEditor',
       args: [
         selectData.address,
@@ -222,11 +222,11 @@ const FipEditorRevoke = () => {
   };
 
   useEffect(() => {
-    if (!isConnected || (checkFipEditorAddressSuccess && !isFipEditorAddress)) {
+    if (!isConnected || (checkFipFetchStatus !== 'fetching' && !isFipEditorAddress)) {
       navigate("/home");
       return;
     }
-  }, [isConnected, checkFipEditorAddressSuccess, isFipEditorAddress]);
+  }, [isConnected, checkFipFetchStatus, isFipEditorAddress]);
 
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
@@ -254,17 +254,17 @@ const FipEditorRevoke = () => {
     reset();
   }, [writeContractError]);
 
-  useEffect(() => {
-    if (getFipEditorProposalIdSuccess) {
-      initState();
-    }
-  }, [getFipEditorProposalIdSuccess]);
 
   useEffect(() => {
-    if (isConnected && !getRevokeProposalIdLoading && !getFipEditorProposalIdLoading) {
+    if (status === "pending") {
+      setLoading(true)
+    } else if (status === "success") {
       initState();
+      setLoading(false);
+    } else {
+      setLoading(false);
     }
-  }, [chain, page, address]);
+  }, [chain, page, address, status]);
 
   useEffect(() => {
     if (writeContractSuccess) {
@@ -279,49 +279,46 @@ const FipEditorRevoke = () => {
   }, [writeContractSuccess])
 
   const initState = async () => {
-    setLoading(true);
     const list: any = [];
     await Promise.all(fipEditorProposalData.map(async (item: any) => {
-      try{
+      try {
         const { result } = item;
         const obj = {
           proposalId: result[0],
           fipEditorAddress: result[1],
-          voterInfoCid: result[2],
+          voterInfo: result[2],
           voters: result[3],
         }
-        const url = `https://${obj.voterInfoCid}.ipfs.w3s.link/`;
-        const { data } = await axios.get(url);
         const revokeList = fipEditors?.filter((address: string) => address !== obj.fipEditorAddress);
-        list.push({
-          proposalId: obj.proposalId,
-          address: obj.fipEditorAddress,
-          info: data,
-          voters: obj.voters,
-          ratio: `${obj.voters?.length} / ${revokeList?.length}`,
-          voteList: revokeList.map((address: string) => {
-            return { address, status: obj.voters?.includes(address) ? 'Revoked' : '' }
-          }).sort((a) => (a.status ? -1 : 1))
-        });
-      } catch(e){
+        if (obj.fipEditorAddress !== address) {
+          list.push({
+            proposalId: obj.proposalId,
+            address: obj.fipEditorAddress,
+            info: obj.voterInfo,
+            voters: obj.voters,
+            ratio: `${obj.voters?.length} / ${revokeList?.length}`,
+            voteList: revokeList.map((address: string) => {
+              return { address, status: obj.voters?.includes(address) ? 'Revoked' : '' }
+            }).sort((a) => (a.status ? -1 : 1))
+          });
+        }
+      } catch (e) {
         console.log(e)
       }
-      
+
     }));
     // Remove current address
     setFipProposalList(list);
-    setLoading(false);
   }
-
   return (
-    loading ? <Loading /> : <div className="px-3 mb-6 md:px-0">
+    <div className="px-3 mb-6 md:px-0">
       {contextHolder}
       <button>
         <div className="inline-flex items-center mb-8 gap-1 text-skin-text hover:text-skin-link">
           <Link to="/home" className="flex items-center">
             <svg className="mr-1" viewBox="0 0 24 24" width="1.2em" height="1.2em">
               <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                    d="m11 17l-5-5m0 0l5-5m-5 5h12" />
+                d="m11 17l-5-5m0 0l5-5m-5 5h12" />
             </svg>
             {t('content.back')}
           </Link>
@@ -332,28 +329,30 @@ const FipEditorRevoke = () => {
           <div className='font-normal text-black px-8 py-7 text-2xl border-b border-[#eeeeee] flex items-center'>
             <span>{t('content.FIPEditorRevoke')}</span>
           </div>
-          <div className='px-8 pb-4 !mt-0'>
-            <Table
-              loading={loading}
-              className='mb-4'
-              rowKey={(record: any) => record.proposalId}
-              dataSource={fipProposalList}
-              columns={columns}
-              pagination={false}
-            />
-            {
-              !!revokeProposalId?.length && <Row justify='end'>
-                    <Pagination
-                        simple
-                        showSizeChanger={false}
-                        current={page}
-                        pageSize={pageSize}
-                        total={revokeProposalId.length}
-                        onChange={handlePageChange}
-                    />
+          {loading ? <Loading /> :
+            <div className='px-8 pb-4 !mt-0'>
+              <Table
+                loading={loading}
+                className='mb-4'
+                rowKey={(record: any) => record.proposalId}
+                dataSource={fipProposalList}
+                columns={columns}
+                pagination={false}
+              />
+              {
+                revokeProposalId && revokeProposalId?.length > 0 && <Row justify='end'>
+                  <Pagination
+                    simple
+                    showSizeChanger={false}
+                    current={page}
+                    pageSize={pageSize}
+                    total={revokeProposalId.length}
+                    onChange={handlePageChange}
+                  />
                 </Row>
-            }
-          </div>
+              }
+            </div>
+          }
         </div>
       </div>
     </div>

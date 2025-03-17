@@ -24,20 +24,24 @@ import { useNavigate } from "react-router-dom";
 import VoteStatusBtn from "src/components/VoteStatusBtn";
 import { useAccount, useWaitForTransactionReceipt } from "wagmi";
 import {
+  COMPLETED_STATUS,
   IN_PROGRESS_STATUS,
-  calibrationChainId,
+  PASSED_STATUS,
   PENDING_STATUS,
+  REJECTED_STATUS,
   STORING_DATA_MSG,
   STORING_FAILED_MSG,
   STORING_STATUS,
   STORING_SUCCESS_MSG,
   VOTE_ALL_STATUS,
   VOTE_FILTER_LIST,
+  VOTE_OPTIONS,
+  calibrationChainId,
   web3AvatarUrl
 } from "../../common/consts";
-import { useCheckFipEditorAddress } from "../../common/hooks"
-import { useCurrentTimezone, useProposalStatus, useStoringCid, useVotingList } from "../../common/store";
-import type { ProposalResult, VotingList } from '../../common/types';
+import { useCheckFipEditorAddress } from "../../common/hooks";
+import { useCurrentTimezone, useProposalStatus, useSearchValue, useStoringCid, useVotingList } from "../../common/store";
+import type { VotingList } from '../../common/types';
 import EllipsisMiddle from "../../components/EllipsisMiddle";
 import ListFilter from "../../components/ListFilter";
 import Loading from "../../components/Loading";
@@ -67,20 +71,15 @@ const Home = () => {
   const timezone = useCurrentTimezone((state: any) => state.timezone);
   const storingCid = useStoringCid((state: any) => state.storingCid);
   const setStoringCid = useStoringCid((state: any) => state.setStoringCid);
-  const { votingList, totalPage, searchKey } = useVotingList((state: any) => state.votingData);
+  const { votingList, totalPage } = useVotingList((state: any) => state.votingData);
   const setVotingList = useVotingList((state: any) => state.setVotingList);
   const setStatusList = useProposalStatus((state: any) => state.setStatusList);
   const { isFipEditorAddress } = useCheckFipEditorAddress(chainId, address);
+  const searchValue = useSearchValue((state: any) => state.searchValue);
 
   const { isFetched, isSuccess, isError } = useWaitForTransactionReceipt({
     hash: storingCid[0]?.hash
   });
-
-  useEffect(() => {
-    if (isConnected && !loading) {
-      queryVotingList(page, proposalStatus);
-    }
-  }, [chain, page, address, isConnected, i18n.language]);
 
   useEffect(() => {
     if (isFetched) {
@@ -94,7 +93,11 @@ const Home = () => {
           content: t(STORING_SUCCESS_MSG)
         });
         setTimeout(() => {
-          queryVotingList(page, proposalStatus);
+          queryVotingList(page, proposalStatus, searchValue)
+          //Prevent delayed API refresh
+          setTimeout(() => {
+            queryVotingList(page, proposalStatus, searchValue)
+          }, 3000);
         }, 3000)
       }
       // If the transaction fails, show an error message
@@ -105,35 +108,39 @@ const Home = () => {
         })
       }
     }
-  }, [isFetched]);
+  }, [isFetched, proposalStatus, searchValue]);
 
-  const queryVotingList = async (page: number, proposalStatus: number) => {
-    setLoading(true);
+  const queryVotingList = async (page: number, proposalStatus: number, searchValue: string, isLoading?: boolean) => {
     const params = {
       chainId,
       page,
       pageSize: 5,
-      searchKey: searchKey,
+      searchKey: searchValue,
       status: proposalStatus === VOTE_ALL_STATUS ? 0 : proposalStatus,
     }
+    setLoading(isLoading || false);
     const { data: { data: votingData } } = await axios.get('/api/proposal/list', { params });
-    setVotingList({ votingList: votingData?.list || [], totalPage: votingData?.total, searchKey: searchKey });
+    setVotingList({ votingList: votingData?.list || [], totalPage: votingData?.total });
     setLoading(false);
   }
+  useEffect(() => {
+    //When the search value changes, display all by default
+    setPage(1);
+  }, [searchValue])
+  useEffect(() => {
+    if (!page) return
+    queryVotingList(page, proposalStatus, searchValue, true)
+  }, [page, isConnected, i18n.language, searchValue, proposalStatus, address, chainId]);
+
   /**
    * filter proposal list
    * @param status
    */
   const handleFilter = async (status: number) => {
     setProposalStatus(status);
-    queryVotingList(1, status);
     setStatusList(status)
     setPage(1);
   }
-  useEffect(() => {
-    //When the search value changes, display all by default
-    setPage(1);
-  }, [searchKey])
   /**
    * page jump
    * @param item
@@ -146,7 +153,7 @@ const Home = () => {
       });
       return;
     }
-    const router = `/${[PENDING_STATUS, IN_PROGRESS_STATUS].includes(item.status) ? "vote" : "votingResults"}/${item.proposalId}/${item.cid}`;
+    const router = `/${[PENDING_STATUS, IN_PROGRESS_STATUS].includes(item.status) ? "vote" : "votingResults"}/${item.proposalId}`;
     navigate(router, { state: item });
   }
 
@@ -162,7 +169,6 @@ const Home = () => {
     // Reset vote status when page change
     // setProposalStatus(VOTE_ALL_STATUS);
     setPage(page);
-    queryVotingList(page, proposalStatus);
   }
 
   /**
@@ -184,11 +190,7 @@ const Home = () => {
         </div>
       );
     }
-    return list.map((item: VotingList, index: number) => {
-      const maxOption = (item?.voteResult || [])?.reduce((prev, current) => {
-        return (prev.votes > current.votes) ? prev : current;
-      }, 0);
-
+    return list.map((item: VotingList) => {
       let href = '';
       let img = '';
       if (item?.githubName) {
@@ -198,10 +200,29 @@ const Home = () => {
         href = `${chain?.blockExplorers?.default.url}/address/${item.address}`;
         img = `${web3AvatarUrl}:${item.address}`
       }
+      const votStatus = item.status === COMPLETED_STATUS ? (
+        item.votePercentage.approve > item.votePercentage.reject ? PASSED_STATUS : REJECTED_STATUS
+      ) : item.status;
+      const option = [
+        {
+          name: VOTE_OPTIONS[0],
+          count: item.votePercentage.approve
+        },
+        {
+          name: VOTE_OPTIONS[1],
+          count: item.votePercentage.reject
+        }
+      ]
+      const maxOption = option.reduce((max, current) => {
+        return (current.count > max.count) ? current : max;
+      });
       return (
         <div
-          key={item.cid + index}
-          className="rounded-xl border-[1px] border-solid border-[#DFDFDF] bg-[#FFFFFF] px-[30px] py-[12px] mb-[16px]"
+          onClick={() => {
+            handleJump(item)
+          }}
+          key={item.proposalId}
+          className="rounded-xl border-[1px] border-solid border-[#DFDFDF] bg-[#FFFFFF] px-[30px] py-[12px] mb-[16px] cursor-pointer"
         >
           <div className="flex justify-between mb-3">
             <div
@@ -211,6 +232,9 @@ const Home = () => {
                 target='_blank'
                 rel="noopener noreferrer"
                 href={href}
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
               >
                 <div className="bg-[#F5F5F5] rounded-full  flex p-[5px] justify-center items-center">
                   <img className="w-[20px] h-[20px] rounded-full mr-2" src={img} alt="" />
@@ -220,32 +244,27 @@ const Home = () => {
                 </div>
               </a>
               <div className="truncate text-[#4B535B] text-sm ml-5">
-                {t('content.created')} {dayjs(item.currentTime * 1000).format('YYYY-MM-D')}
+                {t('content.createdAt')} {dayjs(item.createdAt * 1000).format('YYYY-MM-D')}
               </div>
             </div>
-            <VoteStatusBtn status={item.status} />
+            <VoteStatusBtn status={votStatus} />
 
           </div>
-          <div className="relative mb-4 line-clamp-2 break-words break-all text-lg pr-[80px] leading-7 cursor-pointer"
-            onClick={() => {
-              handleJump(item);
-            }}>
+          <div className="relative mb-4 line-clamp-2 break-words break-all text-lg pr-[80px] leading-7">
             <h3 className="inline pr-2 text-2xl font-semibold text-[#313D4F]">
-              {item.name}
+              {item.title}
             </h3>
           </div>
-          <div className="mb-2 line-clamp-2 break-words text-normal text-lg cursor-pointer" onClick={() => {
-            handleJump(item)
-          }}>
-            {markdownToText(item.descriptions)}
+          <div className="mb-2 line-clamp-2 break-words text-normal text-lg">
+            {markdownToText(item.content)}
           </div>
           {
-            maxOption?.votes > 0 &&
+            maxOption.count > 0 &&
             <div>
               {
-                item.voteResult?.map((option: ProposalResult, index: number) => {
-                  const isapprove = option.optionId == 0; //0 approve 1 reject
-                  const passed = maxOption.optionId == 0;
+                option?.map((option: { name: string, count: number }, index: number) => {
+                  const isapprove = option.name == VOTE_OPTIONS[0];
+                  const passed = maxOption.name == VOTE_OPTIONS[0];
                   let bgColor = "#F7F7F7";
                   let txColor = "#273141";
                   let borderColor = "#F7F7F7";
@@ -264,16 +283,16 @@ const Home = () => {
                         style={{ color: txColor }}
                         className='absolute ml-3 flex items-center leading-[35px] font-semibold'>
                         {
-                          ((maxOption.votes === 50 && option.optionId === 1) || (maxOption.votes > 50 && option.votes > 0 && option.votes === maxOption.votes)) &&
+                          ((maxOption.count === 50 && option.name === VOTE_OPTIONS[1]) || (maxOption.count > 50 && option.count > 0 && option.count === maxOption.count)) &&
                           <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" className="-ml-1 mr-2 text-sm">
                             <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
-                              strokeWidth="2" d="m5 13l4 4L19 7" />
+                                  strokeWidth="2" d="m5 13l4 4L19 7" />
                           </svg>
                         }
-                        {option.optionId === 0 ? t('content.approve') : t('content.rejected')}
+                        {option.name == VOTE_OPTIONS[0] ? t('content.approve') : t('content.rejected')}
                       </div>
-                      <div className="font-semibold absolute right-0 mr-3 leading-[35px]" style={{ color: txColor }}>{option.votes}%</div>
-                      {option.votes > 0 && <div className="h-[35px] border-[1px] border-solid rounded-md bg-[#E3FFEE]" style={{ width: `${option.votes}%`, backgroundColor: bgColor, borderColor: borderColor }} />
+                      <div className="font-semibold absolute right-0 mr-3 leading-[35px]" style={{ color: txColor }}>{option.count}%</div>
+                      {option.count > 0 && <div className="h-[35px] border-[1px] border-solid rounded-md bg-[#E3FFEE]" style={{ width: `${option.count}%`, backgroundColor: bgColor, borderColor: borderColor }} />
                       }
                     </div>
                   )
@@ -283,7 +302,7 @@ const Home = () => {
           }
           <div className="text-[#4B535B] text-sm mt-4">
             <span className="mr-2">{t('content.endTime')}:</span>
-            {dayjs(item.expTime * 1000).format('MMM.D, YYYY, h:mm A')} ({timezone})
+            {dayjs(item.endTime * 1000).format('MMM. D, YYYY, h:mm A')} ({timezone})
           </div>
         </div >
       )

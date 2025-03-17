@@ -20,7 +20,7 @@ import type { BaseError } from "wagmi";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { filecoinCalibration } from "wagmi/chains";
 import oraclePowerAbi from "../../common/abi/oracle-powers.json";
-import fileCoinAbi from "../../common/abi/power-voting.json";
+import oracleAbi from "../../common/abi/oracle.json";
 import {
   DUPLICATED_MINER_ID_MSG, calibrationChainId,
   STORING_DATA_MSG,
@@ -143,7 +143,6 @@ const MinerId = () => {
     const prefix = getMinerIdPrefix(chainId);
     const prefixRegex = new RegExp('^' + prefix);
     let hasError = false;
-
     const arr = minerIds?.length > 0 ? minerIds.map(minerId => {
       const str = minerId.replace(prefixRegex, '');
       if (isNaN(Number(str)) || str?.length > 7) {
@@ -202,9 +201,9 @@ const MinerId = () => {
         return;
       } else {
         writeContract({
-          abi: fileCoinAbi,
-          address: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
-          functionName: 'addMinerId',
+          abi: oracleAbi,
+          address: getContractAddress(chain?.id || calibrationChainId, 'oracle'),
+          functionName: 'addMinerIds',
           args: [
             value
           ],

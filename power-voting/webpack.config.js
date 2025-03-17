@@ -15,7 +15,8 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'dist'),
     publicPath: '/',
-    filename: '[name].[contenthash].js'
+    filename: '[name].[contenthash].js',
+    clean: true,
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
@@ -27,24 +28,24 @@ module.exports = {
   },
   devServer: {
     static: path.join(__dirname, 'public'),
-    port: 3001,
+    port: 3000,
     open: true,
     historyApiFallback: true,
     proxy: {
       '/api': {
-        target: 'http://192.168.11.94:9999/power_voting',
+        target: 'http://192.168.11.122:9999/power_voting',
         changeOrigin: true,
         pathRewrite: {
           '^/api': '/api'
         }
       },
-      '/rpc/v1': {
+      /*'/rpc/v1': {
         target: 'http://192.168.11.139:1235',
         changeOrigin: true,
         pathRewrite: {
           '^/rpc/v1': '/rpc/v1'
         }
-      },
+      },*/
     }
   },
   stats: {
@@ -71,18 +72,26 @@ module.exports = {
       {
         test: /\.css$/i,
         use: [
-          "style-loader",
-          "css-loader",
-          'postcss-loader'
-        ]
+          'style-loader',
+          'css-loader',
+          'postcss-loader',
+        ],
       },
       {
         test: /\.less$/i,
         use: [
-          "style-loader",
-          "css-loader",
-          "less-loader"
-        ]
+          'style-loader',
+          'css-loader',
+          'less-loader',
+        ],
+      },
+      {
+        test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/,
+        loader: 'file-loader',
+        options: {
+          name: '[name].[ext]',
+          outputPath: 'fonts/',
+        },
       },
     ],
   },
@@ -98,6 +107,10 @@ module.exports = {
         {
           from: 'public/images',
           to: 'images'
+        },
+        {
+          from: 'public/fonts',
+          to: 'fonts'
         }
       ]
     }),
@@ -107,7 +120,19 @@ module.exports = {
     new ProgressPlugin(),
   ],
   devtool: 'source-map',
-  // optimization: {
-  //   minimize: true,
-  // },
+  optimization: {
+    minimize: true,
+    splitChunks: {
+      chunks: 'all',
+      maxSize: 2000000,
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all',
+        },
+      },
+    },
+    runtimeChunk: 'single',
+  },
 };
