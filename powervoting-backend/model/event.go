@@ -14,11 +14,6 @@
 
 package model
 
-import (
-	"math/big"
-
-	"github.com/ethereum/go-ethereum/common"
-)
 
 // sync event table
 type SyncEventTbl struct {
@@ -29,30 +24,3 @@ type SyncEventTbl struct {
 	SyncedHeight    int64  `json:"synced_height" gorm:"not null,default:0"`
 }
 
-// Contract Event - Vote
-type VoteEvent struct {
-	Id       *big.Int       // proposal id
-	Voter    common.Address // voter address
-	VoteInfo string         // The encrypted string after the time lock, the parsed content is ["reject" or "approve"]
-}
-
-// Contract Event - ProposalCreate
-type ProposalCreateEvent struct {
-	Id       *big.Int      // proposal id
-	Proposal ProposalEvent // proposal info
-}
-
-// ProposalCreate info. Structure according to the field order of the Event, do not change the field position of this structure at will.
-type ProposalEvent struct {
-	Creator               common.Address // The address to create the proposal
-	StartTime             *big.Int       // The start time of the proposal
-	EndTime               *big.Int       // The end time of the proposal
-	Timestamp             *big.Int       // The time when the proposal is created
-	SnapshotTimestamp     *big.Int       // The timestamp of the snapshot sync voter address date
-	Content               string         // The content of the proposal
-	Title                 string         // The title of the proposal
-	TokenHolderPercentage uint16         // The percentage of votes that token holders have
-	SpPercentage          uint16         // The percentage of votes that sps have
-	ClientPercentage      uint16         // The percentage of votes that clients have
-	DeveloperPercentage   uint16         // The percentage of votes that developers have
-}

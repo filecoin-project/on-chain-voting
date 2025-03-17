@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package task
+package event
 
 import (
 	"context"
@@ -23,6 +23,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 
 	"powervoting-server/config"
 	"powervoting-server/constant"
@@ -32,26 +33,17 @@ import (
 	"powervoting-server/service"
 )
 
-func TestSubscriptEvent(t *testing.T) {
-	initConfig()
-	mydb := data.NewMysql()
-	for _, conf := range config.Client.Network {
-		syncService := service.NewSyncService(
-			repo.NewSyncRepo(mydb),
-			repo.NewVoteRepo(mydb),
-			repo.NewProposalRepo(mydb),
-		)
-		ethClient, err := data.GetClient(syncService, conf.ChainId)
-		assert.NoError(t, err)
-		ev := &Event{
-			Client:      ethClient,
-			SyncService: syncService,
-			Network:     &conf,
-		}
-
-		ev.SubscribeEvent()
-	}
+func initConfig() {
+	config.InitConfig("../")
+	config.Client.ABIPath.PowerVotingAbi = "../abi/power-voting.json"
+	config.Client.ABIPath.OracleAbi = "../abi/oracle.json"
+	logger, _ := zap.NewDevelopment()
+	zap.ReplaceGlobals(logger)
+	//? local debug
+	// config.Client.ABIPath.PowerVotingAbi = "./power-voting.json"
+	// config.Client.ABIPath.OracleAbi = "./oracle.json"
 }
+
 
 func TestFetchMatchingEventLogs(t *testing.T) {
 	initConfig()
