@@ -17,6 +17,7 @@ package repo
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -43,7 +44,7 @@ func NewProposalRepo(mydb *gorm.DB) *ProposalRepoImpl {
 
 // GetProposalListWithPagination retrieves a paginated list of proposals based on the given request.
 // It returns a slice of ProposalTbl, the total count of proposals, and an error if any occurred.
-func (p *ProposalRepoImpl) GetProposalListWithPagination(ctx context.Context, req api.ProposalListReq) ([]model.ProposalTbl, int64, error) {
+func (p *ProposalRepoImpl) GetProposalListWithPagination(ctx context.Context, req api.ProposalListReq) ([]model.ProposalWithVoted, int64, error) {
 	// Build the base SQL queries for counting and listing proposals based on the request parameters.
 	queryCount, queryList := p.buildProposalBaseQuery(req)
 	// Apply status filter to both the count and list queries if a status is specified in the request.
@@ -56,7 +57,17 @@ func (p *ProposalRepoImpl) GetProposalListWithPagination(ctx context.Context, re
 		return nil, 0, fmt.Errorf("get proposal list count error: %w", err)
 	}
 
-	var proposals []model.ProposalTbl
+	if req.Addr != "" {
+		subQuery := p.mydb.Model(&model.VoteTbl{}).
+			Select("1").
+			Where("proposal_id = proposal_tbl.proposal_id").
+			Where("chain_id = proposal_tbl.chain_id").
+			Where("address = ?", req.Addr)
+		queryList = queryList.Select("proposal_tbl.*, EXISTS(?) AS voted", subQuery)
+		queryList.Select("proposal_tbl.*, (?) AS voted", subQuery)
+	}
+
+	var proposals []model.ProposalWithVoted
 	if err := queryList.WithContext(ctx).Find(&proposals).Error; err != nil {
 		return nil, 0, fmt.Errorf("get proposal list error: %w", err)
 	}
@@ -65,21 +76,33 @@ func (p *ProposalRepoImpl) GetProposalListWithPagination(ctx context.Context, re
 }
 
 // GetProposalById retrieves a proposal from the database based on the provided proposal ID and chain ID.
-func (p *ProposalRepoImpl) GetProposalById(ctx context.Context, req api.ProposalReq) (*model.ProposalTbl, error) {
-	var proposal model.ProposalTbl
+func (p *ProposalRepoImpl) GetProposalById(ctx context.Context, req api.ProposalReq) (*model.ProposalWithVoted, error) {
+	var proposal model.ProposalWithVoted
 	// Query the database for a proposal with the specified ID and chain ID.
 	// The WithContext method ensures that the query is cancellable and can be timed out.
 	// The Where method specifies the conditions for the query.
 	// The First method retrieves the first record that matches the conditions.
-	if err := p.mydb.Model(model.ProposalTbl{}).
-		WithContext(ctx).
-		Where("id = ? and chain_id = ?", req.ProposalId, req.ChainId).
-		First(&proposal).Error; err != nil {
+	query := p.mydb.Model(&model.ProposalTbl{}).
+		Where("proposal_id = ? AND chain_id = ?", req.ProposalId, req.ChainId)
+	if req.Addr != "" {
+		subQuery := p.mydb.Model(&model.VoteTbl{}).
+			Select("1").
+			Where("proposal_id = proposal_tbl.proposal_id").
+			Where("chain_id = proposal_tbl.chain_id").
+			Where("address = ?", req.Addr)
+		query = query.Select("proposal_tbl.*, EXISTS(?) AS voted", subQuery)
+	}
+
+	if err := query.WithContext(ctx).First(&proposal).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
 
 		return nil, fmt.Errorf("get proposal by id error: %w", err)
+	}
+
+	if req.Addr == "" {
+		proposal.Voted = nil
 	}
 
 	return &proposal, nil
@@ -98,6 +121,7 @@ func (p *ProposalRepoImpl) CreateProposalDraft(ctx context.Context, in *model.Pr
 				"start_time",
 				"end_time",
 				"title",
+				"timezone",
 				"content",
 				"token_holder_percentage",
 				"sp_percentage",
@@ -151,9 +175,9 @@ func (p *ProposalRepoImpl) CreateProposal(ctx context.Context, in *model.Proposa
 				"timestamp",
 				"chain_id",
 				"title",
-				"random_day",
 				"content",
 				"block_number",
+				"snapshot_day",
 				"token_holder_percentage",
 				"snapshot_block_height",
 				"sp_percentage",
@@ -213,7 +237,11 @@ func (p *ProposalRepoImpl) buildProposalBaseQuery(req api.ProposalListReq) (quer
 	baseCondition := func(query *gorm.DB) {
 		// If a search key is provided, add a condition to filter by title.
 		if req.SearchKey != "" {
-			query.Where("title LIKE ?", "%"+req.SearchKey+"%")
+			safeSearchKey := "%" + strings.ReplaceAll(
+				strings.ReplaceAll(req.SearchKey, "%", "\\%"),
+				"_", "\\_",
+			) + "%"
+			query.Where("title LIKE ?", safeSearchKey)
 		}
 
 		// If a chain ID is provided, add a condition to filter by chain ID.

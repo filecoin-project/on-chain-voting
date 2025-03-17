@@ -46,6 +46,7 @@ type DataHeightRep struct {
 type ProposalRep struct {
 	ProposalId     int64                  `json:"proposalId"`               // Proposal ID
 	Creator        string                 `json:"address"`                  // Creator address
+	GithubName     string                 `json:"githubName"`               // Github name
 	StartTime      int64                  `json:"startTime"`                // Start time
 	EndTime        int64                  `json:"endTime"`                  // End time
 	ChainId        int64                  `json:"chainId"`                  // Chain ID
@@ -53,6 +54,7 @@ type ProposalRep struct {
 	Content        string                 `json:"content"`                  // Proposal content
 	CreatedAt      int64                  `json:"createdAt"`                // Created time
 	UpdatedAt      int64                  `json:"updatedAt"`                // Updated time
+	Voted          bool                   `json:"voted"`                    // Whether the proposal has been voted
 	Status         int                    `json:"status"`                   // Proposal status
 	VotePercentage ProposalVotePercentage `json:"votePercentage,omitempty"` // Voting result percentages
 	SnapshotInfo   SnapshotInfo           `json:"snapshotInfo,omitempty"`   // Snapshot information
@@ -84,6 +86,7 @@ type ProposalDraftRep struct {
 	Content               string `json:"content"`               // Proposal content
 	StartTime             int64  `json:"startTime"`             // Start time
 	EndTime               int64  `json:"endTime"`               // End time
+	Timezone              string `json:"timezone"`              // Timezone
 	TokenHolderPercentage uint16 `json:"tokenHolderPercentage"` // Token holder percentage
 	SpPercentage          uint16 `json:"spPercentage"`          // SP percentage
 	DeveloperPercentage   uint16 `json:"developerPercentage"`   // Developer percentage

@@ -19,14 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Snapshot_GetAddressPower_FullMethodName      = "/snapshot.Snapshot/GetAddressPower"
-	Snapshot_SyncDateHeight_FullMethodName       = "/snapshot.Snapshot/SyncDateHeight"
-	Snapshot_SyncAddrPower_FullMethodName        = "/snapshot.Snapshot/SyncAddrPower"
-	Snapshot_SyncAllAddrPower_FullMethodName     = "/snapshot.Snapshot/SyncAllAddrPower"
-	Snapshot_SyncSnapshot_FullMethodName         = "/snapshot.Snapshot/SyncSnapshot"
-	Snapshot_GetDataHeight_FullMethodName        = "/snapshot.Snapshot/GetDataHeight"
-	Snapshot_GetAddressPowerByDay_FullMethodName = "/snapshot.Snapshot/GetAddressPowerByDay"
-	Snapshot_GetAllAddrPowerByDay_FullMethodName = "/snapshot.Snapshot/GetAllAddrPowerByDay"
+	Snapshot_GetAddressPower_FullMethodName         = "/snapshot.Snapshot/GetAddressPower"
+	Snapshot_SyncDateHeight_FullMethodName          = "/snapshot.Snapshot/SyncDateHeight"
+	Snapshot_SyncAddrPower_FullMethodName           = "/snapshot.Snapshot/SyncAddrPower"
+	Snapshot_SyncAllAddrPower_FullMethodName        = "/snapshot.Snapshot/SyncAllAddrPower"
+	Snapshot_UploadSnapshotInfoByDay_FullMethodName = "/snapshot.Snapshot/UploadSnapshotInfoByDay"
+	Snapshot_GetDataHeight_FullMethodName           = "/snapshot.Snapshot/GetDataHeight"
+	Snapshot_GetAddressPowerByDay_FullMethodName    = "/snapshot.Snapshot/GetAddressPowerByDay"
+	Snapshot_GetAllAddrPowerByDay_FullMethodName    = "/snapshot.Snapshot/GetAllAddrPowerByDay"
 )
 
 // SnapshotClient is the client API for Snapshot service.
@@ -37,7 +37,7 @@ type SnapshotClient interface {
 	SyncDateHeight(ctx context.Context, in *SyncDateHeightRequest, opts ...grpc.CallOption) (*SyncDateHeightResponse, error)
 	SyncAddrPower(ctx context.Context, in *SyncAddrPowerRequest, opts ...grpc.CallOption) (*SyncAddrPowerResponse, error)
 	SyncAllAddrPower(ctx context.Context, in *SyncAllAddrPowerRequest, opts ...grpc.CallOption) (*SyncAllAddrPowerResponse, error)
-	SyncSnapshot(ctx context.Context, in *SyncSnapshotRequest, opts ...grpc.CallOption) (*SyncSnapshotResponse, error)
+	UploadSnapshotInfoByDay(ctx context.Context, in *UploadSnapshotInfoByDayRequest, opts ...grpc.CallOption) (*UploadSnapshotInfoByDayResponse, error)
 	GetDataHeight(ctx context.Context, in *DataHeightRequest, opts ...grpc.CallOption) (*DataHeightResponse, error)
 	GetAddressPowerByDay(ctx context.Context, in *AddressPowerByDayRequest, opts ...grpc.CallOption) (*AddressPowerResponse, error)
 	GetAllAddrPowerByDay(ctx context.Context, in *GetAllAddrPowerByDayRequest, opts ...grpc.CallOption) (*GetAllAddrPowerByDayResponse, error)
@@ -87,9 +87,9 @@ func (c *snapshotClient) SyncAllAddrPower(ctx context.Context, in *SyncAllAddrPo
 	return out, nil
 }
 
-func (c *snapshotClient) SyncSnapshot(ctx context.Context, in *SyncSnapshotRequest, opts ...grpc.CallOption) (*SyncSnapshotResponse, error) {
-	out := new(SyncSnapshotResponse)
-	err := c.cc.Invoke(ctx, Snapshot_SyncSnapshot_FullMethodName, in, out, opts...)
+func (c *snapshotClient) UploadSnapshotInfoByDay(ctx context.Context, in *UploadSnapshotInfoByDayRequest, opts ...grpc.CallOption) (*UploadSnapshotInfoByDayResponse, error) {
+	out := new(UploadSnapshotInfoByDayResponse)
+	err := c.cc.Invoke(ctx, Snapshot_UploadSnapshotInfoByDay_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +131,7 @@ type SnapshotServer interface {
 	SyncDateHeight(context.Context, *SyncDateHeightRequest) (*SyncDateHeightResponse, error)
 	SyncAddrPower(context.Context, *SyncAddrPowerRequest) (*SyncAddrPowerResponse, error)
 	SyncAllAddrPower(context.Context, *SyncAllAddrPowerRequest) (*SyncAllAddrPowerResponse, error)
-	SyncSnapshot(context.Context, *SyncSnapshotRequest) (*SyncSnapshotResponse, error)
+	UploadSnapshotInfoByDay(context.Context, *UploadSnapshotInfoByDayRequest) (*UploadSnapshotInfoByDayResponse, error)
 	GetDataHeight(context.Context, *DataHeightRequest) (*DataHeightResponse, error)
 	GetAddressPowerByDay(context.Context, *AddressPowerByDayRequest) (*AddressPowerResponse, error)
 	GetAllAddrPowerByDay(context.Context, *GetAllAddrPowerByDayRequest) (*GetAllAddrPowerByDayResponse, error)
@@ -154,8 +154,8 @@ func (UnimplementedSnapshotServer) SyncAddrPower(context.Context, *SyncAddrPower
 func (UnimplementedSnapshotServer) SyncAllAddrPower(context.Context, *SyncAllAddrPowerRequest) (*SyncAllAddrPowerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SyncAllAddrPower not implemented")
 }
-func (UnimplementedSnapshotServer) SyncSnapshot(context.Context, *SyncSnapshotRequest) (*SyncSnapshotResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SyncSnapshot not implemented")
+func (UnimplementedSnapshotServer) UploadSnapshotInfoByDay(context.Context, *UploadSnapshotInfoByDayRequest) (*UploadSnapshotInfoByDayResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UploadSnapshotInfoByDay not implemented")
 }
 func (UnimplementedSnapshotServer) GetDataHeight(context.Context, *DataHeightRequest) (*DataHeightResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDataHeight not implemented")
@@ -251,20 +251,20 @@ func _Snapshot_SyncAllAddrPower_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Snapshot_SyncSnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SyncSnapshotRequest)
+func _Snapshot_UploadSnapshotInfoByDay_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UploadSnapshotInfoByDayRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SnapshotServer).SyncSnapshot(ctx, in)
+		return srv.(SnapshotServer).UploadSnapshotInfoByDay(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Snapshot_SyncSnapshot_FullMethodName,
+		FullMethod: Snapshot_UploadSnapshotInfoByDay_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SnapshotServer).SyncSnapshot(ctx, req.(*SyncSnapshotRequest))
+		return srv.(SnapshotServer).UploadSnapshotInfoByDay(ctx, req.(*UploadSnapshotInfoByDayRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -347,8 +347,8 @@ var Snapshot_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Snapshot_SyncAllAddrPower_Handler,
 		},
 		{
-			MethodName: "SyncSnapshot",
-			Handler:    _Snapshot_SyncSnapshot_Handler,
+			MethodName: "UploadSnapshotInfoByDay",
+			Handler:    _Snapshot_UploadSnapshotInfoByDay_Handler,
 		},
 		{
 			MethodName: "GetDataHeight",

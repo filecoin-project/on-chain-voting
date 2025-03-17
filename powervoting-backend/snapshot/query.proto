@@ -9,7 +9,7 @@ service Snapshot {
   rpc SyncDateHeight(SyncDateHeightRequest) returns (SyncDateHeightResponse) {}
   rpc SyncAddrPower(SyncAddrPowerRequest) returns (SyncAddrPowerResponse) {}
   rpc SyncAllAddrPower(SyncAllAddrPowerRequest) returns (SyncAllAddrPowerResponse){}
-  rpc SyncSnapshot(SyncSnapshotRequest) returns (SyncSnapshotResponse) {}
+  rpc UploadSnapshotInfoByDay(UploadSnapshotInfoByDayRequest) returns (UploadSnapshotInfoByDayResponse) {}
   rpc GetDataHeight(DataHeightRequest) returns (DataHeightResponse) {}
   rpc GetAddressPowerByDay(AddressPowerByDayRequest) returns (AddressPowerResponse) {}
   rpc GetAllAddrPowerByDay(GetAllAddrPowerByDayRequest) returns (GetAllAddrPowerByDayResponse) {}
@@ -22,8 +22,8 @@ message GetAllAddrPowerByDayRequest {
 
 message GetAllAddrPowerByDayResponse {
   string day = 1;
-  string info = 2; 
-  int64 netId = 3;
+  string info = 3; 
+  int64 netId = 4;
 }
 
 message DataHeightRequest{
@@ -71,7 +71,7 @@ message AddressPowerResponse {
   string date_str = 7;
 }
 
-message SyncSnapshotRequest {
+message UploadSnapshotInfoByDayRequest {
   string day = 1;
   int64 netId = 2;
 }
@@ -87,7 +87,7 @@ message SyncDateHeightResponse {
 message SyncAddrPowerResponse {
 
 }
-message SyncSnapshotResponse {
+message UploadSnapshotInfoByDayResponse {
   string day = 1;
   int64 height=2;
 }

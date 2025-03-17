@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math/big"
 	"sync"
 	"time"
 
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -26,9 +26,14 @@ var (
 // getClient returns a singleton gRPC client instance.
 func getClient() pb.SnapshotClient {
 	clientOnce.Do(func() {
-		conn, err := grpc.Dial(config.Client.Snapshot.Rpc, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+
+		conn, err := grpc.Dial(
+			config.Client.Snapshot.Rpc,
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithBlock(),
+		)
 		if err != nil {
-			log.Fatalf("failed to connect to gRPC server: %v", err)
+			zap.L().Error("failed to connect to gRPC server", zap.Error(err))
 		}
 		clientInstance = pb.NewSnapshotClient(conn)
 	})
@@ -153,16 +158,16 @@ func GetAllAddressPowerByDay(chainId int64, snapshotDay string) (model.SnapshotA
 	return allPower, nil
 }
 
-func SyncSnapshot(chainId int64, snapshotDay string) (model.SnapshotHeight, error) {
+func UploadSnapshotInfo(chainId int64, snapshotDay string) (model.SnapshotHeight, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), constant.RequestTimeout)
 	defer cancel()
 
-	grpcReq := &pb.SyncSnapshotRequest{
+	grpcReq := &pb.UploadSnapshotInfoByDayRequest{
 		Day:   snapshotDay,
 		NetId: chainId,
 	}
 
-	grpcRes, err := getClient().SyncSnapshot(ctx, grpcReq)
+	grpcRes, err := getClient().UploadSnapshotInfoByDay(ctx, grpcReq)
 	if err != nil {
 		return model.SnapshotHeight{}, fmt.Errorf("failed to sync snapshot: %v", err)
 	}

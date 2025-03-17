@@ -18,6 +18,7 @@ package api
 type ProposalListReq struct {
 	Status       int    `form:"status" validate:"oneof=0 1 2 3 4"` // Status filter (0: all, 1: pending, 2: in progress, 3: counting, 4: completed)
 	SearchKey    string `form:"searchKey"`                         // Keyword for fuzzy search in proposal titles
+	Addr         string `form:"addr"`                              // The user address is used to determine whether the proposal has been voted on.
 	PageReq             // Embedded pagination request
 	ChainIdParam        // Embedded chain ID parameter
 }
@@ -47,8 +48,9 @@ type ChainIdParam struct {
 
 // ProposalReq represents a request for retrieving a specific proposal by its ID and chain ID.
 type ProposalReq struct {
-	ProposalId   int64 `form:"proposalId" validate:"required"` // Proposal ID
-	ChainIdParam       // Embedded chain ID parameter
+	ProposalId   int64  `form:"proposalId" validate:"required"`          // Proposal ID
+	Addr         string `form:"addr"` // Address to query
+	ChainIdParam        // Embedded chain ID parameter
 }
 
 // AddProposalDraftReq represents a request for creating or updating a proposal draft.
@@ -56,6 +58,7 @@ type AddProposalDraftReq struct {
 	Creator   string `json:"creator"`   // Creator address
 	StartTime int64  `json:"startTime"` // Start time of the proposal
 	EndTime   int64  `json:"endTime"`   // End time of the proposal
+	Timezone  string `json:"timezone"`  // Timezone of the proposal
 	ChainId   int64  `json:"chainId"`   // Chain ID associated with the proposal
 	Title     string `json:"title"`     // Title of the proposal
 	Content   string `json:"content"`   // Description of the proposal
