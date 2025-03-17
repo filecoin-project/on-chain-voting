@@ -37,7 +37,7 @@ import (
 
 type Event struct {
 	Client      *model.GoEthClient
-	SyncService *service.SyncService
+	SyncService service.ISyncService
 	Network     *config.Network
 }
 

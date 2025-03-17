@@ -25,32 +25,32 @@ type MockSyncService struct {
 }
 
 // AddProposal implements service.ISyncService.
-func (m *MockSyncService) AddProposal(ctx context.Context, in *model.ProposalTbl) error {
+func (m MockSyncService) AddProposal(ctx context.Context, in *model.ProposalTbl) error {
 	panic("unimplemented")
 }
 
 // AddVote implements service.ISyncService.
-func (m *MockSyncService) AddVote(ctx context.Context, in *model.VoteTbl) error {
+func (m MockSyncService) AddVote(ctx context.Context, in *model.VoteTbl) error {
 	panic("unimplemented")
 }
 
 // BatchUpdateVotes implements service.ISyncService.
-func (m *MockSyncService) BatchUpdateVotes(ctx context.Context, votes []model.VoteTbl) error {
+func (m MockSyncService) BatchUpdateVotes(ctx context.Context, votes []model.VoteTbl) error {
 	return nil
 }
 
 // CreateSyncEventInfo implements service.ISyncService.
-func (m *MockSyncService) CreateSyncEventInfo(ctx context.Context, in *model.SyncEventTbl) error {
+func (m MockSyncService) CreateSyncEventInfo(ctx context.Context, in *model.SyncEventTbl) error {
 	return nil
 }
 
 // GetSyncEventInfo implements service.ISyncService.
-func (m *MockSyncService) GetSyncEventInfo(ctx context.Context, addr string) (*model.SyncEventTbl, error) {
+func (m MockSyncService) GetSyncEventInfo(ctx context.Context, addr string) (*model.SyncEventTbl, error) {
 	panic("unimplemented")
 }
 
 // GetUncountedVotedList implements service.ISyncService.
-func (m *MockSyncService) GetUncountedVotedList(ctx context.Context, chainId int64, proposalId int64) ([]model.VoteTbl, error) {
+func (m MockSyncService) GetUncountedVotedList(ctx context.Context, chainId int64, proposalId int64) ([]model.VoteTbl, error) {
 	return []model.VoteTbl{
 		{
 			ProposalId: 1,
