@@ -21,7 +21,8 @@ WORKDIR /dist
 
 COPY --from=backend-builder /build/app .
 COPY --from=backend-builder /build/configuration.yaml .
-COPY --from=backend-builder /build/abi/power-voting.json ./abi/
+COPY --from=backend-builder /build/abi/power-voting.json ./
+COPY --from=backend-builder /build/abi/oracle.json ./
 
 EXPOSE 18007
 

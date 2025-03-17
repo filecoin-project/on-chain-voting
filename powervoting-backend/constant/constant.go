@@ -25,7 +25,7 @@ const (
 	VoteReject = "reject"
 
 	// http request timeout time
-	RequestTimeout = time.Second * 5
+	RequestTimeout = time.Second * 15
 
 	// geth The maximum supported event parsing block limit
 	SyncBlockLimit = 2880
