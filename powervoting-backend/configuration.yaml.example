@@ -19,19 +19,12 @@ mysql:
   password: <MYSQL_ROOT_PASSWORD>
 
 network:
-  - id: <CHAIN_ID>
+  - chainId: <CHAIN_ID>
     name: <CHAIN_NAME>
     rpc: <CHAIN_RPC>
-    powerVotingAbi: /dist/power-voting.json
-    oracleAbi: /dist/oracle.json
     powerVotingContract: <POWERVoting_Contract_ADDRESS>
     oracleContract: <ORACLE_Contract_ADDRESS>
-    privateKey: <PRIVATE_Key>
-    walletAddress: <WALLET_ADDRESS>
-    gasLimit: 500000000
 
-w3client:
-  did: <DID>
-  privateKey: <PRIVATE_Key>
-  proof: ./proof.ucan
-  space: <SPACE>
+abiPath:
+  powerVotingAbi: /dist/power-voting.json
+  oracleAbi: /dist/oracle.json

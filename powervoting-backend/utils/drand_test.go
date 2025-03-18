@@ -16,41 +16,53 @@ package utils
 
 import (
 	"encoding/json"
-	"fmt"
-	"go.uber.org/zap"
-	"powervoting-server/config"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"powervoting-server/constant"
+	"powervoting-server/mock"
 )
 
-func TestGetIpfsAndDecrypt(t *testing.T) {
-	config.InitConfig("../")
-	ipfs, err := GetIpfs("bafkreic2hs32eeortzls7utl5bu3yjxieb64k2q3afqn2l7enofeamvqjq")
-	if err != nil {
-		zap.L().Error("get ipfs error: ", zap.Error(err))
-		return
-	}
-	decrypt, err := Decrypt(ipfs)
-	if err != nil {
-		zap.L().Error("decrypt error: ", zap.Error(err))
-		return
-	}
-	fmt.Println("decrypt string: ", string(decrypt))
-	var mapData [][]string
-	err = json.Unmarshal(decrypt, &mapData)
-	if err != nil {
-		zap.L().Error("unmarshal error：", zap.Error(err))
-		return
-	}
-	fmt.Println("Map data: ", mapData)
+func TestDecodeVoteResult(t *testing.T) {
+	mock.InifMockConfig()
+	decStr := `-----BEGIN AGE ENCRYPTED FILE-----
+YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IHRsb2NrIDE2MzI1ODEyIDUyZGI5YmE3
+MGUwY2MwZjZlYWY3ODAzZGQwNzQ0N2ExZjU0Nzc3MzVmZDNmNjYxNzkyYmE5NDYw
+MGM4NGU5NzEKdFVxWng1VVpiSW1pRjk2ZmJSU2dXRVJrblRjeEFuWjdkblg5VHNx
+djNaZkdzYlh1eVBUSUh4NHZabkJWWmFwVwpCa09MNGpZMUVtNkQ2cjdGK0Z6eEE3
+Y0VBR3F3SCtabFMyenE5TjRtNEF4d0FoMkFBS1NhbkxXRVozRzBMSlViCnQ4ZEF1
+MHhCbHhmTW1LQnJKRXN3NkFIV3h6VjNSNXlHdnlobk03SFY3b3cKLS0tIHFwbHJi
+Qnhxd1JvZHVKaElYSVZOa3dMZkt0SHdIc2hMVzA0NHVmSmsvcTQKBVM4IBEuFQcP
+l0YZKbPlAmnEhcp3EAwQ84BvVSibhTmIzq/MYdsHnTX/1O8=
+-----END AGE ENCRYPTED FILE-----
+`
+	res, err := DecodeVoteResult(decStr)
+	assert.NoError(t, err, "decode error：", err)
+	assert.Equal(t, constant.VoteReject, res)
 }
 
-func TestGetOptions(t *testing.T) {
-	config.InitConfig("../")
-	options, err := GetOptions("bafkreihmdncwpk2kgos7ddzhu2tznirmjhevukhmvonvtspkeomsgxvsty")
-	if err != nil {
-		zap.L().Error("get option error: ", zap.Error(err))
-		return
-	}
-	fmt.Println(options)
-	fmt.Println(len(options))
+func TestDecrypt(t *testing.T) {
+	mock.InifMockConfig()
+	decStr := `-----BEGIN AGE ENCRYPTED FILE-----
+YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IHRsb2NrIDE2MzI1ODEyIDUyZGI5YmE3
+MGUwY2MwZjZlYWY3ODAzZGQwNzQ0N2ExZjU0Nzc3MzVmZDNmNjYxNzkyYmE5NDYw
+MGM4NGU5NzEKcExwOUJkK2ZWbFpEMEx5OGZ3OVhCa09pWldRWnpHSGZtWGErcSsw
+b3pzdEFON2VNTjU3T3RFbTRFQ2d2bElpMApBV2ZvU3A5cy9Ydjl0YkRrb3p1Tk5v
+RjdaRUo0c2RtdWRWQ2hEOENQcm1FN1VBYUxtaXBLR29ScVFKdFFFbHUrCitDT2Vr
+SENnYWE4eHNGNUxuVzdwWEhkd25sRzlsSmxXSy9wUVJIaEM2S2cKLS0tIHNUV2Yr
+RVdEZlJQWm9yaS9ITnNqcGNuQmxNcUlob3VKYkErRUJDb243eUkK2rehvaQY2kad
+04WmD3ZNvrbcQRZwWonF+Ww4UhpwUApwbCjpEx80W5jfIo+p
+-----END AGE ENCRYPTED FILE-----
+`
+
+	decrypt, err := Decrypt(decStr)
+	assert.NoError(t, err, "decrypt error：", err)
+
+	var data [][]string
+	err = json.Unmarshal(decrypt, &data)
+	assert.NoError(t, err, "unmarshal error：", err)
+	assert.Len(t, data, 1)
+	assert.Len(t, data[0], 1)
+	assert.Equal(t, constant.VoteApprove, data[0][0])
 }

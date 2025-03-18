@@ -14,24 +14,35 @@
 
 package constant
 
+import "time"
+
 const (
-	// ProposalStartKey is the key used to record the start of proposals.
-	ProposalStartKey = "ProposalStartKey"
-
-	// VoteStartKey is the key used to record the start of votes.
-	VoteStartKey = "VoteStartKey"
-
+	PowerVotingApiPrefix = "/power_voting/api"
 	// VoteApprove represents the approval vote status.
-	VoteApprove = 0
+	VoteApprove = "approve"
 
 	// VoteReject represents the rejection vote status.
-	VoteReject = 1
+	VoteReject = "reject"
 
-	ProposalStatusStoring    = 0
+	// http request timeout time
+	RequestTimeout = time.Second * 15
+
+	// geth The maximum supported event parsing block limit
+	SyncBlockLimit = 2880
+
+	// ProposalStatusPending represents the pending proposal status.
 	ProposalStatusPending    = 1
 	ProposalStatusInProgress = 2
 	ProposalStatusCounting   = 3
 	ProposalStatusCompleted  = 4
-	ProposalStatusRejected   = 5
-	ProposalStatusPassed     = 6
+
+	ProposalCreate  = 0 // proposal created
+	ProposalCounted = 1 // proposal counted
+
+	// contract event logs name
+	ProposalEvt = "ProposalCreate"
+	VoteEvt     = "Vote"
+
+	// mysql duplicate error code
+	MysqlDuplicateEntryErrorCode = 1062
 )

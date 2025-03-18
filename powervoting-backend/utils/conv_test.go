@@ -12,35 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config
+package utils
 
 import (
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
+	"testing"
 )
 
-// export client
-var Client Config
-
-// InitConfig initializes the configuration by reading from a YAML file located at the specified path.
-func InitConfig(path string) {
-	// configuration file name
-	viper.SetConfigName("configuration")
-
-	viper.AddConfigPath(path)
-
-	viper.SetConfigType("yaml")
-
-	err := viper.ReadInConfig()
-	if err != nil {
-		zap.L().Error("read config file error:", zap.Error(err))
-		return
+func TestStringConvToBigInt(t *testing.T) {
+	strNumber := "1234567890123456789012345678901234567890"
+	bigNumber := StringConvToBigInt(strNumber)
+	if bigNumber.String() != strNumber {
+		t.Errorf("Expected %s, got %s", strNumber, bigNumber.String())
 	}
+}
 
-	err = viper.Unmarshal(&Client)
-	if err != nil {
-		zap.L().Error("unmarshal error:", zap.Error(err))
-		return
+func TestBigIntConvToString(t *testing.T) {
+	// 1 Ether = 10^18 Wei
+	strNumber := "1000000000000000000"
+	bigNumber := StringConvToBigInt(strNumber)
+	strResult := DividedBy10To18(bigNumber, 0)
+	if strResult != "1" {
+		t.Errorf("Expected %s, got %s", "1", strResult)
 	}
-
 }

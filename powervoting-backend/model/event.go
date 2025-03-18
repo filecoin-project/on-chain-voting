@@ -12,35 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config
+package model
 
-import (
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
-)
 
-// export client
-var Client Config
-
-// InitConfig initializes the configuration by reading from a YAML file located at the specified path.
-func InitConfig(path string) {
-	// configuration file name
-	viper.SetConfigName("configuration")
-
-	viper.AddConfigPath(path)
-
-	viper.SetConfigType("yaml")
-
-	err := viper.ReadInConfig()
-	if err != nil {
-		zap.L().Error("read config file error:", zap.Error(err))
-		return
-	}
-
-	err = viper.Unmarshal(&Client)
-	if err != nil {
-		zap.L().Error("unmarshal error:", zap.Error(err))
-		return
-	}
-
+// sync event table
+type SyncEventTbl struct {
+	Id              int64  `json:"id"`
+	ChainId         int64  `json:"chain_id" gorm:"not null"`
+	ChainName       string `json:"chain_name" gorm:"not null"`
+	ContractAddress string `json:"contract_address" gorm:"not null;unique"`
+	SyncedHeight    int64  `json:"synced_height" gorm:"not null,default:0"`
 }
+

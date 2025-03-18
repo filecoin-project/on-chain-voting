@@ -49,7 +49,7 @@ jobs:
         run: |
           cd ./powervoting-backend
           mv configuration.yaml.example configuration.yaml
-          cp ./abi/* ./contract
+          cp ./abi/* ./task/event
           cp ./abi/* ./task
           cp ./abi/* ./utils
 

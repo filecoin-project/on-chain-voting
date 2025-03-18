@@ -38,4 +38,4 @@ else
     echo "Container $IMAGE_NAME does not exist or is already stopped."
 fi
 
-docker run --name $IMAGE_NAME -v ./configuration.yaml:/dist/configuration.yaml -v ./proof.ucan:/dist/proof.ucan -p $PORT:$PORT -d $IMAGE_NAME
+docker run --name $IMAGE_NAME -v ./configuration.yaml:/dist/configuration.yaml -p $PORT:$PORT -d $IMAGE_NAME
