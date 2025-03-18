@@ -231,7 +231,7 @@ func (ev *Event) parseEvent(ctx context.Context, vLog types.Log) error {
 			return err
 		}
 
-		data := model.VoteTbl{
+		voteData := model.VoteTbl{
 			ProposalId:    event.Id.Int64(),
 			Address:       event.Voter.Hex(),
 			VoteEncrypted: event.VoteInfo,
@@ -243,16 +243,26 @@ func (ev *Event) parseEvent(ctx context.Context, vLog types.Log) error {
 			},
 		}
 
+		voterAddressData := model.VoterAddressTbl{
+			Address:           event.Voter.Hex(),
+			InitCreatedHeight: blockHeader.Number.Int64(),
+			UpdateHeight:      blockHeader.Number.Int64(),
+		}
+
 		zap.L().Info(
 			"Sync vote event parsed result",
 			zap.Int64("proposal id", event.Id.Int64()),
 			zap.String("voter", event.Voter.Hex()),
 		)
 
-		if err = ev.SyncService.AddVote(ctx, &data); err != nil {
+		if err = ev.SyncService.AddVote(ctx, &voteData); err != nil {
 			return fmt.Errorf("parse %s event error: %w", constant.VoteEvt, err)
 		}
 
+		if err := ev.SyncService.AddVoterAddress(ctx, &voterAddressData); err != nil {
+			return fmt.Errorf("parse %s event error: %w", constant.VoteEvt, err)
+		}
+		
 		zap.L().Info("Sync vote event success", zap.Int64("proposal id", event.Id.Int64()))
 	default:
 		return fmt.Errorf("unknown event")

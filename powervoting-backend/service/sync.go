@@ -71,6 +71,8 @@ type ISyncService interface {
 	BatchUpdateVotes(ctx context.Context, votes []model.VoteTbl) error
 	AddVote(ctx context.Context, in *model.VoteTbl) error
 	GetUncountedVotedList(ctx context.Context, chainId, proposalId int64) ([]model.VoteTbl, error)
+	AddVoterAddress(ctx context.Context, in *model.VoterAddressTbl) error
+	GetVoterAddresss(ctx context.Context, height int64) ([]model.VoterAddressTbl, int64, error)
 }
 
 // SyncService provides functionality for synchronizing data across repositories.
@@ -261,4 +263,53 @@ func (s *SyncService) GetUncountedVotedList(ctx context.Context, chainId, propos
 	}
 
 	return res, nil
+}
+
+// AddVoterAddress adds a new voter address record to the database or updates an existing one.
+// It delegates the operation to the `CreateVoterAddress` method of the `voteRepo` and handles any errors that may occur.
+//
+// Parameters:
+//   - ctx: The context for managing request-scoped values, cancellation signals, and deadlines.
+//   - in: A pointer to the `VoterAddressTbl` struct containing the voter address data to be added or updated.
+//
+// Returns:
+//   - error: An error object if the operation fails. Returns nil on success.
+func (s *SyncService) AddVoterAddress(ctx context.Context, in *model.VoterAddressTbl) error {
+	_, err := s.voteRepo.CreateVoterAddress(ctx, in)
+	if err != nil {
+		zap.L().Error("CreateVoterAddress failed", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
+// GetVoterAddresss retrieves a list of voter addresses that were created after a specified block height.
+// It delegates the operation to the `GetNewVoterAddresss` method of the `voteRepo` and handles any errors that may occur.
+// If no voter addresses are found, it returns nil for the list and 0 for the height.
+//
+// Parameters:
+//   - ctx: The context for managing request-scoped values, cancellation signals, and deadlines.
+//   - height: The block height threshold. Only voter addresses created after this height are returned.
+//
+// Returns:
+//   - []model.VoterAddressTbl: A list of voter addresses that meet the criteria. Returns nil if no addresses are found.
+//   - int64: The highest `init_created_height` from the retrieved voter addresses. Returns 0 if no addresses are found.
+//   - error: An error object if the operation fails. Returns nil on success.
+func (s *SyncService) GetVoterAddresss(ctx context.Context, height int64) ([]model.VoterAddressTbl, int64, error) {
+	// Delegate the retrieval of voter addresses to the repository layer
+	res, err := s.voteRepo.GetNewVoterAddresss(ctx, height)
+	if err != nil {
+		// Log the error and return it if the operation fails
+		zap.L().Error("GetNewVoterAddresss failed", zap.Error(err))
+		return nil, 0, err
+	}
+
+	// If no voter addresses are found, return nil for the list and 0 for the height
+	if len(res) == 0 {
+		return nil, 0, nil
+	}
+
+	// Return the retrieved voter addresses and the highest `init_created_height`
+	return res, res[0].InitCreatedHeight, nil
 }

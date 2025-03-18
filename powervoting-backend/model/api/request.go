@@ -49,7 +49,6 @@ type ChainIdParam struct {
 // ProposalReq represents a request for retrieving a specific proposal by its ID and chain ID.
 type ProposalReq struct {
 	ProposalId   int64  `form:"proposalId" validate:"required"`          // Proposal ID
-	Addr         string `form:"addr"` // Address to query
 	ChainIdParam        // Embedded chain ID parameter
 }
 

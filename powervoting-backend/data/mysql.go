@@ -60,7 +60,8 @@ func NewMysql() *gorm.DB {
 	db.AutoMigrate(&model.VoteTbl{})
 	db.AutoMigrate(&model.ProposalDraftTbl{})
 	db.AutoMigrate(&model.SyncEventTbl{})
-
+	db.AutoMigrate(&model.VoterAddressTbl{})
+	
 	return db
 }
 

@@ -23,7 +23,13 @@ func InifMockConfig() {
 			OracleAbi:      "../abi/oracle.json",
 		},
 		Drand: config.Drand{
-			Url:       []string{"https://api.drand.secureweb3.com:6875"},
+			Url: []string{
+				"https://api2.drand.sh/",
+				"https://api.drand.secureweb3.com:6875",
+				"https://api.drand.sh/",
+				"https://api3.drand.sh/",
+				"https://drand.cloudflare.com/",
+			},
 			ChainHash: "52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971",
 		},
 		Network: []config.Network{
@@ -36,8 +42,6 @@ func InifMockConfig() {
 				OracleContract:                  "0x974e0AffA36Ef25ad3F99Edda6a0f9Cc09D354Ff",
 			},
 		},
-		Snapshot: config.Snapshot{
-			// Rpc: "192.168.11.135:8001",
-		},
+		Snapshot: config.Snapshot{},
 	}
 }

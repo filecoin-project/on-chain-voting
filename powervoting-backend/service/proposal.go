@@ -52,7 +52,7 @@ type ProposalRepo interface {
 	// Returns:
 	//   - *model.ProposalTbl: The proposal details if found.
 	//   - error: An error if the query operation fails; otherwise, nil.
-	GetProposalById(ctx context.Context, req api.ProposalReq) (*model.ProposalWithVoted, error)
+	GetProposalById(ctx context.Context, req api.ProposalReq) (*model.ProposalTbl, error)
 
 	// CreateProposalDraft creates a new proposal draft.
 	// A creator can only have one draft proposal at a time; creating a new draft overwrites the existing one.
@@ -247,7 +247,6 @@ func (p *ProposalService) ProposalDetail(ctx context.Context, req api.ProposalRe
 		Title:      proposal.Title,
 		Status:     status,
 		CreatedAt:  proposal.CreatedAt.Unix(),
-		Voted:      proposal.Voted != nil,
 		UpdatedAt:  proposal.UpdatedAt.Unix(),
 		VotePercentage: api.ProposalVotePercentage{
 			Approve: proposal.ApprovePercentage,

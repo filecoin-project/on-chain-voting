@@ -25,6 +25,8 @@ import (
 type MockVoteService struct {
 }
 
+
+
 var _ service.VoteRepo = (*MockVoteService)(nil)
 
 // BatchUpdateVotes implements service.VoteRepo.
@@ -49,4 +51,14 @@ func (m *MockVoteService) GetVoteList(ctx context.Context, chainId int64, propos
 			Address:    "voter",
 		},
 	}, nil
+}
+
+// CreateVoterAddress implements service.VoteRepo.
+func (m *MockVoteService) CreateVoterAddress(ctx context.Context, in *model.VoterAddressTbl) (int64, error) {
+	panic("unimplemented")
+}
+
+// GetNewVoterAddresss implements service.VoteRepo.
+func (m *MockVoteService) GetNewVoterAddresss(ctx context.Context, height int64) ([]model.VoterAddressTbl, error) {
+	panic("unimplemented")
 }

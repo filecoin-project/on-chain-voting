@@ -57,15 +57,13 @@ func (p *ProposalRepoImpl) GetProposalListWithPagination(ctx context.Context, re
 		return nil, 0, fmt.Errorf("get proposal list count error: %w", err)
 	}
 
-	if req.Addr != "" {
-		subQuery := p.mydb.Model(&model.VoteTbl{}).
-			Select("1").
-			Where("proposal_id = proposal_tbl.proposal_id").
-			Where("chain_id = proposal_tbl.chain_id").
-			Where("address = ?", req.Addr)
-		queryList = queryList.Select("proposal_tbl.*, EXISTS(?) AS voted", subQuery)
-		queryList.Select("proposal_tbl.*, (?) AS voted", subQuery)
-	}
+	subQuery := p.mydb.Model(&model.VoteTbl{}).
+		Select("1").
+		Where("proposal_id = proposal_tbl.proposal_id").
+		Where("chain_id = proposal_tbl.chain_id").
+		Where("address = ?", req.Addr)
+	queryList = queryList.Select("proposal_tbl.*, EXISTS(?) AS voted", subQuery)
+	queryList.Select("proposal_tbl.*, (?) AS voted", subQuery)
 
 	var proposals []model.ProposalWithVoted
 	if err := queryList.WithContext(ctx).Find(&proposals).Error; err != nil {
@@ -76,22 +74,14 @@ func (p *ProposalRepoImpl) GetProposalListWithPagination(ctx context.Context, re
 }
 
 // GetProposalById retrieves a proposal from the database based on the provided proposal ID and chain ID.
-func (p *ProposalRepoImpl) GetProposalById(ctx context.Context, req api.ProposalReq) (*model.ProposalWithVoted, error) {
-	var proposal model.ProposalWithVoted
+func (p *ProposalRepoImpl) GetProposalById(ctx context.Context, req api.ProposalReq) (*model.ProposalTbl, error) {
+	var proposal model.ProposalTbl
 	// Query the database for a proposal with the specified ID and chain ID.
 	// The WithContext method ensures that the query is cancellable and can be timed out.
 	// The Where method specifies the conditions for the query.
 	// The First method retrieves the first record that matches the conditions.
 	query := p.mydb.Model(&model.ProposalTbl{}).
 		Where("proposal_id = ? AND chain_id = ?", req.ProposalId, req.ChainId)
-	if req.Addr != "" {
-		subQuery := p.mydb.Model(&model.VoteTbl{}).
-			Select("1").
-			Where("proposal_id = proposal_tbl.proposal_id").
-			Where("chain_id = proposal_tbl.chain_id").
-			Where("address = ?", req.Addr)
-		query = query.Select("proposal_tbl.*, EXISTS(?) AS voted", subQuery)
-	}
 
 	if err := query.WithContext(ctx).First(&proposal).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -99,10 +89,6 @@ func (p *ProposalRepoImpl) GetProposalById(ctx context.Context, req api.Proposal
 		}
 
 		return nil, fmt.Errorf("get proposal by id error: %w", err)
-	}
-
-	if req.Addr == "" {
-		proposal.Voted = nil
 	}
 
 	return &proposal, nil
@@ -255,7 +241,7 @@ func (p *ProposalRepoImpl) buildProposalBaseQuery(req api.ProposalListReq) (quer
 
 	// Initialize the query for listing proposals with ordering, pagination, and common conditions.
 	queryList = p.mydb.Model(model.ProposalTbl{}).
-		Order("created_at desc").
+		Order("end_time desc").
 		Limit(req.PageSize).
 		Offset(int(req.Offset()))
 

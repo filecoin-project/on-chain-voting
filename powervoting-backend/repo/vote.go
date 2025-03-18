@@ -57,8 +57,6 @@ func (v *VoteRepoImpl) BatchUpdateVotes(ctx context.Context, votes []model.VoteT
 				"client_power":       vote.ClientPower,
 				"developer_power":    vote.DeveloperPower,
 				"token_holder_power": vote.TokenHolderPower,
-				"block_number":       vote.BlockNumber,
-				"timestamp":          vote.Timestamp,
 			}).Error; err != nil {
 			tx.Rollback()
 			return fmt.Errorf("update vote error: %w", err)
@@ -80,7 +78,7 @@ func (v VoteRepoImpl) CreateVote(ctx context.Context, in *model.VoteTbl) (int64,
 				{Name: "address"},
 				{Name: "chain_id"},
 			},
-			DoUpdates: clause.AssignmentColumns([]string{"vote_encrypted"}),
+			DoUpdates: clause.AssignmentColumns([]string{"vote_encrypted", "updated_at"}),
 		}).
 		Create(in).Error
 	if err != nil {
@@ -108,4 +106,63 @@ func (v *VoteRepoImpl) GetVoteList(ctx context.Context, chainId, proposalId int6
 
 	tx.Find(&proposalList)
 	return proposalList, tx.Error
+}
+
+// CreateVoterAddress creates or updates a voter address record in the database.
+// If a record with the same address already exists, it updates the `update_height` field.
+// Otherwise, it inserts a new record.
+//
+// Parameters:
+//   - ctx: The context for managing request-scoped values, cancellation signals, and deadlines.
+//   - in: A pointer to the `VoterAddressTbl` struct containing the voter address data to be created or updated.
+//
+// Returns:
+//   - int64: The ID of the created or updated voter address record.
+//   - error: An error object if the operation fails.
+func (v *VoteRepoImpl) CreateVoterAddress(ctx context.Context, in *model.VoterAddressTbl) (int64, error) {
+	// Use the `OnConflict` clause to handle duplicate addresses
+	err := v.mydb.Model(model.VoterAddressTbl{}).
+		WithContext(ctx).
+		Clauses(clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "address"}, // Conflict resolution based on the `address` column
+			},
+			DoUpdates: clause.AssignmentColumns([]string{"update_height", "updated_at"}), // Update `update_height` if the address exists
+		}).
+		Create(in).Error // Perform the create or update operation
+
+	// Handle errors during the operation
+	if err != nil {
+		return 0, fmt.Errorf("create or update voter address error: %w", err)
+	}
+
+	// Return the ID of the created or updated record
+	return in.BaseField.ID, nil
+}
+
+// GetNewVoterAddresss retrieves a list of voter addresses that were created after a specified block height.
+// It queries the database for voter addresses with an `init_created_height` greater than the provided height,
+// orders the results in descending order by `init_created_height`, and returns the list along with the highest height found.
+//
+// Parameters:
+//   - ctx: The context for managing request-scoped values, cancellation signals, and deadlines.
+//   - height: The block height threshold. Only voter addresses created after this height are returned.
+//
+// Returns:
+//   - []model.VoterAddressTbl: A list of voter addresses that meet the criteria.
+//   - int64: The highest `init_created_height` from the retrieved voter addresses. Returns 0 if no addresses are found.
+//   - error: An error object if the query fails.
+func (v *VoteRepoImpl) GetNewVoterAddresss(ctx context.Context, height int64) ([]model.VoterAddressTbl, error) {
+	var proposalList []model.VoterAddressTbl
+
+	// Query the database for voter addresses created after the specified height
+	if err := v.mydb.Model(model.VoterAddressTbl{}).
+		WithContext(ctx).
+		Where("init_created_height > ?", height).
+		Order("init_created_height desc").
+		Find(&proposalList).Error; err != nil {
+		return proposalList, err
+	}
+
+	return proposalList, nil
 }

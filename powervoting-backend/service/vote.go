@@ -62,6 +62,33 @@ type VoteRepo interface {
 	// Returns:
 	//   - error: An error if the batch update operation fails; otherwise, nil.
 	BatchUpdateVotes(ctx context.Context, votes []model.VoteTbl) error
+
+	// CreateVoterAddress creates or updates a voter address record in the database.
+	// If a record with the same address already exists, it updates the `update_height` field.
+	// Otherwise, it inserts a new record.
+	//
+	// Parameters:
+	//   - ctx: The context for managing request-scoped values, cancellation signals, and deadlines.
+	//   - in: A pointer to the `VoterAddressTbl` struct containing the voter address data to be created or updated.
+	//
+	// Returns:
+	//   - int64: The ID of the created or updated voter address record.
+	//   - error: An error object if the operation fails.
+	CreateVoterAddress(ctx context.Context, in *model.VoterAddressTbl) (int64, error)
+
+	// GetNewVoterAddresss retrieves a list of voter addresses that were created after a specified block height.
+	// It queries the database for voter addresses with an `init_created_height` greater than the provided height,
+	// orders the results in descending order by `init_created_height`, and returns the list along with the highest height found.
+	//
+	// Parameters:
+	//   - ctx: The context for managing request-scoped values, cancellation signals, and deadlines.
+	//   - height: The block height threshold. Only voter addresses created after this height are returned.
+	//
+	// Returns:
+	//   - []model.VoterAddressTbl: A list of voter addresses that meet the criteria.
+	//   - int64: The highest `init_created_height` from the retrieved voter addresses. Returns 0 if no addresses are found.
+	//   - error: An error object if the query fails.
+	GetNewVoterAddresss(ctx context.Context, height int64) ([]model.VoterAddressTbl, error)
 }
 
 type IVoteService interface {

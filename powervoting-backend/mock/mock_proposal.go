@@ -41,11 +41,9 @@ func (m *MockProposalService) CreateProposalDraft(ctx context.Context, in *model
 }
 
 // GetProposalById implements service.ProposalRepo.
-func (m *MockProposalService) GetProposalById(ctx context.Context, req api.ProposalReq) (*model.ProposalWithVoted, error) {
-	return &model.ProposalWithVoted{
-		ProposalTbl: model.ProposalTbl{
-			ProposalId: 1,
-		},
+func (m *MockProposalService) GetProposalById(ctx context.Context, req api.ProposalReq) (*model.ProposalTbl, error) {
+	return &model.ProposalTbl{
+		ProposalId: 1,
 	}, nil
 }
 

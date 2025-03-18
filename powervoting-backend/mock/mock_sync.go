@@ -24,6 +24,16 @@ import (
 type MockSyncService struct {
 }
 
+// AddVoterAddress implements service.ISyncService.
+func (m *MockSyncService) AddVoterAddress(ctx context.Context, in *model.VoterAddressTbl) error {
+	panic("unimplemented")
+}
+
+// GetVoterAddresss implements service.ISyncService.
+func (m *MockSyncService) GetVoterAddresss(ctx context.Context, height int64) ([]model.VoterAddressTbl, int64, error) {
+	panic("unimplemented")
+}
+
 // AddProposal implements service.ISyncService.
 func (m MockSyncService) AddProposal(ctx context.Context, in *model.ProposalTbl) error {
 	panic("unimplemented")
@@ -56,15 +66,16 @@ func (m MockSyncService) GetUncountedVotedList(ctx context.Context, chainId int6
 			ProposalId: 1,
 			ChainId:    1,
 			Address:    "0x1234567890123456789012345678901234567890",
+			// approve
 			VoteEncrypted: `-----BEGIN AGE ENCRYPTED FILE-----
-YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IHRsb2NrIDE2MjU3MDEyIDUyZGI5YmE3
+YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IHRsb2NrIDE2MzI1ODEyIDUyZGI5YmE3
 MGUwY2MwZjZlYWY3ODAzZGQwNzQ0N2ExZjU0Nzc3MzVmZDNmNjYxNzkyYmE5NDYw
-MGM4NGU5NzEKbVEvRW8zR3gxZS9xTXhPb0kyT080MFhLdm5INUZiK0FQYW1qSSs3
-WnlKeGVwbkMwYU1zV29LanhJNEljcFBNTApEL0pFNEdGK3hhSkdxS1FkbmhzdWpZ
-WUtrcFM3WE5qUi9mSUFDRCttaEZiZzdCTUlYa2o4c0ZuSG9YZHUvWnBxCmVSWnpS
-YnUweHlHN2x4bjJ5d1BuVmZvMGtQMC9OMlpMcS9hM0g2U3E3NlEKLS0tIFd5N1JJ
-TnBkVlh3MXo0UWhLSEg2NnFHdDd4ZHRPZlJsRVQ1ZENvN01yRVkKZxIPZbUHXxCp
-WJFtIRfXNUjhc/ClVYYKp7nrUcnWc/soVYTO3q7adl6i738=
+MGM4NGU5NzEKcExwOUJkK2ZWbFpEMEx5OGZ3OVhCa09pWldRWnpHSGZtWGErcSsw
+b3pzdEFON2VNTjU3T3RFbTRFQ2d2bElpMApBV2ZvU3A5cy9Ydjl0YkRrb3p1Tk5v
+RjdaRUo0c2RtdWRWQ2hEOENQcm1FN1VBYUxtaXBLR29ScVFKdFFFbHUrCitDT2Vr
+SENnYWE4eHNGNUxuVzdwWEhkd25sRzlsSmxXSy9wUVJIaEM2S2cKLS0tIHNUV2Yr
+RVdEZlJQWm9yaS9ITnNqcGNuQmxNcUlob3VKYkErRUJDb243eUkK2rehvaQY2kad
+04WmD3ZNvrbcQRZwWonF+Ww4UhpwUApwbCjpEx80W5jfIo+p
 -----END AGE ENCRYPTED FILE-----
 `,
 			SpPower:          "0",
@@ -76,15 +87,16 @@ WJFtIRfXNUjhc/ClVYYKp7nrUcnWc/soVYTO3q7adl6i738=
 			ProposalId: 1,
 			ChainId:    1,
 			Address:    "0x1234567890123456789012345678901234567891",
+			// reject
 			VoteEncrypted: `-----BEGIN AGE ENCRYPTED FILE-----
-YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IHRsb2NrIDE2MzI5MjEyIDUyZGI5YmE3
+YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IHRsb2NrIDE2MzI1ODEyIDUyZGI5YmE3
 MGUwY2MwZjZlYWY3ODAzZGQwNzQ0N2ExZjU0Nzc3MzVmZDNmNjYxNzkyYmE5NDYw
-MGM4NGU5NzEKdVlwMzF6RzF0REdYbk5QcHpPam5mOFl1dE9CSFdHZGRuYVIzMllQ
-UVZkbjBTWEVOWEZROUROQVpXdERuSFFQYQpBL1NsdXdjS25ZRXN6OU0rQ3JKY3dx
-NnFxelY4Y2Nvc2JnMnZrdHMvdU1lVldvVXhENVdtRE9yTHRzNjFJVlY0CmM4Wjg0
-ekxoazYyT2psYnNDUWNvdjBabjl3NHFBZHNZSlNJRmNyeFhDZzgKLS0tIG5qcDZX
-VnBxT2VlUWphZTA5MWNueVZ5eXRERGpVUURTNEN6VG83QnZ5dEEKlsE1n8mpI4w4
-ETGnT966XLd1P76JQujjdDMUb4yJdRgFGDHWkVH3SjPY1WD2
+MGM4NGU5NzEKdFVxWng1VVpiSW1pRjk2ZmJSU2dXRVJrblRjeEFuWjdkblg5VHNx
+djNaZkdzYlh1eVBUSUh4NHZabkJWWmFwVwpCa09MNGpZMUVtNkQ2cjdGK0Z6eEE3
+Y0VBR3F3SCtabFMyenE5TjRtNEF4d0FoMkFBS1NhbkxXRVozRzBMSlViCnQ4ZEF1
+MHhCbHhmTW1LQnJKRXN3NkFIV3h6VjNSNXlHdnlobk03SFY3b3cKLS0tIHFwbHJi
+Qnhxd1JvZHVKaElYSVZOa3dMZkt0SHdIc2hMVzA0NHVmSmsvcTQKBVM4IBEuFQcP
+l0YZKbPlAmnEhcp3EAwQ84BvVSibhTmIzq/MYdsHnTX/1O8=
 -----END AGE ENCRYPTED FILE-----
 `,
 			SpPower:          "0",

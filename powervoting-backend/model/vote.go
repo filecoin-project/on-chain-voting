@@ -14,6 +14,8 @@
 
 package model
 
+import "github.com/shopspring/decimal"
+
 // vote table
 type VoteTbl struct {
 	BaseField
@@ -28,4 +30,25 @@ type VoteTbl struct {
 	DeveloperPower   string `json:"developer_power" gorm:"not null"`                                             // Developer power
 	BlockNumber      int64  `json:"block_number" gorm:"not null"`                                                // Proposal created block number
 	Timestamp        int64  `json:"timestamp" gorm:"not null"`                                                   // Proposal create time
+}
+
+type VoterAddressTbl struct {
+	BaseField
+	Address           string `json:"address" gorm:"not null;uniqueIndex:idx_address"` // Voter address
+	InitCreatedHeight int64  `json:"init_created_height" gorm:"not null"`             // Voter address
+	UpdateHeight      int64  `json:"update_height" gorm:"not null"`                   // Voter address
+}
+
+// vote result count
+type VoterPowerCount struct {
+	SpPower        decimal.Decimal // total SP power
+	ClientPower    decimal.Decimal // total client power
+	TokenPower     decimal.Decimal // total token holder power
+	DeveloperPower decimal.Decimal // total developer power
+}
+
+// vote percentage
+type PowerPercentage struct {
+	ApprovePercentage decimal.Decimal // approve vote percentage
+	RejectPercentage  decimal.Decimal // reject vote percentage
 }
