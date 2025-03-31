@@ -14,7 +14,6 @@ Add the following environment variables under **"Settings" > "Secrets and variab
 
 - `BACKEND_PORT`: Backend service port
 - `BUILD_PATH`: Project path
-- `ORACLE_PORT`: Oracle service port
 - `SNAPSHOT_PORT`: Snapshot service port
 - `SSH_HOST`: Host IP
 - `SSH_USERNAME`: Username
@@ -226,43 +225,7 @@ w3client:
   space: <SPACE>
 ```
 
-### 5.3 Oracle Configuration
-
-#### 1. Navigate to the Oracle directory
-
-```
-cd power-oracle-node/backend
-```
-
-#### 2. Modify the configuration file
-
-```
-mv configuration.yaml.example configuration.yaml
-vim configuration.yaml
-```
-
-Example configuration:
-
-```
-server:
-  port: <PORT> 
-
-network:
-  - id: <CHAIN_ID>
-    name: <CHAIN_NAME>
-    rpc: <CHAIN_RPC>
-    abiPath: /dist/oracle_abi.json
-    contractAddress: <CONTRACT_Address> 
-    privateKey: <PRIVATE_Key>
-    walletAddress: <WALLET_Address>
-    gasLimit: 500000000
-
-github:
-  githubToken: <GITHUB_TOKEN>
-  graphql: https://api.github.com/graphql
-```
-
-### 5.4 Snapshot Configuration
+### 5.3 Snapshot Configuration
 
 #### 1. Navigate to the Snapshot directory
 
