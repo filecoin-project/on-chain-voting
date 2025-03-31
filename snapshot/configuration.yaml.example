@@ -1,0 +1,31 @@
+server:
+  port: :<PORT>
+  rpcUri: <RPC_URL>
+redis:
+  uri: <REDIS_IP>:<PORT>
+  user:
+  password:
+  db: 0
+
+nats:
+  uri: <NATS_URI>
+
+network:
+  - id: <NETWORK_ID>
+    name: <NETWORK_NAME>
+    idPrefix: <ID_PREFIX>
+    queryRpc: [<QUERY_RPC_URL>]
+    
+github:
+  token:
+    - <GITHUB_TOKEN_1>
+    - <GITHUB_TOKEN_2>
+  graphql: https://api.github.com/graphql
+
+mysql:
+  url: <MYSQL_IP:PORT>
+  username: <MYSQL_USERNAME>
+  password: <MYSQL_PASSWORD>
+
+w3client:
+  ipfsAPI: localhost:5001
