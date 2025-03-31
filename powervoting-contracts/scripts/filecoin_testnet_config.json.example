@@ -1,5 +1,0 @@
-{
-  "POWER_VOTING_FIP": "",
-  "POWER_VOTING_ORCAL": "", //should add this to ${network_name}.config.json
-  "POWER_VOTING_VOTE": ""
-}
