@@ -1,0 +1,23 @@
+node_modules
+typechain-types
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# dist
+dist
+dist.zip
+
+# IDE
+.vscode/
+.idea
+.DS_Store
+
+# env
+.env
+.env.example
+
+# misc
+.eslintcache
