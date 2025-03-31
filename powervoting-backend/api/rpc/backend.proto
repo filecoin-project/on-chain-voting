@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package rpc;
+
+option go_package = "./proto;rpc";
+
+
+service Backend {
+    rpc GetAllVoterAddresss(GetAllVoterAddressRequest) returns (GetAllVoterAddressResponse);
+    rpc GetVoterInfo(GetVoterInfoRequest) returns (GetVoterInfoResponse);
+}
+
+message GetAllVoterAddressRequest {
+    int64 chainId = 1;
+}
+
+message GetVoterInfoRequest {
+    string address = 1;
+}
+
+message GetAllVoterAddressResponse {
+    repeated string address = 1;
+    int64 endHeight = 2;
+}
+
+message GetVoterInfoResponse {
+    repeated uint64 minerIds = 1;
+    uint64 actorId =2;
+    string githubAccount = 3;
+}

@@ -18,6 +18,7 @@ import "time"
 
 const (
 	PowerVotingApiPrefix = "/power_voting/api"
+	GistApiPrefix        = "https://api.github.com/gists/"
 	// VoteApprove represents the approval vote status.
 	VoteApprove = "approve"
 
@@ -26,6 +27,7 @@ const (
 
 	// http request timeout time
 	RequestTimeout = time.Second * 15
+	MaxFileSize = 1024*2
 
 	// geth The maximum supported event parsing block limit
 	SyncBlockLimit = 2880
@@ -39,10 +41,19 @@ const (
 	ProposalCreate  = 0 // proposal created
 	ProposalCounted = 1 // proposal counted
 
+	FipProposalRevoke = 0 // fip proposal revoked
+	FipProposalUnpass = 0 // fip proposal unpassed
+	FipProposalPass   = 1 // fip proposal passed
+	FipEditorValid    = 0 // fip editor unremoved
+	FipEditorInvalid  = 1 // fip editor removed
 	// contract event logs name
-	ProposalEvt = "ProposalCreate"
-	VoteEvt     = "Vote"
-
+	ProposalEvt             = "ProposalCreate"
+	VoteEvt                 = "Vote"
+	FipCreateEvt            = "FipEditorProposalCreateEvent"
+	FipPassedEvt            = "FipEditorProposalPassedEvent"
+	FipVoteEvt              = "FipEditorProposalVoteEvent"
+	OracleUpdateGistIdsEvt  = "UpdateGistIdsEvent"
+	OracleUpdateMinerIdsEvt = "UpdateMinerIdsEvent"
 	// mysql duplicate error code
 	MysqlDuplicateEntryErrorCode = 1062
 )

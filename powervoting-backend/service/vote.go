@@ -74,9 +74,9 @@ type VoteRepo interface {
 	// Returns:
 	//   - int64: The ID of the created or updated voter address record.
 	//   - error: An error object if the operation fails.
-	CreateVoterAddress(ctx context.Context, in *model.VoterAddressTbl) (int64, error)
+	CreateVoterAddress(ctx context.Context, in *model.VoterInfoTbl) (int64, error)
 
-	// GetNewVoterAddresss retrieves a list of voter addresses that were created after a specified block height.
+	// GetAllVoterAddresss retrieves a list of voter addresses that were created after a specified block height.
 	// It queries the database for voter addresses with an `init_created_height` greater than the provided height,
 	// orders the results in descending order by `init_created_height`, and returns the list along with the highest height found.
 	//
@@ -88,7 +88,13 @@ type VoteRepo interface {
 	//   - []model.VoterAddressTbl: A list of voter addresses that meet the criteria.
 	//   - int64: The highest `init_created_height` from the retrieved voter addresses. Returns 0 if no addresses are found.
 	//   - error: An error object if the query fails.
-	GetNewVoterAddresss(ctx context.Context, height int64) ([]model.VoterAddressTbl, error)
+	GetAllVoterAddresss(ctx context.Context, chainId int64) ([]model.VoterInfoTbl, error)
+
+	UpdateVoterByMinerInfo(ctx context.Context, in *model.VoterInfoTbl) error
+
+	UpdateVoterByGistInfo(ctx context.Context, in *model.VoterInfoTbl) error
+
+	GetVoterInfoByAddress(ctx context.Context, address string) (*model.VoterInfoTbl, error)
 }
 
 type IVoteService interface {

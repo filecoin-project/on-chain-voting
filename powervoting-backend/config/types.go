@@ -16,17 +16,18 @@ package config
 
 // Config represents the configuration structure for the PowerVoting application.
 type Config struct {
-	Server   Server    // Server configuration
-	Mysql    Mysql     // MySQL database configuration
-	Drand    Drand     // Drand network configuration
-	Snapshot Snapshot  // Snapshot configuration
-	Network  []Network // List of network configurations
-	ABIPath  ABIPath   // Abi path to the contracts
+	Server   Server   // Server configuration
+	Mysql    Mysql    // MySQL database configuration
+	Drand    Drand    // Drand network configuration
+	Snapshot Snapshot // Snapshot configuration
+	Network  Network  // List of network configurations
+	ABIPath  ABIPath  // Abi path to the contracts
 }
 
 // Server represents the server configuration.
 type Server struct {
-	Port string // Port number for the server
+	Port    string // Port number for the server
+	RpcPort string // Port number for the RPC server
 }
 
 // Mysql represents the MySQL database configuration.
@@ -44,20 +45,24 @@ type Drand struct {
 
 // Network represents the configuration for a specific network.
 type Network struct {
-	ChainId                         int64  // Unique identifier for the network
-	Name                            string // Name of the network
-	Rpc                             string // RPC endpoint for the network
-	PowerVotingContract             string // Contract address for PowerVoting
-	PowerVotingContractDeployHeight int64  // Deployment height of the PowerVoting contract
-	OracleContract                  string // Contract address for Oracle
+	ChainId              int64  // Unique identifier for the network
+	Name                 string // Name of the network
+	Rpc                  string // RPC endpoint for the network
+	PowerVotingContract  string // Contract address for PowerVoting
+	SyncEventStartHeight int64  // Deployment height of the PowerVoting contract
+	OracleContract       string // Contract address for Oracle
+	OraclePowersContract string // Contract address for OraclePowers
+	FipContract          string // Contract address for FIP
+	FipInitEditor        string // Initial editor for FIP
 }
-
 
 type Snapshot struct {
 	Rpc string // RPC endpoint for the snapshot
 }
 
 type ABIPath struct {
-	PowerVotingAbi string // ABI (Application Binary Interface) for PowerVoting contract
-	OracleAbi      string // ABI for Oracle contract
+	PowerVotingAbi  string // ABI (Application Binary Interface) for PowerVoting contract
+	OracleAbi       string // ABI for Oracle contract
+	OraclePowersAbi string // ABI for OraclePowers contract
+	FipAbi          string // ABI for FIP contract
 }

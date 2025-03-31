@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package snapshot;
+package rpc;
 
-option go_package = "./proto;snapshot";
+option go_package = "./proto;rpc";
 
 service Snapshot {
   rpc GetAddressPower(AddressPowerRequest) returns (AddressPowerResponse) {}

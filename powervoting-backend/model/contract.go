@@ -27,21 +27,26 @@ type GoEthClient struct {
 	Client              *ethclient.Client // Ethereum client instance
 	PowerVotingContract common.Address    // Contract address for PowerVoting
 	OracleContract      common.Address    // Contract address for Oracle
+	FipContract         common.Address    // Contract address for FIP
 	ABI                 *ABI              // ABI (Application Binary Interface) for PowerVoting and Oracle contracts
 }
 
 // ClientConfig represents the configuration for creating a GoEthClient instance.
 type ClientConfig struct {
-	ChainId                         int64  // Unique identifier for the client
-	Name                            string // Name of the client
-	Rpc                             string // RPC endpoint for the client
-	PowerVotingContract             string // Contract address for PowerVoting
-	PowerVotingContractDeployHeight int64  // Deploy height for PowerVoting contract
-	OracleContract                  string // Contract address for Oracle
+	ChainId              int64  // Unique identifier for the client
+	Name                 string // Name of the client
+	Rpc                  string // RPC endpoint for the client
+	PowerVotingContract  string // Contract address for PowerVoting
+	SyncEventStartHeight int64  // Deploy height for PowerVoting contract
+	OracleContract       string // Contract address for Oracle
+	OraclePowersContract string // Contract address for OraclePowers
+	FipContract          string // Contract address for FIP
 
 }
 
 type ABI struct {
-	PowerVotingAbi *abi.ABI // ABI for PowerVoting contract
-	OracleAbi      *abi.ABI // ABI for Oracle contract
+	PowerVotingAbi  *abi.ABI // ABI for PowerVoting contract
+	OracleAbi       *abi.ABI // ABI for Oracle contract
+	FipAbi          *abi.ABI // ABI for FIP contract
+	OraclePowersAbi *abi.ABI // ABI for OraclePowers contract
 }

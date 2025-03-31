@@ -32,11 +32,17 @@ type VoteTbl struct {
 	Timestamp        int64  `json:"timestamp" gorm:"not null"`                                                   // Proposal create time
 }
 
-type VoterAddressTbl struct {
+type VoterInfoTbl struct {
 	BaseField
-	Address           string `json:"address" gorm:"not null;uniqueIndex:idx_address"` // Voter address
-	InitCreatedHeight int64  `json:"init_created_height" gorm:"not null"`             // Voter address
-	UpdateHeight      int64  `json:"update_height" gorm:"not null"`                   // Voter address
+	Address     string   `json:"address" gorm:"not null;uniqueIndex:idx_address_chain"`  // Voter address
+	ChainId     int64    `json:"chain_id" gorm:"not null;uniqueIndex:idx_address_chain"` // Chain ID
+	MinerIds    []uint64 `json:"miner_ids" gorm:"type:json"`                             // Miner IDs
+	GistId      string   `json:"gist_id" gorm:"not null"`                                // Github Gist ID
+	GistInfo    string   `json:"gist_info" gorm:"type:longtext;not null"`                // Github Gist Info
+	OwnerId     uint64   `json:"owner_id" gorm:"not null"`                               // Voter Owner ID
+	GithubId    string   `json:"github_id" gorm:"not null"`                              // Github Name
+	BlockNumber int64    `json:"block_number" gorm:"not null"`                           // Voter create block number
+	Timestamp   int64    `json:"timestamp" gorm:"not null"`                              // Voter create time
 }
 
 // vote result count
@@ -51,4 +57,24 @@ type VoterPowerCount struct {
 type PowerPercentage struct {
 	ApprovePercentage decimal.Decimal // approve vote percentage
 	RejectPercentage  decimal.Decimal // reject vote percentage
+}
+
+// github gist response
+type GistInfo struct {
+	Id    string               `json:"id"`
+	Files map[string]GistFiles `json:"files"`
+	Owner GistOwner            `json:"owner"`
+}
+
+type GistFiles struct {
+	FileName string `json:"filename"`
+	Language string `json:"language"`
+	Type     string `json:"type"`
+	Content  string `json:"content"`
+	Size     int64  `json:"size"`
+}
+
+type GistOwner struct {
+	Owner string `json:"owner"`
+	Id    int64  `json:"id"`
 }

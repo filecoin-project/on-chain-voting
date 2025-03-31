@@ -4,7 +4,7 @@
 // - protoc             v3.21.5
 // source: query.proto
 
-package snapshot
+package rpc
 
 import (
 	context "context"
@@ -19,14 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Snapshot_GetAddressPower_FullMethodName         = "/snapshot.Snapshot/GetAddressPower"
-	Snapshot_SyncDateHeight_FullMethodName          = "/snapshot.Snapshot/SyncDateHeight"
-	Snapshot_SyncAddrPower_FullMethodName           = "/snapshot.Snapshot/SyncAddrPower"
-	Snapshot_SyncAllAddrPower_FullMethodName        = "/snapshot.Snapshot/SyncAllAddrPower"
-	Snapshot_UploadSnapshotInfoByDay_FullMethodName = "/snapshot.Snapshot/UploadSnapshotInfoByDay"
-	Snapshot_GetDataHeight_FullMethodName           = "/snapshot.Snapshot/GetDataHeight"
-	Snapshot_GetAddressPowerByDay_FullMethodName    = "/snapshot.Snapshot/GetAddressPowerByDay"
-	Snapshot_GetAllAddrPowerByDay_FullMethodName    = "/snapshot.Snapshot/GetAllAddrPowerByDay"
+	Snapshot_GetAddressPower_FullMethodName         = "/rpc.Snapshot/GetAddressPower"
+	Snapshot_SyncDateHeight_FullMethodName          = "/rpc.Snapshot/SyncDateHeight"
+	Snapshot_SyncAddrPower_FullMethodName           = "/rpc.Snapshot/SyncAddrPower"
+	Snapshot_SyncAllAddrPower_FullMethodName        = "/rpc.Snapshot/SyncAllAddrPower"
+	Snapshot_UploadSnapshotInfoByDay_FullMethodName = "/rpc.Snapshot/UploadSnapshotInfoByDay"
+	Snapshot_GetDataHeight_FullMethodName           = "/rpc.Snapshot/GetDataHeight"
+	Snapshot_GetAddressPowerByDay_FullMethodName    = "/rpc.Snapshot/GetAddressPowerByDay"
+	Snapshot_GetAllAddrPowerByDay_FullMethodName    = "/rpc.Snapshot/GetAllAddrPowerByDay"
 )
 
 // SnapshotClient is the client API for Snapshot service.
@@ -327,7 +327,7 @@ func _Snapshot_GetAllAddrPowerByDay_Handler(srv interface{}, ctx context.Context
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Snapshot_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "snapshot.Snapshot",
+	ServiceName: "rpc.Snapshot",
 	HandlerType: (*SnapshotServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

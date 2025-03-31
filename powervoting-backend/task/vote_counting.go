@@ -18,17 +18,16 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"sync"
 
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 
+	snapshot "powervoting-server/api/rpc"
 	"powervoting-server/config"
 	"powervoting-server/constant"
 	"powervoting-server/data"
 	"powervoting-server/model"
 	"powervoting-server/service"
-	"powervoting-server/snapshot"
 	"powervoting-server/utils"
 )
 
@@ -44,52 +43,34 @@ type VoteCount struct {
 // It then launches a goroutine to handle the voting count for each network.
 // Any errors encountered during the retrieval of the Ethereum client are logged.
 func VotingCountHandler(syncService service.ISyncService) {
-	networkList := config.Client.Network
-	wg := sync.WaitGroup{}
-	errList := make([]error, 0, len(config.Client.Network))
-	mu := &sync.Mutex{}
-
-	for _, network := range networkList {
-		network := network
-		ethClient, err := data.GetClient(syncService, network.ChainId)
-		if err != nil {
-			zap.L().Error("get go-eth client error:", zap.Error(err))
-			continue
-		}
-
-		voteCount := &VoteCount{
-			EthClient:   ethClient,
-			SyncService: syncService,
-		}
-
-		syncEventInfo, err := syncService.GetSyncEventInfo(context.Background(), network.PowerVotingContract)
-		if err != nil {
-			zap.L().Error("get sync event info error:", zap.Error(err))
-			continue
-		}
-
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
-			if err := voteCount.voteCounting(syncEventInfo.SyncedHeight); err != nil {
-				mu.Lock()
-				errList = append(errList, err)
-				mu.Unlock()
-			}
-
-			zap.L().Info(
-				"voting count finished",
-				zap.String("network name", network.Name),
-				zap.Int64("network id", network.ChainId),
-			)
-		}()
+	network := config.Client.Network
+	ethClient, err := data.GetClient(syncService, network.ChainId)
+	if err != nil {
+		zap.L().Error("get go-eth client error:", zap.Error(err))
+		return
 	}
 
-	wg.Wait()
-	if len(errList) != 0 {
-		zap.L().Error("vote count with err:", zap.Errors("errors", errList))
+	voteCount := &VoteCount{
+		EthClient:   ethClient,
+		SyncService: syncService,
 	}
+
+	syncEventInfo, err := syncService.GetSyncEventInfo(context.Background(), network.PowerVotingContract)
+	if err != nil {
+		zap.L().Error("get sync event info error:", zap.Error(err))
+		return
+	}
+
+	if err := voteCount.voteCounting(syncEventInfo.SyncedHeight); err != nil {
+		zap.L().Error("vote count with err:", zap.Error(err))
+		return
+	}
+
+	zap.L().Info(
+		"voting count finished",
+		zap.String("network name", network.Name),
+		zap.Int64("network id", network.ChainId),
+	)
 }
 
 // voteCounting is the main function that handles the voting count process.
@@ -358,8 +339,8 @@ func (vc *VoteCount) calculateFinalPercentages(approve, reject decimal.Decimal, 
 	case reject.GreaterThan(approve):
 		reject = reject.Add(offset)
 	default:
-		approve = decimal.NewFromFloat(0.5)
-		reject = decimal.NewFromFloat(0.5)
+		approve = decimal.NewFromFloat(50)
+		reject = decimal.NewFromFloat(50)
 	}
 
 	zap.L().Info("Final percentages", zap.Any("approve", approve), zap.Any("reject", reject))

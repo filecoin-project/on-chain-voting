@@ -19,8 +19,10 @@ import "powervoting-server/config"
 func InifMockConfig() {
 	config.Client = config.Config{
 		ABIPath: config.ABIPath{
-			PowerVotingAbi: "../abi/power-voting.json",
-			OracleAbi:      "../abi/oracle.json",
+			PowerVotingAbi:  "../abi/power-voting.json",
+			OracleAbi:       "../abi/oracle.json",
+			FipAbi:          "../abi/power-voting-fip.json",
+			OraclePowersAbi: "../abi/oracle-powers.json",
 		},
 		Drand: config.Drand{
 			Url: []string{
@@ -32,15 +34,13 @@ func InifMockConfig() {
 			},
 			ChainHash: "52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971",
 		},
-		Network: []config.Network{
-			{
-				ChainId:                         314159,
-				Name:                            "FileCoin-Calibration",
-				Rpc:                             "https://filecoin-calibration.chainup.net/rpc/v1",
-				PowerVotingContract:             "0x4fe1B0D71FBFe97458D5c29D47928e1EA3b4466b",
-				PowerVotingContractDeployHeight: 240000,
-				OracleContract:                  "0x974e0AffA36Ef25ad3F99Edda6a0f9Cc09D354Ff",
-			},
+		Network: config.Network{
+			ChainId:              314159,
+			Name:                 "FileCoin-Calibration",
+			Rpc:                  "https://filecoin-calibration.chainup.net/rpc/v1",
+			PowerVotingContract:  "0x4fe1B0D71FBFe97458D5c29D47928e1EA3b4466b",
+			SyncEventStartHeight: 240000,
+			OracleContract:       "0x974e0AffA36Ef25ad3F99Edda6a0f9Cc09D354Ff",
 		},
 		Snapshot: config.Snapshot{},
 	}

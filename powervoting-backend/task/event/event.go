@@ -19,20 +19,16 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/golang-module/carbon"
 	"go.uber.org/zap"
 
 	"powervoting-server/config"
 	"powervoting-server/constant"
 	"powervoting-server/model"
 	"powervoting-server/service"
-	"powervoting-server/snapshot"
-	"powervoting-server/utils"
 )
 
 type Event struct {
@@ -45,7 +41,12 @@ func (ev *Event) SubscribeEvent() error {
 	ctx := context.Background()
 	// Collect log information
 	logs, syncHeight, err := ev.FetchMatchingEventLogs(ctx)
-	zap.L().Info("fetch matching event logs success", zap.Int64("current sync block height", syncHeight))
+	zap.L().Info(
+		"fetch matching event logs success",
+		zap.Int("event logs length", len(logs)),
+		zap.Int64("current sync block height", syncHeight),
+	)
+
 	if err != nil {
 		if errors.Is(err, constant.ErrAlreadySyncHeight) {
 			return nil
@@ -103,11 +104,20 @@ func (ev *Event) FetchMatchingEventLogs(ctx context.Context) ([]types.Log, int64
 	query := ethereum.FilterQuery{
 		FromBlock: big.NewInt(syncInfo.SyncedHeight + 1),
 		ToBlock:   big.NewInt(endBlock),
-		Addresses: []common.Address{common.HexToAddress(syncInfo.ContractAddress)},
+		Addresses: []common.Address{
+			common.HexToAddress(ev.Network.PowerVotingContract),
+			common.HexToAddress(ev.Network.FipContract),
+			common.HexToAddress(ev.Network.OraclePowersContract),
+		},
 		Topics: [][]common.Hash{
 			{
 				ev.Client.ABI.PowerVotingAbi.Events[constant.ProposalEvt].ID,
 				ev.Client.ABI.PowerVotingAbi.Events[constant.VoteEvt].ID,
+				ev.Client.ABI.FipAbi.Events[constant.FipCreateEvt].ID,
+				ev.Client.ABI.FipAbi.Events[constant.FipVoteEvt].ID,
+				ev.Client.ABI.FipAbi.Events[constant.FipPassedEvt].ID,
+				ev.Client.ABI.OracleAbi.Events[constant.OracleUpdateGistIdsEvt].ID,
+				ev.Client.ABI.OracleAbi.Events[constant.OracleUpdateMinerIdsEvt].ID,
 			},
 		},
 	}
@@ -137,11 +147,6 @@ func (ev *Event) ProcessingEventLogs(ctx context.Context, logs []types.Log) {
 
 // parses the event log for the forum and stores the parsed results to the database.
 func (ev *Event) parseEvent(ctx context.Context, vLog types.Log) error {
-	// Parse the event log using the client's PowerVotingAbi and the log data.
-	parseFunc := func(event any, unpackName string) error {
-		// Decode non-index parameters
-		return ev.Client.ABI.PowerVotingAbi.UnpackIntoInterface(event, unpackName, vLog.Data)
-	}
 
 	// Get the block header of the block containing the event log
 	blockHeader, err := ev.Client.Client.HeaderByNumber(ctx, big.NewInt(int64(vLog.BlockNumber)))
@@ -153,120 +158,89 @@ func (ev *Event) parseEvent(ctx context.Context, vLog types.Log) error {
 	// Parse the proposal event
 	case ev.Client.ABI.PowerVotingAbi.Events[constant.ProposalEvt].ID.Hex():
 		var event ProposalCreateEvent
-		if err := parseFunc(&event, constant.ProposalEvt); err != nil {
+		if err := ev.parsePowerVotingEvent(&event, constant.ProposalEvt, vLog.Data); err != nil {
 			return fmt.Errorf("unpack proposal event error: %v", err)
 		}
 
-		// Get the proposal creator's information from the Oracle contract
-		// Includes the voter's GitHub account and other information
-		voterInfo, err := utils.GetProposalCreatorByOracle(event.Proposal.Creator.Hex(), ev.Client)
-		if err != nil {
-			zap.L().Error("Get proposal creator by oracle error", zap.Error(err))
-			voterInfo = model.VoterInfo{}
+		if err := ev.HandleProposalCreate(ctx, event, blockHeader); err != nil {
+			return fmt.Errorf("handle proposal create error: %v", err)
 		}
-		zap.L().Info(
-			"Get proposal creator infomation by oracle result",
-			zap.Int64("proposal id", event.Id.Int64()),
-			zap.String("creator", event.Proposal.Creator.Hex()),
-			zap.String("github name", voterInfo.GithubAccount),
-		)
-
-		data := model.ProposalTbl{
-			ProposalId:        event.Id.Int64(),
-			Creator:           event.Proposal.Creator.Hex(),
-			GithubName:        voterInfo.GithubAccount,
-			StartTime:         event.Proposal.StartTime.Int64(),
-			EndTime:           event.Proposal.EndTime.Int64(),
-			Content:           event.Proposal.Content,
-			Title:             event.Proposal.Title,
-			SnapshotTimestamp: event.Proposal.SnapshotTimestamp.Int64(),
-			Percentage: model.Percentage{
-				TokenHolderPercentage: event.Proposal.TokenHolderPercentage,
-				SpPercentage:          event.Proposal.SpPercentage,
-				ClientPercentage:      event.Proposal.ClientPercentage,
-				DeveloperPercentage:   event.Proposal.DeveloperPercentage,
-			},
-			Timestamp:   int64(blockHeader.Time),
-			BlockNumber: blockHeader.Number.Int64(),
-			ChainId:     ev.Client.ChainId,
-			BaseField: model.BaseField{
-				CreatedAt: time.Unix(int64(blockHeader.Time), 0),
-			},
-		}
-
-		zap.L().Info(
-			"Sync proposal event parsed result",
-			zap.Int64("proposal id", event.Id.Int64()),
-			zap.String("creator", event.Proposal.Creator.Hex()),
-			zap.Int64("start time", event.Proposal.StartTime.Int64()),
-			zap.Int64("end time", event.Proposal.EndTime.Int64()),
-			zap.String("title", event.Proposal.Title),
-			zap.String("content", event.Proposal.Content),
-			zap.Int64("snapshot timestamp", event.Proposal.SnapshotTimestamp.Int64()),
-		)
-
-		snapshotday := carbon.CreateFromTimestamp(event.Proposal.SnapshotTimestamp.Int64()).ToShortDateString()
-		snapshotInfo, err := snapshot.UploadSnapshotInfo(ev.Client.ChainId, snapshotday)
-		if err != nil {
-			zap.L().Error("record snapshot error", zap.Error(err))
-		}
-		zap.L().Info(
-			"record snapshot info",
-			zap.Int64("proposal id", event.Id.Int64()),
-			zap.Int64("chain id", ev.Client.ChainId),
-			zap.Int64("snapshot block height", snapshotInfo.Height),
-			zap.String("snapshot day", snapshotInfo.Day),
-		)
-
-		data.SnapshotBlockHeight = snapshotInfo.Height
-		data.SnapshotDay = snapshotday
-		if err = ev.SyncService.AddProposal(ctx, &data); err != nil {
-			return fmt.Errorf("parse %s event error: %w", constant.ProposalEvt, err)
-		}
-		zap.L().Info("Sync proposal event success", zap.Int64("proposal id", event.Id.Int64()))
 
 	case ev.Client.ABI.PowerVotingAbi.Events[constant.VoteEvt].ID.Hex():
 		var event VoteEvent
-		if err := parseFunc(&event, constant.VoteEvt); err != nil {
+		if err := ev.parsePowerVotingEvent(&event, constant.VoteEvt, vLog.Data); err != nil {
 			return err
 		}
 
-		voteData := model.VoteTbl{
-			ProposalId:    event.Id.Int64(),
-			Address:       event.Voter.Hex(),
-			VoteEncrypted: event.VoteInfo,
-			ChainId:       ev.Client.ChainId,
-			Timestamp:     int64(blockHeader.Time),
-			BlockNumber:   blockHeader.Number.Int64(),
-			BaseField: model.BaseField{
-				CreatedAt: time.Unix(int64(blockHeader.Time), 0),
-			},
+		if err := ev.HandleVote(ctx, event, blockHeader); err != nil {
+			return fmt.Errorf("handle vote error: %v", err)
 		}
 
-		voterAddressData := model.VoterAddressTbl{
-			Address:           event.Voter.Hex(),
-			InitCreatedHeight: blockHeader.Number.Int64(),
-			UpdateHeight:      blockHeader.Number.Int64(),
+	case ev.Client.ABI.FipAbi.Events[constant.FipCreateEvt].ID.Hex():
+		var event FipEditorProposalCreateEvent
+		if err := ev.parseFipEvent(&event, constant.FipCreateEvt, vLog.Data); err != nil {
+			return fmt.Errorf("unpack fip create event error: %v", err)
 		}
 
-		zap.L().Info(
-			"Sync vote event parsed result",
-			zap.Int64("proposal id", event.Id.Int64()),
-			zap.String("voter", event.Voter.Hex()),
-		)
-
-		if err = ev.SyncService.AddVote(ctx, &voteData); err != nil {
-			return fmt.Errorf("parse %s event error: %w", constant.VoteEvt, err)
+		if err := ev.HandleFipEditorProposalCreateEvent(ctx, event, blockHeader); err != nil {
+			return fmt.Errorf("handle fip create error: %v", err)
 		}
 
-		if err := ev.SyncService.AddVoterAddress(ctx, &voterAddressData); err != nil {
-			return fmt.Errorf("parse %s event error: %w", constant.VoteEvt, err)
+	case ev.Client.ABI.FipAbi.Events[constant.FipPassedEvt].ID.Hex():
+		var event FipEditorProposalPassedEvent
+		if err := ev.parseFipEvent(&event, constant.FipPassedEvt, vLog.Data); err != nil {
+			return fmt.Errorf("unpack fip passed event error: %v", err)
 		}
-		
-		zap.L().Info("Sync vote event success", zap.Int64("proposal id", event.Id.Int64()))
+
+		if err := ev.HandleFipEditorProposalPassedEvent(ctx, event, blockHeader); err != nil {
+			return fmt.Errorf("handle fip passed error: %v", err)
+		}
+
+	case ev.Client.ABI.FipAbi.Events[constant.FipVoteEvt].ID.Hex():
+		var event FipEditorProposalVoteEvent
+		if err := ev.parseFipEvent(&event, constant.FipVoteEvt, vLog.Data); err != nil {
+			return fmt.Errorf("unpack fip vote event error: %v", err)
+		}
+
+		if err := ev.HandleFipEditorProposalVoteEvent(ctx, event, blockHeader); err != nil {
+			return fmt.Errorf("handle fip vote error: %v", err)
+		}
+
+	case ev.Client.ABI.OracleAbi.Events[constant.OracleUpdateGistIdsEvt].ID.Hex():
+		var event OracleUpdateGistIdsEvent
+		if err := ev.parseFipEvent(&event, constant.OracleUpdateGistIdsEvt, vLog.Data); err != nil {
+			return fmt.Errorf("unpack oracle update gist ids event error: %v", err)
+		}
+
+		if err := ev.HandleOracleUpdateGistId(ctx, event, blockHeader); err != nil {
+			return fmt.Errorf("handle oracle update gist ids error: %v", err)
+		}
+
+	case ev.Client.ABI.OracleAbi.Events[constant.OracleUpdateMinerIdsEvt].ID.Hex():
+		var event OracleUpdateMinerIdsEvent
+		if err := ev.parseFipEvent(&event, constant.OracleUpdateMinerIdsEvt, vLog.Data); err != nil {
+			return fmt.Errorf("unpack oracle update miner ids event error: %v", err)
+		}
+
+		if err := ev.HandleOracleUpdateMinerIds(ctx, event, blockHeader); err != nil {
+			return fmt.Errorf("handle oracle update miner ids error: %v", err)
+		}
+
 	default:
 		return fmt.Errorf("unknown event")
 	}
 
 	return nil
+}
+
+// Parse the event log using the client's PowerVotingAbi and the log data.
+func (ev *Event) parsePowerVotingEvent(event any, unpackName string, log []byte) error {
+	// Decode non-index parameters
+	return ev.Client.ABI.PowerVotingAbi.UnpackIntoInterface(event, unpackName, log)
+}
+
+// Parse the event log using the client's Fip Abi and the log data.
+func (ev *Event) parseFipEvent(event any, unpackName string, log []byte) error {
+	// Decode non-index parameters
+	return ev.Client.ABI.FipAbi.UnpackIntoInterface(event, unpackName, log)
 }

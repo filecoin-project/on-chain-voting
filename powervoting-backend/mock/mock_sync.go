@@ -24,13 +24,50 @@ import (
 type MockSyncService struct {
 }
 
+// UpdateVoterByGistInfo implements service.ISyncService.
+func (m *MockSyncService) UpdateVoterAndProposalGithubNameByGistInfo(ctx context.Context, voterAddress string, gistId string) error {
+	panic("unimplemented")
+}
+
+// UpdateVoterByMinerIds implements service.ISyncService.
+func (m *MockSyncService) UpdateVoterByMinerIds(ctx context.Context, voterAddress string, minerIds []uint64, ownerId uint64) error {
+	panic("unimplemented")
+}
+
+// RevokeFipProposal implements service.ISyncService.
+func (m *MockSyncService) RevokeFipProposal(ctx context.Context, chainId int64, cadidateAddresss string) error {
+	panic("unimplemented")
+}
+
+// UpdateStatusAndGetFipProposal implements service.ISyncService.
+func (m *MockSyncService) UpdateStatusAndGetFipProposal(ctx context.Context, proposalId int64, chainId int64) (*model.FipProposalTbl, error) {
+	panic("unimplemented")
+}
+
+// CreateFipProposal implements service.ISyncService.
+func (m *MockSyncService) CreateFipProposal(ctx context.Context, in *model.FipProposalTbl) error {
+	panic("unimplemented")
+}
+
+// CreateFipProposalVotedInfo implements service.ISyncService.
+func (m *MockSyncService) CreateFipProposalVotedInfo(ctx context.Context, in *model.FipProposalVoteTbl) error {
+	panic("unimplemented")
+}
+
+// CreateFipEditor implements service.ISyncService.
+func (m *MockSyncService) CreateFipEditor(ctx context.Context, in *model.FipEditorTbl) error {
+	return nil
+}
+
+var _ service.ISyncService = (*MockSyncService)(nil)
+
 // AddVoterAddress implements service.ISyncService.
-func (m *MockSyncService) AddVoterAddress(ctx context.Context, in *model.VoterAddressTbl) error {
+func (m *MockSyncService) AddVoterAddress(ctx context.Context, in *model.VoterInfoTbl) error {
 	panic("unimplemented")
 }
 
 // GetVoterAddresss implements service.ISyncService.
-func (m *MockSyncService) GetVoterAddresss(ctx context.Context, height int64) ([]model.VoterAddressTbl, int64, error) {
+func (m *MockSyncService) GetVoterAddresss(ctx context.Context, height int64) ([]model.VoterInfoTbl, int64, error) {
 	panic("unimplemented")
 }
 

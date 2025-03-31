@@ -16,6 +16,7 @@ package data
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strconv"
 	"sync"
@@ -48,33 +49,39 @@ func GetClient(syncService service.ISyncService, chainId int64) (*model.GoEthCli
 	if ok {
 		return &client, nil
 	}
-	networkList := config.Client.Network
-	var clientConfig model.ClientConfig
-	for _, network := range networkList {
-		if network.ChainId == chainId {
-			clientConfig = model.ClientConfig{
-				ChainId:                         network.ChainId,
-				Name:                            network.Name,
-				Rpc:                             network.Rpc,
-				PowerVotingContract:             network.PowerVotingContract,
-				OracleContract:                  network.OracleContract,
-				PowerVotingContractDeployHeight: network.PowerVotingContractDeployHeight,
-			}
+	network := config.Client.Network
 
-			if err := syncService.CreateSyncEventInfo(context.Background(), &model.SyncEventTbl{
-				ChainId:         chainId,
-				ChainName:       clientConfig.Name,
-				ContractAddress: clientConfig.PowerVotingContract,
-				SyncedHeight:    clientConfig.PowerVotingContractDeployHeight,
-			}); err != nil {
-				zap.L().Error("CreateSyncEventInfo error: ", zap.Error(err))
-				return nil, err
-			}
-
-			zap.L().Info("network init", zap.String("network id", strconv.FormatInt(chainId, 10)))
-			break
-		}
+	clientConfig := model.ClientConfig{
+		ChainId:              network.ChainId,
+		Name:                 network.Name,
+		Rpc:                  network.Rpc,
+		PowerVotingContract:  network.PowerVotingContract,
+		OracleContract:       network.OracleContract,
+		SyncEventStartHeight: network.SyncEventStartHeight,
+		FipContract:          network.FipContract,
+		OraclePowersContract: network.OraclePowersContract,
 	}
+
+	if err := syncService.CreateFipEditor(context.Background(), &model.FipEditorTbl{
+		ChainId: chainId,
+		Editor:  network.FipInitEditor,
+	}); err != nil {
+		zap.L().Error("CreateFipEditor error: ", zap.Error(err))
+		return nil, err
+	}
+
+	if err := syncService.CreateSyncEventInfo(context.Background(), &model.SyncEventTbl{
+		ChainId:                    chainId,
+		ChainName:                  clientConfig.Name,
+		PowerVotingContractAddress: clientConfig.PowerVotingContract,
+		FipProposalContractAddress: clientConfig.FipContract,
+		SyncedHeight:               clientConfig.SyncEventStartHeight,
+	}); err != nil {
+		zap.L().Error("CreateSyncEventInfo error: ", zap.Error(err))
+		return nil, err
+	}
+
+	zap.L().Info("network init", zap.String("network id", strconv.FormatInt(chainId, 10)))
 
 	ethClient, err := getGoEthClient(clientConfig, config.Client.ABIPath)
 	if err != nil {
@@ -98,30 +105,6 @@ func getGoEthClient(clientConfig model.ClientConfig, abiPath config.ABIPath) (mo
 	powerVotingContract := common.HexToAddress(clientConfig.PowerVotingContract)
 	oracleContract := common.HexToAddress(clientConfig.OracleContract)
 
-	// open abi file and parse json
-	powerVotingFile, err := os.Open(abiPath.PowerVotingAbi)
-	if err != nil {
-		zap.L().Error("open abi file error: ", zap.Error(err))
-		return model.GoEthClient{}, err
-	}
-	powerVotingAbi, err := abi.JSON(powerVotingFile)
-	if err != nil {
-		zap.L().Error("abi.JSON error: ", zap.Error(err))
-		return model.GoEthClient{}, err
-	}
-
-	// open abi file and parse json
-	oracleFile, err := os.Open(abiPath.OracleAbi)
-	if err != nil {
-		zap.L().Error("open abi file error: ", zap.Error(err))
-		return model.GoEthClient{}, err
-	}
-	oracleAbi, err := abi.JSON(oracleFile)
-	if err != nil {
-		zap.L().Error("abi.JSON error: ", zap.Error(err))
-		return model.GoEthClient{}, err
-	}
-
 	// generate goEthClient
 	goEthClient := model.GoEthClient{
 		ChainId:             clientConfig.ChainId,
@@ -130,9 +113,25 @@ func getGoEthClient(clientConfig model.ClientConfig, abiPath config.ABIPath) (mo
 		PowerVotingContract: powerVotingContract,
 		OracleContract:      oracleContract,
 		ABI: &model.ABI{
-			PowerVotingAbi: &powerVotingAbi,
-			OracleAbi:      &oracleAbi,
+			PowerVotingAbi:  GetAbiFromLocalFile(abiPath.PowerVotingAbi),
+			OracleAbi:       GetAbiFromLocalFile(abiPath.OracleAbi),
+			FipAbi:          GetAbiFromLocalFile(abiPath.FipAbi),
+			OraclePowersAbi: GetAbiFromLocalFile(abiPath.OraclePowersAbi),
 		},
 	}
 	return goEthClient, nil
+}
+
+func GetAbiFromLocalFile(abiPath string) *abi.ABI {
+	// open abi file and parse json
+	abiFile, err := os.Open(abiPath)
+	if err != nil {
+		panic(fmt.Errorf("failed to open abi file: %s, error: %v", abiPath, err))
+	}
+	abi, err := abi.JSON(abiFile)
+	if err != nil {
+		panic(err)
+	}
+
+	return &abi
 }

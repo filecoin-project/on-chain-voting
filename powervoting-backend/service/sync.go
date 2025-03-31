@@ -16,10 +16,13 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"go.uber.org/zap"
 
+	"powervoting-server/constant"
 	"powervoting-server/model"
+	"powervoting-server/utils"
 )
 
 // SyncRepo defines the interface for managing synchronization event data.
@@ -71,8 +74,16 @@ type ISyncService interface {
 	BatchUpdateVotes(ctx context.Context, votes []model.VoteTbl) error
 	AddVote(ctx context.Context, in *model.VoteTbl) error
 	GetUncountedVotedList(ctx context.Context, chainId, proposalId int64) ([]model.VoteTbl, error)
-	AddVoterAddress(ctx context.Context, in *model.VoterAddressTbl) error
-	GetVoterAddresss(ctx context.Context, height int64) ([]model.VoterAddressTbl, int64, error)
+	AddVoterAddress(ctx context.Context, in *model.VoterInfoTbl) error
+	CreateFipProposal(ctx context.Context, in *model.FipProposalTbl) error
+
+	UpdateStatusAndGetFipProposal(ctx context.Context, proposalId, chainId int64) (*model.FipProposalTbl, error)
+	CreateFipProposalVotedInfo(ctx context.Context, in *model.FipProposalVoteTbl) error
+	CreateFipEditor(ctx context.Context, in *model.FipEditorTbl) error
+	RevokeFipProposal(ctx context.Context, chainId int64, cadidateAddresss string) error
+
+	UpdateVoterAndProposalGithubNameByGistInfo(ctx context.Context, voterAddress, gistId string) error
+	UpdateVoterByMinerIds(ctx context.Context, voterAddress string, minerIds []uint64, ownerId uint64) error
 }
 
 // SyncService provides functionality for synchronizing data across repositories.
@@ -82,13 +93,15 @@ type SyncService struct {
 	repo         SyncRepo     // repo handles synchronization-related data operations
 	voteRepo     VoteRepo     // voteRepo manages voting-related data
 	proposalRepo ProposalRepo // proposalRepo handles proposal-related data
+	fipRepo      FipRepo      // fipRepo handles fip-related data
 }
 
-func NewSyncService(repo SyncRepo, voteRepo VoteRepo, proposalRepo ProposalRepo) *SyncService {
+func NewSyncService(repo SyncRepo, voteRepo VoteRepo, proposalRepo ProposalRepo, fipRepo FipRepo) *SyncService {
 	return &SyncService{
 		repo:         repo,
 		voteRepo:     voteRepo,
 		proposalRepo: proposalRepo,
+		fipRepo:      fipRepo,
 	}
 }
 
@@ -141,6 +154,10 @@ func (s *SyncService) GetSyncEventInfo(ctx context.Context, addr string) (*model
 // Returns:
 //   - error: An error if the creation operation fails; otherwise, nil.
 func (s *SyncService) CreateSyncEventInfo(ctx context.Context, in *model.SyncEventTbl) error {
+	if in == nil {
+		return errors.New("sync event is nil")
+	}
+
 	_, err := s.repo.CreateSyncEventInfo(ctx, in)
 	if err != nil {
 		zap.L().Error("CreateSyncEventInfo failed", zap.Error(err))
@@ -159,6 +176,10 @@ func (s *SyncService) CreateSyncEventInfo(ctx context.Context, in *model.SyncEve
 // Returns:
 //   - error: An error if the creation operation fails; otherwise, nil.
 func (s *SyncService) AddProposal(ctx context.Context, in *model.ProposalTbl) error {
+	if in == nil {
+		return errors.New("proposal is nil")
+	}
+
 	_, err := s.proposalRepo.CreateProposal(ctx, in)
 	if err != nil {
 		zap.L().Error("AddProposal failed", zap.Error(err))
@@ -178,6 +199,10 @@ func (s *SyncService) AddProposal(ctx context.Context, in *model.ProposalTbl) er
 // Returns:
 //   - error: An error if the update operation fails; otherwise, nil.
 func (s *SyncService) UpdateProposal(ctx context.Context, in *model.ProposalTbl) error {
+	if in == nil {
+		return errors.New("proposal is nil")
+	}
+
 	if err := s.proposalRepo.UpdateProposal(ctx, in); err != nil {
 		zap.L().Error("UpdateProposal failed", zap.Error(err))
 		return err
@@ -235,6 +260,10 @@ func (s *SyncService) BatchUpdateVotes(ctx context.Context, votes []model.VoteTb
 // Returns:
 //   - error: An error if the creation operation fails; otherwise, nil.
 func (s *SyncService) AddVote(ctx context.Context, in *model.VoteTbl) error {
+	if in == nil {
+		return errors.New("vote data is nil")
+	}
+
 	_, err := s.voteRepo.CreateVote(ctx, in)
 	if err != nil {
 		zap.L().Error("CreateVote failed", zap.Error(err))
@@ -274,7 +303,11 @@ func (s *SyncService) GetUncountedVotedList(ctx context.Context, chainId, propos
 //
 // Returns:
 //   - error: An error object if the operation fails. Returns nil on success.
-func (s *SyncService) AddVoterAddress(ctx context.Context, in *model.VoterAddressTbl) error {
+func (s *SyncService) AddVoterAddress(ctx context.Context, in *model.VoterInfoTbl) error {
+	if in == nil {
+		return errors.New("voter address is nil")
+	}
+
 	_, err := s.voteRepo.CreateVoterAddress(ctx, in)
 	if err != nil {
 		zap.L().Error("CreateVoterAddress failed", zap.Error(err))
@@ -284,32 +317,191 @@ func (s *SyncService) AddVoterAddress(ctx context.Context, in *model.VoterAddres
 	return nil
 }
 
-// GetVoterAddresss retrieves a list of voter addresses that were created after a specified block height.
-// It delegates the operation to the `GetNewVoterAddresss` method of the `voteRepo` and handles any errors that may occur.
-// If no voter addresses are found, it returns nil for the list and 0 for the height.
+// CreateFipProposal creates a new FipProposal record in the database by delegating the operation
+// to the underlying repository (`fipRepo`). It performs basic validation to ensure the input is not nil.
 //
 // Parameters:
 //   - ctx: The context for managing request-scoped values, cancellation signals, and deadlines.
-//   - height: The block height threshold. Only voter addresses created after this height are returned.
+//   - in: A pointer to the `FipProposalTbl` struct containing the FipProposal data to be created.
 //
 // Returns:
-//   - []model.VoterAddressTbl: A list of voter addresses that meet the criteria. Returns nil if no addresses are found.
-//   - int64: The highest `init_created_height` from the retrieved voter addresses. Returns 0 if no addresses are found.
-//   - error: An error object if the operation fails. Returns nil on success.
-func (s *SyncService) GetVoterAddresss(ctx context.Context, height int64) ([]model.VoterAddressTbl, int64, error) {
-	// Delegate the retrieval of voter addresses to the repository layer
-	res, err := s.voteRepo.GetNewVoterAddresss(ctx, height)
+//   - error: An error object if the operation fails. Returns `nil` if the operation is successful.
+func (s *SyncService) CreateFipProposal(ctx context.Context, in *model.FipProposalTbl) error {
+	// Validate the input to ensure it is not nil.
+	if in == nil {
+		return errors.New("fip proposal is nil") // Return an error if the input is nil
+	}
+
+	// Delegate the creation of the FipProposal to the underlying repository (`fipRepo`).
+	_, err := s.fipRepo.CreateFipProposal(ctx, in)
 	if err != nil {
-		// Log the error and return it if the operation fails
-		zap.L().Error("GetNewVoterAddresss failed", zap.Error(err))
-		return nil, 0, err
+		// Log the error using the Zap logger for debugging and monitoring purposes.
+		zap.L().Error("CreateFipProposal failed", zap.Error(err))
+		return err // Return the error if the creation fails
 	}
 
-	// If no voter addresses are found, return nil for the list and 0 for the height
-	if len(res) == 0 {
-		return nil, 0, nil
+	// Return nil to indicate the operation was successful.
+	return nil
+}
+
+// CreateFipProposalVotedInfo creates a new FipProposalVoter record in the database by delegating the operation
+// to the underlying repository (`fipRepo`). It performs basic validation to ensure the input is not nil.
+//
+// Parameters:
+//   - ctx: The context for managing request-scoped values, cancellation signals, and deadlines.
+//   - in: A pointer to the `FipProposalVoteTbl` struct containing the FipProposalVoter data to be created.
+//
+// Returns:
+//   - error: An error object if the operation fails. Returns `nil` if the operation is successful.
+func (s *SyncService) CreateFipProposalVotedInfo(ctx context.Context, in *model.FipProposalVoteTbl) error {
+	// Validate the input to ensure it is not nil.
+	if in == nil {
+		return errors.New("fip proposal voted info is nil") // Return an error if the input is nil
 	}
 
-	// Return the retrieved voter addresses and the highest `init_created_height`
-	return res, res[0].InitCreatedHeight, nil
+	// Delegate the creation of the FipProposalVoter to the underlying repository (`fipRepo`).
+	_, err := s.fipRepo.CreateFipProposalVote(ctx, in)
+	if err != nil {
+		// Log the error using the Zap logger for debugging and monitoring purposes.
+		zap.L().Error("CreateFipProposalVotedInfo failed", zap.Error(err))
+		return err // Return the error if the creation fails
+	}
+
+	// Return nil to indicate the operation was successful.
+	return nil
+}
+
+// CreateFipEditor creates a new FipVoter record in the database by delegating the operation
+// to the underlying repository (`fipRepo`). It performs basic validation to ensure the input is not nil.
+//
+// Parameters:
+//   - ctx: The context for managing request-scoped values, cancellation signals, and deadlines.
+//   - in: A pointer to the `FipEditorTbl` struct containing the FipVoter data to be created.
+//
+// Returns:
+//   - error: An error object if the operation fails. Returns `nil` if the operation is successful.
+func (s *SyncService) CreateFipEditor(ctx context.Context, in *model.FipEditorTbl) error {
+	// Validate the input to ensure it is not nil.
+	if in == nil {
+		return errors.New("fip voter is nil") // Return an error if the input is nil
+	}
+
+	// Delegate the creation of the FipVoter to the underlying repository (`fipRepo`).
+	_, err := s.fipRepo.CreateFipEditor(ctx, in)
+	if err != nil {
+		// Log the error using the Zap logger for debugging and monitoring purposes.
+		zap.L().Error("CreateFipEditor failed", zap.Error(err))
+		return err // Return the error if the creation fails
+	}
+
+	// Return nil to indicate the operation was successful.
+	return nil
+}
+
+// UpdateStatusAndGetFipProposal updates the status of a FipProposal by delegating the operation
+// to the underlying repository (`fipRepo`). It handles errors by logging them and returning them to the caller.
+//
+// Parameters:
+//   - ctx: The context for managing request-scoped values, cancellation signals, and deadlines.
+//   - proposalId: The unique identifier of the proposal for which the status is to be updated.
+//   - chainId: The unique identifier of the blockchain network associated with the proposal.
+//
+// Returns:
+//   - error: An error object if the operation fails. Returns `nil` if the operation is successful.
+func (s *SyncService) UpdateStatusAndGetFipProposal(ctx context.Context, proposalId, chainId int64) (*model.FipProposalTbl, error) {
+	// Delegate the update operation to the underlying repository (`fipRepo`).
+	res, err := s.fipRepo.UpdateStatusAndGetFipProposal(ctx, proposalId, chainId)
+	if err != nil {
+		// Log the error using the Zap logger for debugging and monitoring purposes.
+		zap.L().Error("UpdateStatusAndGetFipProposal failed", zap.Error(err))
+		return nil, err // Return the error if the update fails
+	}
+
+	// Return nil to indicate the operation was successful.
+	return res, nil
+}
+
+func (s *SyncService) RevokeFipProposal(ctx context.Context, chainId int64, cadidateAddresss string) error {
+	if err := s.fipRepo.UpdateFipEditorByAddress(ctx, cadidateAddresss); err != nil {
+		zap.L().Error(
+			"UpdateFipEditorByAddress failed",
+			zap.String("cadidateAddresss", cadidateAddresss),
+			zap.Error(err),
+		)
+
+		return err
+	}
+
+	unpassFipProposals, err := s.fipRepo.GetUnpassFipProposalList(ctx, chainId)
+	if err != nil {
+		zap.L().Error("GetUnpassFipList failed", zap.Error(err))
+		return err
+	}
+
+	zap.L().Info("RevokeFipProposal unpassFipProposals", zap.Int("length", len(unpassFipProposals)))
+
+	for _, proposal := range unpassFipProposals {
+		zap.L().Info("unpassFipProposals", zap.Any("fip proposal", proposal))
+		if err := s.fipRepo.UpdateFipProposalVoteByAddress(ctx, proposal.ProposalId, cadidateAddresss); err != nil {
+			zap.L().Error(
+				"UpdateFipProposalVoteByAddress failed",
+				zap.String("cadidateAddresss", cadidateAddresss),
+				zap.Int64("proposalId", proposal.ProposalId),
+				zap.Error(err),
+			)
+			continue
+		}
+	}
+
+	return nil
+}
+
+func (s *SyncService) UpdateVoterAndProposalGithubNameByGistInfo(ctx context.Context, voterAddress, gistId string) error {
+	gist := utils.GetGistInfoByGistId(gistId)
+	gistFile := model.GistFiles{}
+	for _, value := range gist.Files {
+		gistFile = value
+	}
+
+	gistInfo := ""
+	if gistFile.Size <= constant.MaxFileSize {
+		gistInfo = gistFile.Content
+	}
+
+	zap.L().Info(
+		"UpdateVoterByGistInfo",
+		zap.String("gistId", gistId),
+		zap.String("github id", gist.Owner.Owner),
+		zap.String("gistInfo", gistInfo),
+	)
+	if err := s.voteRepo.UpdateVoterByGistInfo(ctx, &model.VoterInfoTbl{
+		GistId:   gistId,
+		GithubId: gist.Owner.Owner,
+		GistInfo: gistInfo,
+	}); err != nil {
+		zap.L().Error("UpdateVoterByGistInfo failed", zap.Error(err))
+		return err
+	}
+
+	if err := s.proposalRepo.UpdateProposalGitHubName(ctx, voterAddress, gist.Owner.Owner); err != nil {
+		zap.L().Error("UpdateProposalGitHubName failed", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
+func (s *SyncService) UpdateVoterByMinerIds(ctx context.Context, voterAddress string, minerIds []uint64, ownerId uint64) error {
+	if err := s.voteRepo.UpdateVoterByMinerInfo(ctx, &model.VoterInfoTbl{
+		Address: voterAddress,
+		MinerIds: minerIds,
+		OwnerId:  ownerId,
+	}); err != nil {
+
+		zap.L().Error("UpdateVoterByMinerIds failed", zap.Error(err))
+
+		return err
+	}
+
+	return nil
 }

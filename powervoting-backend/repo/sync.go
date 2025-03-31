@@ -60,7 +60,7 @@ func (s *SyncRepoImpl) GetSyncEventInfo(ctx context.Context, addr string) (*mode
 	var syncEvent model.SyncEventTbl
 	tx := s.mydb.Model(model.SyncEventTbl{}).
 		WithContext(ctx).
-		Where("contract_address = ?", addr).
+		Where("power_voting_contract_address = ?", addr).
 		Take(&syncEvent)
 
 	return &syncEvent, tx.Error
@@ -70,7 +70,7 @@ func (s *SyncRepoImpl) GetSyncEventInfo(ctx context.Context, addr string) (*mode
 func (s *SyncRepoImpl) UpdateSyncEventInfo(ctx context.Context, addr string, height int64) error {
 	err := s.mydb.Model(model.SyncEventTbl{}).
 		WithContext(ctx).
-		Where("contract_address = ?", addr).
+		Where("power_voting_contract_address = ?", addr).
 		Updates(model.SyncEventTbl{SyncedHeight: height}).Error
 	if err != nil {
 		return fmt.Errorf("update sync event error: %w", err)

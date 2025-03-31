@@ -25,7 +25,20 @@ import (
 type MockVoteService struct {
 }
 
+// GetVoterInfoByAddress implements service.VoteRepo.
+func (m *MockVoteService) GetVoterInfoByAddress(ctx context.Context, address string) (*model.VoterInfoTbl, error) {
+	panic("unimplemented")
+}
 
+// UpdateVoterByGistInfo implements service.VoteRepo.
+func (m *MockVoteService) UpdateVoterByGistInfo(ctx context.Context, in *model.VoterInfoTbl) error {
+	panic("unimplemented")
+}
+
+// UpdateVoterByMinerInfo implements service.VoteRepo.
+func (m *MockVoteService) UpdateVoterByMinerInfo(ctx context.Context, in *model.VoterInfoTbl) error {
+	panic("unimplemented")
+}
 
 var _ service.VoteRepo = (*MockVoteService)(nil)
 
@@ -54,11 +67,11 @@ func (m *MockVoteService) GetVoteList(ctx context.Context, chainId int64, propos
 }
 
 // CreateVoterAddress implements service.VoteRepo.
-func (m *MockVoteService) CreateVoterAddress(ctx context.Context, in *model.VoterAddressTbl) (int64, error) {
+func (m *MockVoteService) CreateVoterAddress(ctx context.Context, in *model.VoterInfoTbl) (int64, error) {
 	panic("unimplemented")
 }
 
-// GetNewVoterAddresss implements service.VoteRepo.
-func (m *MockVoteService) GetNewVoterAddresss(ctx context.Context, height int64) ([]model.VoterAddressTbl, error) {
+// GetAllVoterAddresss implements service.VoteRepo.
+func (m *MockVoteService) GetAllVoterAddresss(ctx context.Context, chainId int64) ([]model.VoterInfoTbl, error) {
 	panic("unimplemented")
 }

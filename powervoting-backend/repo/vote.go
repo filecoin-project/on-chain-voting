@@ -17,6 +17,7 @@ package repo
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -57,6 +58,7 @@ func (v *VoteRepoImpl) BatchUpdateVotes(ctx context.Context, votes []model.VoteT
 				"client_power":       vote.ClientPower,
 				"developer_power":    vote.DeveloperPower,
 				"token_holder_power": vote.TokenHolderPower,
+				"updated_at":         time.Now(),
 			}).Error; err != nil {
 			tx.Rollback()
 			return fmt.Errorf("update vote error: %w", err)
@@ -119,15 +121,16 @@ func (v *VoteRepoImpl) GetVoteList(ctx context.Context, chainId, proposalId int6
 // Returns:
 //   - int64: The ID of the created or updated voter address record.
 //   - error: An error object if the operation fails.
-func (v *VoteRepoImpl) CreateVoterAddress(ctx context.Context, in *model.VoterAddressTbl) (int64, error) {
+func (v *VoteRepoImpl) CreateVoterAddress(ctx context.Context, in *model.VoterInfoTbl) (int64, error) {
 	// Use the `OnConflict` clause to handle duplicate addresses
-	err := v.mydb.Model(model.VoterAddressTbl{}).
+	err := v.mydb.Model(model.VoterInfoTbl{}).
 		WithContext(ctx).
 		Clauses(clause.OnConflict{
 			Columns: []clause.Column{
 				{Name: "address"}, // Conflict resolution based on the `address` column
+				{Name: "chain_id"},
 			},
-			DoUpdates: clause.AssignmentColumns([]string{"update_height", "updated_at"}), // Update `update_height` if the address exists
+			DoUpdates: clause.AssignmentColumns([]string{"updated_at"}), // Update `update_height` if the address exists
 		}).
 		Create(in).Error // Perform the create or update operation
 
@@ -140,7 +143,7 @@ func (v *VoteRepoImpl) CreateVoterAddress(ctx context.Context, in *model.VoterAd
 	return in.BaseField.ID, nil
 }
 
-// GetNewVoterAddresss retrieves a list of voter addresses that were created after a specified block height.
+// GetAllVoterAddresss retrieves a list of voter addresses that were created after a specified block height.
 // It queries the database for voter addresses with an `init_created_height` greater than the provided height,
 // orders the results in descending order by `init_created_height`, and returns the list along with the highest height found.
 //
@@ -152,17 +155,60 @@ func (v *VoteRepoImpl) CreateVoterAddress(ctx context.Context, in *model.VoterAd
 //   - []model.VoterAddressTbl: A list of voter addresses that meet the criteria.
 //   - int64: The highest `init_created_height` from the retrieved voter addresses. Returns 0 if no addresses are found.
 //   - error: An error object if the query fails.
-func (v *VoteRepoImpl) GetNewVoterAddresss(ctx context.Context, height int64) ([]model.VoterAddressTbl, error) {
-	var proposalList []model.VoterAddressTbl
+func (v *VoteRepoImpl) GetAllVoterAddresss(ctx context.Context, chainId int64) ([]model.VoterInfoTbl, error) {
+	var proposalList []model.VoterInfoTbl
 
 	// Query the database for voter addresses created after the specified height
-	if err := v.mydb.Model(model.VoterAddressTbl{}).
+	if err := v.mydb.Model(model.VoterInfoTbl{}).
 		WithContext(ctx).
-		Where("init_created_height > ?", height).
-		Order("init_created_height desc").
+		Where("chain_id = ?", chainId).
 		Find(&proposalList).Error; err != nil {
 		return proposalList, err
 	}
 
 	return proposalList, nil
+}
+
+// UpdateVoterByGistInfo implements service.VoteRepo.
+func (v *VoteRepoImpl) UpdateVoterByGistInfo(ctx context.Context, in *model.VoterInfoTbl) error {
+	if err := v.mydb.Model(model.VoterInfoTbl{}).
+		WithContext(ctx).
+		Where("address = ?", in.Address).UpdateColumns(map[string]any{
+		"gist_id":    in.GistId,
+		"github_id":  in.GithubId,
+		"gist_info":  in.GistInfo,
+		"updated_at": time.Now(),
+	}).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateVoterByMinerInfo implements service.VoteRepo.
+func (v *VoteRepoImpl) UpdateVoterByMinerInfo(ctx context.Context, in *model.VoterInfoTbl) error {
+	if err := v.mydb.Model(model.VoterInfoTbl{}).
+		WithContext(ctx).
+		Where("address = ?", in.Address).UpdateColumns(map[string]any{
+		"miner_ids":  in.MinerIds,
+		"owner_id":   in.OwnerId,
+		"updated_at": time.Now(),
+	}).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetVoterInfoByAddress implements service.VoteRepo.
+func (v *VoteRepoImpl) GetVoterInfoByAddress(ctx context.Context, address string) (*model.VoterInfoTbl, error) {
+	var voterInfo model.VoterInfoTbl
+	if err := v.mydb.Model(model.VoterInfoTbl{}).
+		WithContext(ctx).
+		Where("address = ?", address).
+		First(&voterInfo).Error; err != nil {
+		return nil, err
+	}
+
+	return &voterInfo, nil
 }

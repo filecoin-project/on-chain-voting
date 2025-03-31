@@ -1,4 +1,4 @@
-package snapshot
+package rpc
 
 import (
 	"context"
@@ -15,11 +15,11 @@ import (
 	"powervoting-server/config"
 	"powervoting-server/constant"
 	"powervoting-server/model"
-	pb "powervoting-server/snapshot/proto"
+	pb "powervoting-server/api/rpc/proto"
 )
 
 var (
-	clientInstance pb.SnapshotClient
+	snapshotClient pb.SnapshotClient
 	clientOnce     sync.Once
 )
 
@@ -35,9 +35,9 @@ func getClient() pb.SnapshotClient {
 		if err != nil {
 			zap.L().Error("failed to connect to gRPC server", zap.Error(err))
 		}
-		clientInstance = pb.NewSnapshotClient(conn)
+		snapshotClient = pb.NewSnapshotClient(conn)
 	})
-	return clientInstance
+	return snapshotClient
 }
 
 // GetAddressPower fetches power information from the gRPC server.

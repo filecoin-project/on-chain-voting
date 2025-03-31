@@ -28,18 +28,19 @@ import (
 // The health check route returns a success response.
 // The proposal result route is mapped to the VoteResult handler function.
 // The proposal history route is mapped to the VoteHistory handler function.
-func InitRouters(r *gin.Engine, proposalService service.IProposalService, voteService service.IVoteService) {
+func InitRouters(r *gin.Engine, proposalService service.IProposalService, voteService service.IVoteService, fipService service.IFipService) {
 
 	proposalHandler := api.NewProposalHandler(proposalService)
-	voteHandle := api.NewVoteHandler(voteService)
-
+	voteHandler := api.NewVoteHandler(voteService)
+	fipHandler := api.NewFipHandle(fipService)
 	powerVotingRouter := r.Group(constant.PowerVotingApiPrefix)
 	r.GET(constant.PowerVotingApiPrefix+"/health_check", func(c *gin.Context) {
 		api.Success(c)
 	})
 
-	proposalRouter(powerVotingRouter, proposalHandler, voteHandle)
+	proposalRouter(powerVotingRouter, proposalHandler, voteHandler)
 	powerRouter(powerVotingRouter)
+	fipEditor(powerVotingRouter, fipHandler)
 }
 
 // proposalRouter defines routes related to proposal management.
@@ -54,6 +55,11 @@ func proposalRouter(rg *gin.RouterGroup, ph *api.ProposalHandler, vh *api.VoteHa
 // powerRouter defines routes related to power distribution and management.
 func powerRouter(rg *gin.RouterGroup) {
 	rg.GET("/power/getPower", wrap(api.GetAddressPower)) // Get power distribution for a specific address
+}
+
+func fipEditor(rg *gin.RouterGroup, fh *api.FipHandle) {
+	rg.GET("/fipProposal/list", wrap(fh.GetFipProposalList)) // Get a list of fipProposals
+	rg.GET("/fipEditor/list", wrap(fh.GetFipEditorList))     // Get a list of fipEditors
 }
 
 // wrap is a utility function to wrap handlers with additional context and validation.

@@ -27,6 +27,11 @@ import (
 type MockProposalService struct {
 }
 
+// UpdateProposalGitHubName implements service.ProposalRepo.
+func (m *MockProposalService) UpdateProposalGitHubName(ctx context.Context, createrAddress string, githubName string) error {
+	panic("unimplemented")
+}
+
 var _ service.ProposalRepo = (*MockProposalService)(nil)
 
 // CreateProposal implements service.ProposalRepo.

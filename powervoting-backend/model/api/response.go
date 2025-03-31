@@ -54,7 +54,7 @@ type ProposalRep struct {
 	Content        string                 `json:"content"`                  // Proposal content
 	CreatedAt      int64                  `json:"createdAt"`                // Created time
 	UpdatedAt      int64                  `json:"updatedAt"`                // Updated time
-	Voted          bool                   `json:"voted"`                    // Whether the proposal has been voted
+	Voted          bool                   `json:"voted"`          // Whether the proposal has been voted
 	Status         int                    `json:"status"`                   // Proposal status
 	VotePercentage ProposalVotePercentage `json:"votePercentage,omitempty"` // Voting result percentages
 	SnapshotInfo   SnapshotInfo           `json:"snapshotInfo,omitempty"`   // Snapshot information
@@ -102,4 +102,24 @@ type Voted struct {
 	Percentage   string `json:"percentage"`   // Single vote as a percentage of the entire proposal
 	VotedTime    int64  `json:"votedTime"`    // Voted time
 	PowerRep            // Voter power information
+}
+
+type FipProposalRep struct {
+	ProposalId       int64    `json:"proposalId"`       // Proposal ID
+	ChainId          int64    `json:"chainId"`          // Chain ID
+	ProposalType     int      `json:"proposalType"`     // FIP proposal type
+	Creator          string   `json:"creator"`          // FIP proposal creator
+	CandidateAddress string   `json:"candidateAddress"` // FIP proposal candidate address
+	CandidateInfo    string   `json:"candidateInfo"`    // FIP proposal candidate info
+	Timestamp        int64    `json:"timestamp"`        // FIP proposal timestamp
+	VotedCount       int64    `json:"votedCount"`       // FIP proposal voted count
+	EditorCount      int64    `json:"editorCount"`      // FIP proposal editor count
+	Status           int      `json:"status"`           // FIP proposal status
+	VotedAddresss    []string `json:"votedAddresss"`    // FIP proposal voted addresss
+}
+
+type FipEditorRep struct {
+	Editor    string `json:"editor"`
+	ChainId   int64  `json:"chainId"`
+	Timestamp int64  `json:"timestamp"`
 }

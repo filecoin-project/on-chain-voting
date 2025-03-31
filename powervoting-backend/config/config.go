@@ -15,6 +15,10 @@
 package config
 
 import (
+	"os"
+	"strings"
+
+	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
@@ -22,19 +26,45 @@ import (
 // export client
 var Client Config
 
+func init() {
+	if err := godotenv.Load(); err != nil {
+		zap.L().Warn("Unable to load .env file: %v", zap.Error(err))
+	}
+}
+
 // InitConfig initializes the configuration by reading from a YAML file located at the specified path.
 func InitConfig(path string) {
 	// configuration file name
-	viper.SetConfigName("configuration")
+	viper.SetConfigName("configuration-backend")
 
 	viper.AddConfigPath(path)
 
 	viper.SetConfigType("yaml")
 
+	viper.AutomaticEnv()
+
 	err := viper.ReadInConfig()
 	if err != nil {
 		zap.L().Error("read config file error:", zap.Error(err))
 		return
+	}
+
+	for _, key := range viper.AllKeys() {
+		value := viper.GetString(key)
+		if value == "" {
+			continue
+		}
+
+		replacedValue := replaceEnvVariables(value)
+		replacedValue = strings.ReplaceAll(replacedValue, "'", "")
+		replacedValue = strings.ReplaceAll(replacedValue, "\"", "")
+
+		if key == "xxl-job.serveraddrs" {
+			viper.Set(key, strings.Split(replacedValue, ","))
+		} else {
+			viper.Set(key, replacedValue)
+		}
+
 	}
 
 	err = viper.Unmarshal(&Client)
@@ -43,4 +73,10 @@ func InitConfig(path string) {
 		return
 	}
 
+}
+
+func replaceEnvVariables(value string) string {
+	return os.Expand(value, func(key string) string {
+		return os.Getenv(key)
+	})
 }

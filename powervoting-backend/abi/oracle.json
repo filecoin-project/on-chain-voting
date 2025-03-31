@@ -1,48 +1,40 @@
 [
     {
+        "anonymous": false,
         "inputs": [
             {
+                "indexed": false,
                 "internalType": "address",
-                "name": "voter",
+                "name": "voterAddress",
                 "type": "address"
-            }
-        ],
-        "name": "getVoterInfo",
-        "outputs": [
+            },
             {
-                "components": [
-                    {
-                        "internalType": "uint64[]",
-                        "name": "actorIds",
-                        "type": "uint64[]"
-                    },
-                    {
-                        "internalType": "uint64[]",
-                        "name": "minerIds",
-                        "type": "uint64[]"
-                    },
-                    {
-                        "internalType": "string",
-                        "name": "githubAccount",
-                        "type": "string"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "ethAddress",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "string",
-                        "name": "ucanCid",
-                        "type": "string"
-                    }
-                ],
-                "internalType": "struct IOracle.VoterInfo",
-                "name": "",
-                "type": "tuple"
+                "indexed": false,
+                "internalType": "string",
+                "name": "gistId",
+                "type": "string"
             }
         ],
-        "stateMutability": "view",
-        "type": "function"
+        "name": "UpdateGistIdsEvent",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "voterAddress",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint64[]",
+                "name": "minerIds",
+                "type": "uint64[]"
+            }
+        ],
+        "name": "UpdateMinerIdsEvent",
+        "type": "event"
     }
 ]

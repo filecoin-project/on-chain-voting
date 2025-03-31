@@ -48,8 +48,8 @@ type ChainIdParam struct {
 
 // ProposalReq represents a request for retrieving a specific proposal by its ID and chain ID.
 type ProposalReq struct {
-	ProposalId   int64  `form:"proposalId" validate:"required"`          // Proposal ID
-	ChainIdParam        // Embedded chain ID parameter
+	ProposalId   int64 `form:"proposalId" validate:"required"` // Proposal ID
+	ChainIdParam       // Embedded chain ID parameter
 }
 
 // AddProposalDraftReq represents a request for creating or updating a proposal draft.
@@ -69,6 +69,16 @@ type ProposalPercentage struct {
 	SpPercentage          uint16 `json:"spPercentage"`          // Voting power percentage for SPs
 	ClientPercentage      uint16 `json:"clientPercentage"`      // Voting power percentage for clients
 	DeveloperPercentage   uint16 `json:"developerPercentage"`   // Voting power percentage for developers
+}
+
+type FipProposalListReq struct {
+	PageReq
+	ProposalType int   `form:"proposalType" validate:"oneof=0 1"` // FIP type filter (0: revoke, 1: approve)
+	ChainId      int64 `form:"chainId" validate:"required"`
+}
+
+type FipEditorListReq struct {
+	ChainId int64 `form:"chainId" validate:"required"`
 }
 
 // Offset calculates the offset for pagination based on the current page and page size.

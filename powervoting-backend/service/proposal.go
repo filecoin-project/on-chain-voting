@@ -111,6 +111,8 @@ type ProposalRepo interface {
 	//   - []model.ProposalTbl: A list of uncounted proposals if the query is successful.
 	//   - error: An error if the query operation fails; otherwise, nil.
 	GetUncountedProposalList(ctx context.Context, chainId int64, timestamp int64) ([]model.ProposalTbl, error)
+
+	UpdateProposalGitHubName(ctx context.Context, createrAddress, githubName string) error
 }
 
 // IProposalService defines the interface for managing proposal-related operations.

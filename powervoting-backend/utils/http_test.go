@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package model
+package utils
 
-// sync event table
-type SyncEventTbl struct {
-	Id                         int64  `json:"id"`
-	ChainId                    int64  `json:"chain_id" gorm:"not null"`
-	ChainName                  string `json:"chain_name" gorm:"not null"`
-	PowerVotingContractAddress string `json:"power_voting_contract_address" gorm:"not null;uniqueIndex"`
-	FipProposalContractAddress string `json:"fip_proposal_contract_address" gorm:"not null"`
-	SyncedHeight               int64  `json:"synced_height" gorm:"not null,default:0"`
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestGetGistInfoByGistId(t *testing.T) {
+	res := GetGistInfoByGistId("c8a001be0c90e8c616e60100c1af54bf")
+	assert.NotEmpty(t, res)
 }

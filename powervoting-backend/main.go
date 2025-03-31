@@ -15,11 +15,19 @@
 package main
 
 import (
+	"log"
+	"net"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
+	"powervoting-server/api/rpc"
+	pb "powervoting-server/api/rpc/proto"
 	"powervoting-server/config"
 	"powervoting-server/data"
 	"powervoting-server/repo"
@@ -39,17 +47,20 @@ func main() {
 	proposalRepoImpl := repo.NewProposalRepo(mydb)
 	voteRepoImpl := repo.NewVoteRepo(mydb)
 	syncRepoImpl := repo.NewSyncRepo(mydb)
-
+	fipRepoImpl := repo.NewFipRepo(mydb)
 	proposalService := service.NewProposalService(proposalRepoImpl)
 	voteService := service.NewVoteService(voteRepoImpl)
-	syncService := service.NewSyncService(syncRepoImpl, voteRepoImpl, proposalRepoImpl)
+	syncService := service.NewSyncService(syncRepoImpl, voteRepoImpl, proposalRepoImpl, fipRepoImpl)
+	fipService := service.NewFipService(fipRepoImpl)
 	// initialization scheduled task
 	go task.TaskScheduler(syncService)
 
+	// initialization grpc server
+	go RpcServer(rpc.NewBackendRpc(service.NewRpcService(voteRepoImpl)))
 	// default gin web
 	r := gin.Default()
 	r.Use(Cors())
-	router.InitRouters(r, proposalService, voteService)
+	router.InitRouters(r, proposalService, voteService, fipService)
 	err := r.Run(config.Client.Server.Port)
 	if err != nil {
 		zap.L().Error("start web server failed: ", zap.Error(err))
@@ -71,4 +82,30 @@ func Cors() gin.HandlerFunc {
 			context.AbortWithStatus(http.StatusNoContent)
 		}
 	}
+}
+
+func RpcServer(rpc *rpc.BackendRpc) {
+	_ = grpc.ChainUnaryInterceptor(
+		recovery.UnaryServerInterceptor(recovery.WithRecoveryHandler(
+			func(p any) (err error) {
+				zap.S().Error("recovery form panic", zap.Error(err))
+				return status.Errorf(codes.Internal, "internal error")
+			},
+		)),
+	)
+
+	server := grpc.NewServer()
+	pb.RegisterBackendServer(server, rpc)
+
+	lis, err := net.Listen("tcp", config.Client.Server.RpcPort)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+
+	log.Printf("rpc server start on port: %v\n", config.Client.Server.RpcPort)
+	if err := server.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+
+	log.Println("rpc server shutdown")
 }

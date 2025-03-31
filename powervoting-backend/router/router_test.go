@@ -19,9 +19,25 @@ import (
 )
 
 var _ service.IProposalService = (*MockProposalService)(nil)
+var _ service.IFipService = (*MockFipService)(nil)
+var _ service.IVoteService = (*MockVoteService)(nil)
 
 type MockProposalService struct {
 	mock.Mock
+}
+
+type MockFipService struct {
+	mock.Mock
+}
+
+// GetFipEditorList implements service.IFipService.
+func (m *MockFipService) GetFipEditorList(ctx context.Context, req api.FipEditorListReq) ([]api.FipEditorRep, error) {
+	panic("unimplemented")
+}
+
+// GetFipProposalList implements service.IFipService.
+func (m *MockFipService) GetFipProposalList(ctx context.Context, req api.FipProposalListReq) (*api.CountListRep, error) {
+	panic("unimplemented")
 }
 
 // AddDraft implements service.IProposalService.
@@ -48,8 +64,6 @@ func (m *MockProposalService) ProposalList(ctx context.Context, req api.Proposal
 	return args.Get(0).(*api.CountListRep), args.Error(1)
 }
 
-var _ service.IVoteService = (*MockVoteService)(nil)
-
 type MockVoteService struct {
 	mock.Mock
 }
@@ -61,16 +75,16 @@ func (m *MockVoteService) GetCountedVotedList(ctx context.Context, chainId int64
 }
 
 // 测试初始化
-func setupRouter(p *MockProposalService, v *MockVoteService) *gin.Engine {
+func setupRouter(p *MockProposalService, v *MockVoteService, f *MockFipService) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 
 	r := gin.New()
-	InitRouters(r, p, v)
+	InitRouters(r, p, v, f)
 	return r
 }
 
 func TestHealthCheck(t *testing.T) {
-	router := setupRouter(nil, nil)
+	router := setupRouter(nil, nil, nil)
 	req, _ := http.NewRequest("GET", constant.PowerVotingApiPrefix+"/health_check", nil)
 	resp := httptest.NewRecorder()
 
@@ -83,7 +97,8 @@ func TestHealthCheck(t *testing.T) {
 func TestGetCountedVotesInfo_Success(t *testing.T) {
 	proposalService := new(MockProposalService)
 	voteService := new(MockVoteService)
-	router := setupRouter(proposalService, voteService)
+	fipService := new(MockFipService)
+	router := setupRouter(proposalService, voteService, fipService)
 
 	data := api.Voted{VoterAddress: "addr1", ProposalId: 100}
 	voteService.On("GetCountedVotedList",
@@ -115,7 +130,8 @@ func TestGetCountedVotesInfo_Success(t *testing.T) {
 func TestGetCountedVotesInfo_MissingParams(t *testing.T) {
 	proposalService := new(MockProposalService)
 	voteService := new(MockVoteService)
-	router := setupRouter(proposalService, voteService)
+	fipService := new(MockFipService)
+	router := setupRouter(proposalService, voteService, fipService)
 	testCases := []struct {
 		query       string
 		expectedErr string
@@ -139,7 +155,8 @@ func TestGetCountedVotesInfo_MissingParams(t *testing.T) {
 func TestGetProposalList_Success(t *testing.T) {
 	proposalService := new(MockProposalService)
 	voteService := new(MockVoteService)
-	router := setupRouter(proposalService, voteService)
+	fipService := new(MockFipService)
+	router := setupRouter(proposalService, voteService, fipService)
 
 	data := []api.ProposalRep{
 		{
@@ -178,7 +195,8 @@ func TestGetProposalList_Success(t *testing.T) {
 func TestGetProposalDetail_InvalidChainId(t *testing.T) {
 	proposalService := new(MockProposalService)
 	voteService := new(MockVoteService)
-	router := setupRouter(proposalService, voteService)
+	fipService := new(MockFipService)
+	router := setupRouter(proposalService, voteService, fipService)
 	req, _ := http.NewRequest("GET", constant.PowerVotingApiPrefix+"/proposal/details?proposalId=123&chainId=invalid", nil)
 	resp := httptest.NewRecorder()
 
@@ -192,7 +210,8 @@ func TestGetPower_InvalidAddress(t *testing.T) {
 	config.InitConfig("../")
 	proposalService := new(MockProposalService)
 	voteService := new(MockVoteService)
-	router := setupRouter(proposalService, voteService)
+	fipService := new(MockFipService)
+	router := setupRouter(proposalService, voteService, fipService)
 
 	req, _ := http.NewRequest("GET", constant.PowerVotingApiPrefix+"/power/getPower?address=invalid&chainId=314159&day=20250105", nil)
 	resp := httptest.NewRecorder()
@@ -208,7 +227,8 @@ func TestPostDraft_Success(t *testing.T) {
 
 	proposalService := new(MockProposalService)
 	voteService := new(MockVoteService)
-	router := setupRouter(proposalService, voteService)
+	fipService := new(MockFipService)
+	router := setupRouter(proposalService, voteService, fipService)
 	body := `{"title": "Test Proposal"}`
 
 	proposalService.On("AddDraft",

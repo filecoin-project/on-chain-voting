@@ -11,8 +11,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
 
-	"powervoting-server/snapshot"
-	pb "powervoting-server/snapshot/proto"
+	snapshot "powervoting-server/api/rpc"
+	pb "powervoting-server/api/rpc/proto"
 )
 
 const bufSize = 1024 * 1024 // 1 MB buffer

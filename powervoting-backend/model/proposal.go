@@ -28,7 +28,7 @@ type ProposalTbl struct {
 	StartTime           int64  `json:"start_time" gorm:"not null"`                                              // Start time
 	EndTime             int64  `json:"end_time" gorm:"not null"`                                                // Expiry time
 	Timestamp           int64  `json:"timestamp" gorm:"not null"`                                               // Proposal create time
-	Counted             int    `json:"counted" gorm:"not null,default:0"`                                       // Whether the proposal has been counted. [0: false, 1: true] 0 is not counted, 1 is counted
+	Counted             int    `json:"counted" gorm:"not null,default:0;comment:0: not counted, 1: counted"`                                       // Whether the proposal has been counted. [0: false, 1: true] 0 is not counted, 1 is counted
 	ChainId             int64  `json:"chain_id" gorm:"not null;uniqueIndex:idx_proposal_chain_id"`              // Chain ID
 	Title               string `json:"title" gorm:"type:longtext;not null,default:''"`                          // Name
 	Content             string `json:"content" gorm:"type:longtext;not null,default:''"`                        // Descriptions

@@ -20,12 +20,39 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"powervoting-server/config"
 	"powervoting-server/constant"
-	"powervoting-server/mock"
 )
 
+func initConfig() {
+	config.Client = config.Config{
+		ABIPath: config.ABIPath{
+			PowerVotingAbi: "../abi/power-voting.json",
+			OracleAbi:      "../abi/oracle.json",
+		},
+		Drand: config.Drand{
+			Url: []string{
+				"https://api2.drand.sh/",
+				"https://api.drand.secureweb3.com:6875",
+				"https://api.drand.sh/",
+				"https://api3.drand.sh/",
+				"https://drand.cloudflare.com/",
+			},
+			ChainHash: "52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971",
+		},
+		Network: config.Network{
+			ChainId:              314159,
+			Name:                 "FileCoin-Calibration",
+			Rpc:                  "https://filecoin-calibration.chainup.net/rpc/v1",
+			PowerVotingContract:  "0x4fe1B0D71FBFe97458D5c29D47928e1EA3b4466b",
+			SyncEventStartHeight: 240000,
+			OracleContract:       "0x974e0AffA36Ef25ad3F99Edda6a0f9Cc09D354Ff",
+		},
+		Snapshot: config.Snapshot{},
+	}
+}
 func TestDecodeVoteResult(t *testing.T) {
-	mock.InifMockConfig()
+	initConfig()
 	decStr := `-----BEGIN AGE ENCRYPTED FILE-----
 YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IHRsb2NrIDE2MzI1ODEyIDUyZGI5YmE3
 MGUwY2MwZjZlYWY3ODAzZGQwNzQ0N2ExZjU0Nzc3MzVmZDNmNjYxNzkyYmE5NDYw
@@ -43,7 +70,7 @@ l0YZKbPlAmnEhcp3EAwQ84BvVSibhTmIzq/MYdsHnTX/1O8=
 }
 
 func TestDecrypt(t *testing.T) {
-	mock.InifMockConfig()
+	initConfig()
 	decStr := `-----BEGIN AGE ENCRYPTED FILE-----
 YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IHRsb2NrIDE2MzI1ODEyIDUyZGI5YmE3
 MGUwY2MwZjZlYWY3ODAzZGQwNzQ0N2ExZjU0Nzc3MzVmZDNmNjYxNzkyYmE5NDYw

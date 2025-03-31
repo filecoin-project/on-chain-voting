@@ -16,6 +16,7 @@ package utils
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum"
@@ -35,37 +36,67 @@ func GetBlockTime(client *model.GoEthClient, syncedHeight int64) (int64, error) 
 	if err != nil {
 		return 0, err
 	}
-	
+
 	return int64(block.Time()), nil
 }
 
-// GetProposalCreatorByOracle retrieves the voter information for a given address using an oracle contract.
-func GetProposalCreatorByOracle(address string, client *model.GoEthClient) (model.VoterInfo, error) {
-	// Pack the "getVoterInfo" method and the address parameter into a byte array using the oracle ABI.
-	data, err := client.ABI.OracleAbi.Pack("getVoterInfo", common.HexToAddress(address))
-	if err != nil {
-		// Log an error if packing the method and parameter fails.
-		zap.L().Error("Pack method and param error: ", zap.Error(err))
-		return model.VoterInfo{}, err
+func GetOwnerIdByOracle(client *model.GoEthClient, minerId []uint64) uint64 {
+	res := uint64(0)
+	for _, miner := range minerId {
+		data, err := client.ABI.OracleAbi.Pack("getOwner", miner)
+		if err != nil {
+			zap.L().Error("Error packing getOwner", zap.Uint64("minerId", miner))
+			continue
+		}
+
+		msg := ethereum.CallMsg{
+			To:   &client.OracleContract,
+			Data: data,
+		}
+
+		result, err := client.Client.CallContract(context.Background(), msg, nil)
+		if err != nil {
+			zap.L().Error("Error calling getOwner", zap.Uint64("minerId", miner))
+			continue
+		}
+
+		upPacked, err := client.ABI.OracleAbi.Unpack("getOwner", result)
+		if err != nil {
+			zap.L().Error("Error unpacking getOwner", zap.Uint64("minerId", miner))
+			continue
+		}
+
+		res = upPacked[0].(uint64)
 	}
 
-	// Call the contract using the packed data.
-	result, err := client.Client.CallContract(context.Background(), ethereum.CallMsg{
-		To:   &client.OracleContract, // The address of the oracle contract.
-		Data: data,                   // The packed data containing the method and parameters.
-	}, nil)
+	return res
+}
+
+func GetActorIdByAddress(client *model.GoEthClient, address string) (uint64, error) {
+	data, err := client.ABI.OracleAbi.Pack("resolveEthAddress", common.HexToAddress(address))
 	if err != nil {
-		return model.VoterInfo{}, err
+		return 0, fmt.Errorf("error packing resolveEthAddress: %v", err)
 	}
 
-	// Define a variable to hold the unpacked voter information.
-	var voterInfo model.VoterInfo
-	// Unpack the result into the voterInfo variable using the "getVoterInfo" method.
-	err = client.ABI.OracleAbi.UnpackIntoInterface(&voterInfo, "getVoterInfo", result)
-	if err != nil {
-		zap.L().Error("Unpack return data to interface error: ", zap.Error(err))
-		return model.VoterInfo{}, err
+	msg := ethereum.CallMsg{
+		To:   &client.OracleContract,
+		Data: data,
 	}
 
-	return voterInfo, nil
+	result, err := client.Client.CallContract(context.Background(), msg, nil)
+	if err != nil {
+		return 0, fmt.Errorf("error calling resolveEthAddress: %v", err)
+	}
+
+	upPacked, err := client.ABI.OracleAbi.Unpack("getOwner", result)
+	if err != nil {
+		return 0, fmt.Errorf("error unpacking resolveEthAddress: %v", err)
+	}
+
+	if len(upPacked) == 0 {
+		return 0, fmt.Errorf("resolveEthAddress returned empty result")
+	}
+
+	return upPacked[0].(uint64), err
+
 }

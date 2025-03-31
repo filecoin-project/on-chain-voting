@@ -1,0 +1,80 @@
+[
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "uint256",
+                        "name": "proposalId",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "int8",
+                        "name": "proposalType",
+                        "type": "int8"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "creator",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "candidateInfo",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "candidateAddress",
+                        "type": "address"
+                    }
+                ],
+                "indexed": false,
+                "internalType": "struct FipEditorProposalCreateInfo",
+                "name": "proposal",
+                "type": "tuple"
+            }
+        ],
+        "name": "FipEditorProposalCreateEvent",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "proposalId",
+                "type": "uint256"
+            }
+        ],
+        "name": "FipEditorProposalPassedEvent",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "address",
+                        "name": "voter",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "proposalId",
+                        "type": "uint256"
+                    }
+                ],
+                "indexed": false,
+                "internalType": "struct FipEditorProposalVoteInfo",
+                "name": "voteInfo",
+                "type": "tuple"
+            }
+        ],
+        "name": "FipEditorProposalVoteEvent",
+        "type": "event"
+    }
+]

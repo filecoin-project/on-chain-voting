@@ -15,8 +15,6 @@
 package task
 
 import (
-	"sync"
-
 	"go.uber.org/zap"
 
 	"powervoting-server/config"
@@ -32,50 +30,25 @@ import (
 // Parameters:
 //   - syncService: The sync service used to manage synchronization operations.
 func SyncEventHandler(syncService *service.SyncService) {
-	// Use a WaitGroup to wait for all goroutines to finish
-	wg := sync.WaitGroup{}
-	// Use a slice to collect errors from all goroutines
-	errList := make([]error, 0, len(config.Client.Network))
-	// Use a mutex to safely append errors from multiple goroutines
-	mu := &sync.Mutex{}
+	network := config.Client.Network
 
-	// Iterate over each network configuration
-	for _, network := range config.Client.Network {
-		network := network // Create a local copy of the network variable for the goroutine
-
-		// Get the Ethereum client for the current network
-		ethClient, err := data.GetClient(syncService, network.ChainId)
-		if err != nil {
-			zap.L().Error("get go-eth client error:", zap.Error(err))
-			continue // Skip this network if the client cannot be initialized
-		}
-
-		// Increment the WaitGroup counter for the new goroutine
-		wg.Add(1)
-		go func(network config.Network) {
-			defer wg.Done() // Decrement the WaitGroup counter when the goroutine completes
-
-			// Create an event handler for the current network
-			var syncEvent = &event.Event{
-				SyncService: syncService,
-				Network:     &network,
-				Client:      ethClient,
-			}
-
-			// Subscribe to contract events for the current network
-			if err := syncEvent.SubscribeEvent(); err != nil {
-				mu.Lock()
-				errList = append(errList, err) // Append the error to the error list
-				mu.Unlock()
-			}
-		}(network) // Pass the local copy of the network to the goroutine
+	// Get the Ethereum client for the current network
+	ethClient, err := data.GetClient(syncService, network.ChainId)
+	if err != nil {
+		zap.L().Error("get go-eth client error:", zap.Error(err))
+		return
 	}
 
-	// Wait for all goroutines to finish
-	wg.Wait()
+	// Increment the WaitGroup counter for the new goroutine
 
-	// Log any errors encountered during synchronization
-	if len(errList) != 0 {
-		zap.L().Error("sync finished with err:", zap.Errors("errors", errList))
+	var syncEvent = &event.Event{
+		SyncService: syncService,
+		Network:     &network,
+		Client:      ethClient,
+	}
+
+	// Subscribe to contract events for the current network
+	if err := syncEvent.SubscribeEvent(); err != nil {
+		zap.L().Error("sync finished with err:", zap.Error(err))
 	}
 }

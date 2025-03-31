@@ -17,9 +17,9 @@ package api
 import (
 	"go.uber.org/zap"
 
+	snapshot "powervoting-server/api/rpc"
 	"powervoting-server/constant"
 	"powervoting-server/model/api"
-	"powervoting-server/snapshot"
 )
 
 // GetPower handles the request to get power information for a specific address on a specific day.

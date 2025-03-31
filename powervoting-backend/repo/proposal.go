@@ -62,7 +62,7 @@ func (p *ProposalRepoImpl) GetProposalListWithPagination(ctx context.Context, re
 		Where("proposal_id = proposal_tbl.proposal_id").
 		Where("chain_id = proposal_tbl.chain_id").
 		Where("address = ?", req.Addr)
-	queryList = queryList.Select("proposal_tbl.*, EXISTS(?) AS voted", subQuery)
+
 	queryList.Select("proposal_tbl.*, (?) AS voted", subQuery)
 
 	var proposals []model.ProposalWithVoted
@@ -197,6 +197,21 @@ func (p *ProposalRepoImpl) UpdateProposal(ctx context.Context, in *model.Proposa
 		}).Error
 
 	return err
+}
+
+// UpdateProposalGitHubName implements service.ProposalRepo.
+func (p *ProposalRepoImpl) UpdateProposalGitHubName(ctx context.Context, createrAddress, githubName string) error {
+	if err := p.mydb.Model(model.ProposalTbl{}).
+		WithContext(ctx).
+		Where("creator = ?", createrAddress).
+		UpdateColumns(map[string]any{
+			"github_name": githubName,
+			"updated_at":  time.Now(),
+		}).Error; err != nil {
+		return fmt.Errorf("update proposal github name error: %w", err)
+	}
+
+	return nil
 }
 
 // GetUnCountedProposalList retrieves a list of proposals based on the provided network ID and timestamp.

@@ -89,6 +89,6 @@ func (j *Safejob) RunVoteCountingTask() {
 		VotingCountHandler(j.syncService)
 		zap.L().Info("sync voting count finished, end time: ", zap.Int64("end time", time.Now().Unix()))
 	} else {
-		zap.L().Info("sync event task is running, continue")
+		zap.L().Info("sync voting count task is running, continue")
 	}
 }

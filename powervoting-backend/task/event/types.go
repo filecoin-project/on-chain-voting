@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package event
 
 import (
@@ -47,4 +46,42 @@ type ProposalEvent struct {
 	SpPercentage          uint16         // The percentage of votes that sps have
 	ClientPercentage      uint16         // The percentage of votes that clients have
 	DeveloperPercentage   uint16         // The percentage of votes that developers have
+}
+
+// Contract Event - FipEditorProposalCreate
+type FipEditorProposalCreateEvent struct {
+	Proposal FipEditorProposalCreateInfo
+}
+
+type FipEditorProposalCreateInfo struct {
+	ProposalId       *big.Int       // proposal id
+	ProposalType     int8           // proposal type ['create proposal role' or 'remove proposal role']
+	Creator          common.Address // The address to create the proposal
+	CandidateInfo    string         // The content of the proposal
+	CandidateAddress common.Address // The address of the candidate
+}
+
+// Contract Event - FipEditorProposalPassed
+type FipEditorProposalPassedEvent struct {
+	ProposalId *big.Int // proposal id
+}
+
+// Contract Event - FipEditorProposalVote
+type FipEditorProposalVoteEvent struct {
+	VoteInfo VoteInfo
+}
+
+type VoteInfo struct {
+	Voter      common.Address // voter address
+	ProposalId *big.Int       // proposal id
+}
+
+type OracleUpdateGistIdsEvent struct {
+	VoterAddress common.Address
+	GistIds      string
+}
+
+type OracleUpdateMinerIdsEvent struct {
+	VoterAddress common.Address
+	MinerIds     []uint64
 }
