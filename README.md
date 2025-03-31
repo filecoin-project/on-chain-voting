@@ -15,13 +15,10 @@ The specification for the on chain voting tool can be found [in this Google Doc]
 The system at a high level is composed of a few core components, each listed in a separate folder:
 
 - [**docs**](https://github.com/filecoin-project/on-chain-voting/tree/main/docs): Documentation
-- [**power-oracle-contracts**](https://github.com/filecoin-project/on-chain-voting/tree/main/power-oracle-contracts): Contains smart contracts for the Oracle contract functionality, which stores voter info, miner id mappings, and other shared state.
-- [**power-oracle-node**](https://github.com/filecoin-project/on-chain-voting/tree/main/power-oracle-node): Contains the code for the Oracle nodes that power the Oracle contract
-- [**power-snapshot**](https://github.com/filecoin-project/on-chain-voting/tree/main/power-snapshot): Contains code for the snapshot service, used to take and store snapshots of key data for later use in calculating vote power.
-- [**power-voting**](https://github.com/filecoin-project/on-chain-voting/tree/main/power-voting): Contains the frontend dApp code that runs the UI, timelock encypts vote data, and stores proposals and ecnypted data in web3.storage.
-- [**powervoting-backend**](https://github.com/filecoin-project/on-chain-voting/tree/main/powervoting-backend): The powervoting backend contains code necessary to sync proposals and votes, decode all votes once the timelock encryption has expired, and calculate the final result based on the power of each respective vote. Everything this service does should be independently verifiable using on chain data.
-- [**powervoting-contracts**](https://github.com/filecoin-project/on-chain-voting/tree/main/powervoting-contracts): Contains smart contracts used for the core Power Voting functionality, including managing FIP Editors, creating proposals, and casting votes.
-- [**ucan-utils**](https://github.com/filecoin-project/on-chain-voting/tree/main/ucan-utils): Contains utility functions for UCAN delegations, which is currently used for delegating voting rights, associated miner addresses, and associating github accounts with a wallet.
+- [**snapshot**](https://github.com/filecoin-project/on-chain-voting/tree/main/snapshot): Contains code for the snapshot service, used to take and store snapshots of key data for later use in calculating vote power.
+- [**frontend**](https://github.com/filecoin-project/on-chain-voting/tree/main/frontend): Contains the frontend dApp code that runs the UI, timelock encypts vote data, and stores proposals and ecnypted data in web3.storage.
+- [**backend**](https://github.com/filecoin-project/on-chain-voting/tree/main/backend): The powervoting backend contains code necessary to sync proposals and votes, decode all votes once the timelock encryption has expired, and calculate the final result based on the power of each respective vote. Everything this service does should be independently verifiable using on chain data.
+- [**contracts**](https://github.com/filecoin-project/on-chain-voting/tree/main/contracts): Contains smart contracts used for the core Power Voting functionality, including managing FIP Editors, creating proposals, and casting votes.
 
 ### Testing
 Each component of the overall system is tested using a go test suite (or [`forge`](https://github.com/foundry-rs/foundry), in the case of smart contracts). The test suite for each component is run by CI anytime the code in that subfolder changes. You can view test history on theGithub actions page: https://github.com/filecoin-project/on-chain-voting/actions
