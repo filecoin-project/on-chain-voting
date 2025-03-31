@@ -1,17 +1,17 @@
 # This workflow will build a golang project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
-name: Powervoting-backend-test
+name: backend-test
 
 on:
   push:
     branches: [ "main" ]
     paths:
-      - 'powervoting-backend/*'
+      - 'backend/*'
   pull_request:
     branches: [ "main" ]
     paths:
-      - 'powervoting-backend/*'
+      - 'backend/*'
 
 jobs:
   test:
@@ -37,7 +37,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd ./powervoting-backend
+          cd ./backend
           go mod tidy   
 
       - name: Initialize MySQL database
@@ -47,7 +47,7 @@ jobs:
 
       - name: Copy config file to test dir
         run: |
-          cd ./powervoting-backend
+          cd ./backend
           mv configuration.yaml.example configuration.yaml
           cp ./abi/* ./task/event
           cp ./abi/* ./task
@@ -55,7 +55,7 @@ jobs:
 
       - name: Test
         run: |
-          cd ./powervoting-backend
+          cd ./backend
           go test -v ./...
 
   deploy:
@@ -68,5 +68,5 @@ jobs:
           username: ${{ vars.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd ${{ vars.BUILD_PATH }}/powervoting-backend
+            cd ${{ vars.BUILD_PATH }}/backend
             sudo sh build.sh ${{ vars.BACKEND_PORT }}

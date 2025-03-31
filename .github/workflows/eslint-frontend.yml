@@ -5,12 +5,12 @@ on:
     branches:
       - main
     paths:
-      - power-voting/*
+      - frontend/*
   push:
     branches:
       - main
     paths:
-      - power-voting/*
+      - frontend/*
 
 jobs:
   eslint:
@@ -31,10 +31,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd power-voting
+          cd frontend
           npm install -d
 
       - name: Lint
         run: |
-          cd power-voting
+          cd frontend
           npm run lint

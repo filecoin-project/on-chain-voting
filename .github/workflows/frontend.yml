@@ -5,12 +5,12 @@ on:
     branches:
       - main
     paths:
-      - power-voting/*
+      - frontend/*
   push:
     branches:
       - main
     paths:
-      - power-voting/*
+      - frontend/*
 
 jobs:
   frontend-test:
@@ -31,10 +31,23 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd power-voting
+          cd frontend
           npm install -d
 
       - name: Test
         run: |
-          cd power-voting
+          cd frontend
           npm run test
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ vars.SSH_HOST }}
+          username: ${{ vars.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ${{ vars.BUILD_PATH }}/frontend
+            sudo sh build.sh
