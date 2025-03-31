@@ -1,15 +1,14 @@
-name: powervoting-contracts
+name: contracts
 
 on:
   push:
     branches: [ "main" ]
     paths:
-      - 'powervoting-contracts/*'
+      - 'contracts/*'
   pull_request:
     branches: [ "main" ]
     paths:
-      - 'powervoting-contracts/*'
+      - 'contracts/*'
 env:
   FOUNDRY_PROFILE: ci
-
 
