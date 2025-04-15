@@ -15,12 +15,12 @@
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
 import axios from 'axios';
 import dayjs from 'dayjs';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { useCurrentTimezone } from "src/common/store";
-import Loading from 'src/components/Loading';
-import VoteStatusBtn from 'src/components/VoteStatusBtn';
+import { useCurrentTimezone } from "../../common/store.ts";
+import Loading from '../../../src/components/Loading';
+import VoteStatusBtn from '../../../src/components/VoteStatusBtn';
 import { useAccount } from "wagmi";
 import {
   COMPLETED_STATUS,
@@ -249,7 +249,7 @@ const VotingResults = () => {
                   <span className='text-[#313D4F] text-sm font-normal'>{timezone}</span>
                 </div>
                 <div className='flex justify-between'>
-                  <div className='text-sm font-medium'>{t('content.blockHeight')}</div>
+                  <div className='text-sm font-medium'>{t('content.snapshotBlockHeight')}</div>
                   <span className='text-[#313D4F] font-normal'>{votingData.snapshotInfo?.snapshotHeight || '-'}</span>
                 </div>
               </div>

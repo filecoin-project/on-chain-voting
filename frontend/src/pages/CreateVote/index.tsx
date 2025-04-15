@@ -19,18 +19,18 @@ import classNames from 'classnames';
 import dayjs from "dayjs";
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from "react-router-dom";
-import { ProposalDraft } from "src/common/types";
+import type { ProposalDraft } from "../../common/types";
 import { UserRejectedRequestError } from "viem";
 import type { BaseError } from "wagmi";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import fileCoinAbi from "../../common/abi/power-voting.json";
 
-import CreateTable from "src/components/CreateTable";
-import timezoneOption from '../../../public/json/timezons.json';
+import CreateTable from "../../components/CreateTable";
+import timezoneOption from '../../json/timezons.json';
 import {
   calibrationChainId,
   DEFAULT_TIMEZONE,
@@ -80,10 +80,10 @@ const CreateVote = () => {
       name: '',
       descriptions: '',
       percent: {
-        spPercentage: 25,
-        clientPercentage: 25,
-        developerPercentage: 25,
-        tokenHolderPercentage: 25,
+        spPercentage: 2500,
+        clientPercentage: 2500,
+        developerPercentage: 2500,
+        tokenHolderPercentage: 2500,
       },
       option: [
         { value: '' },
@@ -165,10 +165,10 @@ const CreateVote = () => {
           setValue("timezone", result.timezone)
         }
         setValue("percent", {
-          spPercentage: result?.spPercentage,
-          clientPercentage: result?.clientPercentage,
-          developerPercentage: result?.developerPercentage,
-          tokenHolderPercentage: result?.tokenHolderPercentage,
+          spPercentage: result?.spPercentage / 100,
+          clientPercentage: result?.clientPercentage / 100,
+          developerPercentage: result?.developerPercentage / 100,
+          tokenHolderPercentage: result?.tokenHolderPercentage / 100,
         })
 
         setHasDraft(true)
@@ -305,10 +305,10 @@ const CreateVote = () => {
         startTime: 0,
         endTime: 0,
         chainId: chainId,
-        spPercentage: 25,
-        clientPercentage: 25,
-        developerPercentage: 25,
-        tokenHolderPercentage: 25,
+        spPercentage: 25 * 100,
+        clientPercentage: 25 * 100,
+        developerPercentage: 25 * 100,
+        tokenHolderPercentage: 25 * 100,
         timezone: DEFAULT_TIMEZONE,
       }
       await axios.post(proposalDraftAddApi, data)
@@ -372,10 +372,10 @@ const CreateVote = () => {
       chainId: chainId,
       // currentTime,
       // Time: (values.time ?? []).join(OPTION_SPLIT_TAG),
-      spPercentage: values.percent.spPercentage,
-      clientPercentage: values.percent.clientPercentage,
-      developerPercentage: values.percent.developerPercentage,
-      tokenHolderPercentage: values.percent.tokenHolderPercentage,
+      spPercentage: values.percent.spPercentage * 100,
+      clientPercentage: values.percent.clientPercentage * 100,
+      developerPercentage: values.percent.developerPercentage * 100,
+      tokenHolderPercentage: values.percent.tokenHolderPercentage * 100,
       timezone: values.timezone,
     }
     try {

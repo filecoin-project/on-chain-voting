@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import type { CSSProperties } from "react";
-import React from "react";
 import { Typography } from "antd";
 import "../common/styles/common.less";
 

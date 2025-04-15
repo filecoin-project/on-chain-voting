@@ -15,10 +15,10 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Button, Pagination, Popconfirm, Popover, Row, Table, Tooltip, message } from 'antd';
 import axios from 'axios';
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from "react-router-dom";
-import { useFipList, useTransactionHash } from 'src/common/store';
+import { useFipList, useTransactionHash } from '../../../common/store';
 import type { BaseError } from "wagmi";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import votingFipeditorAbi from "../../../common/abi/power-voting-fipeditor.json";

@@ -22,11 +22,11 @@ import 'dayjs/locale/zh-cn';
 import enUS from 'antd/locale/en_US';
 import zhCN from 'antd/locale/zh_CN';
 import { useTranslation } from 'react-i18next';
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation, useRoutes } from "react-router-dom";
 import "tailwindcss/tailwind.css";
 import { useAccount } from "wagmi";
-import timezones from '../public/json/timezons.json';
+import timezones from './json/timezons.json';
 import { calibrationChainId, getFipListApi } from "./common/consts"
 import { useVoterInfoSet } from "./common/hooks"
 import { useCurrentTimezone, useFipList, useVoterInfo } from "./common/store";

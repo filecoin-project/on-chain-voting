@@ -15,7 +15,7 @@
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { message } from 'antd';
 import classNames from 'classnames';
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from "react-router-dom";

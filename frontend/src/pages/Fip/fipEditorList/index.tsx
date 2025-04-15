@@ -13,11 +13,11 @@
 // limitations under the License.
 
 import { Pagination, Row, Table } from "antd";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from "react-router-dom";
-import { useFipList } from "src/common/store";
-import Loading from "src/components/Loading";
+import { useFipList } from "../../../common/store";
+import Loading from "../../../../src/components/Loading";
 import { useAccount } from "wagmi";
 import {
   calibrationChainId,

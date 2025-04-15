@@ -14,7 +14,6 @@
 
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import type { ReactNode } from 'react';
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Table({ title = '', link = {} as { type: string, action: string, href: string }, list = [] as { name: string, hide?: boolean, comp: ReactNode, width?: number, desc?: ReactNode, }[], subTitle = null }) {
