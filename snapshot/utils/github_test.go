@@ -12,22 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package models
+package utils
 
-import "github.com/ethereum/go-ethereum/common"
+import (
+	"fmt"
+	"testing"
 
-// CreateDelegateEvent Define the event structure
-type CreateDelegateEvent struct {
-	VoterAddress common.Address
-	ActorIds     []uint64
-	Github       string
-	BlockHeight  int
-}
+	"github.com/stretchr/testify/assert"
+)
 
-type DeleteDelegateEvent struct {
-	VoterAddress common.Address
-	ActorIds     []uint64
-	MinerIds     []uint64
-	Github       string
-	BlockHeight  int
+func TestGitHubRequest(t *testing.T) {
+	var res []struct {
+		Name string `json:"name"`
+	}
+	url := fmt.Sprintf("https://api.github.com/orgs/%s/repos", "ArchlyFi")
+	_, err := FetchGithubDeveloper(
+		url,
+		"",
+		map[string]string{
+			"per_page": "100",
+		},
+		&res,
+	)
+	assert.NoError(t, err)
 }

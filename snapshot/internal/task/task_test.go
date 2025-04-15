@@ -19,9 +19,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 
 	"power-snapshot/config"
+	"power-snapshot/internal/data"
+	"power-snapshot/internal/repo"
+	"power-snapshot/internal/service"
 )
 
 func TestRepeatTask(t *testing.T) {
@@ -29,7 +33,7 @@ func TestRepeatTask(t *testing.T) {
 	config.InitLogger()
 	for i := range 5 {
 		if atomic.CompareAndSwapInt32(&isRunning, 0, 1) {
-			
+
 			zap.L().Info("Task is running", zap.Int("task id", i))
 			go func() {
 				time.Sleep(3 * time.Second)
@@ -40,4 +44,32 @@ func TestRepeatTask(t *testing.T) {
 		}
 		time.Sleep(time.Second)
 	}
+}
+
+func getSafeJob(t *testing.T) *Safejob {
+	config.InitConfig("../../")
+	config.InitLogger()
+	redisClient, err := data.NewRedisClient()
+	assert.NoError(t, err)
+	jetstreamClient, err := data.NewJetstreamClient()
+	assert.NoError(t, err)
+
+	manager, err := data.NewGoEthClientManager(config.Client.Network)
+	assert.NoError(t, err)
+	syncRepo, err := repo.NewSyncRepoImpl(314159, redisClient, jetstreamClient)
+	assert.NoError(t, err)
+	syncService := service.NewSyncService(
+		repo.NewBaseRepoImpl(manager, redisClient),
+		syncRepo,
+		repo.NewMysqlRepoImpl(data.NewMysql()),
+		repo.NewLotusRPCRepo(redisClient),
+	)
+	return &Safejob{
+		syncService: syncService,
+	}
+}
+
+func TestSyncPower(t *testing.T) {
+	syncPowerFunc := getSafeJob(t).SyncPower()
+	syncPowerFunc()
 }

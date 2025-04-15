@@ -17,8 +17,11 @@ package service
 import (
 	"fmt"
 	"log"
-	"power-snapshot/config"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"power-snapshot/config"
 )
 
 func TestGetRepoNames(t *testing.T) {
@@ -35,4 +38,14 @@ func TestGetRepoNames(t *testing.T) {
 	allRepos := GetRepoNames(EcosystemOrg, GithubUser, tokenManager)
 	fmt.Println(len(allRepos))
 
+}
+
+func TestFetchRepositories(t *testing.T) {
+	url := fmt.Sprintf("https://api.github.com/orgs/%s/repos", "ArchlyFi")
+	res, err := fetchRepositories(
+		url,
+		"",
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, res)
 }

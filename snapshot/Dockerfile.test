@@ -11,10 +11,10 @@ ENV GO111MODULE=on \
 WORKDIR /build
 
 
-COPY power-snapshot/go.mod power-snapshot/go.sum ./
+COPY snapshot/go.mod snapshot/go.sum ./
 RUN go mod tidy
 
-COPY power-snapshot/. .
+COPY snapshot/. .
 
 RUN go build -o app .
 

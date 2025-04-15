@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/nats-io/nats.go/jetstream"
-	"github.com/redis/go-redis/v9"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/ybbus/jsonrpc/v3"
@@ -54,10 +53,7 @@ func (m *mockBaseRepo) GetLotusClientByHashKey(ctx context.Context, netID int64,
 		return nil, err
 	}
 
-	client, err := manager.GetClient(netID)
-	if err != nil {
-		return nil, err
-	}
+	client := manager.GetClient()
 
 	h := fnv.New32a()
 	key = fmt.Sprintf("%s_%d", key, time.Now().UnixNano())
@@ -71,15 +67,21 @@ func (m *mockBaseRepo) GetLotusClientByHashKey(ctx context.Context, netID int64,
 	return jsonrpc.NewClient(client.QueryRpc[index]), nil
 }
 
+func (s *mockBaseRepo) SetDeveloperWeights(ctx context.Context, dayStr string, commits []models.Nodes) error {
+	return nil
+}
+
+func (s *mockBaseRepo) GetDeveloperWeights(ctx context.Context, dayStr string) ([]models.Nodes, error) {
+	return []models.Nodes{}, nil
+}
+
 func (m *mockBaseRepo) GetEthClient(ctx context.Context, netID int64) (*models.GoEthClient, error) {
 	manager, err := data.NewGoEthClientManager(config.Client.Network)
 	if err != nil {
 		return nil, err
 	}
-	client, err := manager.GetClient(netID)
-	if err != nil {
-		return nil, err
-	}
+	client := manager.GetClient()
+
 	return &client, nil
 }
 
@@ -97,7 +99,6 @@ func (m *mockBaseRepo) SetDateHeightMap(ctx context.Context, netId int64, height
 func (m *mockBaseRepo) GetVoteInfo(ctx context.Context, netID int64, addr string) (*models.VoterInfo, error) {
 	config.InitLogger()
 	err := config.InitConfig("../../")
-	config.Client.OracleAbi = "../../abi/oracle.json"
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +111,9 @@ func (m *mockBaseRepo) GetVoteInfo(ctx context.Context, netID int64, addr string
 	return &voterInfo, nil
 }
 
-type mockLotusRepo struct{}
+type mockLotusRepo struct {
+	logger *zap.Logger
+}
 
 // GetAddrBalanceBySpecialHeight implements LotusRepo.
 func (m *mockLotusRepo) GetAddrBalanceBySpecialHeight(ctx context.Context, addr string, netId int64, height int64) (string, error) {
@@ -119,12 +122,20 @@ func (m *mockLotusRepo) GetAddrBalanceBySpecialHeight(ctx context.Context, addr 
 
 // GetBlockHeader implements LotusRepo.
 func (m *mockLotusRepo) GetBlockHeader(ctx context.Context, netId int64, height int64) (models.BlockHeader, error) {
-	panic("unimplemented")
+	return models.BlockHeader{
+		Height:    height,
+		Timestamp: time.Now().Unix(),
+	}, nil
 }
 
 // GetClientBalanceByHeight implements LotusRepo.
 func (m *mockLotusRepo) GetClientBalanceByHeight(ctx context.Context, netId int64, height int64) (types.StateMarketDeals, error) {
-	panic("unimplemented")
+	m.logger.Debug("GetClientBalanceByHeight", zap.Any("netId", netId), zap.Any("height", height))
+	return types.StateMarketDeals{
+		"0": types.Deal{
+			Proposal: types.Proposal{},
+		},
+	}, nil
 }
 
 // GetClientBalanceBySpecialHeight implements LotusRepo.
@@ -139,7 +150,7 @@ func (m *mockLotusRepo) GetMinerPowerByHeight(ctx context.Context, netId int64, 
 
 // GetNewestHeight implements LotusRepo.
 func (m *mockLotusRepo) GetNewestHeight(ctx context.Context, netId int64) (height int64, err error) {
-	panic("unimplemented")
+	return 1, nil
 }
 
 // GetTipSetByHeight implements LotusRepo.
@@ -149,109 +160,23 @@ func (m *mockLotusRepo) GetTipSetByHeight(ctx context.Context, netId int64, heig
 
 // GetWalletBalanceByHeight implements LotusRepo.
 func (m *mockLotusRepo) GetWalletBalanceByHeight(ctx context.Context, id string, netId int64, height int64) (string, error) {
-	panic("unimplemented")
+	m.logger.Debug("GetWalletBalanceByHeight", zap.Any("id", id), zap.Any("netId", netId), zap.Any("height", height))
+	return "1000", nil
 }
 
 type mockSyncRepo struct {
 	AddrSyncedDateMap map[string][]string
 	AddrPowerMap      map[string]map[string]models.SyncPower
-}
-
-func (m *mockSyncRepo) GetDelegateEvent(ctx context.Context, netId int64, addr string, maxBlockHeight int64) (models.CreateDelegateEvent, models.DeleteDelegateEvent, error) {
-	// TODO implement me
-	panic("implement me")
+	logger            *zap.Logger
 }
 
 func (m *mockSyncRepo) CreateSnapshot(ctx context.Context, netId int64, cid, day string) error {
 	panic("implement me")
 }
 
-func (m *mockSyncRepo) GetDict(ctx context.Context, netId int64) (int64, error) {
-	config.InitLogger()
-	err := config.InitConfig("../../")
-	if err != nil {
-		return 0, err
-	}
-	client, err := data.NewRedisClient()
-	if err != nil {
-		return 0, err
-	}
-
-	key := fmt.Sprintf(constant.RedisDict, netId)
-
-	val, err := client.Get(ctx, key).Int()
-	if err == redis.Nil {
-		return 0, nil
-	} else if err != nil {
-		return 0, err
-	}
-	return int64(val), nil
-}
-
-func (m *mockSyncRepo) SetDelegateEvent(ctx context.Context, netId int64, createDelegateEvents []models.CreateDelegateEvent, deleteDelegateEvents []models.DeleteDelegateEvent, endBlock int64) error {
-	config.InitLogger()
-	err := config.InitConfig("../../")
-	if err != nil {
-		return err
-	}
-	client, err := data.NewRedisClient()
-	if err != nil {
-		return err
-	}
-
-	// Start a new transaction
-	tx := client.TxPipeline()
-
-	for _, event := range createDelegateEvents {
-		// Serialize the event to JSON
-		eventJSON, err := json.Marshal(event)
-		if err != nil {
-			return fmt.Errorf("failed to serialize CreateDelegateEvent: %v", err)
-		}
-
-		// Determine the Redis sorted set key
-		key := fmt.Sprintf(constant.RedisCreateDelegateEvent, netId, event.VoterAddress)
-
-		// Queue the ZADD command in the transaction
-		tx.ZAdd(ctx, key, redis.Z{
-			Score:  float64(event.BlockHeight),
-			Member: eventJSON,
-		})
-	}
-
-	for _, event := range deleteDelegateEvents {
-		// Serialize the event to JSON
-		eventJSON, err := json.Marshal(event)
-		if err != nil {
-			return fmt.Errorf("failed to serialize DeleteDelegateEvent: %v", err)
-		}
-
-		// Determine the Redis sorted set key
-		key := fmt.Sprintf(constant.RedisDeleteDelegateEvent, netId, event.VoterAddress)
-
-		// Queue the ZADD command in the transaction
-		tx.ZAdd(ctx, key, redis.Z{
-			Score:  float64(event.BlockHeight),
-			Member: eventJSON,
-		})
-	}
-
-	// Update the block height in the same transaction
-	dictKey := fmt.Sprintf(constant.RedisDict, netId)
-	tx.Set(ctx, dictKey, endBlock, 0)
-
-	// Execute the transaction
-	_, err = tx.Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to execute Redis transaction: %v", err)
-	}
-
-	return nil
-}
-
 func (m *mockSyncRepo) SetDeveloperWeights(ctx context.Context, dateStr string, in map[string]int64) error {
-	// TODO implement me
-	panic("implement me")
+	m.logger.Debug("SetDeveloperWeights", zap.String("dateStr", dateStr), zap.Any("in", in))
+	return nil
 }
 
 func (m *mockSyncRepo) GetDeveloperWeights(ctx context.Context, dateStr string) (map[string]int64, error) {
@@ -265,31 +190,36 @@ func (m *mockSyncRepo) GetUserDeveloperWeights(ctx context.Context, dateStr stri
 }
 
 func (m *mockSyncRepo) ExistDeveloperWeights(ctx context.Context, dateStr string) (bool, error) {
-	// TODO implement me
-	panic("implement me")
+	m.logger.Debug("ExistDeveloperWeights", zap.String("dateStr", dateStr))
+	return false, nil
 }
 
 func (m *mockSyncRepo) GetAddrSyncedDate(ctx context.Context, netId int64, addr string) ([]string, error) {
+	m.logger.Debug("GetAddrSyncedDate", zap.Any("netId", netId), zap.Any("addr", addr))
 	return nil, nil
 }
 
 func (m *mockSyncRepo) SetAddrSyncedDate(ctx context.Context, netId int64, addr string, dates []string) error {
+	m.logger.Debug("SetAddrSyncedDate", zap.Any("netId", netId), zap.Any("addr", addr), zap.Any("dates", dates))
 	return nil
 }
 
-func (m *mockSyncRepo) GetAddrPower(ctx context.Context, netId int64, addr string) (map[string]*models.SyncPower, error) {
+func (m *mockSyncRepo) GetAddrPower(ctx context.Context, netId int64, addr string) (map[string]models.SyncPower, error) {
+	m.logger.Debug("GetAddrPower", zap.Any("netId", netId), zap.Any("addr", addr))
 	return nil, nil
 }
 
 func (m *mockSyncRepo) GetTask(ctx context.Context, netID int64) (jetstream.MessageBatch, error) {
+	m.logger.Debug("GetTask")
 	return nil, nil
 }
 
 func (m *mockSyncRepo) AddTask(ctx context.Context, netID int64, task *models.Task) error {
+	m.logger.Debug("AddTask", zap.Any("task", task))
 	return nil
 }
 
-func (m *mockSyncRepo) SetAddrPower(ctx context.Context, netId int64, addr string, in map[string]*models.SyncPower) error {
+func (m *mockSyncRepo) SetAddrPower(ctx context.Context, netId int64, addr string, in map[string]models.SyncPower) error {
 	config.InitLogger()
 	err := config.InitConfig("../../")
 	if err != nil {
@@ -314,12 +244,6 @@ func (m *mockSyncRepo) SetAddrPower(ctx context.Context, netId int64, addr strin
 		return err
 	}
 	zap.L().Info("SetAddrPower", zap.Any("in", in))
-	// _, ok := m.AddrPowerMap[addr]
-	// if !ok {
-	// 	m.AddrPowerMap[addr] = make(map[string]models.SyncPower)
-	// }
-	// p := m.AddrPowerMap[addr]
-	// p[date] = in
 
 	return nil
 }
@@ -345,41 +269,63 @@ func (m *mockBaseRepo) GetDateHeightMap(ctx context.Context, netId int64) (map[s
 
 // GetSnapshotBackupList implements MysqlRepo.
 func (m *mockmMysqlRepo) GetSnapshotBackupList(ctx context.Context, chainId int64) ([]models.SnapshotBackupTbl, error) {
-	panic("unimplemented")
+	return []models.SnapshotBackupTbl{
+		{
+			RawData: "test",
+		},
+	}, nil
 }
 
 // UpdateSnapshotBackup implements MysqlRepo.
 func (m *mockmMysqlRepo) UpdateSnapshotBackup(ctx context.Context, in models.SnapshotBackupTbl) error {
-	panic("unimplemented")
+	m.logger.Debug("UpdateSnapshotBackup", zap.Any("in", in))
+	return nil
 }
 
 // CreateSnapshotBackup implements MysqlRepo.
 func (m *mockmMysqlRepo) CreateSnapshotBackup(ctx context.Context, in models.SnapshotBackupTbl) error {
-	panic("unimplemented")
+	m.logger.Debug("CreateSnapshotBackup", zap.Any("in", in))
+	return nil
 }
 
 var _ MysqlRepo = (*mockmMysqlRepo)(nil)
 
 type mockmMysqlRepo struct {
+	logger *zap.Logger
 }
 
+func getMockSyncService(t *testing.T) *SyncService {
+	config.InitLogger()
+	err := config.InitConfig("../..")
+	config.Client.W3Client.Proof = "../../proof.ucan"
+	assert.NoError(t, err)
+
+	b := &mockBaseRepo{}
+	r := &mockSyncRepo{
+		AddrPowerMap:      make(map[string]map[string]models.SyncPower),
+		AddrSyncedDateMap: map[string][]string{},
+		logger:            zap.L().Named("Testing Mock SyncRepo"),
+	}
+	m := &mockmMysqlRepo{
+		logger: zap.L().Named("Testing Mock MysqlRepo"),
+	}
+	l := &mockLotusRepo{
+		logger: zap.L().Named("Testing Mock LotusRepo"),
+	}
+
+	return &SyncService{
+		baseRepo:  b,
+		syncRepo:  r,
+		mysqlRepo: m,
+		lotusRepo: l,
+	}
+}
 func TestDiffAddrList(t *testing.T) {
 	l1, l2 := []string{"a", "b"}, []string{"a", "b", "c", "d"}
 	_, d2 := lo.Difference(l1, l2)
 
 	expected := []string{"c", "d"}
 	assert.Equal(t, expected, d2)
-}
-
-func TestGetPendingSyncAddrIDList(t *testing.T) {
-	sync := NewSyncService(&mockBaseRepo{}, &mockSyncRepo{}, &mockmMysqlRepo{}, &mockLotusRepo{})
-	res, err := sync.GetAllAddrInfoList(context.Background(), testNetID, "t0")
-	assert.Nil(t, err)
-
-	zap.L().Info("res", zap.Any("res", res))
-	zap.L().Info("res", zap.Any("len(res)", len(res)))
-
-	assert.NotEmpty(t, res, res)
 }
 
 func TestCalMissDates(t *testing.T) {
@@ -406,27 +352,12 @@ func TestCalMissDates(t *testing.T) {
 
 	excepted4 := []string{"20240605", "20240603", "20240601", "20240531"}
 	assert.Equal(t, excepted4, r4)
-
-	zap.L().Info("result", zap.Any("r1", r1))
-	zap.L().Info("result", zap.Any("r2", r2))
-	zap.L().Info("result", zap.Any("r3", r3))
-	zap.L().Info("result", zap.Any("r4", r4))
 }
 
 func TestSyncAllAddrPower(t *testing.T) {
-	config.InitLogger()
-	err := config.InitConfig("../..")
-	config.Client.OracleAbi = "../../abi/oracle.json"
+	sync := getMockSyncService(t)
+	_, err := sync.GetAllAddrInfoList(context.Background(), 314159)
 	assert.NoError(t, err)
-
-	b := &mockBaseRepo{}
-	r := &mockSyncRepo{
-		AddrPowerMap:      make(map[string]map[string]models.SyncPower),
-		AddrSyncedDateMap: map[string][]string{},
-	}
-	m := &mockmMysqlRepo{}
-	l := &mockLotusRepo{}
-	sync := NewSyncService(b, r, m, l)
 
 	err = sync.SyncAllAddrPower(context.Background(), testNetID)
 	assert.NoError(t, err)
@@ -436,7 +367,6 @@ func getSyncService(t *testing.T) *SyncService {
 	config.InitConfig("../../")
 
 	config.InitLogger()
-	config.Client.OracleAbi = "../../abi/oracle.json"
 	config.Client.W3Client.Proof = "../../proof.ucan"
 	manager, err := data.NewGoEthClientManager(config.Client.Network)
 	assert.NoError(t, err)
@@ -447,9 +377,9 @@ func getSyncService(t *testing.T) *SyncService {
 	jetstreamClient, err := data.NewJetstreamClient()
 	assert.NoError(t, err)
 
-	baseRepo, err := repo.NewBaseRepoImpl(manager, redisClient)
+	baseRepo := repo.NewBaseRepoImpl(manager, redisClient)
 	assert.NoError(t, err)
-	syncRepo, err := repo.NewSyncRepoImpl([]int64{314159}, redisClient, jetstreamClient)
+	syncRepo, err := repo.NewSyncRepoImpl(314159, redisClient, jetstreamClient)
 	assert.NoError(t, err)
 
 	mysalRepo := repo.NewMysqlRepoImpl(data.NewMysql())
@@ -460,14 +390,53 @@ func getSyncService(t *testing.T) *SyncService {
 
 func TestUploadPowerToIPFS(t *testing.T) {
 
-	syncService := getSyncService(t)
+	syncService := getMockSyncService(t)
 
 	err := syncService.UploadPowerToIPFS(context.Background(), 314159, data.NewW3Client())
 	assert.NoError(t, err)
 }
 
-func TestStartSyncWorker(t *testing.T) {
-	syncService := getSyncService(t)
+func TestExistDeveloperWeight(t *testing.T) {
+	sync := getMockSyncService(t)
+	res, err := sync.ExistDeveloperWeight(context.Background(), "20250331")
+	assert.NoError(t, err)
+	assert.Equal(t, false, res)
+}
 
-	syncService.StartSyncWorker(context.Background(), 314159)
+func TestSyncDeveloperWeight(t *testing.T) {
+	sync := getMockSyncService(t)
+	err := sync.SyncDeveloperWeight(context.Background(), "20250311")
+	assert.NoError(t, err)
+}
+
+func TestSyncDateHeight(t *testing.T) {
+	err := getSyncService(t).SyncDateHeight(context.Background(), 314159)
+	assert.NoError(t, err)
+}
+
+func TestGetActorBalance(t *testing.T) {
+	walletBalance, clientBalance, err := getMockSyncService(t).GetActorBalance(context.Background(), "f0114153", 314159, 2539001)
+	assert.NoError(t, err)
+	assert.Equal(t, "1000", walletBalance)
+	assert.Equal(t, "0", clientBalance)
+}
+
+func TestAddAddrPowerTaskToMQ(t *testing.T) {
+	err := getMockSyncService(t).AddAddrPowerTaskToMQ(context.Background(), 314159, "20250331")
+	assert.NoError(t, err)
+}
+
+func TestUploadSnapshotInfoByDay(t *testing.T) {
+	allPower := map[string]any{
+		"total": "1000",
+		"miners": map[string]any{
+			"t01000": map[string]any{
+				"total": "1000",
+				"power": "1000",
+			},
+		},
+	}
+	height, err := getMockSyncService(t).UploadSnapshotInfoByDay(context.Background(), allPower, "20240511", 314159)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1603697), height)
 }

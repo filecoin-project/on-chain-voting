@@ -27,6 +27,7 @@ import (
 
 	"power-snapshot/internal/mock"
 	"power-snapshot/internal/repo"
+	"power-snapshot/utils/types"
 )
 
 var (
@@ -262,4 +263,11 @@ func TestGetBlockHeader(t *testing.T) {
 	assert.Equal(t, int64(1729065330), rsp.Timestamp)
 
 	zap.L().Info("result", zap.Any("block", rsp))
+}
+
+func TestNewRpc(t *testing.T) {
+	rpc := jsonrpc.NewClientWithOpts("https://api.calibration.node.glif.io/rpc/v1", &jsonrpc.RPCClientOpts{})
+	resp, err:=rpc.Call(context.Background(), "Filecoin.ChainGetTipSetByHeight", 2564883, types.TipSetKey{})
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
 }

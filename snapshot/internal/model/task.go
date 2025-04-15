@@ -15,7 +15,7 @@
 package models
 
 type SubTask struct {
-	UID         string
+	UID         string // voter address - date - actorID (e.g 0x1234567890123456789012345678901234567890-20231010-1)
 	Address     string
 	DateStr     string
 	BlockHeight int64

@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	filecoinAddress "github.com/filecoin-project/go-address"
 	"github.com/redis/go-redis/v9"
@@ -30,24 +31,20 @@ import (
 )
 
 type LotusRPCRepo struct {
-	clientMap   map[int64]jsonrpc.RPCClient
+	rpcClient   jsonrpc.RPCClient
 	redisClient *redis.Client
 }
 
 func NewLotusRPCRepo(redisClient *redis.Client) *LotusRPCRepo {
-	c := make(map[int64]jsonrpc.RPCClient)
-	for _, network := range config.Client.Network {
-		c[network.ChainId] = jsonrpc.NewClientWithOpts(network.QueryRpc[0], &jsonrpc.RPCClientOpts{})
-	}
 	return &LotusRPCRepo{
-		clientMap:   c,
+		rpcClient:   jsonrpc.NewClientWithOpts(config.Client.Network.QueryRpc[0], &jsonrpc.RPCClientOpts{}),
 		redisClient: redisClient,
 	}
 }
 
 func (l *LotusRPCRepo) GetTipSetByHeight(ctx context.Context, netId, height int64) ([]any, error) {
-	key := fmt.Sprintf(constant.RedisTipset, height)
-	res, err := l.redisClient.Get(ctx, key).Result()
+	key := fmt.Sprintf(constant.RedisTipset, netId)
+	res, err := l.redisClient.HGet(ctx, key, strconv.FormatInt(height, 10)).Result()
 	if err != nil {
 		if err != redis.Nil {
 			return nil, err
@@ -62,7 +59,7 @@ func (l *LotusRPCRepo) GetTipSetByHeight(ctx context.Context, netId, height int6
 		return resTipSet, nil
 	}
 
-	resp, err := l.clientMap[netId].Call(ctx, "Filecoin.ChainGetTipSetByHeight", height, types.TipSetKey{})
+	resp, err := l.rpcClient.Call(ctx, "Filecoin.ChainGetTipSetByHeight", height, types.TipSetKey{})
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +75,12 @@ func (l *LotusRPCRepo) GetTipSetByHeight(ctx context.Context, netId, height int6
 
 	resTipSet := rMap["Cids"].([]interface{})
 
-	if err = l.redisClient.Set(ctx, key, resTipSet, redis.KeepTTL).Err(); err != nil {
+	jsonData, err := json.Marshal(resTipSet)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = l.redisClient.HSet(ctx, key, strconv.FormatInt(height, 10), string(jsonData)).Err(); err != nil {
 		return nil, err
 	}
 
@@ -97,7 +99,7 @@ func (l *LotusRPCRepo) GetAddrBalanceBySpecialHeight(ctx context.Context, addr s
 	}
 
 	tipSetList := append([]any{}, addressStr, tipSetKey)
-	resp, err := l.clientMap[netId].Call(ctx, "Filecoin.StateGetActor", &tipSetList)
+	resp, err := l.rpcClient.Call(ctx, "Filecoin.StateGetActor", &tipSetList)
 	if err != nil {
 		return "", err
 	}
@@ -122,7 +124,7 @@ func (l *LotusRPCRepo) GetMinerPowerByHeight(ctx context.Context, netId int64, a
 	}
 
 	rpcParams := append([]any{}, addressStr, tipsetKey)
-	resp, err := l.clientMap[netId].Call(ctx, "Filecoin.StateMinerPower", rpcParams)
+	resp, err := l.rpcClient.Call(ctx, "Filecoin.StateMinerPower", rpcParams)
 	if err != nil {
 		return models.LotusMinerPower{}, err
 	}
@@ -149,7 +151,7 @@ func (l *LotusRPCRepo) GetClientBalanceBySpecialHeight(ctx context.Context, netI
 	tipSetList := append([]any{}, tipSetKey)
 
 	var t models.StateMarketDeals
-	resp, err := l.clientMap[netId].Call(ctx, "Filecoin.StateMarketDeals", tipSetList)
+	resp, err := l.rpcClient.Call(ctx, "Filecoin.StateMarketDeals", tipSetList)
 	if err != nil {
 		return models.StateMarketDeals{}, err
 	}
@@ -167,7 +169,7 @@ func (l *LotusRPCRepo) GetClientBalanceBySpecialHeight(ctx context.Context, netI
 }
 
 func (l *LotusRPCRepo) GetNewestHeight(ctx context.Context, netId int64) (height int64, err error) {
-	resp, err := l.clientMap[netId].Call(ctx, "Filecoin.ChainHead")
+	resp, err := l.rpcClient.Call(ctx, "Filecoin.ChainHead")
 	if err != nil {
 		return 0, nil
 	}
@@ -197,7 +199,7 @@ func (l *LotusRPCRepo) GetBlockHeader(ctx context.Context, netId, height int64) 
 		return models.BlockHeader{}, err
 	}
 
-	resp, err := l.clientMap[netId].Call(ctx, "Filecoin.ChainGetBlock", []models.GetBlockParam{{Empty: blockParam[0].Empty}})
+	resp, err := l.rpcClient.Call(ctx, "Filecoin.ChainGetBlock", []models.GetBlockParam{{Empty: blockParam[0].Empty}})
 
 	if err != nil {
 		return models.BlockHeader{}, err
@@ -223,29 +225,29 @@ func (l *LotusRPCRepo) GetBlockHeader(ctx context.Context, netId, height int64) 
 func (l *LotusRPCRepo) GetWalletBalanceByHeight(ctx context.Context, id string, netId, height int64) (string, error) {
 	tipSetKey, err := l.GetTipSetByHeight(ctx, netId, height)
 	if err != nil {
-		return "", err
+		return "0", err
 	}
 
 	addressStr, err := filecoinAddress.NewFromString(id)
 	if err != nil {
-		return "", err
+		return "0", err
 	}
 
 	tipSetList := append([]any{}, addressStr, tipSetKey)
 
-	resp, err := l.clientMap[netId].Call(ctx, "Filecoin.StateGetActor", &tipSetList)
+	resp, err := l.rpcClient.Call(ctx, "Filecoin.StateGetActor", &tipSetList)
 	if err != nil {
-		return "", err
+		return "0", err
 	}
 
 	tmp, err := json.Marshal(resp.Result)
 	if err != nil {
-		return "", err
+		return "0", err
 	}
 
 	var t types.BalanceInfo
 	if err := json.Unmarshal(tmp, &t); err != nil {
-		return "", err
+		return "0", err
 	}
 
 	return t.Balance, nil
@@ -260,7 +262,7 @@ func (l *LotusRPCRepo) GetClientBalanceByHeight(ctx context.Context, netId, heig
 	tipSetList := append([]any{}, tipSetKey)
 
 	var t types.StateMarketDeals
-	resp, err := l.clientMap[netId].Call(ctx, "Filecoin.StateMarketDeals", tipSetList)
+	resp, err := l.rpcClient.Call(ctx, "Filecoin.StateMarketDeals", tipSetList)
 	if err != nil {
 		return types.StateMarketDeals{}, err
 	}

@@ -12,19 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package models
+package utils
 
 import (
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/ethclient"
+	"go.uber.org/zap"
 )
 
-// GoEthClient represents the structure for interacting with the Ethereum client.
-type GoEthClient struct {
-	ChainId           int64               // Unique identifier for the client
-	Name              string              // Name of the client	
-	QueryClient       []*ethclient.Client // Ethereum client instance list
-	QueryRpc          []string            // RPC endpoint for the query client
-	Amount            *big.Int            // Amount for transactions.
+func StringToBigInt(v string) *big.Int {
+	if len(v) == 0 {
+		return big.NewInt(0)
+	}
+	
+	res, ok := big.NewInt(0).SetString(v, 10)
+	if ok {
+		return res
+	}
+
+	zap.L().Warn("failed to convert string to big.Int", zap.Any("convert value", v))
+	return big.NewInt(0)
 }

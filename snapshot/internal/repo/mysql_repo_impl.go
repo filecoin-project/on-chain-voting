@@ -64,7 +64,7 @@ func (m *MysqlRepoImpl) GetSnapshotBackupList(ctx context.Context, chainId int64
 	var snapshotBackups []models.SnapshotBackupTbl
 	if err := m.db.Model(models.SnapshotBackupTbl{}).
 		WithContext(ctx).
-		Where("chain_id = ? and status < ?", chainId, constant.SnapshotBackupRetry).
+		Where("chain_id = ? and status < ?", chainId, constant.RetryCount).
 		Find(&snapshotBackups).Error; err != nil {
 		return nil, err
 	}

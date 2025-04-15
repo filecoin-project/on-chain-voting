@@ -46,7 +46,7 @@ func NewGitHubTokenManager(tokens []string) *GitHubTokenManager {
 		manager.graphQLTokenCapacity[token], manager.coreTokenCapacity[token] = CheckRateLimitBeforeRequest(token)
 		zap.L().Info("GitHubTokenManager",
 			zap.Int("graphQLTokenCapacity", manager.graphQLTokenCapacity[token]),
-			zap.Int("graphQLTokenCapacity", manager.coreTokenCapacity[token]))
+			zap.Int("coreTokenCapacity", manager.coreTokenCapacity[token]))
 	}
 
 	return manager
@@ -98,6 +98,7 @@ func (m *GitHubTokenManager) GetCoreAvailableToken() string {
 	if maxToken != "" {
 		m.coreTokenUsage[maxToken]++
 	}
+	
 	return maxToken
 }
 

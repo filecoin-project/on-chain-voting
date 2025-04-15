@@ -72,7 +72,7 @@ func main() {
 	}()
 
 	// init repo
-	syncRepo, err := repo.NewSyncRepoImpl(manager.ListClientNetWork(), redisClient, jetstreamClient)
+	syncRepo, err := repo.NewSyncRepoImpl(manager.GetChainId(), redisClient, jetstreamClient)
 	if err != nil {
 		panic(err)
 	}
@@ -82,30 +82,26 @@ func main() {
 		panic(err)
 	}
 
-	baseRepo, err := repo.NewBaseRepoImpl(manager, redisClient)
-	if err != nil {
-		panic(err)
-	}
+	baseRepo := repo.NewBaseRepoImpl(manager, redisClient)
 
 	mysqlRepo := repo.NewMysqlRepoImpl(data.NewMysql())
 
 	lotusRepo := repo.NewLotusRPCRepo(redisClient)
 	// init service
 	syncSrv := service.NewSyncService(baseRepo, syncRepo, mysqlRepo, lotusRepo)
-	for _, network := range config.Client.Network {
-		go func() {
-			defer func() {
-				if r := recover(); r != nil {
-					zap.S().Error("recover from panic", zap.Any("err", r))
-				}
-			}()
-			err := syncSrv.StartSyncWorker(context.Background(), network.ChainId)
-			if err != nil {
-				zap.S().Error("start sync worker failed", zap.Error(err))
-				panic(err)
+
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				zap.S().Error("recover from panic", zap.Any("err", r))
 			}
 		}()
-	}
+		err := syncSrv.StartSyncWorker(context.Background(), config.Client.Network.ChainId)
+		if err != nil {
+			zap.S().Error("start sync worker failed", zap.Error(err))
+			panic(err)
+		}
+	}()
 
 	// init job
 	go task.TaskScheduler(syncSrv)

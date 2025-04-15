@@ -6,25 +6,25 @@ option go_package = "./proto;rpc";
 
 
 service Backend {
-    rpc GetAllVoterAddresss(GetAllVoterAddressRequest) returns (GetAllVoterAddressResponse);
-    rpc GetVoterInfo(GetVoterInfoRequest) returns (GetVoterInfoResponse);
+  rpc GetAllVoterAddresss(GetAllVoterAddressRequest) 
+    returns (GetAllVoterAddressResponse);
+  rpc GetVoterInfo(GetVoterInfoRequest) returns (GetVoterInfoResponse);
 }
 
 message GetAllVoterAddressRequest {
-    int64 chainId = 1;
+  int64 chain_id=1;
 }
 
 message GetVoterInfoRequest {
-    string address = 1;
+  string address = 1;
 }
 
 message GetAllVoterAddressResponse {
-    repeated string address = 1;
-    int64 endHeight = 2;
+  repeated string addresses = 1;
 }
 
 message GetVoterInfoResponse {
-    repeated uint64 minerIds = 1;
-    uint64 actorId =2;
-    string githubAccount = 3;
+  repeated string miner_ids = 1;
+  string actor_id =2;
+  string github_account = 3;
 }

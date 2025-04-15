@@ -27,6 +27,7 @@ const (
 	Snapshot_GetDataHeight_FullMethodName           = "/rpc.Snapshot/GetDataHeight"
 	Snapshot_GetAddressPowerByDay_FullMethodName    = "/rpc.Snapshot/GetAddressPowerByDay"
 	Snapshot_GetAllAddrPowerByDay_FullMethodName    = "/rpc.Snapshot/GetAllAddrPowerByDay"
+	Snapshot_SyncAllDeveloperWeight_FullMethodName  = "/rpc.Snapshot/SyncAllDeveloperWeight"
 )
 
 // SnapshotClient is the client API for Snapshot service.
@@ -41,6 +42,7 @@ type SnapshotClient interface {
 	GetDataHeight(ctx context.Context, in *DataHeightRequest, opts ...grpc.CallOption) (*DataHeightResponse, error)
 	GetAddressPowerByDay(ctx context.Context, in *AddressPowerByDayRequest, opts ...grpc.CallOption) (*AddressPowerResponse, error)
 	GetAllAddrPowerByDay(ctx context.Context, in *GetAllAddrPowerByDayRequest, opts ...grpc.CallOption) (*GetAllAddrPowerByDayResponse, error)
+	SyncAllDeveloperWeight(ctx context.Context, in *SyncAllDeveloperWeightRequest, opts ...grpc.CallOption) (*SyncAllDeveloperWeightResponse, error)
 }
 
 type snapshotClient struct {
@@ -123,6 +125,15 @@ func (c *snapshotClient) GetAllAddrPowerByDay(ctx context.Context, in *GetAllAdd
 	return out, nil
 }
 
+func (c *snapshotClient) SyncAllDeveloperWeight(ctx context.Context, in *SyncAllDeveloperWeightRequest, opts ...grpc.CallOption) (*SyncAllDeveloperWeightResponse, error) {
+	out := new(SyncAllDeveloperWeightResponse)
+	err := c.cc.Invoke(ctx, Snapshot_SyncAllDeveloperWeight_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SnapshotServer is the server API for Snapshot service.
 // All implementations must embed UnimplementedSnapshotServer
 // for forward compatibility
@@ -135,6 +146,7 @@ type SnapshotServer interface {
 	GetDataHeight(context.Context, *DataHeightRequest) (*DataHeightResponse, error)
 	GetAddressPowerByDay(context.Context, *AddressPowerByDayRequest) (*AddressPowerResponse, error)
 	GetAllAddrPowerByDay(context.Context, *GetAllAddrPowerByDayRequest) (*GetAllAddrPowerByDayResponse, error)
+	SyncAllDeveloperWeight(context.Context, *SyncAllDeveloperWeightRequest) (*SyncAllDeveloperWeightResponse, error)
 	mustEmbedUnimplementedSnapshotServer()
 }
 
@@ -165,6 +177,9 @@ func (UnimplementedSnapshotServer) GetAddressPowerByDay(context.Context, *Addres
 }
 func (UnimplementedSnapshotServer) GetAllAddrPowerByDay(context.Context, *GetAllAddrPowerByDayRequest) (*GetAllAddrPowerByDayResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAllAddrPowerByDay not implemented")
+}
+func (UnimplementedSnapshotServer) SyncAllDeveloperWeight(context.Context, *SyncAllDeveloperWeightRequest) (*SyncAllDeveloperWeightResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SyncAllDeveloperWeight not implemented")
 }
 func (UnimplementedSnapshotServer) mustEmbedUnimplementedSnapshotServer() {}
 
@@ -323,6 +338,24 @@ func _Snapshot_GetAllAddrPowerByDay_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Snapshot_SyncAllDeveloperWeight_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SyncAllDeveloperWeightRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SnapshotServer).SyncAllDeveloperWeight(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Snapshot_SyncAllDeveloperWeight_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SnapshotServer).SyncAllDeveloperWeight(ctx, req.(*SyncAllDeveloperWeightRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Snapshot_ServiceDesc is the grpc.ServiceDesc for Snapshot service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -361,6 +394,10 @@ var Snapshot_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAllAddrPowerByDay",
 			Handler:    _Snapshot_GetAllAddrPowerByDay_Handler,
+		},
+		{
+			MethodName: "SyncAllDeveloperWeight",
+			Handler:    _Snapshot_SyncAllDeveloperWeight_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
