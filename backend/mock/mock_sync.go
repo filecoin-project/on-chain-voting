@@ -25,12 +25,12 @@ type MockSyncService struct {
 }
 
 // UpdateVoterByGistInfo implements service.ISyncService.
-func (m *MockSyncService) UpdateVoterAndProposalGithubNameByGistInfo(ctx context.Context, voterAddress string, gistId string) error {
+func (m *MockSyncService) UpdateVoterAndProposalGithubNameByGistInfo(ctx context.Context, voterInfo *model.VoterInfoTbl) error {
 	panic("unimplemented")
 }
 
 // UpdateVoterByMinerIds implements service.ISyncService.
-func (m *MockSyncService) UpdateVoterByMinerIds(ctx context.Context, voterAddress string, minerIds []uint64, ownerId uint64) error {
+func (m *MockSyncService) UpdateVoterByMinerIds(ctx context.Context, voterAddress string, minerIds []uint64) error {
 	panic("unimplemented")
 }
 
@@ -120,27 +120,27 @@ RVdEZlJQWm9yaS9ITnNqcGNuQmxNcUlob3VKYkErRUJDb243eUkK2rehvaQY2kad
 			ClientPower:      "0",
 			DeveloperPower:   "0",
 		},
-		{
-			ProposalId: 1,
-			ChainId:    1,
-			Address:    "0x1234567890123456789012345678901234567891",
-			// reject
-			VoteEncrypted: `-----BEGIN AGE ENCRYPTED FILE-----
-YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IHRsb2NrIDE2MzI1ODEyIDUyZGI5YmE3
-MGUwY2MwZjZlYWY3ODAzZGQwNzQ0N2ExZjU0Nzc3MzVmZDNmNjYxNzkyYmE5NDYw
-MGM4NGU5NzEKdFVxWng1VVpiSW1pRjk2ZmJSU2dXRVJrblRjeEFuWjdkblg5VHNx
-djNaZkdzYlh1eVBUSUh4NHZabkJWWmFwVwpCa09MNGpZMUVtNkQ2cjdGK0Z6eEE3
-Y0VBR3F3SCtabFMyenE5TjRtNEF4d0FoMkFBS1NhbkxXRVozRzBMSlViCnQ4ZEF1
-MHhCbHhmTW1LQnJKRXN3NkFIV3h6VjNSNXlHdnlobk03SFY3b3cKLS0tIHFwbHJi
-Qnhxd1JvZHVKaElYSVZOa3dMZkt0SHdIc2hMVzA0NHVmSmsvcTQKBVM4IBEuFQcP
-l0YZKbPlAmnEhcp3EAwQ84BvVSibhTmIzq/MYdsHnTX/1O8=
------END AGE ENCRYPTED FILE-----
-`,
-			SpPower:          "0",
-			TokenHolderPower: "9000",
-			ClientPower:      "0",
-			DeveloperPower:   "0",
-		},
+		// 		{
+		// 			ProposalId: 1,
+		// 			ChainId:    1,
+		// 			Address:    "0x1234567890123456789012345678901234567891",
+		// 			// reject
+		// 			VoteEncrypted: `-----BEGIN AGE ENCRYPTED FILE-----
+		// YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IHRsb2NrIDE2MzI1ODEyIDUyZGI5YmE3
+		// MGUwY2MwZjZlYWY3ODAzZGQwNzQ0N2ExZjU0Nzc3MzVmZDNmNjYxNzkyYmE5NDYw
+		// MGM4NGU5NzEKdFVxWng1VVpiSW1pRjk2ZmJSU2dXRVJrblRjeEFuWjdkblg5VHNx
+		// djNaZkdzYlh1eVBUSUh4NHZabkJWWmFwVwpCa09MNGpZMUVtNkQ2cjdGK0Z6eEE3
+		// Y0VBR3F3SCtabFMyenE5TjRtNEF4d0FoMkFBS1NhbkxXRVozRzBMSlViCnQ4ZEF1
+		// MHhCbHhmTW1LQnJKRXN3NkFIV3h6VjNSNXlHdnlobk03SFY3b3cKLS0tIHFwbHJi
+		// Qnhxd1JvZHVKaElYSVZOa3dMZkt0SHdIc2hMVzA0NHVmSmsvcTQKBVM4IBEuFQcP
+		// l0YZKbPlAmnEhcp3EAwQ84BvVSibhTmIzq/MYdsHnTX/1O8=
+		// -----END AGE ENCRYPTED FILE-----
+		// `,
+		// 			SpPower:          "0",
+		// 			TokenHolderPower: "9000",
+		// 			ClientPower:      "0",
+		// 			DeveloperPower:   "0",
+		// 		},
 	}, nil
 }
 

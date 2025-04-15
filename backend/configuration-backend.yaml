@@ -23,9 +23,13 @@ network:
   chainId: ${CHAIN_ID}
   name: ${CHAIN_NAME}
   rpc: ${CHAIN_RPC_NODE}
-  powerVotingContract: ${POWERVOTING_CONTRACT}
   syncEventStartHeight: ${SYNC_EVENT_START_HEIGHT}
   oracleContract: ${ORACLE_CONTRACT}
+  minerIdPrefix: ${MINER_ID_PREFIX}
+
+  oraclePowersContract: ${ORACLE_POWERS_CONTRACT}
+  powerVotingContract: ${POWERVOTING_CONTRACT}
+
   fipContract: ${FIP_CONTRACT}
   fipInitEditor: ${FIP_INIT_EDITOR}
 

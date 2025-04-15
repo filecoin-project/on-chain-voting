@@ -29,8 +29,6 @@ import (
 )
 
 func (ev *Event) HandleProposalCreate(ctx context.Context, event ProposalCreateEvent, blockHeader *types.Header) error {
-
-
 	data := model.ProposalTbl{
 		ProposalId:        event.Id.Int64(),
 		Creator:           event.Proposal.Creator.Hex(),

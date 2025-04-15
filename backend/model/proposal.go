@@ -24,7 +24,6 @@ type ProposalTbl struct {
 	BaseField
 	ProposalId          int64  `json:"proposal_id" gorm:"not null,default:0;uniqueIndex:idx_proposal_chain_id"` // Proposal ID
 	Creator             string `json:"creator" gorm:"not null"`                                                 // Creator address
-	GithubName          string `json:"github_name" gorm:"not null"`                                             // Creator's github name
 	StartTime           int64  `json:"start_time" gorm:"not null"`                                              // Start time
 	EndTime             int64  `json:"end_time" gorm:"not null"`                                                // Expiry time
 	Timestamp           int64  `json:"timestamp" gorm:"not null"`                                               // Proposal create time

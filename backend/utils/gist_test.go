@@ -15,12 +15,34 @@
 package utils
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestGetGistInfoByGistId(t *testing.T) {
-	res := GetGistInfoByGistId("c8a001be0c90e8c616e60100c1af54bf")
+	res, err := FetchGistInfoByGistId("c8a001be0c90e8c616e60100c1af54bf")
+	assert.NoError(t, err)
 	assert.NotEmpty(t, res)
+}
+
+func TestParseGistContent(t *testing.T) {
+	gist, err := FetchGistInfoByGistId("0d753f709c11735e7598ae6cf2657c60")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, gist)
+	voterInfo, err := ParseGistContent(gist.Files)
+	assert.NoError(t, err)
+	fmt.Printf("match res: %v\n", voterInfo)
+
+	// sigBytes, _ := json.Marshal(res.SigObject)
+	verifyRes, err := VerifySignature(
+		"0x763D410594a24048537990dde6ca81c38CfF566a",
+		voterInfo.Signature,
+		[]byte(voterInfo.SigObjectStr),
+	)
+
+	assert.NoError(t, err)
+	assert.True(t, verifyRes)
+
 }

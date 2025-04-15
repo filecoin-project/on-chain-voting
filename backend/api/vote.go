@@ -46,3 +46,35 @@ func (h *VoteHandler) GetCountedVotesInfo(c *constant.Context) {
 
 	SuccessWithData(c.Context, res)
 }
+
+func (f *VoteHandler) GetFipEditorGistInfo(c *constant.Context) {
+	var req api.AddressReq
+	if err := c.BindAndValidate(&req); err != nil {
+		ParamError(c.Context)
+		return
+	}
+
+	gistInfo, err := f.voteServer.GetFipEditorGistInfo(c.Context, req)
+	if err != nil {
+		Error(c.Context, err)
+		return
+	}
+
+	SuccessWithData(c.Context, gistInfo)
+}
+
+func (f *VoteHandler) VerifyGistValid(c *constant.Context) {
+	var req api.VerifyGistReq
+	if err := c.BindAndValidate(&req); err != nil {
+		ParamError(c.Context)
+		return
+	}
+
+	obj, err := f.voteServer.VerifyGist(c.Context, req)
+	if err != nil {
+		Error(c.Context, err)
+		return
+	}
+
+	SuccessWithData(c.Context, obj)
+}

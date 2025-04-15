@@ -15,9 +15,12 @@
 package task
 
 import (
+	"errors"
+
 	"go.uber.org/zap"
 
 	"powervoting-server/config"
+	"powervoting-server/constant"
 	"powervoting-server/data"
 	"powervoting-server/service"
 	"powervoting-server/task/event"
@@ -40,7 +43,6 @@ func SyncEventHandler(syncService *service.SyncService) {
 	}
 
 	// Increment the WaitGroup counter for the new goroutine
-
 	var syncEvent = &event.Event{
 		SyncService: syncService,
 		Network:     &network,
@@ -49,6 +51,9 @@ func SyncEventHandler(syncService *service.SyncService) {
 
 	// Subscribe to contract events for the current network
 	if err := syncEvent.SubscribeEvent(); err != nil {
+		if errors.Is(err, constant.ErrAlreadySyncHeight) {
+			return
+		}
 		zap.L().Error("sync finished with err:", zap.Error(err))
 	}
 }

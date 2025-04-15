@@ -40,12 +40,13 @@ func InitRouters(r *gin.Engine, proposalService service.IProposalService, voteSe
 
 	proposalRouter(powerVotingRouter, proposalHandler, voteHandler)
 	powerRouter(powerVotingRouter)
-	fipEditor(powerVotingRouter, fipHandler)
+	fipEditor(powerVotingRouter, fipHandler, voteHandler)
 }
 
 // proposalRouter defines routes related to proposal management.
 func proposalRouter(rg *gin.RouterGroup, ph *api.ProposalHandler, vh *api.VoteHandler) {
 	rg.GET("/proposal/votes", wrap(vh.GetCountedVotesInfo)) // Get counted votes for a proposal
+
 	rg.GET("/proposal/list", wrap(ph.GetProposalList))      // Get a list of proposals
 	rg.GET("/proposal/details", wrap(ph.GetProposalDetail)) // Get details of a specific proposal
 	rg.POST("/proposal/draft/add", wrap(ph.PostDraft))      // Add a new proposal draft
@@ -57,9 +58,13 @@ func powerRouter(rg *gin.RouterGroup) {
 	rg.GET("/power/getPower", wrap(api.GetAddressPower)) // Get power distribution for a specific address
 }
 
-func fipEditor(rg *gin.RouterGroup, fh *api.FipHandle) {
-	rg.GET("/fipProposal/list", wrap(fh.GetFipProposalList)) // Get a list of fipProposals
-	rg.GET("/fipEditor/list", wrap(fh.GetFipEditorList))     // Get a list of fipEditors
+// fipEditor sets up routes for handling FIP (Federated Identity Proposal) related operations.
+func fipEditor(rg *gin.RouterGroup, fh *api.FipHandle, vh *api.VoteHandler) {
+	rg.GET("/fipProposal/list", wrap(fh.GetFipProposalList))           // Get a list of fipProposals
+	rg.GET("/fipEditor/list", wrap(fh.GetFipEditorList))               // Get a list of fipEditors
+	rg.GET("/fipEditor/gistAuthorized", wrap(vh.GetFipEditorGistInfo)) // Get FIP editor gist info
+	rg.GET("/fipEditor/checkGist", wrap(vh.VerifyGistValid))
+	// The wrap function is used to handle the request and response, passing the fh.GetFipEditorList handler.
 }
 
 // wrap is a utility function to wrap handlers with additional context and validation.

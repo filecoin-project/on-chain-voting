@@ -64,6 +64,10 @@ type SyncRepo interface {
 	GetSyncEventInfo(ctx context.Context, addr string) (*model.SyncEventTbl, error)
 }
 
+type LotusRepo interface {
+	GetActorIdByAddress(ctx context.Context, addr string) (string, error)
+	GetValidMinerIds(ctx context.Context, minerId string, minerIds []uint64) ([]string, error)
+}
 type ISyncService interface {
 	UpdateSyncEventInfo(ctx context.Context, addr string, height int64) error
 	GetSyncEventInfo(ctx context.Context, addr string) (*model.SyncEventTbl, error)
@@ -82,8 +86,8 @@ type ISyncService interface {
 	CreateFipEditor(ctx context.Context, in *model.FipEditorTbl) error
 	RevokeFipProposal(ctx context.Context, chainId int64, cadidateAddresss string) error
 
-	UpdateVoterAndProposalGithubNameByGistInfo(ctx context.Context, voterAddress, gistId string) error
-	UpdateVoterByMinerIds(ctx context.Context, voterAddress string, minerIds []uint64, ownerId uint64) error
+	UpdateVoterAndProposalGithubNameByGistInfo(ctx context.Context, voterInfo *model.VoterInfoTbl) error
+	UpdateVoterByMinerIds(ctx context.Context, voterAddress string, minerIds []uint64) error
 }
 
 // SyncService provides functionality for synchronizing data across repositories.
@@ -94,14 +98,16 @@ type SyncService struct {
 	voteRepo     VoteRepo     // voteRepo manages voting-related data
 	proposalRepo ProposalRepo // proposalRepo handles proposal-related data
 	fipRepo      FipRepo      // fipRepo handles fip-related data
+	lotusRepo    LotusRepo    // lotusRepo handles lotus-related data
 }
 
-func NewSyncService(repo SyncRepo, voteRepo VoteRepo, proposalRepo ProposalRepo, fipRepo FipRepo) *SyncService {
+func NewSyncService(repo SyncRepo, voteRepo VoteRepo, proposalRepo ProposalRepo, fipRepo FipRepo, lotusrepo LotusRepo) *SyncService {
 	return &SyncService{
 		repo:         repo,
 		voteRepo:     voteRepo,
 		proposalRepo: proposalRepo,
 		fipRepo:      fipRepo,
+		lotusRepo:    lotusrepo,
 	}
 }
 
@@ -308,7 +314,14 @@ func (s *SyncService) AddVoterAddress(ctx context.Context, in *model.VoterInfoTb
 		return errors.New("voter address is nil")
 	}
 
-	_, err := s.voteRepo.CreateVoterAddress(ctx, in)
+	actorId, err := s.lotusRepo.GetActorIdByAddress(ctx, in.Address)
+	if err != nil {
+		zap.L().Error("GetActorIdByAddress failed", zap.String("address", in.Address), zap.Error(err))
+		return err
+	}
+
+	in.OwnerId = actorId
+	_, err = s.voteRepo.CreateVoterAddress(ctx, in)
 	if err != nil {
 		zap.L().Error("CreateVoterAddress failed", zap.Error(err))
 		return err
@@ -456,8 +469,19 @@ func (s *SyncService) RevokeFipProposal(ctx context.Context, chainId int64, cadi
 	return nil
 }
 
-func (s *SyncService) UpdateVoterAndProposalGithubNameByGistInfo(ctx context.Context, voterAddress, gistId string) error {
-	gist := utils.GetGistInfoByGistId(gistId)
+func (s *SyncService) UpdateVoterAndProposalGithubNameByGistInfo(ctx context.Context, voterInfo *model.VoterInfoTbl) error {
+	actorId, err := s.lotusRepo.GetActorIdByAddress(ctx, voterInfo.Address)
+	if err != nil {
+		zap.L().Error("FilecoinAddressToID failed", zap.Error(err))
+		return err
+	}
+
+	gist, err := utils.FetchGistInfoByGistId(voterInfo.GistId)
+	if err != nil {
+		zap.L().Error("GetGistInfoByGistId failed", zap.Error(err))
+		return err
+	}
+
 	gistFile := model.GistFiles{}
 	for _, value := range gist.Files {
 		gistFile = value
@@ -470,32 +494,42 @@ func (s *SyncService) UpdateVoterAndProposalGithubNameByGistInfo(ctx context.Con
 
 	zap.L().Info(
 		"UpdateVoterByGistInfo",
-		zap.String("gistId", gistId),
-		zap.String("github id", gist.Owner.Owner),
-		zap.String("gistInfo", gistInfo),
+		zap.String("gistId", voterInfo.GistId),
+		zap.String("github id", gist.Owner.Login),
 	)
-	if err := s.voteRepo.UpdateVoterByGistInfo(ctx, &model.VoterInfoTbl{
-		GistId:   gistId,
-		GithubId: gist.Owner.Owner,
-		GistInfo: gistInfo,
-	}); err != nil {
-		zap.L().Error("UpdateVoterByGistInfo failed", zap.Error(err))
-		return err
+
+	voterInfo.GithubId = gist.Owner.Login
+	voterInfo.GistInfo = gistInfo
+	voterInfo.OwnerId = actorId
+	isValid := utils.VerifyAuthorizeAllow(voterInfo.Address, gist.Owner.Login, gist)
+
+	if !isValid {
+		voterInfo.GithubId = ""
+		voterInfo.GistInfo = ""
+		voterInfo.GistId = ""
 	}
 
-	if err := s.proposalRepo.UpdateProposalGitHubName(ctx, voterAddress, gist.Owner.Owner); err != nil {
-		zap.L().Error("UpdateProposalGitHubName failed", zap.Error(err))
+	if err := s.voteRepo.UpdateVoterByGistInfo(ctx, voterInfo); err != nil {
+		zap.L().Error("UpdateVoterByGistInfo failed", zap.Error(err))
 		return err
 	}
 
 	return nil
 }
 
-func (s *SyncService) UpdateVoterByMinerIds(ctx context.Context, voterAddress string, minerIds []uint64, ownerId uint64) error {
+func (s *SyncService) UpdateVoterByMinerIds(ctx context.Context, voterAddress string, minerIds []uint64) error {
+	actorId, err := s.lotusRepo.GetActorIdByAddress(ctx, voterAddress)
+	if err != nil {
+		zap.L().Error("FilecoinAddressToID failed", zap.String("Func", "UpdateVoterByMinerIds"), zap.String("voterAddress", voterAddress), zap.Error(err))
+		return err
+	}
+
+	validMinerIds, err := s.lotusRepo.GetValidMinerIds(ctx, actorId, minerIds)
+
 	if err := s.voteRepo.UpdateVoterByMinerInfo(ctx, &model.VoterInfoTbl{
-		Address: voterAddress,
-		MinerIds: minerIds,
-		OwnerId:  ownerId,
+		Address:  voterAddress,
+		MinerIds: validMinerIds,
+		OwnerId:  actorId,
 	}); err != nil {
 
 		zap.L().Error("UpdateVoterByMinerIds failed", zap.Error(err))

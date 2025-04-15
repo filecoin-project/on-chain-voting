@@ -16,6 +16,7 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -80,7 +81,12 @@ func (v VoteRepoImpl) CreateVote(ctx context.Context, in *model.VoteTbl) (int64,
 				{Name: "address"},
 				{Name: "chain_id"},
 			},
-			DoUpdates: clause.AssignmentColumns([]string{"vote_encrypted", "updated_at"}),
+			DoUpdates: clause.AssignmentColumns([]string{
+				"vote_encrypted",
+				"timestamp",
+				"block_number",
+				"updated_at",
+			}),
 		}).
 		Create(in).Error
 	if err != nil {
@@ -173,12 +179,32 @@ func (v *VoteRepoImpl) GetAllVoterAddresss(ctx context.Context, chainId int64) (
 func (v *VoteRepoImpl) UpdateVoterByGistInfo(ctx context.Context, in *model.VoterInfoTbl) error {
 	if err := v.mydb.Model(model.VoterInfoTbl{}).
 		WithContext(ctx).
-		Where("address = ?", in.Address).UpdateColumns(map[string]any{
-		"gist_id":    in.GistId,
-		"github_id":  in.GithubId,
-		"gist_info":  in.GistInfo,
-		"updated_at": time.Now(),
-	}).Error; err != nil {
+		Clauses(clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "address"},
+				{Name: "chain_id"},
+			},
+			DoUpdates: clause.AssignmentColumns([]string{
+				"gist_id",
+				"github_id",
+				"gist_info",
+				"block_number",
+				"timestamp",
+				"updated_at",
+			}),
+		}).Create(in).Error; err != nil {
+		return err
+	}
+
+	if err := v.mydb.Model(model.VoterInfoTbl{}).
+		WithContext(ctx).
+		Where("address <> ? and github_id = ?", in.Address, in.GithubId).
+		UpdateColumns(map[string]any{
+			"gist_id":    "",
+			"github_id":  "",
+			"gist_info":  "",
+			"updated_at": time.Now(),
+		}).Error; err != nil {
 		return err
 	}
 
@@ -207,7 +233,9 @@ func (v *VoteRepoImpl) GetVoterInfoByAddress(ctx context.Context, address string
 		WithContext(ctx).
 		Where("address = ?", address).
 		First(&voterInfo).Error; err != nil {
-		return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("voter address not found: %s", address)
+		}
 	}
 
 	return &voterInfo, nil

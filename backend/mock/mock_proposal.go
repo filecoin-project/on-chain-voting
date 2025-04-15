@@ -27,10 +27,6 @@ import (
 type MockProposalService struct {
 }
 
-// UpdateProposalGitHubName implements service.ProposalRepo.
-func (m *MockProposalService) UpdateProposalGitHubName(ctx context.Context, createrAddress string, githubName string) error {
-	panic("unimplemented")
-}
 
 var _ service.ProposalRepo = (*MockProposalService)(nil)
 
@@ -53,7 +49,7 @@ func (m *MockProposalService) GetProposalById(ctx context.Context, req api.Propo
 }
 
 // GetProposalDraftByAddress implements service.ProposalRepo.
-func (m *MockProposalService) GetProposalDraftByAddress(ctx context.Context, req api.GetDraftReq) (*model.ProposalDraftTbl, error) {
+func (m *MockProposalService) GetProposalDraftByAddress(ctx context.Context, req api.AddressReq) (*model.ProposalDraftTbl, error) {
 	if req.Address == "test" {
 		return &model.ProposalDraftTbl{
 			Creator: "test",

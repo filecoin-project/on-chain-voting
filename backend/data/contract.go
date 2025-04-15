@@ -104,14 +104,17 @@ func getGoEthClient(clientConfig model.ClientConfig, abiPath config.ABIPath) (mo
 	// contract address, wallet private key , wallet address
 	powerVotingContract := common.HexToAddress(clientConfig.PowerVotingContract)
 	oracleContract := common.HexToAddress(clientConfig.OracleContract)
-
+	orcalePowersContract := common.HexToAddress(clientConfig.OraclePowersContract)
+	fipContract := common.HexToAddress(clientConfig.FipContract)
 	// generate goEthClient
 	goEthClient := model.GoEthClient{
-		ChainId:             clientConfig.ChainId,
-		Name:                clientConfig.Name,
-		Client:              client,
-		PowerVotingContract: powerVotingContract,
-		OracleContract:      oracleContract,
+		ChainId:              clientConfig.ChainId,
+		Name:                 clientConfig.Name,
+		Client:               client,
+		PowerVotingContract:  powerVotingContract,
+		OracleContract:       oracleContract,
+		OraclePowersContract: orcalePowersContract,
+		FipContract:          fipContract,
 		ABI: &model.ABI{
 			PowerVotingAbi:  GetAbiFromLocalFile(abiPath.PowerVotingAbi),
 			OracleAbi:       GetAbiFromLocalFile(abiPath.OracleAbi),

@@ -20,13 +20,20 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"go.uber.org/zap"
 
-	"powervoting-server/utils"
+	"powervoting-server/model"
 )
 
-func (ev *Event) HandleOracleUpdateGistId(ctx context.Context, event OracleUpdateGistIdsEvent, blockHeader *types.Header) error {
-	zap.L().Info("oracle update gist ids event handled", zap.String("voter", event.VoterAddress.Hex()), zap.String("gist id", event.GistIds))
-	if err := ev.SyncService.UpdateVoterAndProposalGithubNameByGistInfo(ctx, event.VoterAddress.Hex(), event.GistIds); err != nil {
-		zap.L().Error("failed to update voter by gist info", zap.Error(err))
+func (ev *Event) HandleOracleUpdateGistId(ctx context.Context, event OracleUpdateGistIdsEvent, chainId int64, blockHeader *types.Header) error {
+	zap.L().Info("oracle update gist ids event handled", zap.String("voter", event.VoterAddress.Hex()), zap.String("gist id", event.GistId))
+
+	if err := ev.SyncService.UpdateVoterAndProposalGithubNameByGistInfo(ctx, &model.VoterInfoTbl{
+		Address:     event.VoterAddress.Hex(),
+		GistId:      event.GistId,
+		ChainId:     chainId,
+		BlockNumber: blockHeader.Number.Int64(),
+		Timestamp:   int64(blockHeader.Time),
+	}); err != nil {
+		zap.L().Error("func HandleOracleUpdateGistId: failed to update voter by gist info", zap.Error(err))
 		return err
 	}
 
@@ -37,19 +44,8 @@ func (ev *Event) HandleOracleUpdateGistId(ctx context.Context, event OracleUpdat
 func (ev *Event) HandleOracleUpdateMinerIds(ctx context.Context, event OracleUpdateMinerIdsEvent, blockHeader *types.Header) error {
 	zap.L().Info("oracle update miner ids event handled", zap.String("voter", event.VoterAddress.Hex()), zap.Any("miner ids", event.MinerIds))
 
-	ownerId := utils.GetOwnerIdByOracle(ev.Client, event.MinerIds)
-	actionId, err := utils.GetActorIdByAddress(ev.Client, event.VoterAddress.Hex())
-	if err != nil {
-		zap.L().Error("failed to get actor id by address", zap.String("voter", event.VoterAddress.Hex()), zap.Error(err))
-		return err
-	}
 
-	if ownerId != actionId {
-		zap.L().Error("oracle update miner ids event failed: owner id != action id", zap.String("voter", event.VoterAddress.Hex()), zap.Any("owner id", ownerId), zap.Any("action id", actionId))
-		return nil
-	}
-
-	if err := ev.SyncService.UpdateVoterByMinerIds(ctx, event.VoterAddress.Hex(), event.MinerIds, ownerId); err != nil {
+	if err := ev.SyncService.UpdateVoterByMinerIds(ctx, event.VoterAddress.Hex(), event.MinerIds); err != nil {
 		zap.L().Error("failed to update voter by miner ids", zap.Error(err))
 		return err
 	}
