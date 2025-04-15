@@ -1,0 +1,18 @@
+network:
+  chainID: {CHAIN_ID}
+  rpc: "{RPC_URL}"
+  token: "{JWT_TOKEN}"
+  powerVotingContract: "{POWER_VOTING_CONTRACT}"
+  powerBackendURL: "{POWER_BACKEND_URL}"
+
+abiPath:
+  powerVotingAbi: "{POWER_VOTING_ABI_PATH}"
+
+drand:
+  urls:
+    - "{DRAND_URL_1}"
+    - "{DRAND_URL_2}"
+    - "{DRAND_URL_3}"
+    - "{DRAND_URL_4}"
+    - "{DRAND_URL_5}"
+  chainHash: "{DRAND_CHAIN_HASH}"
