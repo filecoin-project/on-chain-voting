@@ -40,17 +40,17 @@ func GetBlockTime(client *model.GoEthClient, syncedHeight int64) (int64, error) 
 	return int64(block.Time()), nil
 }
 
-func GetOwnerIdByOracle(client *model.GoEthClient, minerId []uint64) uint64 {
-	res := uint64(0)
+func GetOwnerIdByOracle(client *model.GoEthClient,actorID uint64, minerId []uint64) []uint64 {
+	var res []uint64
 	for _, miner := range minerId {
-		data, err := client.ABI.OracleAbi.Pack("getOwner", miner)
+		data, err := client.ABI.OraclePowersAbi.Pack("getOwner", miner)
 		if err != nil {
 			zap.L().Error("Error packing getOwner", zap.Uint64("minerId", miner))
 			continue
 		}
 
 		msg := ethereum.CallMsg{
-			To:   &client.OracleContract,
+			To:   &client.OraclePowersContract,
 			Data: data,
 		}
 
@@ -60,26 +60,33 @@ func GetOwnerIdByOracle(client *model.GoEthClient, minerId []uint64) uint64 {
 			continue
 		}
 
-		upPacked, err := client.ABI.OracleAbi.Unpack("getOwner", result)
+		upPacked, err := client.ABI.OraclePowersAbi.Unpack("getOwner", result)
 		if err != nil {
 			zap.L().Error("Error unpacking getOwner", zap.Uint64("minerId", miner))
 			continue
 		}
 
-		res = upPacked[0].(uint64)
+		if len(upPacked) == 0 {
+			zap.L().Error("getOwner returned empty result", zap.Uint64("minerId", miner))
+			continue
+		}
+
+		if upPacked[0].(uint64) == uint64(actorID) {
+			res = append(res, uint64(miner))
+		}
 	}
 
 	return res
 }
 
 func GetActorIdByAddress(client *model.GoEthClient, address string) (uint64, error) {
-	data, err := client.ABI.OracleAbi.Pack("resolveEthAddress", common.HexToAddress(address))
+	data, err := client.ABI.OraclePowersAbi.Pack("resolveEthAddress", common.HexToAddress(address))
 	if err != nil {
 		return 0, fmt.Errorf("error packing resolveEthAddress: %v", err)
 	}
 
 	msg := ethereum.CallMsg{
-		To:   &client.OracleContract,
+		To:   &client.OraclePowersContract,
 		Data: data,
 	}
 
@@ -88,7 +95,11 @@ func GetActorIdByAddress(client *model.GoEthClient, address string) (uint64, err
 		return 0, fmt.Errorf("error calling resolveEthAddress: %v", err)
 	}
 
-	upPacked, err := client.ABI.OracleAbi.Unpack("getOwner", result)
+	if len(result) == 0 {
+		return 0, fmt.Errorf("resolveEthAddress returned empty result")
+	}
+
+	upPacked, err := client.ABI.OraclePowersAbi.Unpack("resolveEthAddress", result)
 	if err != nil {
 		return 0, fmt.Errorf("error unpacking resolveEthAddress: %v", err)
 	}
@@ -98,5 +109,4 @@ func GetActorIdByAddress(client *model.GoEthClient, address string) (uint64, err
 	}
 
 	return upPacked[0].(uint64), err
-
 }

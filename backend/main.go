@@ -50,7 +50,13 @@ func main() {
 	fipRepoImpl := repo.NewFipRepo(mydb)
 	proposalService := service.NewProposalService(proposalRepoImpl)
 	voteService := service.NewVoteService(voteRepoImpl)
-	syncService := service.NewSyncService(syncRepoImpl, voteRepoImpl, proposalRepoImpl, fipRepoImpl)
+	syncService := service.NewSyncService(
+		syncRepoImpl,
+		voteRepoImpl,
+		proposalRepoImpl,
+		fipRepoImpl,
+		repo.NewLotusRPCRepo(),
+	)
 	fipService := service.NewFipService(fipRepoImpl)
 	// initialization scheduled task
 	go task.TaskScheduler(syncService)

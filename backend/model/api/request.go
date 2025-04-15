@@ -14,6 +14,7 @@
 
 package api
 
+
 // ProposalListReq represents a request for listing proposals with pagination, status filter, and search functionality.
 type ProposalListReq struct {
 	Status       int    `form:"status" validate:"oneof=0 1 2 3 4"` // Status filter (0: all, 1: pending, 2: in progress, 3: counting, 4: completed)
@@ -29,16 +30,22 @@ type PageReq struct {
 	PageSize int `form:"pageSize"` // Number of items per page
 }
 
-// GetDraftReq represents a request for retrieving a proposal draft by creator address.
-type GetDraftReq struct {
+// AddressReq represents a request for retrieving a proposal draft by creator address.
+type AddressReq struct {
 	Address string `form:"address" validate:"required"` // Creator's address
+}
+
+// VerifyGistReq verify that Gist is valid
+type VerifyGistReq struct {
+	GistId string `form:"gistId" validate:"required"` // Gist ID
+	AddressReq
 }
 
 // GetPowerReq represents a request for retrieving power information for a specific address and day.
 type GetPowerReq struct {
-	PowerDay string `form:"powerDay" validate:"required"`         // Day for which power information is requested
-	Address  string `form:"address" validate:"required,eth_addr"` // Address to query
-	ChainId  int64  `form:"chainId" validate:"required"`          // Chain ID to filter power information
+	PowerDay string `form:"powerDay" validate:"required"` // Day for which power information is requested
+	ChainId  int64  `form:"chainId" validate:"required"`  // Chain ID to filter power information
+	AddressReq
 }
 
 // ChainIdParam represents a request parameter for chain ID.

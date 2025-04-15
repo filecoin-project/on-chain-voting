@@ -15,10 +15,13 @@
 package utils
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"math/big"
 	"strconv"
+	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/shopspring/decimal"
 )
 
@@ -72,4 +75,24 @@ func ObjToString(obj any) string {
 	}
 
 	return string(res)
+}
+
+
+func StringToBase64URL(str string) string {
+	base64Str := base64.RawStdEncoding.EncodeToString([]byte(str))
+	
+	base64Url := strings.NewReplacer(
+		"+", "-",
+		"/", "_",
+	).Replace(base64Str)
+
+	return strings.TrimRight(base64Url, "=")
+}
+
+func ConvertTopics(topics []string) []common.Hash {
+    hashes := make([]common.Hash, len(topics))
+    for i, t := range topics {
+        hashes[i] = common.HexToHash(t)
+    }
+    return hashes
 }

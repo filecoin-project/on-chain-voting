@@ -16,10 +16,13 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"go.uber.org/zap"
 
+	"powervoting-server/constant"
 	"powervoting-server/model"
+	"powervoting-server/utils"
 )
 
 type RpcService struct {
@@ -66,5 +69,42 @@ func (r *RpcService) GetAllVoterAddresss(ctx context.Context, chainId int64) ([]
 }
 
 func (r *RpcService) GetVoterInfoByAddress(ctx context.Context, address string) (*model.VoterInfoTbl, error) {
-	return r.voteRepo.GetVoterInfoByAddress(ctx, address)
+	voterInfo, err := r.voteRepo.GetVoterInfoByAddress(ctx, address)
+	if err != nil {
+		r.logger.Error("GetVoterInfoByAddress error", zap.Error(err))
+		return nil, err
+	}
+
+	clearGist := func ()  {
+		voterInfo.GistId = ""
+		voterInfo.GithubId = ""
+		voterInfo.GistInfo = ""
+	}
+	
+	if voterInfo.GistId != "" {
+		gist, err := utils.FetchGistInfoByGistId(voterInfo.GistId)
+		if err != nil {
+			r.logger.Error("GetGistInfoByGistId error", zap.Error(err))
+
+			clearGist()
+			if errors.Is(err, constant.ErrGistNotFound) {
+				if err := r.voteRepo.UpdateVoterByGistInfo(ctx, voterInfo); err != nil {
+					r.logger.Warn("UpdateVoterByGistInfo error for GetVoterInfoByAddress", zap.Any("voterInfo", voterInfo), zap.Error(err))
+				}
+			}
+
+			return voterInfo, nil
+		}
+
+		isValid := utils.VerifyAuthorizeAllow(voterInfo.Address, voterInfo.GithubId, gist)
+		if !isValid {
+			r.logger.Warn("VerifyAuthorizeAllow error", zap.Any("gist", gist), zap.Any("voterInfo", voterInfo))
+			clearGist()
+			if err := r.voteRepo.UpdateVoterByGistInfo(ctx, voterInfo); err != nil {
+				r.logger.Warn("UpdateVoterByGistInfo error for GetVoterInfoByAddress", zap.Any("voterInfo", voterInfo), zap.Error(err))
+			}
+		}
+	}
+
+	return voterInfo, nil
 }

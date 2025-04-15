@@ -54,6 +54,7 @@ type Network struct {
 	OraclePowersContract string // Contract address for OraclePowers
 	FipContract          string // Contract address for FIP
 	FipInitEditor        string // Initial editor for FIP
+	MinerIdPrefix        string // Prefix for miner IDs
 }
 
 type Snapshot struct {

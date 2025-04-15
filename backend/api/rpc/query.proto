@@ -6,33 +6,47 @@ option go_package = "./proto;rpc";
 
 service Snapshot {
   rpc GetAddressPower(AddressPowerRequest) returns (AddressPowerResponse) {}
+
   rpc SyncDateHeight(SyncDateHeightRequest) returns (SyncDateHeightResponse) {}
+
   rpc SyncAddrPower(SyncAddrPowerRequest) returns (SyncAddrPowerResponse) {}
-  rpc SyncAllAddrPower(SyncAllAddrPowerRequest) returns (SyncAllAddrPowerResponse){}
-  rpc UploadSnapshotInfoByDay(UploadSnapshotInfoByDayRequest) returns (UploadSnapshotInfoByDayResponse) {}
+
+  rpc SyncAllAddrPower(SyncAllAddrPowerRequest)
+    returns (SyncAllAddrPowerResponse){}
+
+  rpc UploadSnapshotInfoByDay(UploadSnapshotInfoByDayRequest)
+    returns (UploadSnapshotInfoByDayResponse) {}
+
   rpc GetDataHeight(DataHeightRequest) returns (DataHeightResponse) {}
-  rpc GetAddressPowerByDay(AddressPowerByDayRequest) returns (AddressPowerResponse) {}
-  rpc GetAllAddrPowerByDay(GetAllAddrPowerByDayRequest) returns (GetAllAddrPowerByDayResponse) {}
+
+  rpc GetAddressPowerByDay(AddressPowerByDayRequest)
+    returns (AddressPowerResponse) {}
+
+  rpc GetAllAddrPowerByDay(GetAllAddrPowerByDayRequest)
+    returns (GetAllAddrPowerByDayResponse) {}
+
+  rpc SyncAllDeveloperWeight(SyncAllDeveloperWeightRequest)
+    returns (SyncAllDeveloperWeightResponse){}
 }
 
 message GetAllAddrPowerByDayRequest {
   string day = 1;
-  int64 netId = 2;
+  int64 net_id = 2;
 }
 
 message GetAllAddrPowerByDayResponse {
   string day = 1;
-  string info = 3; 
-  int64 netId = 4;
+  string info = 2;
+  int64 net_id = 3;
 }
 
 message DataHeightRequest{
-    int64  netId = 1;
-    string day = 2;
+  int64  net_id = 1;
+  string day = 2;
 }
 
 message AddressPowerByDayRequest{
-  int64  netId = 1;
+  int64  net_id = 1;
   string address = 2;
   string day = 3;
 }
@@ -43,21 +57,21 @@ message DataHeightResponse {
 }
 
 message  SyncAllAddrPowerRequest {
-  int64  netId = 1;
+  int64  net_id = 1;
 }
 
 message AddressPowerRequest {
-  int64  netId = 1;
+  int64  net_id = 1;
   string address = 2;
   int32  random_num = 3;
 }
 
 message SyncDateHeightRequest {
-  int64  netId = 1;
+  int64  net_id = 1;
 }
 
 message SyncAddrPowerRequest {
-  int64  netId = 1;
+  int64  net_id = 1;
   string address = 2;
 }
 
@@ -73,7 +87,11 @@ message AddressPowerResponse {
 
 message UploadSnapshotInfoByDayRequest {
   string day = 1;
-  int64 netId = 2;
+  int64 net_id = 2;
+}
+
+message SyncAllDeveloperWeightRequest {
+
 }
 
 message SyncAllAddrPowerResponse{
@@ -87,7 +105,12 @@ message SyncDateHeightResponse {
 message SyncAddrPowerResponse {
 
 }
+
 message UploadSnapshotInfoByDayResponse {
   string day = 1;
   int64 height=2;
+}
+
+message SyncAllDeveloperWeightResponse {
+
 }

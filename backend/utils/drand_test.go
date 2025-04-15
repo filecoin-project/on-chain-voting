@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package utils
+package utils_test
 
 import (
 	"encoding/json"
@@ -22,6 +22,7 @@ import (
 
 	"powervoting-server/config"
 	"powervoting-server/constant"
+	"powervoting-server/utils"
 )
 
 func initConfig() {
@@ -64,7 +65,7 @@ Qnhxd1JvZHVKaElYSVZOa3dMZkt0SHdIc2hMVzA0NHVmSmsvcTQKBVM4IBEuFQcP
 l0YZKbPlAmnEhcp3EAwQ84BvVSibhTmIzq/MYdsHnTX/1O8=
 -----END AGE ENCRYPTED FILE-----
 `
-	res, err := DecodeVoteResult(decStr)
+	res, err := utils.DecodeVoteResult(decStr)
 	assert.NoError(t, err, "decode error：", err)
 	assert.Equal(t, constant.VoteReject, res)
 }
@@ -83,7 +84,7 @@ RVdEZlJQWm9yaS9ITnNqcGNuQmxNcUlob3VKYkErRUJDb243eUkK2rehvaQY2kad
 -----END AGE ENCRYPTED FILE-----
 `
 
-	decrypt, err := Decrypt(decStr)
+	decrypt, err := utils.Decrypt(decStr)
 	assert.NoError(t, err, "decrypt error：", err)
 
 	var data [][]string
@@ -92,4 +93,34 @@ RVdEZlJQWm9yaS9ITnNqcGNuQmxNcUlob3VKYkErRUJDb243eUkK2rehvaQY2kad
 	assert.Len(t, data, 1)
 	assert.Len(t, data[0], 1)
 	assert.Equal(t, constant.VoteApprove, data[0][0])
+}
+
+// func TestVerifyEthSignature(t *testing.T) {
+// 	isVerified, err := VerifyEthSignature(
+// 		"0xF7457C431de37b381dC07653beF5ca0a0EfFceE9",
+// 		`{
+//     "githubName": Ds0305,
+//     "walletAddress":0xF7457C431de37b381dC07653beF5ca0a0EfFceE9,
+//     "timestamp":1743646656
+//   }`,
+// 		"0x1ee7ffffe687d03ba6455d65cbfab59dc3ca2cad8ea71440b730a7e19741d8cb05e579cb8d1fdf3aed624e40139b2c249add0258c461357a378fdc739a7d78071b",
+// 	)
+
+// 	assert.NoError(t, err, "verify error：", err)
+// 	assert.True(t, isVerified)
+// }
+
+func TestAddr(t *testing.T) {
+	m1 := "eyJhbGciOiJlY2RzYSIsInR5cGUiOiJKV1QiLCJ2ZXJzaW9uIjoiMC4wLjEifQ.eyJ3YWxsZXRBZGRyZXNzIjoiMHhmNThjQzM0Y2Y4MEJERjlEM2FEODJFN0FDNTdhQ2QwMmNBNTkyMTkzIiwiZ2l0aHViTmFtZSI6ImxpdXplbWluZzEiLCJ0aW1lc3RhbXAiOjE3NDM2NTE5MzR9"
+	// decodeRes, err := base64.StdEncoding.DecodeString(m1)
+	// assert.NoError(t, err, "decode error：", err)
+	// fmt.Printf("res: %s\n", decodeRes)
+	// config.InitConfig("../")
+	address := "0xf58cC34cf80BDF9D3aD82E7AC57aCd02cA592193"
+	// base64Msg := base64.RawStdEncoding.EncodeToString([]byte(msg))
+	// fmt.Printf("base64Msg: %s\n", base64Msg)
+	signature := "0x1eb4fbd5a48eba93acd514fcb74e541b7cfb2b5ab11116d1bd03a4c6262fb63233f960438a005ce9836386b68ae0149c59b95bb0fc4cf5eeadd1eeb653c133de1c"
+	res, err := utils.VerifySignature(address, (signature), []byte(m1))
+	assert.NoError(t, err, "verify error：", err)
+	assert.True(t, res)
 }

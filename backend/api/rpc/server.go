@@ -28,7 +28,7 @@ func (b *BackendRpc) GetAllVoterAddresss(ctx context.Context, req *pb.GetAllVote
 	}
 
 	return &pb.GetAllVoterAddressResponse{
-		Address: addresss,
+		Addresses: addresss,
 	}, err
 }
 

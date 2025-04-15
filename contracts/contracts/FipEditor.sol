@@ -179,9 +179,6 @@ contract PowerVotingFipEditor is
         proposal.proposalId = fipEditorProposalId;
         proposal.proposalType = fipEditorProposalType;
 
-        // creating a proposal defaults to voting on the proposal
-        voteFipEditorProposal(fipEditorProposalId);
-
         //emit create event
         FipEditorProposalCreateInfo
             memory eventInfo = FipEditorProposalCreateInfo({
@@ -193,6 +190,9 @@ contract PowerVotingFipEditor is
             });
 
         emit FipEditorProposalCreateEvent(eventInfo);
+
+        // creating a proposal defaults to voting on the proposal
+        voteFipEditorProposal(fipEditorProposalId);
     }
 
     /**

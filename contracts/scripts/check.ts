@@ -4,7 +4,7 @@ import { getConstantJson } from "./utils";
 const { ethers } = require("hardhat");
 async function main() {
   await check_fipeditor();
-  // await check_vote();
+  await check_vote();
 }
 
 async function check_vote() {
@@ -16,9 +16,11 @@ async function check_vote() {
   const powerVotingContract = await PowerVoting.attach(
     POWER_VOTING_VOTE_ADDRESS
   );
+ const count= await powerVotingContract.proposalId();
+
   const fipEditorAddress = await powerVotingContract.fipEditorContract();
   console.log("remote   fipEditor=" + fipEditorAddress);
-  console.log("local   fipEditor=" + POWER_VOTING_FIP_ADDRESS);
+  console.log("count=" + count);
 }
 
 async function check_fipeditor() {

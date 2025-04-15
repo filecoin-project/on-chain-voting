@@ -16,6 +16,8 @@ package utils
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestStringConvToBigInt(t *testing.T) {
@@ -34,4 +36,9 @@ func TestBigIntConvToString(t *testing.T) {
 	if strResult != "1" {
 		t.Errorf("Expected %s, got %s", "1", strResult)
 	}
+}
+
+func TestStringToBase64URL(t *testing.T) {
+	res := StringToBase64URL("test")
+	assert.NotEmpty(t, res)
 }

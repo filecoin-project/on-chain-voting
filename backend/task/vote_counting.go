@@ -133,7 +133,7 @@ func (vc *VoteCount) processCounting(ethClient *model.GoEthClient, proposal mode
 	powersMap := utils.PowersInfoToMap(allPowers.AddrPower)
 	// powersMap := make(map[string]model.AddrPower)
 	// Calculate the total voting power and update the vote list with weights
-	creditsMap, totalCredits, voteList := vc.countWeightCredits(proposal.ProposalId, powersMap, votesInfo, proposal.Percentage, ethClient.ChainId)
+	creditsMap, totalCredits, voteList := vc.countWeightCredits(proposal.ProposalId, powersMap, votesInfo,  ethClient.ChainId)
 
 	approvePercentage := vc.calculateVotesPercentage(creditsMap[constant.VoteApprove], totalCredits, proposal.Percentage)
 	rejectPercentage := vc.calculateVotesPercentage(creditsMap[constant.VoteReject], totalCredits, proposal.Percentage)
@@ -180,14 +180,13 @@ func (vc *VoteCount) processCounting(ethClient *model.GoEthClient, proposal mode
 //   - proposalId: The ID of the proposal being calculated.
 //   - powersMap: A map containing the voting power of each address, indexed by address.
 //   - voteInfos: A list of vote records for the proposal, including the voter's address and encrypted vote result.
-//   - proposalPercentage: The percentage distribution of voting power among different roles (e.g., SP, Client, Token Holder, Developer).
 //   - chainId: The chain ID associated with the proposal, used for logging and context.
 //
 // Returns:
 //   - map[string]model.VoterPowerCount: A map containing the aggregated voting power for each vote result (e.g., "approve", "reject").
 //   - model.VoterPowerCount: A struct containing the total voting power across all vote results.
 //   - []model.VoteTbl: A list of updated vote records with calculated voting weights.
-func (vc *VoteCount) countWeightCredits(proposalId int64, powersMap map[string]model.AddrPower, voteInfos []model.VoteTbl, proposalPercentage model.Percentage, chainId int64) (map[string]model.VoterPowerCount, model.VoterPowerCount, []model.VoteTbl) {
+func (vc *VoteCount) countWeightCredits(proposalId int64, powersMap map[string]model.AddrPower, voteInfos []model.VoteTbl,  chainId int64) (map[string]model.VoterPowerCount, model.VoterPowerCount, []model.VoteTbl) {
 	// Initialize the vote power struct with zero values
 	var (
 		creditsMap = map[string]model.VoterPowerCount{
@@ -322,7 +321,7 @@ func (vc *VoteCount) calculateVotesPercentage(votesPower model.VoterPowerCount, 
 // calculateFinalPercentages calculates the final voting percentages and handles precision.
 // It ensures the total percentage adds up to 100% by distributing any remainder.
 func (vc *VoteCount) calculateFinalPercentages(approve, reject decimal.Decimal, totalVotes int) map[string]float64 {
-	if totalVotes == 0 {
+	if totalVotes == 0  {
 		return map[string]float64{
 			constant.VoteApprove: 0,
 			constant.VoteReject:  0,

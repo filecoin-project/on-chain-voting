@@ -22,6 +22,7 @@ import (
 
 	"github.com/drand/tlock"
 	drandhttp "github.com/drand/tlock/networks/http"
+
 	"go.uber.org/zap"
 
 	"powervoting-server/config"
@@ -97,3 +98,4 @@ func Decrypt(decStr string) ([]byte, error) {
 	}
 	return data, nil
 }
+

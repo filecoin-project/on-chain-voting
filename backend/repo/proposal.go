@@ -122,7 +122,7 @@ func (p *ProposalRepoImpl) CreateProposalDraft(ctx context.Context, in *model.Pr
 }
 
 // GetProposalDraftByAddress retrieves a proposal draft from the database based on the creator's address.
-func (p *ProposalRepoImpl) GetProposalDraftByAddress(ctx context.Context, req api.GetDraftReq) (*model.ProposalDraftTbl, error) {
+func (p *ProposalRepoImpl) GetProposalDraftByAddress(ctx context.Context, req api.AddressReq) (*model.ProposalDraftTbl, error) {
 	var proposalDraft model.ProposalDraftTbl
 	// Query the database for a proposal draft where the creator matches the provided address.
 	// The query uses GORM's Model method to specify the model type and WithContext to pass the context.
@@ -155,7 +155,6 @@ func (p *ProposalRepoImpl) CreateProposal(ctx context.Context, in *model.Proposa
 			// Here, it specifies the columns to update with the new values from the input.
 			DoUpdates: clause.AssignmentColumns([]string{
 				"creator",
-				"github_name",
 				"start_time",
 				"end_time",
 				"timestamp",
@@ -199,20 +198,6 @@ func (p *ProposalRepoImpl) UpdateProposal(ctx context.Context, in *model.Proposa
 	return err
 }
 
-// UpdateProposalGitHubName implements service.ProposalRepo.
-func (p *ProposalRepoImpl) UpdateProposalGitHubName(ctx context.Context, createrAddress, githubName string) error {
-	if err := p.mydb.Model(model.ProposalTbl{}).
-		WithContext(ctx).
-		Where("creator = ?", createrAddress).
-		UpdateColumns(map[string]any{
-			"github_name": githubName,
-			"updated_at":  time.Now(),
-		}).Error; err != nil {
-		return fmt.Errorf("update proposal github name error: %w", err)
-	}
-
-	return nil
-}
 
 // GetUnCountedProposalList retrieves a list of proposals based on the provided network ID and timestamp.
 // It queries the database for proposals with the following conditions:
@@ -256,7 +241,7 @@ func (p *ProposalRepoImpl) buildProposalBaseQuery(req api.ProposalListReq) (quer
 
 	// Initialize the query for listing proposals with ordering, pagination, and common conditions.
 	queryList = p.mydb.Model(model.ProposalTbl{}).
-		Order("end_time desc").
+		Order("end_time DESC, proposal_id DESC").
 		Limit(req.PageSize).
 		Offset(int(req.Offset()))
 

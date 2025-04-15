@@ -75,7 +75,7 @@ type ProposalRepo interface {
 	// Returns:
 	//   - *model.ProposalDraftTbl: The proposal draft if found.
 	//   - error: An error if the query operation fails; otherwise, nil.
-	GetProposalDraftByAddress(ctx context.Context, req api.GetDraftReq) (*model.ProposalDraftTbl, error)
+	GetProposalDraftByAddress(ctx context.Context, req api.AddressReq) (*model.ProposalDraftTbl, error)
 
 	// CreateProposal creates a new proposal record in the repository.
 	// This is typically called when a ProposalCreate event is parsed during the execution of a synchronous contract event.
@@ -112,7 +112,6 @@ type ProposalRepo interface {
 	//   - error: An error if the query operation fails; otherwise, nil.
 	GetUncountedProposalList(ctx context.Context, chainId int64, timestamp int64) ([]model.ProposalTbl, error)
 
-	UpdateProposalGitHubName(ctx context.Context, createrAddress, githubName string) error
 }
 
 // IProposalService defines the interface for managing proposal-related operations.
@@ -120,7 +119,7 @@ type ProposalRepo interface {
 type IProposalService interface {
 	AddDraft(ctx context.Context, req *api.AddProposalDraftReq) error
 
-	GetDraft(ctx context.Context, req api.GetDraftReq) (*api.ProposalDraftRep, error)
+	GetDraft(ctx context.Context, req api.AddressReq) (*api.ProposalDraftRep, error)
 
 	ProposalDetail(ctx context.Context, req api.ProposalReq) (*api.ProposalRep, error)
 
@@ -166,7 +165,6 @@ func (p *ProposalService) ProposalList(ctx context.Context, req api.ProposalList
 		temp := api.ProposalRep{
 			ProposalId: proposal.ProposalId,
 			ChainId:    proposal.ChainId,
-			GithubName: proposal.GithubName,
 			Content:    proposal.Content,
 			StartTime:  proposal.StartTime,
 			EndTime:    proposal.EndTime,
@@ -242,7 +240,6 @@ func (p *ProposalService) ProposalDetail(ctx context.Context, req api.ProposalRe
 		ProposalId: proposal.ProposalId,
 		ChainId:    proposal.ChainId,
 		Content:    proposal.Content,
-		GithubName: proposal.GithubName,
 		StartTime:  proposal.StartTime,
 		EndTime:    proposal.EndTime,
 		Creator:    proposal.Creator,
@@ -319,7 +316,7 @@ func (p *ProposalService) AddDraft(ctx context.Context, req *api.AddProposalDraf
 // Returns:
 //   - *api.ProposalDraftRep: The proposal draft details if found.
 //   - error: An error if the query operation fails or if no draft is found; otherwise, nil.
-func (p *ProposalService) GetDraft(ctx context.Context, req api.GetDraftReq) (*api.ProposalDraftRep, error) {
+func (p *ProposalService) GetDraft(ctx context.Context, req api.AddressReq) (*api.ProposalDraftRep, error) {
 	// Fetch the proposal draft from the repository
 	res, err := p.repo.GetProposalDraftByAddress(ctx, req)
 	if err != nil {

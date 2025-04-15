@@ -15,6 +15,7 @@
 package config
 
 import (
+	"log"
 	"os"
 	"strings"
 
@@ -26,14 +27,15 @@ import (
 // export client
 var Client Config
 
-func init() {
-	if err := godotenv.Load(); err != nil {
-		zap.L().Warn("Unable to load .env file: %v", zap.Error(err))
+func initEnv(envFile string) {
+	if err := godotenv.Load(envFile); err != nil {
+		log.Default().Printf("Unable to load .env file: %v", zap.Error(err))
 	}
 }
 
 // InitConfig initializes the configuration by reading from a YAML file located at the specified path.
 func InitConfig(path string) {
+	initEnv(path + "/.env")
 	// configuration file name
 	viper.SetConfigName("configuration-backend")
 

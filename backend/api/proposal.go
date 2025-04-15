@@ -48,7 +48,7 @@ func (p *ProposalHandler) PostDraft(c *constant.Context) {
 
 // GetDraft function handles an HTTP request to retrieve a draft proposal from the database.
 func (p *ProposalHandler) GetDraft(c *constant.Context) {
-	var req api.GetDraftReq
+	var req api.AddressReq
 	if err := c.BindAndValidate(&req); err != nil {
 		ParamError(c.Context)
 		return

@@ -36,10 +36,10 @@ type VoterInfoTbl struct {
 	BaseField
 	Address     string   `json:"address" gorm:"not null;uniqueIndex:idx_address_chain"`  // Voter address
 	ChainId     int64    `json:"chain_id" gorm:"not null;uniqueIndex:idx_address_chain"` // Chain ID
-	MinerIds    []uint64 `json:"miner_ids" gorm:"type:json"`                             // Miner IDs
+	MinerIds    []string `json:"miner_ids" gorm:"type:json"`                             // Miner IDs
 	GistId      string   `json:"gist_id" gorm:"not null"`                                // Github Gist ID
 	GistInfo    string   `json:"gist_info" gorm:"type:longtext;not null"`                // Github Gist Info
-	OwnerId     uint64   `json:"owner_id" gorm:"not null"`                               // Voter Owner ID
+	OwnerId     string   `json:"owner_id" gorm:"not null"`                               // Voter Owner ID
 	GithubId    string   `json:"github_id" gorm:"not null"`                              // Github Name
 	BlockNumber int64    `json:"block_number" gorm:"not null"`                           // Voter create block number
 	Timestamp   int64    `json:"timestamp" gorm:"not null"`                              // Voter create time
@@ -60,7 +60,7 @@ type PowerPercentage struct {
 }
 
 // github gist response
-type GistInfo struct {
+type Gist struct {
 	Id    string               `json:"id"`
 	Files map[string]GistFiles `json:"files"`
 	Owner GistOwner            `json:"owner"`
@@ -75,6 +75,18 @@ type GistFiles struct {
 }
 
 type GistOwner struct {
-	Owner string `json:"owner"`
+	Login string `json:"login"`
 	Id    int64  `json:"id"`
+}
+
+type GistVoterInfo struct {
+	SigObject    SigObject `json:"sigObject"`
+	SigObjectStr string    `json:"sigObjectStr"`
+	Signature    string    `json:"signature"`
+}
+
+type SigObject struct {
+	GitHubName    string `json:"githubName"`
+	WalletAddress string `json:"walletAddress"`
+	Timestamp     int64  `json:"timestamp"`
 }

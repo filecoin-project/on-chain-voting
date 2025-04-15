@@ -17,3 +17,12 @@ power-oracle-contracts/.openzeppelin
 .env
 *.ucan
 power-oracle-contracts/cache
+
+contracts/artifacts
+contracts/cache
+contracts/typechain-types
+
+snapshot/data/**
+contracts/coverage
+coverage.json
+contracts/.openzeppelin

@@ -16,11 +16,14 @@ package service
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"go.uber.org/zap"
 
 	"powervoting-server/model"
 	"powervoting-server/model/api"
+	"powervoting-server/utils"
 )
 
 // VoteRepo defines the interface for managing vote-related data.
@@ -99,6 +102,8 @@ type VoteRepo interface {
 
 type IVoteService interface {
 	GetCountedVotedList(ctx context.Context, chainId, proposalId int64) ([]api.Voted, error)
+	GetFipEditorGistInfo(ctx context.Context, req api.AddressReq) (*api.FipEditorGistInfoRep, error)
+	VerifyGist(ctx context.Context, req api.VerifyGistReq) (*model.SigObject, error)
 }
 
 var _ IVoteService = (*VoteService)(nil)
@@ -130,7 +135,7 @@ func NewVoteService(repo VoteRepo) *VoteService {
 func (v *VoteService) GetCountedVotedList(ctx context.Context, chainId, proposalId int64) ([]api.Voted, error) {
 	res, err := v.repo.GetVoteList(ctx, chainId, proposalId, true)
 	if err != nil {
-		zap.L().Error("GetVoteList failed", zap.Error(err))
+		zap.L().Error("GetVoteList failed", zap.Int64("proposalId", proposalId), zap.Error(err))
 		return nil, err
 	}
 
@@ -151,4 +156,69 @@ func (v *VoteService) GetCountedVotedList(ctx context.Context, chainId, proposal
 		})
 	}
 	return votes, nil
+}
+
+func (f *VoteService) GetFipEditorGistInfo(ctx context.Context, req api.AddressReq) (*api.FipEditorGistInfoRep, error) {
+	voterInfo, err := f.repo.GetVoterInfoByAddress(ctx, req.Address)
+	if err != nil {
+		zap.L().Error("GetVoterInfoByAddress failed", zap.String("address", req.Address), zap.Error(err))
+		return nil, err
+	}
+
+	if voterInfo.GistId == "" {
+		return nil, nil
+	}
+
+	gist, err := utils.FetchGistInfoByGistId(voterInfo.GistId)
+	if err != nil {
+		zap.L().Error("FetchGistInfoByGistId failed", zap.String("gistId", voterInfo.GistId), zap.Error(err))
+		return nil, err
+	}
+
+	isValid := utils.VerifyAuthorizeAllow(req.Address, voterInfo.GithubId, gist)
+	if !isValid {
+		voterInfo.GistId = ""
+		voterInfo.GithubId = ""
+		voterInfo.GistInfo = ""
+		if err := f.repo.UpdateVoterByGistInfo(ctx, voterInfo); err != nil {
+			zap.L().Error("UpdateVoterByGistInfo failed", zap.String("address", req.Address), zap.Error(err))
+		}
+
+		return nil, errors.New("gist is not authorized")
+	}
+
+	sigObj, err := utils.ParseGistContent(gist.Files)
+	return &api.FipEditorGistInfoRep{
+		GistId: voterInfo.GistId,
+		GistSigObj: model.SigObject{
+			GitHubName:    sigObj.SigObject.GitHubName,
+			WalletAddress: sigObj.SigObject.WalletAddress,
+			Timestamp:     sigObj.SigObject.Timestamp,
+		},
+	}, nil
+}
+
+func (f *VoteService) VerifyGist(ctx context.Context, req api.VerifyGistReq) (*model.SigObject, error) {
+	gist, err := utils.FetchGistInfoByGistId(req.GistId)
+	if err != nil {
+		zap.L().Error("fetch gist info failed by VerifyGist", zap.String("gistId", req.GistId), zap.Error(err))
+		return nil, err
+	}
+
+	sigObj, err := utils.ParseGistContent(gist.Files)
+	if err != nil {
+		zap.L().Error("parse gist content failed by VerifyGist", zap.String("gistId", req.GistId), zap.Error(err))
+		return nil, err
+	}
+
+	if isValid := utils.VerifyAuthorizeAllow(req.Address, sigObj.SigObject.GitHubName, gist); !isValid {
+		zap.L().Error("verify authorize allow failed by VerifyGist", zap.String("gistId", req.GistId), zap.Error(err))
+		return nil, fmt.Errorf("gist content is invalid")
+	}
+	
+	return &model.SigObject{
+		GitHubName:    sigObj.SigObject.GitHubName,
+		WalletAddress: sigObj.SigObject.WalletAddress,
+		Timestamp:     sigObj.SigObject.Timestamp,
+	}, nil
 }

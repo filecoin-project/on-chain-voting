@@ -14,6 +14,8 @@
 
 package api
 
+import "powervoting-server/model"
+
 // Response represents the structure of a generic response.
 type Response struct {
 	Code    int    `json:"code"`    // Response code
@@ -54,7 +56,7 @@ type ProposalRep struct {
 	Content        string                 `json:"content"`                  // Proposal content
 	CreatedAt      int64                  `json:"createdAt"`                // Created time
 	UpdatedAt      int64                  `json:"updatedAt"`                // Updated time
-	Voted          bool                   `json:"voted"`          // Whether the proposal has been voted
+	Voted          bool                   `json:"voted"`                    // Whether the proposal has been voted
 	Status         int                    `json:"status"`                   // Proposal status
 	VotePercentage ProposalVotePercentage `json:"votePercentage,omitempty"` // Voting result percentages
 	SnapshotInfo   SnapshotInfo           `json:"snapshotInfo,omitempty"`   // Snapshot information
@@ -122,4 +124,9 @@ type FipEditorRep struct {
 	Editor    string `json:"editor"`
 	ChainId   int64  `json:"chainId"`
 	Timestamp int64  `json:"timestamp"`
+}
+
+type FipEditorGistInfoRep struct {
+	GistId     string          `json:"gistId"`
+	GistSigObj model.SigObject `json:"gistSigObj"`
 }

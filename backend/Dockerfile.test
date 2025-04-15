@@ -8,10 +8,10 @@ ENV GO111MODULE=on \
 
 WORKDIR /build
 
-COPY powervoting-backend/go.mod powervoting-backend/go.sum ./
+COPY backend/go.mod backend/go.sum ./
 RUN go mod tidy
 
-COPY powervoting-backend/. .
+COPY backend/. .
 
 RUN go build -o app .
 

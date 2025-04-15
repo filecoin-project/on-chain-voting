@@ -78,10 +78,26 @@ type VoteInfo struct {
 
 type OracleUpdateGistIdsEvent struct {
 	VoterAddress common.Address
-	GistIds      string
+	GistId       string
 }
 
 type OracleUpdateMinerIdsEvent struct {
 	VoterAddress common.Address
 	MinerIds     []uint64
+}
+
+type FilFoxRPCEvents struct {
+	TotalCount int64      `json:"totalCount"`
+	EventLogs  []EventLog `json:"eventLogs"`
+}
+
+type EventLog struct {
+	Address          string   `json:"address"`
+	Data             string   `json:"data"`
+	Topics           []string `json:"topics"`
+	Removed          bool     `json:"removed"`
+	LogIndex         int      `json:"logIndex"`
+	TransactionHash  string   `json:"transactionHash"`
+	TransactionIndex int      `json:"transactionIndex"`
+	BlockNumber      int64    `json:"blockNumber"`
 }

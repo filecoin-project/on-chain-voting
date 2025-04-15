@@ -13,6 +13,7 @@ import (
 
 	"powervoting-server/config"
 	"powervoting-server/constant"
+	"powervoting-server/model"
 	"powervoting-server/model/api"
 	"powervoting-server/service"
 	"powervoting-server/utils"
@@ -47,7 +48,7 @@ func (m *MockProposalService) AddDraft(ctx context.Context, req *api.AddProposal
 }
 
 // GetDraft implements service.IProposalService.
-func (m *MockProposalService) GetDraft(ctx context.Context, req api.GetDraftReq) (*api.ProposalDraftRep, error) {
+func (m *MockProposalService) GetDraft(ctx context.Context, req api.AddressReq) (*api.ProposalDraftRep, error) {
 	m.Called(ctx, req)
 	return nil, nil
 }
@@ -66,6 +67,16 @@ func (m *MockProposalService) ProposalList(ctx context.Context, req api.Proposal
 
 type MockVoteService struct {
 	mock.Mock
+}
+
+// VerifyGist implements service.IVoteService.
+func (m *MockVoteService) VerifyGist(ctx context.Context, req api.VerifyGistReq) (*model.SigObject, error) {
+	panic("unimplemented")
+}
+
+// GetFipEditorGistInfo implements service.IVoteService.
+func (m *MockVoteService) GetFipEditorGistInfo(ctx context.Context, req api.AddressReq) (*api.FipEditorGistInfoRep, error) {
+	panic("unimplemented")
 }
 
 // GetCountedVotedList implements service.IVoteService.
