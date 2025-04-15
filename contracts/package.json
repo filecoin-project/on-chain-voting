@@ -18,7 +18,8 @@
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@openzeppelin/hardhat-upgrades": "^3.9.0",
     "fs-extra": "^11.3.0",
-    "hardhat": "^2.22.19"
+    "hardhat": "^2.22.19",
+    "solidity-coverage": "^0.8.14"
   },
   "dependencies": {
     "@nomicfoundation/hardhat-ethers": "^3.0.8",
