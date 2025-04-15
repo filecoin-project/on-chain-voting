@@ -14,7 +14,6 @@
 
 import { CheckCircleOutlined, CloseCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { Empty, Popover, Table } from 'antd';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Chain } from "viem";
 import { VOTE_OPTIONS, web3AvatarUrl } from "../../common/consts";

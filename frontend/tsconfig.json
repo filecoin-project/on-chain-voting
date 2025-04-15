@@ -1,27 +1,32 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "module": "commonjs",
-    "lib": [
-      "es5",
-      "dom",
-      "dom.iterable",
-      "scripthost"
-    ],
-    "paths": {
-      "@tanstack/react-query": ["node_modules/@tanstack/react-query"],
-    },
-    "sourceMap": true,
-    "jsx": "react",
-    "moduleResolution": "node",
+    "outDir": "dist",
+    "target": "ES2022",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "noEmit": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "moduleDetection": "force",
+    "isolatedModules": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "skipLibCheck": true,
+    "verbatimModuleSyntax": true,
     "resolveJsonModule": true,
-    "baseUrl": ".",
+    /* JavaScript Support */
+    "allowJs": true,
+    "checkJs": true,
+    // Type Checking
+    "strict": true,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+    // Advanced
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "jsx": "react-jsx",
+    "types": ["vite/client"],
+    "allowImportingTsExtensions": true
   },
-  "exclude": [
-    "node_modules",
-  ]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "out"]
 }

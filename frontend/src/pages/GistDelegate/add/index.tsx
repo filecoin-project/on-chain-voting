@@ -15,7 +15,7 @@
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { message } from 'antd';
 import classNames from 'classnames';
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from "react-router-dom";
@@ -26,14 +26,20 @@ import {
   STORING_DATA_MSG,
   GITHUB_STEP_1,
   GITHUB_STEP_2,
-  JWT_HEADER
+  calibrationChainId,
+  checkGistApi
 } from "../../../common/consts";
 import LoadingButton from "../../../components/LoadingButton";
 import Table from '../../../components/Table';
-import { stringToBase64Url, validateValue } from '../../../utils';
+import { getContractAddress, validateValue } from '../../../utils';
 import './index.less';
+import oracleAbi from "../../../common/abi/oracle.json";
+import MDEditor from "../../../../src/components/MDEditor";
+import { useGistList } from "../../../common/store.ts";
+import axios from "axios";
+
 const GistDelegate = () => {
-  const { isConnected, address } = useAccount();
+  const { isConnected, address, chain } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const { openConnectModal } = useConnectModal();
   const navigate = useNavigate();
@@ -42,12 +48,15 @@ const GistDelegate = () => {
 
   const [githubSignature, setGithubSignature] = useState('');
   const [githubStep, setGithubStep] = useState(GITHUB_STEP_1);
+  const setGistList = useGistList((state: any) => state.setGistList);
+  const gistList = useGistList((state: any) => state.gistList);
+
   const [formValue] = useState({
     aud: '',
     prf: '',
     owner: '',
     repo: '',
-    url: '',
+    gistId: '',
     token: '',
   });
 
@@ -55,6 +64,7 @@ const GistDelegate = () => {
     register,
     handleSubmit,
     control,
+    setValue: setFormValue,
     formState: { errors }
   } = useForm({
     defaultValues: {
@@ -65,11 +75,13 @@ const GistDelegate = () => {
   const {
     data: hash,
     error,
+    writeContract,
     isPending: writeContractPending,
     isSuccess: writeContractSuccess,
     reset: resetWriteContract
   } = useWriteContract();
-  const [loading, setLoading] = useState<boolean>(writeContractPending);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [authorizeLoading, setAuthorizeLoading] = useState<boolean>(writeContractPending);
   const { t } = useTranslation();
   useEffect(() => {
     renderForm();
@@ -84,16 +96,6 @@ const GistDelegate = () => {
 
   useEffect(() => {
     if (writeContractSuccess) {
-
-      // save data to localStorage and set validity period to three minutes
-      const gistStorageData = JSON.parse(localStorage.getItem('gistStorage') || '[]');
-      // Calculate expiration time (three minutes from now)
-      const expirationTime = Date.now() + 3 * 60 * 1000;
-      // Push new data (timestamp and address) to the array
-      gistStorageData.push({ timestamp: expirationTime, address });
-      // Save updated data to localStorage
-      localStorage.setItem('gistStorage', JSON.stringify(gistStorageData));
-
       messageApi.open({
         type: 'success',
         content: t(STORING_DATA_MSG),
@@ -121,10 +123,9 @@ const GistDelegate = () => {
       return;
     }
   }, []);
-
   /**
    * create gist
-    * @param values
+   * @param values
    * @param githubStep
    */
   const onSubmit = (values: any, githubStep?: number) => {
@@ -140,10 +141,30 @@ const GistDelegate = () => {
   }
 
   const setValue = async (value: string) => {
-    console.log('value', value)
-    //TODO
+    const params = {
+      gistId: value,
+      address
+    }
 
-    setLoading(false);
+    const { data } = await axios.get(checkGistApi, { params });
+    if (!data.data) {
+      messageApi.open({
+        type: 'error',
+        content: t('content.validGistIdInfo'),
+      });
+      setAuthorizeLoading(false);
+      return
+    }
+    writeContract({
+      abi: oracleAbi,
+      address: getContractAddress(chain?.id || calibrationChainId, 'oracle'),
+      functionName: 'updateGistId',
+      args: [
+        value
+      ],
+    });
+    setGistList([])
+    setAuthorizeLoading(false);
   }
 
 
@@ -158,20 +179,14 @@ const GistDelegate = () => {
         }
         // Define signature parameters
         const signatureParams = {
-          iss: address,
-          aud,
-          prf: '',
-          act: 'add',
+          walletAddress: address,
+          githubName: aud,
+          timestamp: Math.floor(Date.now() / 1000)
         }
-        // Create a new Web3Provider using the current Ethereum provider
-
-        // Convert header and params to base64 URL
-        const base64Header = stringToBase64Url(JSON.stringify(JWT_HEADER));
-        const base64Params = stringToBase64Url(JSON.stringify(signatureParams));
-        let signature = '';
+        let signature = "";
         try {
           // Sign the concatenated header and params
-          signature = await signMessageAsync({ message: `${base64Header}.${base64Params}` })
+          signature = await signMessageAsync({ message: `${JSON.stringify(signatureParams)}` })
         } catch (e) {
           messageApi.open({
             type: 'error',
@@ -180,14 +195,24 @@ const GistDelegate = () => {
           setLoading(false);
           return;
         }
-        // Convert signature to base64 URL
-        const base64Signature = stringToBase64Url(signature);
 
-        // Concatenate header, params, and signature
-        const githubSignatureParams = `${base64Header}.${base64Params}.${base64Signature}`;
+        const signatureStr = `
+      I hereby claim:
 
+        * I am ${aud} on Github.
+        * I control ${address} (Filecoin wallet address).
+
+      To claim this, I am signing this object
+
+      ${JSON.stringify(signatureParams)}
+
+      with my Filecoin wallet's private key, yielding the signature:
+
+      ${signature}
+
+      And finally, I am proving ownership of the github account by posting this as a gist.`
         // Set GitHub signature and step
-        setGithubSignature(githubSignatureParams);
+        setGithubSignature(signatureStr);
         setGithubStep(GITHUB_STEP_2);
       } catch (e) {
         console.log(e);
@@ -199,9 +224,9 @@ const GistDelegate = () => {
   }
 
   const authorizeGithubValue = async (values: any) => {
-    setLoading(true);
-    const { url } = values;
-    setValue(url);
+    setAuthorizeLoading(true);
+    const { gistId } = values;
+    setValue(gistId);
   }
 
   const githubSignatureList = [
@@ -234,7 +259,7 @@ const GistDelegate = () => {
             />}
           />
           {errors.aud && (
-            <p className='text-red-500 mt-1'>{t('content.audRequired')}</p>
+            <p className='text-red-500 mt-1 text-sm'>{t('content.audRequired')}</p>
           )}
         </>
       )
@@ -246,37 +271,42 @@ const GistDelegate = () => {
       name: t('content.signature'),
       width: 100,
       comp: (
-        <textarea
-          disabled
-          value={githubSignature}
-          className='form-input h-[320px] w-full rounded bg-[#ffffff] border border-[#eeeeee] text-black cursor-not-allowed'
-        />
+        <>
+          <MDEditor
+            value={githubSignature}
+            readOnly={true}
+            onChange={() => undefined}
+            className="border-none rounded-[16px] bg-transparent"
+            style={{ height: '100%', width: '820px', whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
+            view={{ menu: false, md: false, html: true, both: false, fullScreen: true, hideMenu: false }}
+          />
+          <a target="_blank" href="https://gist.github.com/" style={{ color: "blue", fontSize: '16px' }}>{t('content.getGistID')}↗</a>
+        </>
       )
     },
     {
-      name: 'URL',
+      name: 'GistId',
       width: 100,
       comp: (
         <>
           <Controller
-            name="url"
+            name="gistId"
             control={control}
             render={() => <input
               className={classNames(
                 'form-input w-full rounded bg-[#ffffff] border border-[#eeeeee] text-black',
-                errors.url && 'border-red-500 focus:border-red-500'
+                errors.gistId && 'border-red-500 focus:border-red-500'
               )}
-              {...register('url', { required: true, validate: validateValue })}
+              {...register('gistId', { required: true, validate: validateValue })}
             />}
           />
-          {errors.url && (
-            <p className='text-red-500 mt-1'>{t('content.uRLRequired')}</p>
+          {errors.gistId && (
+            <p className='text-red-500 mt-1 text-sm'>{t('content.gistIdRequired')}</p>
           )}
         </>
       )
     },
   ];
-
 
   const renderGithubSignature = () => {
     return (
@@ -288,7 +318,16 @@ const GistDelegate = () => {
           />
 
           <div className='text-center'>
-            <LoadingButton text={t('content.sign')} loading={loading || writeContractPending || transactionLoading} />
+            {
+              gistList && gistList.length > 0 && (
+                <button
+                  className={`h-[40px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-6 rounded-xl disabled:opacity-50 mr-8 ${loading && 'cursor-not-allowed'}`}
+                  type='button' onClick={() => { navigate('/gistDelegate/list'); }}>
+                  {t('content.previous')}
+                </button>
+              )
+            }
+            <LoadingButton text={t('content.sign')} loading={loading} />
           </div>
         </div>
       </form>
@@ -306,11 +345,11 @@ const GistDelegate = () => {
 
           <div className='text-center'>
             <button
-              className={`h-[40px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-6 rounded-xl disabled:opacity-50 mr-8 ${loading && 'cursor-not-allowed'}`}
-              type='button' onClick={() => { setGithubStep(GITHUB_STEP_1) }}>
+              className={`h-[40px] bg-sky-500 hover:bg-sky-700 text-white py-2 px-6 rounded-xl disabled:opacity-50 mr-8 ${authorizeLoading && 'cursor-not-allowed'}`}
+              type='button' onClick={() => { setGithubStep(GITHUB_STEP_1); setFormValue('gistId', '') }}>
               {t('content.previous')}
             </button>
-            <LoadingButton text={t('content.authorize')} loading={loading || writeContractPending || transactionLoading} />
+            <LoadingButton text={t('content.authorize')} loading={authorizeLoading || writeContractPending || transactionLoading} />
           </div>
         </div>
       </form>

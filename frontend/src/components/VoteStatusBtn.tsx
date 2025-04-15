@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
-import { VOTE_LIST } from 'src/common/consts';
-import { ProposalFilter } from 'src/common/types';
+import { VOTE_LIST } from "../common/consts.ts";
+import type { ProposalFilter } from '../common/types';
 import { useTranslation } from 'react-i18next';
 
 export default function VoteStatusBtn({ status = 0 }) {

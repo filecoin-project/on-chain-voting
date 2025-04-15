@@ -114,13 +114,13 @@
         "power": "Power",
         "totalPower": "Total Power",
         "powerPercent": "Power Percent",
-        "rolePercent":"Role Percent",
+        "rolePercent": "Role Percent",
         "vote": "Vote",
         "issuer": "Issuer",
         "audience": "Audience",
-        "filecoinAddress": "Input Your Filecoin address",
+        "filecoinAddress": "Input your Filecoin address",
         "proof": "Proof",
-        "yourGithubAccount": "Input Your github account",
+        "yourGithubAccount": "Input your github account",
         "signature": "Signature",
         "ucanDelegatesAuthorize": "UCAN Delegates (Authorize)",
         "githubDelegatesAuthorize": "GitHub Delegates (Authorize)",
@@ -217,6 +217,12 @@
         "createPropose": "Create Propose",
         "approveList": "Approve List",
         "revokeList": "Revoke List",
-        "calculationFormula":"Calculation formula"
+        "calculationFormula": "Calculation formula",
+        "time": "Time",
+        "authorizeAgain": "Authorize again",
+        "getGistID": "Please paste the above text first and obtain gistId.",
+        "gistIdRequired": "GistId is required",
+        "validGistIdInfo": "Invalid GistId!",
+        "voted": "Voted"
     }
 }

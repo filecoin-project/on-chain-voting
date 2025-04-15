@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
-
 export default function ListFilter (props: { name: string, value: number, list: { label: string, value: number }[], onChange: (status: number) => Promise<void> }) {
 
   const { value, list, onChange } = props;

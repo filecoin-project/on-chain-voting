@@ -103,3 +103,10 @@ export const useTransactionHash = create<any>((set, get) => ({
     localStorage.setItem('transactionHash', JSON.stringify(updatedHash));
   },
 }));
+export const useGistList = create(set => ({
+  data: localStorage.getItem('gistList') ? JSON.parse(localStorage.getItem('gistList')!) : [],
+  setGistList: (value: any[]) => {
+    set({ gistList: value, });
+    localStorage.setItem('gistList', JSON.stringify(value));
+  },
+}));

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { message } from 'antd';
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from "react-router-dom";
 import type { BaseError } from "wagmi";

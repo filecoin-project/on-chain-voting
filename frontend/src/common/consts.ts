@@ -11,19 +11,20 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { filecoinCalibration } from 'wagmi/chains';
+import { filecoinCalibration, filecoin } from 'wagmi/chains';
+export const filecoinId = filecoin.id;
 export const calibrationChainId = filecoinCalibration.id;
-export const powerVotingMainNetContractAddress = process.env.POWER_VOTING_MAINNET_CONTRACT_ADDRESS || '';
-export const oracleMainNetContractAddress = process.env.ORACLE_MAINNET_CONTRACT_ADDRESS || '';
-export const oraclePowerMainNetContractAddress = process.env.ORACLE_POWER_MAINNET_CONTRACT_ADDRESS || '';
-export const powerVotingCalibrationContractAddress = process.env.POWER_VOTING_CALIBRATION_CONTRACT_ADDRESS || '';
-export const oracleCalibrationContractAddress = process.env.ORACLE_CALIBRATION_CONTRACT_ADDRESS || '';
-export const oraclePowerCalibrationContractAddress = process.env.ORACLE_POWER_CALIBRATION_CONTRACT_ADDRESS || '';
-export const powerVotingFipMainNetContractAddress = process.env.POWER_VOTING_FIP_MAINNET_CONTRACT_ADDRESS || '';
-export const powerVotingFipCalibrationContractAddress = process.env.POWER_VOTING_FIP_CALIBRATION_CONTRACT_ADDRESS || '';
-export const walletConnectProjectId = process.env.WALLET_CONNECT_ID || '';
+export const powerVotingMainNetContractAddress = import.meta.env.VITE_POWER_VOTING_MAINNET_CONTRACT_ADDRESS || '';
+export const oracleMainNetContractAddress = import.meta.env.VITE_ORACLE_MAINNET_CONTRACT_ADDRESS || '';
+export const oraclePowerMainNetContractAddress = import.meta.env.VITE_ORACLE_POWER_MAINNET_CONTRACT_ADDRESS || '';
+export const powerVotingCalibrationContractAddress = import.meta.env.VITE_POWER_VOTING_CALIBRATION_CONTRACT_ADDRESS || '';
+export const oracleCalibrationContractAddress = import.meta.env.VITE_ORACLE_CALIBRATION_CONTRACT_ADDRESS || '';
+export const oraclePowerCalibrationContractAddress = import.meta.env.VITE_ORACLE_POWER_CALIBRATION_CONTRACT_ADDRESS || '';
+export const powerVotingFipMainNetContractAddress = import.meta.env.VITE_POWER_VOTING_FIP_MAINNET_CONTRACT_ADDRESS || '';
+export const powerVotingFipCalibrationContractAddress = import.meta.env.VITE_POWER_VOTING_FIP_CALIBRATION_CONTRACT_ADDRESS || '';
+export const walletConnectProjectId = import.meta.env.VITE_WALLET_CONNECT_ID || '';
 export const githubApi = 'https://api.github.com/users';
-export const baseUrl = process.env.BASE_API_URL || ''
+export const baseUrl = import.meta.env.VITE_BASE_API_URL || ''
 export const proposalListApi = `${baseUrl}/proposal/list`;
 export const proposalVoteDataApi = `${baseUrl}/proposal/votes`;
 export const proposalDraftAddApi = `${baseUrl}/proposal/draft/add`;
@@ -31,7 +32,9 @@ export const proposalDraftGetApi = `${baseUrl}/proposal/draft/get`;
 export const votePowerGetApi = `${baseUrl}/power/getPower`;
 export const getVoteDetail = `${baseUrl}/proposal/details`;
 export const getFipListApi = `${baseUrl}/fipEditor/list`;
-export const getFipProposalApi=`${baseUrl}/fipProposal/list`
+export const getFipProposalApi = `${baseUrl}/fipProposal/list`;
+export const getGistListApi = `${baseUrl}/fipEditor/gistAuthorized`
+export const checkGistApi = `${baseUrl}/fipEditor/checkGist`
 export const IN_PROGRESS_STATUS = 2;
 export const COMPLETED_STATUS = 4;
 export const PENDING_STATUS = 1;

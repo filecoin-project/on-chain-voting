@@ -18,10 +18,10 @@ import axios from "axios";
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from "react-router-dom";
-import VoteStatusBtn from "src/components/VoteStatusBtn";
+import VoteStatusBtn from "../../../src/components/VoteStatusBtn";
 import { useAccount, useWaitForTransactionReceipt } from "wagmi";
 import {
   COMPLETED_STATUS,
@@ -36,7 +36,7 @@ import {
   VOTE_ALL_STATUS,
   VOTE_FILTER_LIST,
   VOTE_OPTIONS,
-  calibrationChainId,
+  filecoinId,
   proposalListApi,
   web3AvatarUrl
 } from "../../common/consts";
@@ -53,7 +53,7 @@ const Home = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { chain, address, isConnected } = useAccount();
-  const chainId = chain?.id || calibrationChainId;
+  const chainId = chain?.id || filecoinId;
 
   const { openConnectModal } = useConnectModal();
 
@@ -224,7 +224,7 @@ const Home = () => {
           className="relative overflow-hidden rounded-xl border-[1px] border-solid border-[#DFDFDF] bg-[#FFFFFF] px-[30px] py-[12px] mb-[16px] cursor-pointer"
         >
           {item.voted &&
-            <div className="absolute bg-[green] text-[#FFFFFF] w-[75px] h-[18px] top-[9px] left-[-20px] -rotate-[48deg] flex justify-center items-center text-[12px]">Voted</div>
+            <div className="absolute bg-[green] text-[#FFFFFF] w-[75px] h-[18px] top-[9px] left-[-20px] -rotate-[48deg] flex justify-center items-center text-[12px]">{t('content.voted')}</div>
           }
           <div className="flex justify-between mb-3">
             <div

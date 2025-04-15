@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import { Collapse } from "antd";
-import React from "react";
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from "react-router-dom";
 const { Panel } = Collapse;

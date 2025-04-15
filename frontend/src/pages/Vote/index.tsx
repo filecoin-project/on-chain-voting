@@ -3,11 +3,12 @@ import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
 import { message, Popover, Table } from "antd";
 import axios from 'axios';
 import dayjs from 'dayjs';
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from "react-router-dom";
-import VoteStatusBtn from "src/components/VoteStatusBtn";
-import { Buffer, mainnetClient, roundAt, timelockEncrypt } from "tlock-js";
+import VoteStatusBtn from "../../../src/components/VoteStatusBtn";
+import { Buffer } from 'buffer';
+import { mainnetClient, roundAt, timelockEncrypt } from "tlock-js";
 import { UserRejectedRequestError } from "viem";
 import type { BaseError } from "wagmi";
 import { useAccount, useWriteContract } from "wagmi";
@@ -246,10 +247,12 @@ const Vote = () => {
         });
         setLoading(false);
       } else {
-        // If user is not connected, prompt to connect
+        // If user is not connected, prompt to Connect
         openConnectModal && openConnectModal();
+        setLoading(false);
       }
     }
+
   }
 
   const handleOptionClick = (index: number) => {

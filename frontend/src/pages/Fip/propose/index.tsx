@@ -15,10 +15,10 @@
 import { RadioGroup } from '@headlessui/react';
 import { message } from "antd";
 import classNames from 'classnames';
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from "react-router-dom";
-import { useFipList } from 'src/common/store';
+import { useFipList } from '../../../common/store';
 import { isAddress } from 'viem';
 import type { BaseError } from "wagmi";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";

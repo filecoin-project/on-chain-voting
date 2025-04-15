@@ -12,19 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from "react";
 import ReactDOM from "react-dom/client";
 import {
   getDefaultConfig,
 } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
-import { metaMaskWallet } from '@rainbow-me/rainbowkit/wallets';
+import { metaMaskWallet, ledgerWallet } from '@rainbow-me/rainbowkit/wallets';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider, http } from "wagmi";
 import { filecoin } from 'wagmi/chains';
 import { walletConnectProjectId } from './common/consts';
 import { BrowserRouter } from "react-router-dom";
+import { FilecoinProvider } from 'iso-filecoin-react';
+import {
+  WalletAdapterHd,
+  WalletAdapterLedger,
+} from 'iso-filecoin-wallets';
+import TransportWebUSB from '@ledgerhq/hw-transport-webusb';
 import App from "./App";
+
+// Instantiate the wallet adapters you want to support
+const adapters = [
+  new WalletAdapterLedger({
+    transport: TransportWebUSB,
+  }),
+  new WalletAdapterHd(),
+]
 
 const queryClient = new QueryClient();
 
@@ -60,7 +73,10 @@ const config = getDefaultConfig({
   wallets: [
     {
       groupName: 'Recommended',
-      wallets: [metaMaskWallet]
+      wallets: [
+        metaMaskWallet,
+        ledgerWallet
+      ]
     },
   ],
 })
@@ -81,7 +97,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <BrowserRouter>
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <App />
+        <FilecoinProvider adapters={adapters} reconnectOnMount={true}>
+          <App />
+        </FilecoinProvider>
       </QueryClientProvider>
     </WagmiProvider>
   </BrowserRouter>
