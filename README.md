@@ -19,6 +19,7 @@ The system at a high level is composed of a few core components, each listed in 
 - [**frontend**](https://github.com/filecoin-project/on-chain-voting/tree/main/frontend): Contains the frontend dApp code that runs the UI, timelock encypts vote data, and stores proposals and ecnypted data in web3.storage.
 - [**backend**](https://github.com/filecoin-project/on-chain-voting/tree/main/backend): The powervoting backend contains code necessary to sync proposals and votes, decode all votes once the timelock encryption has expired, and calculate the final result based on the power of each respective vote. Everything this service does should be independently verifiable using on chain data.
 - [**contracts**](https://github.com/filecoin-project/on-chain-voting/tree/main/contracts): Contains smart contracts used for the core Power Voting functionality, including managing FIP Editors, creating proposals, and casting votes.
+- [**cli**](https://github.com/filecoin-project/on-chain-voting/tree/main/cli): Contains a CLI used for the core Power Voting functionality, including casting votes.
 
 ### Testing
 Each component of the overall system is tested using a go test suite (or [`forge`](https://github.com/foundry-rs/foundry), in the case of smart contracts). The test suite for each component is run by CI anytime the code in that subfolder changes. You can view test history on theGithub actions page: https://github.com/filecoin-project/on-chain-voting/actions
