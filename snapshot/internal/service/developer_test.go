@@ -26,6 +26,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"power-snapshot/config"
+	"power-snapshot/utils"
 )
 
 func TestGetDeveloperWeights(t *testing.T) {
@@ -39,9 +40,9 @@ func TestGetDeveloperWeights(t *testing.T) {
 		return
 	}
 
-	totalWeights, err := GetDeveloperWeights(time.Date(2024, 10, 15, 12, 00, 00, 00, time.Local))
-	assert.Nil(t, err)
-
+	totalWeights, commit, err := GetDeveloperWeights(time.Now())
+	assert.NoError(t, err)
+	assert.NotEmpty(t, commit)
 	zap.L().Info("result", zap.Any("client", totalWeights))
 }
 
@@ -51,19 +52,18 @@ func TestGetContributors(t *testing.T) {
 		return
 	}
 	config.InitLogger()
-	since := addMonths(time.Now(), -6).Format("2006-01-02T15:04:05Z")
-	ctx := context.Background()
+	since := utils.AddMonths(time.Now(), -6).Format("2006-01-02T15:04:05Z")
 	tokenManager := NewGitHubTokenManager(config.Client.Github.Token)
 
 	token := tokenManager.GetCoreAvailableToken()
-	res, err := getContributors(ctx, "filecoin-project", "venus", since, token)
+	res, err := getContributors(context.Background(), "filecoin-project", "on-chain-voting", since, token)
 	assert.Nil(t, err)
 
 	zap.L().Info("result", zap.Any("res", res))
 }
 
 func TestAddMonths(t *testing.T) {
-	res := addMonths(time.Date(2024, 05, 04, 00, 00, 00, 00, time.Local),
+	res := utils.AddMonths(time.Date(2024, 05, 04, 00, 00, 00, 00, time.Local),
 		-2)
 
 	expected := time.Date(2024, 03, 04, 00, 00, 00, 00, time.Local)

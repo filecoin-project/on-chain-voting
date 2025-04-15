@@ -64,7 +64,7 @@ func GetAllVoterAddresss(chainId int64) ([]string, error) {
 		return nil, err
 	}
 
-	return grpcResp.Address, nil
+	return grpcResp.GetAddresses(), nil
 }
 
 func GetVoterInfo(address string) (models.VoterInfo, error) {
@@ -80,9 +80,13 @@ func GetVoterInfo(address string) (models.VoterInfo, error) {
 		return models.VoterInfo{}, err
 	}
 
+	var actorIds []string
+	if len(grpcResp.ActorId) > 1 {
+		actorIds = []string{grpcResp.ActorId}
+	}
 	return models.VoterInfo{
 		EthAddress:    common.HexToAddress(address),
-		ActorIds:      []uint64{grpcResp.ActorId},
+		ActorIds:      actorIds,
 		MinerIds:      grpcResp.MinerIds,
 		GithubAccount: grpcResp.GithubAccount,
 	}, nil

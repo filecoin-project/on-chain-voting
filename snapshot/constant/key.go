@@ -19,8 +19,5 @@ const (
 	RedisAddrSyncedDate      = "%d_SYNCED_DATE"
 	RedisAddrPower           = "%d_POWER_%s"
 	RedisDeveloperPower      = "DEV_POWER"
-	RedisDict                = "%d_DICT"
-	RedisCreateDelegateEvent = "%d_CREATE_DELEGATE_EVENT_%s"
-	RedisDeleteDelegateEvent = "%d_DELETE_DELEGATE_EVENT_%s"
 	RedisTipset              = "TIPSET_%d"
 )

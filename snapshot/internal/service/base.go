@@ -23,12 +23,12 @@ import (
 )
 
 type BaseRepo interface {
-	GetEthClient(ctx context.Context, netID int64) (*models.GoEthClient, error)
-
 	GetLotusClient(ctx context.Context, netId int64) (jsonrpc.RPCClient, error)
-
+	// Mapping of dates (YYYYMMDD) to block heights. (e.g. {"20250301": 123456})
 	GetDateHeightMap(ctx context.Context, netId int64) (map[string]int64, error)
 	SetDateHeightMap(ctx context.Context, netId int64, height map[string]int64) error
+	SetDeveloperWeights(ctx context.Context, dayStr string, commits []models.Nodes) error
+	GetDeveloperWeights(ctx context.Context, dayStr string) ([]models.Nodes, error)
 }
 
 type MysqlRepo interface {

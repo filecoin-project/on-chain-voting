@@ -16,7 +16,6 @@ package task
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/golang-module/carbon"
@@ -25,7 +24,6 @@ import (
 	"power-snapshot/config"
 	"power-snapshot/constant"
 	"power-snapshot/internal/data"
-	models "power-snapshot/internal/model"
 )
 
 // SyncPower is a function that returns a closure for syncing power data across different networks.
@@ -35,20 +33,18 @@ func (j *Safejob) SyncPower() func() {
 		// Create a background context for the operations.
 		ctx := context.Background()
 		// Iterate over each network configuration in the client's network list.
-		for _, network := range config.Client.Network {
-			// sync date height
-			err := j.syncService.SyncDateHeight(ctx, network.ChainId)
-			if err != nil {
-				zap.L().Error("failed to sync date height, it will skipped ", zap.Error(err), zap.Int64("network_id", network.ChainId))
-				continue
-			}
 
-			err = j.syncService.SyncAllAddrPower(ctx, network.ChainId)
-			if err != nil {
-				zap.L().Error("failed to sync all addr power, it will skipped ", zap.Error(err), zap.Int64("network_id", network.ChainId))
-				continue
-			}
+		// sync date height
+		err := j.syncService.SyncDateHeight(ctx, config.Client.Network.ChainId)
+		if err != nil {
+			zap.L().Error("failed to sync date height, it will skipped ", zap.Error(err), zap.Int64("network_id", config.Client.Network.ChainId))
 		}
+
+		err = j.syncService.SyncAllAddrPower(ctx, config.Client.Network.ChainId)
+		if err != nil {
+			zap.L().Error("failed to sync all addr power, it will skipped ", zap.Error(err), zap.Int64("network_id", config.Client.Network.ChainId))
+		}
+
 	}
 }
 
@@ -89,32 +85,13 @@ func (j *Safejob) SyncDevWeightStepDay() func() {
 func (j *Safejob) UploadPowerToIPFS(w3client *data.W3Client) func() {
 	return func() {
 		zap.L().Info("backup power start: ", zap.Int64("timestamp", time.Now().Unix()))
-		wg := sync.WaitGroup{}
-		errList := make([]error, 0, len(config.Client.Network))
-		mu := &sync.Mutex{}
 
 		// Iterate over networks and upload power data to IPFS concurrently.
-		for _, network := range config.Client.Network {
-			wg.Add(1)
-			go func(network models.Network) {
-				defer wg.Done()
-				ctx := context.Background()
-
-				// Upload power data for the current network.
-				if err := j.syncService.UploadPowerToIPFS(ctx, network.ChainId, w3client); err != nil {
-					mu.Lock()
-					errList = append(errList, err)
-					mu.Unlock()
-				}
-			}(network)
+		ctx := context.Background()
+		// Upload power data for the current network.
+		if err := j.syncService.UploadPowerToIPFS(ctx, config.Client.Network.ChainId, w3client); err != nil {
+			zap.L().Error("backup power finished with err:", zap.Error(err))
 		}
 
-		// Wait for all goroutines to finish.
-		wg.Wait()
-
-		// Log errors if any occurred during the upload process.
-		if len(errList) != 0 {
-			zap.L().Error("backup power finished with err:", zap.Errors("errors", errList))
-		}
 	}
 }

@@ -16,19 +16,21 @@ package service
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
-	"io"
-	"net/http"
+	"math"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/go-resty/resty/v2"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
 	"power-snapshot/config"
+	"power-snapshot/constant"
 	models "power-snapshot/internal/model"
+	"power-snapshot/utils"
 )
 
 var CoreFilecoinOrg = []string{
@@ -113,114 +115,134 @@ var GithubUser = []string{
 }
 
 // GetDeveloperWeights Calculates the weight of a developer based on their contributions to a given repository
-func GetDeveloperWeights(fromTime time.Time) (map[string]int64, error) {
+func GetDeveloperWeights(fromTime time.Time) (map[string]int64, []models.Nodes, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	eg, ctx := errgroup.WithContext(ctx)
 
 	var coreFilecoin, ecosystem map[string]int64
+	var coreCommits, ecosystemCommits, commitsResult []models.Nodes
 	tokenManager := NewGitHubTokenManager(config.Client.Github.Token)
 
 	eg.Go(func() error {
 		var err error
 		coreFilecoinRepos := GetRepoNames(CoreFilecoinOrg, nil, tokenManager)
-		coreFilecoin, err = getDeveloperWeights(ctx, coreFilecoinRepos, 2, fromTime, tokenManager)
+		coreFilecoin, coreCommits, err = getDeveloperWeights(ctx, coreFilecoinRepos, 2, fromTime, tokenManager)
 		return err
 	})
 
 	eg.Go(func() error {
 		var err error
 		ecosystemRepos := GetRepoNames(EcosystemOrg, GithubUser, tokenManager)
-		ecosystem, err = getDeveloperWeights(ctx, ecosystemRepos, 1, fromTime, tokenManager)
+		ecosystem, ecosystemCommits, err = getDeveloperWeights(ctx, ecosystemRepos, 1, fromTime, tokenManager)
 		return err
 	})
 
 	err := eg.Wait()
 	if err != nil {
 		zap.L().Error("!!!!!!Error getting developer weights", zap.Error(err))
-		return nil, err
+		return nil, nil, err
 	}
 
+	commitsResult = append(commitsResult, coreCommits...)
+	commitsResult = append(commitsResult, ecosystemCommits...)
+
 	totalWeights := addMerge(coreFilecoin, ecosystem)
-	return totalWeights, nil
+	return totalWeights, commitsResult, nil
 }
 
 // getDeveloperWeights calculates the weights of developers based on their contributions to the specified repositories.
-func getDeveloperWeights(ctx context.Context, repository []string, weight int, fromTime time.Time, tokenManager *GitHubTokenManager) (map[string]int64, error) {
-	var wg sync.WaitGroup
-	weights := make(chan map[string]int64, len(repository))
-	eg, ctx := errgroup.WithContext(ctx)
+func getDeveloperWeights(ctx context.Context, repositories []string, weight int, fromTime time.Time, tokenManager *GitHubTokenManager) (map[string]int64, []models.Nodes, error) {
+	const maxConcurrency = 10
+	var (
+		wg          sync.WaitGroup
+		mu          sync.Mutex
+		errCh       = make(chan error, len(repositories))
+		weightsCh   = make(chan map[string]int64, len(repositories))
+		commitsPool []models.Nodes
+		sem         = make(chan struct{}, maxConcurrency)
+	)
 
-	for _, fullRepoName := range repository {
-		parts := strings.Split(fullRepoName, "/")
-		if len(parts) == 2 {
-			organization := parts[0]
-			repo := parts[1]
-			result := addMonths(fromTime, -6)
-
-			since := result.Format("2006-01-02T15:04:05Z")
-			time.Sleep(10 * time.Millisecond)
-
-			wg.Add(1)
-			eg.Go(func() error {
-				token := tokenManager.GetAvailableToken()
-				if token == "" {
-					return fmt.Errorf("no available token")
-				}
-
-				// Use the token
-				weightMap, err := getDeveloperWeightsByRepo(ctx, organization, repo, since, token)
-				if err != nil {
-					// If an error occurs, release the token immediately
-					tokenManager.DecreaseUsage(token)
-					return err
-				}
-
-				// Successfully used the token, send results
-				weights <- weightMap
-
-				// Release the token immediately after usage
-				tokenManager.DecreaseUsage(token)
-
-				// Done with this goroutine
-				wg.Done()
-
-				return nil
-			})
-
-		} else {
-			zap.L().Info("invalid repository format", zap.String("repository", fullRepoName))
+	for _, repo := range repositories {
+		parts := strings.Split(repo, "/")
+		if len(parts) != 2 {
+			zap.L().Warn("invalid repository format", zap.String("repo", repo))
+			continue
 		}
+		org, repoName := parts[0], parts[1]
+
+		wg.Add(1)
+		go func(org, repo string) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			token := tokenManager.GetAvailableToken()
+			if token == "" {
+				errCh <- fmt.Errorf("no available tokens")
+				return
+			}
+			defer tokenManager.DecreaseUsage(token)
+
+			repoCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+			defer cancel()
+
+			weightMap, commits, err := getRepoData(repoCtx, org, repo, fromTime, token)
+			if err != nil {
+				errCh <- fmt.Errorf("repo %s error: %w", repo, err)
+				return
+			}
+
+			mu.Lock()
+			commitsPool = append(commitsPool, commits...)
+			mu.Unlock()
+
+			select {
+			case weightsCh <- weightMap:
+			case <-repoCtx.Done():
+			}
+		}(org, repoName)
 	}
 
 	go func() {
 		wg.Wait()
-		close(weights)
+		close(weightsCh)
+		close(errCh)
 	}()
 
 	finalWeights := make(map[string]int64)
-	for weightMap := range weights {
-		for user, weights := range weightMap {
-			if weights >= 2 {
-				finalWeights[user] = int64(weight)
+	for w := range weightsCh {
+		for user, cnt := range w {
+			if cnt >= 2 {
+				finalWeights[user] += int64(weight)
 			}
 		}
 	}
 
-	err := eg.Wait()
-	if err != nil {
-		return nil, err
+	var errs []error
+	for err := range errCh {
+		errs = append(errs, err)
+	}
+	if len(errs) > 0 {
+		return finalWeights, commitsPool, fmt.Errorf("%d errors occurred: %v", len(errs), errors.Join(errs...))
 	}
 
-	return finalWeights, nil
+	return finalWeights, commitsPool, nil
+}
+
+func getRepoData(ctx context.Context, org, repo string, fromTime time.Time, token string) (map[string]int64, []models.Nodes, error) {
+	queryStart := utils.AddMonths(fromTime, -constant.GithubDataWithinXMonths)
+	since := queryStart.Format(time.RFC3339)
+
+	return getDeveloperWeightsByRepo(ctx, org, repo, since, token)
 }
 
 // getDeveloperWeightsByRepo calculates the weights of developers for a specific repository.
-func getDeveloperWeightsByRepo(ctx context.Context, organization, repository, since, token string) (map[string]int64, error) {
-	commits, err := getContributorsWithRetry(ctx, organization, repository, since, token, 3, 5*time.Second)
+func getDeveloperWeightsByRepo(ctx context.Context, organization, repository, since, token string) (map[string]int64, []models.Nodes, error) {
+	commits, err := getContributorsWithRetry(ctx, organization, repository, since, token, 5*time.Second)
 	if err != nil {
 		zap.L().Error("failed to get contributors", zap.Error(err))
-		return nil, err
+		return nil, nil, err
 	}
 
 	weightMap := make(map[string]int64)
@@ -233,138 +255,147 @@ func getDeveloperWeightsByRepo(ctx context.Context, organization, repository, si
 		}
 	}
 
-	return weightMap, nil
+	return weightMap, commits, nil
 }
 
-//TODO: 原始算力的计算方式_; UploadIpfs上传的bytes
 // getContributors retrieves the commit history of a repository from GitHub GraphQL API.
 func getContributors(ctx context.Context, owner, name, since, token string) ([]models.Nodes, error) {
-	payload := strings.NewReader(fmt.Sprintf("{\"query\":\"  "+
-		"query paginatedCommits($cursor: String) {\\n "+
-		"     repository(owner: \\\"%s\\\", name: \\\"%s\\\") {\\n"+
-		"        defaultBranchRef {\\n"+
-		"          target {\\n"+
-		"            ... on Commit {\\n"+
-		"              history(first:100, since: \\\"%s\\\"\\n,"+
-		" after: $cursor) {\\n"+
-		"                totalCount\\n"+
-		"                pageInfo {\\n"+
-		"                  endCursor\\n"+
-		"                  hasNextPage\\n"+
-		"                }\\n"+
-		"                nodes {\\n"+
-		"                  ... on Commit {\\n "+
-		"                     committedDate\\n "+
-		"                     author {\\n"+
-		"                        user {\\n"+
-		"                          login\\n "+
-		"                       }\\n"+
-		"                      }\\n"+
-		"                      committer {\\n "+
-		"                       user {\\n"+
-		"                          login\\n"+
-		"                        }\\n"+
-		"                      }\\n"+
-		"                  }\\n"+
-		"                }\\n"+
-		"              }\\n"+
-		"            }\\n"+
-		"          }\\n"+
-		"        }\\n"+
-		"      }\\n"+
-		"    }\",\"variables\":{}}", owner, name, since))
+	client := resty.New().
+		SetTimeout(30 * time.Second).
+		SetRetryCount(3).
+		SetRetryWaitTime(2 * time.Second).
+		SetRetryMaxWaitTime(10 * time.Second).
+		AddRetryCondition(func(r *resty.Response, err error) bool {
+			return r.StatusCode() >= 500 || err != nil
+		})
 
-	client := &http.Client{}
+	var allNodes []models.Nodes
+	var endCursor *string
+	for {
+		var response models.Developer
+		resp, err := client.R().
+			SetAuthToken(token).
+			SetContext(ctx).
+			SetHeaders(map[string]string{
+				"Content-Type": "application/json",
+				"Accept":       "application/vnd.github.v3+json",
+				"User-Agent":   "Golang-Resty-Client",
+			}).
+			SetBody(map[string]any{
+				"query": `
+                    query paginatedCommits($cursor: String) {
+                        repository(owner: "` + owner + `", name: "` + name + `") {
+                            defaultBranchRef {
+                                target {
+                                    ... on Commit {
+                                        history(first: 100, since: "` + since + `", after: $cursor) {
+                                            nodes {
+                                                ... on Commit {
+                                                    committedDate
+                                                    author { user { login } }
+                                                    committer { user { login } }
+                                                }
+                                            }
+                                            pageInfo {
+                                                endCursor
+                                                hasNextPage
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }`,
+				"variables": map[string]interface{}{
+					"cursor": endCursor,
+				},
+			}).
+			SetResult(&response).
+			Post(config.Client.Github.GraphQl)
 
-	req, err := http.NewRequest("POST", config.Client.Github.GraphQl, payload)
-	if err != nil {
-		zap.L().Error("failed to create http request", zap.Error(err))
-		return nil, err
-	}
-	req.Header.Add("Authorization", fmt.Sprintf("bearer %s", token))
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Accept", "*/*")
-	req.Header.Add("Host", "api.github.com")
-	req.Header.Add("Connection", "keep-alive")
-
-	res, err := client.Do(req)
-	if err != nil {
-		zap.L().Error("failed to make http request", zap.Error(err))
-		return nil, err
-	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-
+		if err != nil || resp.StatusCode() != 200 {
+			zap.L().Error("Request failed",
+				zap.Error(err),
+				zap.Int("status", resp.StatusCode()),
+				zap.String("response", resp.String()))
+			return nil, fmt.Errorf("request failed: %v", err)
 		}
-	}(res.Body)
 
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		zap.L().Error("failed to read http response body", zap.Error(err))
-		return nil, err
+		if len(response.Errors) > 0 {
+			errorMessages := make([]string, len(response.Errors))
+			for i, e := range response.Errors {
+				errorMessages[i] = e.Message
+			}
+			return nil, fmt.Errorf("GraphQL errors: %v", errorMessages)
+		}
+
+		history := response.Data.Repository.DefaultBranchRef.Target.History
+		allNodes = append(allNodes, history.Nodes...)
+
+		if !history.PageInfo.HasNextPage {
+			break
+		}
+
+		endCursor = &history.PageInfo.EndCursor
+		time.Sleep(1 * time.Second)
 	}
-	var calculate models.Developer
-	err = json.Unmarshal(body, &calculate)
-	if err != nil {
-		zap.L().Error("failed to unmarshal json response",
-			zap.Error(err),
-			zap.String("body", string(body)))
-		return nil, err
-	}
-	time.Sleep(1000 * time.Millisecond)
-	return calculate.Data.Repository.DefaultBranchRef.Target.History.Nodes, nil
+
+	return allNodes, nil
 }
 
 // getContributorsWithRetry retries fetching contributors for a repository with backoff and retry logic.
-func getContributorsWithRetry(ctx context.Context, organization, repository, since, token string, maxRetries int, retryInterval time.Duration) ([]models.Nodes, error) {
+func getContributorsWithRetry(ctx context.Context, organization, repository, since, token string, retryInterval time.Duration) ([]models.Nodes, error) {
+	noCancelCtx := context.WithoutCancel(ctx)
+
+	if err := ctx.Err(); err != nil {
+		zap.L().Info("Abort before execution",
+			zap.String("organization", organization),
+			zap.String("repository", repository),
+			zap.Error(err),
+		)
+		return nil, fmt.Errorf("pre-check failed: %w", err)
+	}
+
+	const maxRetries = 3
 	var commits []models.Nodes
-	var err error
+	var lastErr error
 
-	for i := 0; i < maxRetries; i++ {
-		commits, err = getContributors(ctx, organization, repository, since, token)
-		if err == nil {
-			break
-		}
-		if ctx.Err() != nil {
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		select {
+		case <-ctx.Done():
+			zap.L().Warn("Operation canceled",
+				zap.Error(ctx.Err()),
+				zap.Int("attempt", attempt))
 			return nil, ctx.Err()
+		default:
+			commits, lastErr = getContributors(noCancelCtx, organization, repository, since, token)
+			if lastErr == nil {
+				break
+			}
+
+			waitTime := time.Duration(math.Pow(2, float64(attempt))) * retryInterval
+			zap.L().Warn("Retrying...",
+				zap.Int("attempt", attempt+1),
+				zap.Duration("wait", waitTime),
+				zap.Error(lastErr))
+
+			time.Sleep(waitTime)
 		}
-		zap.L().Error(fmt.Sprintf("Retry %d ", i+1), zap.Error(err))
-		time.Sleep(retryInterval)
 	}
 
-	select {
-	case <-ctx.Done():
-		zap.L().Info("ctx done", zap.Error(ctx.Err()))
-		return nil, ctx.Err()
-	default:
-		zap.L().Info("Retrieving contributors", zap.Int("count", len(commits)))
+	if lastErr != nil {
+		zap.L().Error("Permanent failure after retries",
+			zap.Int("max_retries", maxRetries),
+			zap.Error(lastErr))
+		return nil, fmt.Errorf("after %d retries: %w", maxRetries, lastErr)
 	}
 
-	return commits, err
-}
+	zap.L().Info("Finalizing data processing",
+		zap.Int("count", len(commits)),
+		zap.String("organization", organization),
+		zap.String("repository", repository))
 
-// addMonths adds a specified number of months to a given date.
-func addMonths(input time.Time, months int) time.Time {
-	date := time.Date(input.Year(), input.Month(), 1, 0, 0, 0, 0, input.Location())
-	date = date.AddDate(0, months, 0)
-
-	lastDay := getLastDayOfMonth(date.Year(), int(date.Month()))
-	date = time.Date(date.Year(), date.Month(), lastDay, 0, 0, 0, 0, input.Location())
-
-	if input.Day() < lastDay {
-		date = time.Date(date.Year(), date.Month(), input.Day(), 0, 0, 0, 0, input.Location())
-	}
-
-	return date
-}
-
-// getLastDayOfMonth calculates the last day of the specified month in the given year.
-func getLastDayOfMonth(year, month int) int {
-	lastDay := 31
-	nextMonth := time.Date(year, time.Month(month+1), 0, 0, 0, 0, 0, time.UTC)
-	lastDay = nextMonth.Day()
-	return lastDay
+	return commits, nil
 }
 
 // addMerge Merge weights.

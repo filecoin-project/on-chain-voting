@@ -31,14 +31,14 @@ import (
 )
 
 type SyncRepoImpl struct {
-	netIds      []int64
+	netId       int64
 	redisClient *redis.Client
 	stream      jetstream.JetStream
-	consumer    map[int64]jetstream.Consumer
+	consumer    jetstream.Consumer
 	publisher   jetstream.Publisher
 }
 
-func NewSyncRepoImpl(netIDs []int64, redisClient *redis.Client, stream jetstream.JetStream) (*SyncRepoImpl, error) {
+func NewSyncRepoImpl(netID int64, redisClient *redis.Client, stream jetstream.JetStream) (*SyncRepoImpl, error) {
 	// init mq
 	cfg := jetstream.StreamConfig{
 		Name:      "TASKS",
@@ -53,40 +53,56 @@ func NewSyncRepoImpl(netIDs []int64, redisClient *redis.Client, stream jetstream
 		return nil, err
 	}
 
-	consMap := make(map[int64]jetstream.Consumer)
-	for _, netId := range netIDs {
-		consumer, err := stream.CreateOrUpdateConsumer(context.Background(), "TASKS",
-			jetstream.ConsumerConfig{
-				Name:          fmt.Sprintf("processor-%d", netId),
-				FilterSubject: fmt.Sprintf("tasks.%d", netId),
-				DeliverPolicy: jetstream.DeliverAllPolicy,
-				MaxDeliver:    1440,
-				AckWait:       1 * time.Minute,
-			})
-		if err != nil {
-			zap.S().Error("failed to create consumer", zap.Error(err))
-			return nil, err
-		}
-		consMap[netId] = consumer
+	consumer, err := stream.CreateOrUpdateConsumer(context.Background(), "TASKS",
+		jetstream.ConsumerConfig{
+			Name:          fmt.Sprintf("processor-%d", netID),
+			FilterSubject: fmt.Sprintf("tasks.%d", netID),
+			DeliverPolicy: jetstream.DeliverAllPolicy,
+			MaxDeliver:    1440,
+			AckWait:       1 * time.Minute,
+		})
+	if err != nil {
+		zap.S().Error("failed to create consumer", zap.Error(err))
+		return nil, err
 	}
 
 	return &SyncRepoImpl{
-		netIds:      netIDs,
+		netId:       netID,
 		redisClient: redisClient,
 		stream:      stream,
-		consumer:    consMap,
+		consumer:    consumer,
 		publisher:   stream,
 	}, nil
 }
 
+// GetAllAddrSyncedDateMap retrieves synchronization dates mapping for all addresses under specified network
+//
+// Parameters:
+//
+//	ctx   : Context for request lifecycle control
+//	netId : Network identifier used to construct Redis key
+//
+// Returns:
+//
+//	map[string][]string: Address-to-dates mapping (e.g. {"addr1": ["20250301", "20250302"]})
+//	error             : Returns Redis operation errors
 func (s *SyncRepoImpl) GetAllAddrSyncedDateMap(ctx context.Context, netId int64) (map[string][]string, error) {
+	// Construct Redis hash key using format pattern from constants
 	key := fmt.Sprintf(constant.RedisAddrSyncedDate, netId)
+
+	// Retrieve all fields/values from Redis hash
 	res, err := s.redisClient.HGetAll(ctx, key).Result()
 	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
+	// Initialize result map with pre-allocated space
 	m := make(map[string][]string)
+
+	// Convert hash values to string slices using comma delimiter
 	for k, v := range res {
 		m[k] = strings.Split(v, ",")
 	}
@@ -118,27 +134,31 @@ func (s *SyncRepoImpl) SetAddrSyncedDate(ctx context.Context, netId int64, addr 
 	return nil
 }
 
-func (s *SyncRepoImpl) GetAddrPower(ctx context.Context, netId int64, addr string) (map[string]*models.SyncPower, error) {
+func (s *SyncRepoImpl) GetAddrPower(ctx context.Context, netId int64, addr string) (map[string]models.SyncPower, error) {
 	key := fmt.Sprintf(constant.RedisAddrPower, netId, addr)
 	raw, err := s.redisClient.HGetAll(ctx, key).Result()
 	if err != nil {
 		return nil, err
 	}
-	
-	m := make(map[string]*models.SyncPower)
+
+	m := make(map[string]models.SyncPower)
 	for k, v := range raw {
 		var temp models.SyncPower
 		err := json.Unmarshal([]byte(v), &temp)
 		if err != nil {
 			return nil, err
 		}
-		m[k] = &temp
+		m[k] = temp
 	}
 
 	return m, nil
 }
 
-func (s *SyncRepoImpl) SetAddrPower(ctx context.Context, netId int64, addr string, in map[string]*models.SyncPower) error {
+func (s *SyncRepoImpl) SetAddrPower(ctx context.Context, netId int64, addr string, in map[string]models.SyncPower) error {
+	if len(in) == 0 {
+		return nil
+	}
+
 	key := fmt.Sprintf(constant.RedisAddrPower, netId, addr)
 	m := make(map[string]string)
 	for k, power := range in {
@@ -172,12 +192,7 @@ func (s *SyncRepoImpl) AddTask(ctx context.Context, netID int64, task *models.Ta
 }
 
 func (s *SyncRepoImpl) GetTask(ctx context.Context, netID int64) (jetstream.MessageBatch, error) {
-	cons, ok := s.consumer[netID]
-	if !ok {
-		return nil, fmt.Errorf("not found consumer by netID(%d)", netID)
-	}
-
-	mc, err := cons.Fetch(10)
+	mc, err := s.consumer.Fetch(10)
 	if err != nil {
 		return nil, err
 	}
@@ -253,113 +268,4 @@ func (s *SyncRepoImpl) ExistDeveloperWeights(ctx context.Context, dateStr string
 	}
 
 	return exist, nil
-}
-
-func (s *SyncRepoImpl) GetDict(ctx context.Context, netId int64) (int64, error) {
-	key := fmt.Sprintf(constant.RedisDict, netId)
-
-	val, err := s.redisClient.Get(ctx, key).Int()
-	if err == redis.Nil {
-		return 0, nil
-	} else if err != nil {
-		return 0, err
-	}
-	return int64(val), nil
-}
-
-func (s *SyncRepoImpl) SetDelegateEvent(ctx context.Context, netId int64, createDelegateEvents []models.CreateDelegateEvent, deleteDelegateEvents []models.DeleteDelegateEvent, endBlock int64) error {
-	// Start a new transaction
-	tx := s.redisClient.TxPipeline()
-
-	if len(createDelegateEvents) > 0 {
-		for _, event := range createDelegateEvents {
-			// Serialize the event to JSON
-			eventJSON, err := json.Marshal(event)
-			if err != nil {
-				return fmt.Errorf("failed to serialize CreateDelegateEvent: %v", err)
-			}
-
-			// Determine the Redis sorted set key
-			key := fmt.Sprintf(constant.RedisCreateDelegateEvent, netId, event.VoterAddress)
-
-			// Queue the ZADD command in the transaction
-			tx.ZAdd(ctx, key, redis.Z{
-				Score:  float64(event.BlockHeight),
-				Member: eventJSON,
-			})
-		}
-	}
-
-	if len(deleteDelegateEvents) > 0 {
-		for _, event := range deleteDelegateEvents {
-			// Serialize the event to JSON
-			eventJSON, err := json.Marshal(event)
-			if err != nil {
-				return fmt.Errorf("failed to serialize DeleteDelegateEvent: %v", err)
-			}
-
-			// Determine the Redis sorted set key
-			key := fmt.Sprintf(constant.RedisDeleteDelegateEvent, netId, event.VoterAddress)
-
-			// Queue the ZADD command in the transaction
-			tx.ZAdd(ctx, key, redis.Z{
-				Score:  float64(event.BlockHeight),
-				Member: eventJSON,
-			})
-		}
-	}
-
-	// Update the block height in the same transaction
-	dictKey := fmt.Sprintf(constant.RedisDict, netId)
-	tx.Set(ctx, dictKey, endBlock, 0)
-
-	// Execute the transaction
-	_, err := tx.Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to execute Redis transaction: %v", err)
-	}
-
-	return nil
-}
-
-func (s *SyncRepoImpl) GetDelegateEvent(ctx context.Context, netId int64, addr string, maxBlockHeight int64) (models.CreateDelegateEvent, models.DeleteDelegateEvent, error) {
-	// Query CreateDelegateEvent
-	createKey := fmt.Sprintf(constant.RedisCreateDelegateEvent, netId, addr)
-	createResult, err := s.redisClient.ZRevRangeByScore(ctx, createKey, &redis.ZRangeBy{
-		Max:   fmt.Sprintf("%d", maxBlockHeight),
-		Min:   "-inf",
-		Count: 1,
-	}).Result()
-	if err != nil {
-		return models.CreateDelegateEvent{}, models.DeleteDelegateEvent{}, fmt.Errorf("failed to get CreateDelegateEvent from Redis: %v", err)
-	}
-
-	var createEvent models.CreateDelegateEvent
-	if len(createResult) > 0 {
-		err = json.Unmarshal([]byte(createResult[0]), &createEvent)
-		if err != nil {
-			return models.CreateDelegateEvent{}, models.DeleteDelegateEvent{}, fmt.Errorf("failed to deserialize CreateDelegateEvent: %v", err)
-		}
-	}
-
-	// Query DeleteDelegateEvent
-	deleteKey := fmt.Sprintf(constant.RedisDeleteDelegateEvent, netId, addr)
-	deleteResult, err := s.redisClient.ZRevRangeByScore(ctx, deleteKey, &redis.ZRangeBy{
-		Max:   fmt.Sprintf("%d", maxBlockHeight),
-		Min:   "-inf",
-		Count: 1,
-	}).Result()
-	if err != nil {
-		return models.CreateDelegateEvent{}, models.DeleteDelegateEvent{}, fmt.Errorf("failed to get DeleteDelegateEvent from Redis: %v", err)
-	}
-
-	var deleteEvent models.DeleteDelegateEvent
-	if len(deleteResult) > 0 {
-		err = json.Unmarshal([]byte(deleteResult[0]), &deleteEvent)
-		if err != nil {
-			return models.CreateDelegateEvent{}, models.DeleteDelegateEvent{}, fmt.Errorf("failed to deserialize DeleteDelegateEvent: %v", err)
-		}
-	}
-
-	return createEvent, deleteEvent, nil
 }

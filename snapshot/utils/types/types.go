@@ -15,7 +15,6 @@
 package types
 
 type BalanceInfo struct {
-	Height  string `json:"Height"`
 	Balance string `json:"Balance"`
 }
 

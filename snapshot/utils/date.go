@@ -46,3 +46,28 @@ func CalDateList(syncEndTime time.Time, syncCountedDays int, dates []string) []s
 func CalMissDates(dates []string) []string {
 	return CalDateList(time.Now().Add(-(24 * time.Hour)), constant.DataExpiredDuration, dates)
 }
+
+
+// addMonths adds a specified number of months to a given date.
+func AddMonths(input time.Time, months int) time.Time {
+	date := time.Date(input.Year(), input.Month(), 1, 0, 0, 0, 0, input.Location())
+	date = date.AddDate(0, months, 0)
+
+	lastDay := getLastDayOfMonth(date.Year(), int(date.Month()))
+	date = time.Date(date.Year(), date.Month(), lastDay, 0, 0, 0, 0, input.Location())
+
+	if input.Day() < lastDay {
+		date = time.Date(date.Year(), date.Month(), input.Day(), 0, 0, 0, 0, input.Location())
+	}
+
+	return date
+}
+
+// getLastDayOfMonth calculates the last day of the specified month in the given year.
+func getLastDayOfMonth(year, month int) int {
+	lastDay := 31
+	nextMonth := time.Date(year, time.Month(month+1), 0, 0, 0, 0, 0, time.UTC)
+	lastDay = nextMonth.Day()
+	return lastDay
+}
+

@@ -70,26 +70,29 @@ func (q *QueryService) GetAddressPowerByDay(ctx context.Context, netId int64, ad
 		zap.L().Error("error getting address power ", zap.Error(err))
 		return nil, err
 	}
+
+	info, err := q.syncSrv.GetAddrInfo(ctx, netId, address)
+	if err != nil {
+		zap.L().Error("error getting address info", zap.Error(err))
+		return nil, err
+	}
+
 	if power == nil {
 		// get power from chain now and sync all power sync
-		err := q.syncSrv.SyncAddrPower(ctx, netId, address)
+		err := q.syncSrv.AddAddrPowerTaskToMQ(ctx, netId, address)
 		if err != nil {
-			zap.L().Error("error getting address power", zap.Error(err))
+			zap.L().Error("error add  address power task to message queue", zap.Error(err))
 			return nil, err
 		}
-		// start get power
-		
+
 		dh, err := q.baseRepo.GetDateHeightMap(ctx, netId)
 		if err != nil {
 			zap.L().Error("error getting date height map", zap.Error(err))
 			return nil, err
 		}
+
 		height := dh[dayStr]
-		info, err := q.syncSrv.GetAddrInfo(ctx, netId, address)
-		if err != nil {
-			zap.L().Error("error getting address info", zap.Error(err))
-			return nil, err
-		}
+
 		power = &models.SyncPower{
 			GithubAccount:    info.GithubAccount,
 			Address:          info.Addr,
@@ -101,45 +104,42 @@ func (q *QueryService) GetAddressPowerByDay(ctx context.Context, netId int64, ad
 			BlockHeight:      height,
 		}
 
-		if err != nil {
-			zap.L().Error("failed to get client balance", zap.Error(err))
-		}
-
 		for _, actionId := range info.ActionIDs {
-			idStr := fmt.Sprintf("%s%d", info.IdPrefix, actionId)
-
-			walletBalance, clientBalance, err := q.syncSrv.GetActorPower(ctx, idStr, netId,height)
+			walletBalance, clientBalance, err := q.syncSrv.GetActorBalance(ctx, actionId, netId, height)
 			if err != nil {
 				zap.L().Error("failed to get actor power", zap.Error(err))
 				return nil, err
 			}
+
 			if len(walletBalance) != 0 {
 				wl, ok := big.NewInt(0).SetString(walletBalance, 10)
 				if !ok {
 					zap.L().Error("failed to parse wallet balance", zap.Error(err), zap.String("wallet_balance", walletBalance))
 					return nil, errors.New("failed to parse wallet balance")
 				}
+
 				power.TokenHolderPower = power.TokenHolderPower.Add(power.TokenHolderPower, wl)
 			}
+
 			if len(clientBalance) != 0 {
 				wl, ok := big.NewInt(0).SetString(clientBalance, 10)
 				if !ok {
 					zap.L().Error("failed to parse client balance", zap.Error(err), zap.String("client_balance", clientBalance))
 					return nil, errors.New("failed to parse client balance")
 				}
+
 				power.ClientPower = power.ClientPower.Add(power.ClientPower, wl)
 			}
 		}
 
-		tipSetKey, err := q.lotusRepo.GetTipSetByHeight(ctx,netId, height)
+		tipSetKey, err := q.lotusRepo.GetTipSetByHeight(ctx, netId, height)
 		if err != nil {
 			zap.L().Error("failed to get tipset key", zap.Int64("height", height), zap.Error(err))
 		}
 
 		for _, minerId := range info.MinerIDs {
-			idStr := fmt.Sprintf("%s%d", info.IdPrefix, minerId)
 			if len(info.MinerIDs) != 0 {
-				minerPower, err := q.lotusRepo.GetMinerPowerByHeight(ctx, netId,idStr, tipSetKey)
+				minerPower, err := q.lotusRepo.GetMinerPowerByHeight(ctx, netId, minerId, tipSetKey)
 				if err != nil {
 					zap.L().Error("failed to get miner power", zap.Error(err))
 					return nil, err
@@ -156,8 +156,9 @@ func (q *QueryService) GetAddressPowerByDay(ctx context.Context, netId int64, ad
 				}
 			}
 		}
+
 		if len(info.GithubAccount) != 0 {
-			dwm, err := GetDeveloperWeights(dayTime)
+			dwm, commits, err := GetDeveloperWeights(dayTime)
 			if err != nil {
 				zap.L().Error("error getting developer weights", zap.Error(err))
 				power.DeveloperPower = big.NewInt(0)
@@ -166,23 +167,13 @@ func (q *QueryService) GetAddressPowerByDay(ctx context.Context, netId int64, ad
 					power.DeveloperPower = big.NewInt(weight)
 				}
 			}
+
+			err = q.baseRepo.SetDeveloperWeights(ctx, dayStr, commits)
+			if err != nil {
+				zap.S().Error("failed to set developer power", zap.String("date", dayStr), zap.Error(err))
+				return nil, fmt.Errorf("failed to set developer power: %w", err)
+			}
 		}
-	}
-
-	createDelegateEvent, deleteDelegateEvent, err := q.syncSrv.syncRepo.GetDelegateEvent(ctx, netId, power.Address, power.BlockHeight)
-	if err != nil {
-		zap.L().Error("error getting delegate event ", zap.Error(err))
-		return nil, err
-	}
-
-	if createDelegateEvent.Github == "" {
-		power.DeveloperPower = big.NewInt(0)
-		return power, nil
-	}
-
-	if createDelegateEvent.BlockHeight < deleteDelegateEvent.BlockHeight {
-		power.DeveloperPower = big.NewInt(0)
-		return power, nil
 	}
 
 	devWeight, err := q.queryRepo.GetDeveloperWeights(ctx, dayStr)
@@ -197,10 +188,10 @@ func (q *QueryService) GetAddressPowerByDay(ctx context.Context, netId int64, ad
 			zap.String("date", dayStr),
 			zap.String("address", address),
 			zap.String("account", power.GithubAccount))
-	}
-
-	if w, ok := devWeight[createDelegateEvent.Github]; ok {
-		power.DeveloperPower = big.NewInt(w)
+	} else {
+		if w, ok := devWeight[info.GithubAccount]; ok {
+			power.DeveloperPower = big.NewInt(w)
+		}
 	}
 
 	return power, nil
@@ -223,7 +214,6 @@ func (q *QueryService) GetDataHeight(ctx context.Context, netId int64, dayStr st
 }
 
 func (q *QueryService) GetAllAddressPowerByDay(ctx context.Context, chainId int64, dayStr string) (map[string]any, error) {
-
 	res := make(map[string]any)
 	addrPower, err := q.queryRepo.GetAddressPowerByDay(ctx, chainId, dayStr)
 	if err != nil {
@@ -239,6 +229,7 @@ func (q *QueryService) GetAllAddressPowerByDay(ctx context.Context, chainId int6
 	res["addrPower"] = addrPower
 
 	devPower, err := q.queryRepo.GetDevPowerByDay(ctx, dayStr)
+
 	if err != nil {
 		zap.L().Error(
 			"fail to get dev power",

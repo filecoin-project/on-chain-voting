@@ -25,36 +25,26 @@ type DeveloperPower struct {
 // Developer represents the developer structure containing information about the developer's repository.
 type Developer struct {
 	Data struct {
-		Repository Repository `json:"repository"` // Repository information.
+		Repository struct {
+			DefaultBranchRef struct {
+				Target struct {
+					History struct {
+						Nodes    []Nodes `json:"nodes"`
+						PageInfo struct {
+							EndCursor   string `json:"endCursor"`
+							HasNextPage bool   `json:"hasNextPage"`
+						} `json:"pageInfo"`
+					} `json:"history"`
+				} `json:"target"`
+			} `json:"defaultBranchRef"`
+		} `json:"repository"`
 	} `json:"data"`
+	Errors []struct {
+		Message string `json:"message"`
+	} `json:"errors"`
 }
-
-// Repository represents the repository structure containing details about the default branch reference.
-type Repository struct {
-	DefaultBranchRef DefaultBranchRef `json:"defaultBranchRef"` // Default branch reference information.
-}
-
-// DefaultBranchRef represents the default branch reference structure containing details about the target.
-type DefaultBranchRef struct {
-	Target Target `json:"target"` // Target information.
-}
-
-// Target represents the target structure containing details about the history.
-type Target struct {
-	History History `json:"history"` // History information.
-}
-
-// History represents the history structure containing total count, page information, and nodes.
-type History struct {
-	TotalCount int      `json:"totalCount"` // Total count of nodes.
-	PageInfo   PageInfo `json:"pageInfo"`   // Page information.
-	Nodes      []Nodes  `json:"nodes"`      // List of nodes.
-}
-
-// PageInfo represents the page information structure containing an end cursor and whether there is a next page.
-type PageInfo struct {
-	EndCursor   string `json:"endCursor"`   // End cursor.
-	HasNextPage bool   `json:"hasNextPage"` // Indicates if there is a next page.
+type PaginationVariables struct {
+	Cursor *string `json:"cursor"`
 }
 
 // Nodes represents the nodes structure containing details about committed date, author, and committer.

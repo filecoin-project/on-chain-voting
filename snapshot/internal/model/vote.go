@@ -20,8 +20,8 @@ import (
 
 // VoterInfo struct represents information about a voter stored in the Ethereum smart contract.
 type VoterInfo struct {
-	ActorIds      []uint64       `json:"actorIds"`      // List of actor IDs associated with the voter.
-	MinerIds      []uint64       `json:"minerIds"`      // List of miner IDs associated with the voter.
+	ActorIds      []string       `json:"actorIds"`      // List of actor IDs associated with the voter.
+	MinerIds      []string       `json:"minerIds"`      // List of miner IDs associated with the voter.
 	GithubAccount string         `json:"githubAccount"` // GitHub account linked to the voter.
 	EthAddress    common.Address `json:"ethAddress"`    // Ethereum address of the voter.
 	UcanCid       string         `json:"ucanCid"`       // CID (Content Identifier) of the UCAN (UnixFS) associated with the voter.

@@ -16,7 +16,6 @@ package data
 
 import (
 	"bytes"
-	"errors"
 	"net/http"
 	"os"
 	"sync"
@@ -107,50 +106,30 @@ func (w *W3Client) UploadByte(data []byte) (string, error) {
 	return link.String(), nil
 }
 
-
 type GoEthClientManager struct {
 	lock        sync.Mutex
-	instanceMap map[int64]models.GoEthClient
+	goEthClient models.GoEthClient
 }
 
-func NewGoEthClientManager(network []models.Network ) (*GoEthClientManager, error) {
-	instMap := make(map[int64]models.GoEthClient)
-	for _, net := range network {
-		client, err := getGoEthClient(net)
-		if err != nil {
-			zap.L().Error("init eth client failed", zap.Error(err))
-			return nil, err
-		}
-		instMap[net.ChainId] = client
+func NewGoEthClientManager(network models.Network) (*GoEthClientManager, error) {
+	client, err := getGoEthClient(network)
+	if err != nil {
+		zap.L().Error("init eth client failed", zap.Error(err))
+		return nil, err
 	}
 
 	return &GoEthClientManager{
 		lock:        sync.Mutex{},
-		instanceMap: instMap,
+		goEthClient: client,
 	}, nil
 }
 
-func (g *GoEthClientManager) GetClient(netId int64) (models.GoEthClient, error) {
-	g.lock.Lock()
-	defer g.lock.Unlock()
-	client, ok := g.instanceMap[netId]
-	if !ok {
-		zap.L().Error("client not exist", zap.Int64("netId", netId))
-		return models.GoEthClient{}, errors.New("client not exist")
-	}
-
-	return client, nil
+func (g *GoEthClientManager) GetClient() models.GoEthClient {
+	return g.goEthClient
 }
 
-func (g *GoEthClientManager) ListClientNetWork() []int64 {
-	g.lock.Lock()
-	defer g.lock.Unlock()
-	result := make([]int64, 0, len(g.instanceMap))
-	for netId := range g.instanceMap {
-		result = append(result, netId)
-	}
-
-	return result
+func (g *GoEthClientManager) GetChainId() int64 {
+	return config.Client.Network.ChainId
 }
 
 // getGoEthClient initializes a Go-ethereum client with the provided configuration.
@@ -171,7 +150,6 @@ func getGoEthClient(network models.Network) (models.GoEthClient, error) {
 	goEthClient := models.GoEthClient{
 		ChainId:     network.ChainId,
 		Name:        network.Name,
-		IdPrefix:    network.IdPrefix,
 		QueryClient: rpcs,
 		QueryRpc:    network.QueryRpc,
 	}

@@ -80,6 +80,9 @@ func (q *QueryRepoImpl) GetAddressPowerByDay(ctx context.Context, chainId int64,
 	prefix := fmt.Sprintf("%d_POWER_", chainId)
 	keys, err := q.redisCli.Keys(ctx, prefix+"*").Result()
 	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
@@ -109,6 +112,9 @@ func (q *QueryRepoImpl) GetAddressPowerByDay(ctx context.Context, chainId int64,
 func (q *QueryRepoImpl) GetDevPowerByDay(ctx context.Context, dayStr string) (string, error) {
 	devPower, err := q.redisCli.HGet(ctx, constant.RedisDeveloperPower, dayStr).Result()
 	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return "", nil
+		}
 		return "", err
 	}
 

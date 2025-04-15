@@ -29,9 +29,8 @@ type SyncPower struct {
 
 type AddrInfo struct {
 	Addr          string   `json:"addr"`
-	IdPrefix      string   `json:"addrWithPrefix"`
-	ActionIDs     []uint64 `json:"actionIDs"`
-	MinerIDs      []uint64 `json:"minerIDs"`
+	ActionIDs     []string `json:"actionIDs"`
+	MinerIDs      []string `json:"minerIDs"`
 	GithubAccount string   `json:"githubAccount"`
 }
 

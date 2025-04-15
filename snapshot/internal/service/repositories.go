@@ -15,11 +15,14 @@
 package service
 
 import (
-	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
-	"net/http"
 	"sync"
+	"time"
+
+	"go.uber.org/zap"
+
+	"power-snapshot/config"
+	"power-snapshot/utils"
 )
 
 // Repository represents a GitHub repository.
@@ -58,11 +61,13 @@ func GetRepoNames(orgs []string, users []string, tokenManager *GitHubTokenManage
 
 	// Fetch repositories for organizations
 	for _, org := range orgs {
+		time.Sleep(time.Duration(config.Client.Rate.GithubRequestLimit) * time.Millisecond)
 		go fetchRepos(org, "organization", getAllOrgRepos)
 	}
 
 	// Fetch repositories for users
 	for _, user := range users {
+		time.Sleep(time.Duration(config.Client.Rate.GithubRequestLimit) * time.Millisecond)
 		go fetchRepos(user, "user", getAllUserRepos)
 	}
 
@@ -75,6 +80,7 @@ func GetRepoNames(orgs []string, users []string, tokenManager *GitHubTokenManage
 	for repos := range reposChan {
 		allRepos = append(allRepos, repos...)
 	}
+	
 	return allRepos
 }
 
@@ -93,41 +99,17 @@ func getAllUserRepos(user, token string) ([]Repository, error) {
 // fetchRepositories performs the common logic for fetching repositories from GitHub.
 func fetchRepositories(url, token string) ([]Repository, error) {
 	var allRepos []Repository
-	client := http.Client{}
 
 	for {
-		req, err := http.NewRequest("GET", url, nil)
-		if err != nil {
-			return nil, fmt.Errorf("error creating request: %v", err)
-		}
-
-		req.Header.Set("Authorization", "token "+token)
-		req.Header.Set("Accept", "application/vnd.github.v3+json")
-
-		q := req.URL.Query()
-		q.Add("per_page", "100")
-		req.URL.RawQuery = q.Encode()
-
-		resp, err := client.Do(req)
-		if err != nil {
-			return nil, fmt.Errorf("error making request: %v", err)
-		}
-
-		defer resp.Body.Close()
-
-		if resp.StatusCode == http.StatusNotFound {
-			return nil, fmt.Errorf("not found (404)")
-		}
-
 		var repos []Repository
-		err = json.NewDecoder(resp.Body).Decode(&repos)
+		linkHeader, err := utils.FetchGithubDeveloper(url, token, map[string]string{"per_page": "100"}, &repos)
 		if err != nil {
-			return nil, fmt.Errorf("error unmarshal JSON: %v", err)
+			return nil, err
 		}
 
 		allRepos = append(allRepos, repos...)
 
-		nextPageURL := getNextPageURL(resp.Header.Get("Link"))
+		nextPageURL := utils.GetNextPageURL(linkHeader)
 		if nextPageURL == "" {
 			break
 		}
@@ -136,107 +118,4 @@ func fetchRepositories(url, token string) ([]Repository, error) {
 	}
 
 	return allRepos, nil
-}
-
-// getNextPageURL extracts the next page URL from the Link header.
-func getNextPageURL(linkHeader string) string {
-	if linkHeader == "" {
-		return ""
-	}
-	links := parseLinkHeader(linkHeader)
-	return links["next"]
-}
-
-// parseLinkHeader parses the Link header into a map of link relations and URLs.
-func parseLinkHeader(linkHeader string) map[string]string {
-	links := make(map[string]string)
-	if linkHeader != "" {
-		entries := splitByComma(linkHeader)
-		for _, entry := range entries {
-			parts := splitBySemicolon(entry)
-			if len(parts) < 2 {
-				continue
-			}
-			url := extractURL(parts[0])
-			rel := extractRel(parts[1])
-			if url != "" && rel != "" {
-				links[rel] = url
-			}
-		}
-	}
-	return links
-}
-
-// splitByComma splits a string by commas.
-func splitByComma(s string) []string {
-	var result []string
-	start := 0
-	for i := 0; i < len(s); i++ {
-		if s[i] == ',' {
-			result = append(result, s[start:i])
-			start = i + 1
-		}
-	}
-	result = append(result, s[start:])
-	return result
-}
-
-// splitBySemicolon splits a string by semicolons.
-func splitBySemicolon(s string) []string {
-	var result []string
-	start := 0
-	for i := 0; i < len(s); i++ {
-		if s[i] == ';' {
-			result = append(result, s[start:i])
-			start = i + 1
-		}
-	}
-	result = append(result, s[start:])
-	return result
-}
-
-// extractURL extracts a URL enclosed in angle brackets from a string.
-func extractURL(s string) string {
-	start := 0
-	for ; start < len(s) && (s[start] == ' ' || s[start] == '\t'); start++ {
-	}
-	if start >= len(s) || s[start] != '<' {
-		return ""
-	}
-	start++
-	end := start
-	for ; end < len(s) && s[end] != '>'; end++ {
-	}
-	if end >= len(s) || s[end] != '>' {
-		return ""
-	}
-	return s[start:end]
-}
-
-// extractRel extracts a relation from a string formatted as 'rel="value"'.
-func extractRel(s string) string {
-	start := 0
-	for ; start < len(s) && (s[start] == ' ' || s[start] == '\t'); start++ {
-	}
-	if start >= len(s) || s[start] != 'r' || start+3 >= len(s) || s[start+1] != 'e' || s[start+2] != 'l' || s[start+3] != '=' {
-		return ""
-	}
-	start += 4
-	if start >= len(s) {
-		return ""
-	}
-	if s[start] == '"' {
-		start++
-		end := start
-		for ; end < len(s) && s[end] != '"'; end++ {
-		}
-		if end >= len(s) || s[end] != '"' {
-			return ""
-		}
-		return s[start:end]
-	}
-	end := start
-	for ; end < len(s) && s[end] != ',' && s[end] != ';'; end++ {
-	}
-	return s[start:end]
 }

@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 
 	"github.com/golang-module/carbon"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -105,7 +106,6 @@ func (s *Snapshot) GetDataHeight(_ context.Context, req *pb.DataHeightRequest) (
 	}, nil
 }
 
-
 // GetAllAddrPowerByDay retrieves the power information for all addresses on a specific day.
 // It takes a GetAllAddrPowerByDayRequest as input and returns a GetAllAddrPowerByDayResponse or an error.
 // The function queries the power information for all addresses using the provided network ID and day.
@@ -151,7 +151,7 @@ func (s *Snapshot) SyncDateHeight(_ context.Context, req *pb.SyncDateHeightReque
 // If the synchronization fails, it returns an internal error with the corresponding error message.
 // Otherwise, it returns an empty SyncAddrPowerResponse indicating success.
 func (s *Snapshot) SyncAddrPower(_ context.Context, req *pb.SyncAddrPowerRequest) (*pb.SyncAddrPowerResponse, error) {
-	err := s.syncSrv.SyncAddrPower(context.Background(), req.GetNetId(), req.GetAddress())
+	err := s.syncSrv.AddAddrPowerTaskToMQ(context.Background(), req.GetNetId(), req.GetAddress())
 	if err != nil {
 		return &pb.SyncAddrPowerResponse{}, status.Error(codes.Internal, err.Error())
 	}
@@ -173,7 +173,6 @@ func (s *Snapshot) SyncAllAddrPower(_ context.Context, req *pb.SyncAllAddrPowerR
 	return &pb.SyncAllAddrPowerResponse{}, nil
 }
 
-
 // UploadSnapshotInfoByDay upload the snapshot data for a specific day and network.
 // It takes a SyncSnapshotRequest as input and returns a SyncSnapshotResponse or an error.
 // The function retrieves all address power information for the given day and network ID.
@@ -184,7 +183,7 @@ func (s *Snapshot) SyncAllAddrPower(_ context.Context, req *pb.SyncAllAddrPowerR
 func (s *Snapshot) UploadSnapshotInfoByDay(_ context.Context, req *pb.UploadSnapshotInfoByDayRequest) (*pb.UploadSnapshotInfoByDayResponse, error) {
 	allPower, err := s.querySrv.GetAllAddressPowerByDay(context.Background(), req.GetNetId(), req.GetDay())
 	if err != nil {
-		return &pb.UploadSnapshotInfoByDayResponse{}, status.Error(codes.Internal, err.Error())
+		zap.L().Error("get all addr power by day error", zap.Error(err))
 	}
 
 	snapshotHeight, err := s.syncSrv.UploadSnapshotInfoByDay(context.Background(), allPower, req.GetDay(), req.GetNetId())
@@ -196,4 +195,13 @@ func (s *Snapshot) UploadSnapshotInfoByDay(_ context.Context, req *pb.UploadSnap
 		Day:    req.Day,
 		Height: snapshotHeight,
 	}, nil
+}
+
+func (s *Snapshot) SyncAllDeveloperWeight(context.Context, *pb.SyncAllDeveloperWeightRequest) (*pb.SyncAllDeveloperWeightResponse, error) {
+	err := s.syncSrv.SyncAllDeveloperWeight(context.Background())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &pb.SyncAllDeveloperWeightResponse{}, nil
 }

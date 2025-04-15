@@ -16,22 +16,22 @@ package models
 
 // Config represents the overall configuration structure.
 type Config struct {
-	Server    Server
-	Nats      Nats
-	Network   []Network // Network configuration details.
-	OracleAbi string    // Path to the oracle ABI file.
-	Github    GitHub    // Github configuration details.
-	Redis     Redis     // Redis configuration details.
-	Mysql     Mysql     // Mysql configuration details.
-	W3Client  W3Client  // W3Client configuration details.
+	Server   Server
+	Nats     Nats
+	Network  Network // Network configuration details.
+	Github   GitHub    // Github configuration details.
+	Redis    Redis     // Redis configuration details.
+	Mysql    Mysql     // Mysql configuration details.
+	W3Client W3Client  // W3Client configuration details.
+	Rate     Rate      // Rate configuration details.
+	DataPath DataPath    // Data path for storing files.
 }
 
 // Network  configuration for a blockchain network.
 type Network struct {
-	ChainId           int64    // Identifier for the network.
-	Name              string   // Name of the network.
-	IdPrefix          string   // Address prefix.
-	QueryRpc          []string // Query RPC endpoint for the network.
+	ChainId  int64    // Identifier for the network.
+	Name     string   // Name of the network.
+	QueryRpc []string // Query RPC endpoint for the network.
 }
 
 // GitHub represents the configuration for GitHub integration.
@@ -67,4 +67,23 @@ type W3Client struct {
 	Space      string // IPFS space
 	Proof      string // IPFS proof
 	PrivateKey string // Private key for the wallet
+}
+
+type Rate struct {
+	GithubRequestLimit int64 // Limit for GitHub requests
+}
+
+type DataPath struct {
+	DeveloperWeights string // Path to the developer weights file
+}
+
+type ChainPrefix map[int64]string
+
+func (c *ChainPrefix) GetPrefix(netId int64) string {
+	value, exist := (*c)[netId]
+	if !exist {
+		return ""
+	}
+
+	return value
 }
