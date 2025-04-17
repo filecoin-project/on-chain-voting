@@ -21,6 +21,12 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 contract Oracle is IOracle, Ownable2StepUpgradeable, UUPSUpgradeable {
+    
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+    
     /**
      * @notice Authorizes an upgrade to a new implementation contract.
      * @param newImplementation The address of the new implementation contract.
