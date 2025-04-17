@@ -52,6 +52,11 @@ contract PowerVoting is IPowerVoting, Ownable2StepUpgradeable, UUPSUpgradeable {
 
     uint16 public snapshotMaxRandomOffsetDays;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+    
     /**
      * @dev Modifier that ensures the provided address is non-zero.
      * @param addr The address to check.
