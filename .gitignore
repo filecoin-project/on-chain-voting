@@ -26,3 +26,5 @@ snapshot/data/**
 contracts/coverage
 coverage.json
 contracts/.openzeppelin
+
+*/node_modules
