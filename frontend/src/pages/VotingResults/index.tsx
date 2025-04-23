@@ -17,7 +17,7 @@ import axios from 'axios';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useCurrentTimezone } from "../../common/store.ts";
 import Loading from '../../../src/components/Loading';
 import VoteStatusBtn from '../../../src/components/VoteStatusBtn';
@@ -39,9 +39,10 @@ import type { ProposalOption, ProposalVotes } from "../../common/types";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
 import MDEditor from '../../components/MDEditor';
 import VoteList from "../../components/VoteList";
+import { getBlockExplorers } from "../../utils"
 
 const VotingResults = () => {
-  const { chain, isConnected } = useAccount();
+  const { chain, isConnected, address } = useAccount();
   const { openConnectModal } = useConnectModal();
   const { openChainModal } = useChainModal();
   const { id } = useParams();
@@ -51,6 +52,7 @@ const VotingResults = () => {
   const timezone = useCurrentTimezone((state: any) => state.timezone);
   const [loading, setLoading] = useState(true);
   const [userInfo, setUserInfo] = useState<{ href: string, img: string }>({ href: '', img: '' })
+  const navigate = useNavigate();
 
   const initState = async () => {
     let option: ProposalOption[] = [];
@@ -134,18 +136,23 @@ const VotingResults = () => {
 
   useEffect(() => {
     initState();
-  }, [chain]);
-
+  }, [chain, address]);
+  useEffect(() => {
+    if (!isConnected) {
+      navigate("/home");
+      return;
+    }
+  }, [isConnected]);
   const getUserInfo = async () => {
     let href = '';
     let img = '';
     if (votingData?.githubName) {
       href = `https://github.com/${votingData.githubName}`;
-      const { data } = await axios.get(`${githubApi}/${votingData.githubName}`);
-      const githubAvatar = data.avatar_url;
-      img = `${githubAvatar}`;
+      // const { data } = await axios.get(`${githubApi}/${votingData.githubName}`);
+      // const githubAvatar = data.avatar_url;
+      img = `${githubApi}/${votingData.githubName}`;
     } else {
-      href = `${chain?.blockExplorers?.default.url}/address/${votingData?.address}`;
+      href = getBlockExplorers(chain, votingData?.address);
       img = `${web3AvatarUrl}:${votingData?.address}`
     }
     setUserInfo({ href, img })

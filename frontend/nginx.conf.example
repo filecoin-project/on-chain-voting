@@ -14,20 +14,9 @@ server {
       	proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
       	proxy_pass { BACKEND_HOST }/power_voting/api;
     }
-        location /rpc/v1 {
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header Host $host;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_pass { RPC_HOST }
-                add_header Access-Control-Allow-Origin *;
-                add_header Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT";
-                add_header Access-Control-Allow-Headers "Origin, X-Re/power_votingquested-With, Content-Type, Accept";
-                proxy_hide_header Content-Type;
-                add_header Content-Type application/json;
-                if ($request_method = 'OPTIONS') {
-                        return 204;
-               }
-	}
+
+
+
 
     listen [::]:{ LISTEN_PORT } ipv6only=on;
     listen { LISTEN_PORT };

@@ -23,18 +23,16 @@ import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from "react-router-dom";
-import type { ProposalDraft } from "../../common/types";
 import { UserRejectedRequestError } from "viem";
 import type { BaseError } from "wagmi";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+// import { useSendMessage } from "iso-filecoin-react"
 import fileCoinAbi from "../../common/abi/power-voting.json";
+import type { ProposalDraft } from "../../common/types";
 
-import CreateTable from "../../components/CreateTable";
-import timezoneOption from '../../json/timezons.json';
 import {
   calibrationChainId,
   DEFAULT_TIMEZONE,
-  githubApi,
   NOT_FIP_EDITOR_MSG,
   proposalDraftAddApi,
   proposalDraftGetApi,
@@ -44,12 +42,16 @@ import {
   STORING_DATA_MSG,
   WRONG_EXPIRATION_TIME_MSG,
   WRONG_START_TIME_MSG
-} from "../../common/consts";
-import { useFipList, useSearchValue, useStoringCid, useVoterInfo } from "../../common/store";
+} from "../../common/consts"
+import { useFipList, useSearchValue, useStoringCid } from "../../common/store";
+import CreateTable from "../../components/CreateTable";
 import LoadingButton from "../../components/LoadingButton";
 import Editor from '../../components/MDEditor';
-import { getContractAddress, hexToString, validateValue } from "../../utils";
+import timezoneOption from '../../json/timezons.json';
+// import { getContractAddress, hexToString, isFilAddress, validateValue } from "../../utils"
+import { getContractAddress, hexToString, multiplyWithPrecision, validateValue } from "../../utils"
 import './index.less';
+// import { useFilSnapMessage } from "../../common/hooks.ts"
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -58,13 +60,13 @@ const { RangePicker } = DatePicker;
 
 const CreateVote = () => {
   const { isConnected, address, chain } = useAccount();
+  // const { mutateAsync: sendMessage } = useSendMessage();
   const chainId = chain?.id || calibrationChainId;
   const { t } = useTranslation();
   const { openConnectModal } = useConnectModal();
   const prevAddressRef = useRef(address);
   const [messageApi, contextHolder] = message.useMessage();
   const setSearchValue = useSearchValue((state: any) => state.setSearchValue);
-  const voterInfo = useVoterInfo((state: any) => state.voterInfo);
   const addStoringCid = useStoringCid((state: any) => state.addStoringCid);
   const {
     register,
@@ -80,10 +82,10 @@ const CreateVote = () => {
       name: '',
       descriptions: '',
       percent: {
-        spPercentage: 2500,
-        clientPercentage: 2500,
-        developerPercentage: 2500,
-        tokenHolderPercentage: 2500,
+        spPercentage: 25,
+        clientPercentage: 25,
+        developerPercentage: 25,
+        tokenHolderPercentage: 25,
       },
       option: [
         { value: '' },
@@ -108,6 +110,7 @@ const CreateVote = () => {
   const [loading, setLoading] = useState<boolean>(writeContractPending);
   const [isDraftSave, setDraftSave] = useState(false);
   const [hasDraft, setHasDraft] = useState(false);
+
   useEffect(() => {
     if (error) {
       const errorStr = JSON.stringify(error);
@@ -130,6 +133,7 @@ const CreateVote = () => {
     }
     reset()
   }, [error])
+
   useEffect(() => {
     if (!isConnected) {
       navigate("/home");
@@ -145,7 +149,8 @@ const CreateVote = () => {
       setSearchValue('')
     }
   }, [address]);
-  // const OPTION_SPLIT_TAG = "&%";
+
+
   const loadDraft = async () => {
     try {
       const resp = await axios.get(proposalDraftGetApi, {
@@ -188,6 +193,10 @@ const CreateVote = () => {
         type: 'success',
         content: t(STORING_DATA_MSG),
       });
+      //clear draft
+      if (hasDraft) {
+        clearDraft()
+      }
       addStoringCid([{
         hash,
       }]);
@@ -210,13 +219,14 @@ const CreateVote = () => {
     const expTimestamp = dayjs(values.time[1]).add(offset, 'minute').unix();
     const currentTime = Math.floor(Date.now() / 1000);
     // Check if the role proportion is equal to 100
-    if (values.percent.clientPercentage + values.percent.developerPercentage + values.percent.spPercentage + values.percent.tokenHolderPercentage !== 100) {
+    const total = values.percent.clientPercentage * 100 + values.percent.developerPercentage * 100 + values.percent.spPercentage * 100 + values.percent.tokenHolderPercentage * 100
+    if (total !== 10000) {
       messageApi.open({
         type: "warning",
         content: t('content.infoPercentage'),
       });
       setLoading(false);
-      return false;
+      return
     }
     // Check if current time is after start time
     if (currentTime > startTimestamp) {
@@ -245,22 +255,78 @@ const CreateVote = () => {
       setLoading(false);
       return false;
     }
-    const githubObj = {
-      githubName: '',
-      githubAvatar: ''
-    }
 
-    if (voterInfo && voterInfo[0]) {
-      const githubName = voterInfo[0];
-      const { data } = await axios.get(`${githubApi}/${githubName}`);
-      githubObj.githubName = githubName;
-      githubObj.githubAvatar = data.avatar_url;
-    }
 
     if (isConnected) {
       // Check if user is a FIP editor
       if (isFipEditorAddress) {
         // Create voting using dynamic contract API
+
+
+        /*if (address && isFilAddress(address)) {
+          try {
+            const { message } = await useFilSnapMessage({
+              abi: fileCoinAbi,
+              contractAddress: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
+              address: address as string,
+              functionName: "createProposal",
+              functionParams: [
+                startTimestamp,
+                expTimestamp,
+                values.percent.tokenHolderPercentage * 100,
+                values.percent.spPercentage * 100,
+                values.percent.clientPercentage * 100,
+                values.percent.developerPercentage * 100,
+                values.descriptions,
+                values.name
+              ],
+            })
+            await sendMessage(message);
+            messageApi.open({
+              type: "success",
+              content: t(STORING_DATA_MSG)
+            })
+            if (hasDraft) {
+              clearDraft()
+            }
+            setTimeout(() => {
+              navigate("/home")
+            }, 1000);
+          } catch (error) {
+            console.log(error)
+            if (error as UserRejectedRequestError) {
+              messageApi.open({
+                type: "warning",
+                content: t("content.rejectedSignature")
+              })
+            } else {
+              messageApi.open({
+                type: "error",
+                content: (error as BaseError)?.shortMessage || JSON.stringify(error)
+              })
+            }
+          } finally {
+            setLoading(false);
+          }
+        } else {
+          writeContract({
+            abi: fileCoinAbi,
+            address: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
+            functionName: 'createProposal',
+            args: [
+              startTimestamp,
+              expTimestamp,
+              values.percent.tokenHolderPercentage * 100,
+              values.percent.spPercentage * 100,
+              values.percent.clientPercentage * 100,
+              values.percent.developerPercentage * 100,
+              values.descriptions,
+              values.name,
+            ],
+          });
+          setSearchValue('')
+        }*/
+
         writeContract({
           abi: fileCoinAbi,
           address: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
@@ -268,23 +334,15 @@ const CreateVote = () => {
           args: [
             startTimestamp,
             expTimestamp,
-            // data.blockHeight,
-            values.percent.tokenHolderPercentage * 100,
-            values.percent.spPercentage * 100,
-            values.percent.clientPercentage * 100,
-            values.percent.developerPercentage * 100,
+            multiplyWithPrecision(values.percent.tokenHolderPercentage, 100),
+            multiplyWithPrecision(values.percent.spPercentage, 100),
+            multiplyWithPrecision(values.percent.clientPercentage, 100),
+            multiplyWithPrecision(values.percent.developerPercentage, 100),
             values.descriptions,
             values.name,
           ],
         });
-
-        //clear draft
-        if (hasDraft) {
-          clearDraft()
-        }
-
         setSearchValue('')
-
       } else {
         messageApi.open({
           type: 'warning',
@@ -326,13 +384,21 @@ const CreateVote = () => {
       return
     }
     const values = getValues()
+
     if (!values.descriptions.length
-      && !values.name
-      && !values.time
+      || !values.name
+      || !values.time.length
     ) {
       return
     }
 
+    if (values.name.length >= 100) {
+      messageApi.open({
+        type: "warning",
+        content: t("content.saveProposalTitleInfo"),
+      });
+      return
+    }
     if (values.descriptions.length >= 2048) {
       messageApi.open({
         type: "warning",
@@ -340,7 +406,12 @@ const CreateVote = () => {
       });
       return
     }
-    if (values.percent.clientPercentage + values.percent.developerPercentage + values.percent.spPercentage + values.percent.tokenHolderPercentage !== 100) {
+    const sp = multiplyWithPrecision(values.percent.spPercentage, 100);
+    const client = multiplyWithPrecision(values.percent.clientPercentage, 100);
+    const developer = multiplyWithPrecision(values.percent.developerPercentage, 100);
+    const tokenHolder = multiplyWithPrecision(values.percent.tokenHolderPercentage, 100);
+    const total = sp + client + developer + tokenHolder;
+    if (total !== 10000) {
       messageApi.open({
         type: "warning",
         content: t('content.infoPercentage'),
@@ -348,16 +419,6 @@ const CreateVote = () => {
       return
     }
     setDraftSave(true);
-    const githubObj = {
-      githubName: '',
-      githubAvatar: ''
-    }
-    if (voterInfo && voterInfo[0]) {
-      const githubName = voterInfo[0];
-      const { data } = await axios.get(`${githubApi}/${githubName}`);
-      githubObj.githubName = githubName;
-      githubObj.githubAvatar = data.avatar_url;
-    }
     const offset = dayjs().utcOffset() - dayjs().tz(values.timezone).utcOffset();
     const startTimestamp = dayjs(values.time[0]).add(offset, 'minute').unix();
     const expTimestamp = dayjs(values.time[1]).add(offset, 'minute').unix();
@@ -365,17 +426,13 @@ const CreateVote = () => {
       creator: address,
       title: values.name,
       content: values.descriptions,
-      // ...githubObj,
-      // GMTOffset,
       startTime: startTimestamp,
       endTime: expTimestamp,
       chainId: chainId,
-      // currentTime,
-      // Time: (values.time ?? []).join(OPTION_SPLIT_TAG),
-      spPercentage: values.percent.spPercentage * 100,
-      clientPercentage: values.percent.clientPercentage * 100,
-      developerPercentage: values.percent.developerPercentage * 100,
-      tokenHolderPercentage: values.percent.tokenHolderPercentage * 100,
+      spPercentage: sp,
+      clientPercentage: client,
+      developerPercentage: developer,
+      tokenHolderPercentage: tokenHolder,
       timezone: values.timezone,
     }
     try {

@@ -12,18 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useReadContract, useReadContracts } from 'wagmi';
-import { getContractAddress } from "../utils";
-import oracleAbi from "./abi/oracle.json";
-import fileCoinAbi from "./abi/power-voting.json";
+import { useReadContract, useReadContracts } from "wagmi"
+import cbor from "cbor"
+import { ethers, Contract } from "ethers"
+import { Message } from "iso-filecoin/message"
+import { getContractAddress } from "../utils"
+import oracleAbi from "./abi/oracle.json"
+import fileCoinAbi from "./abi/power-voting.json"
+import { powerVotingCalibrationChainRpc } from "./consts.ts"
 
 export const useVoterInfoSet = (chainId: number, address: `0x${string}` | undefined) => {
   const { data: voterInfo } = useReadContract({
-    address: getContractAddress(chainId, 'oracle'),
+    address: getContractAddress(chainId, "oracle"),
     abi: oracleAbi,
-    functionName: 'voterToInfo',
+    functionName: "voterToInfo",
     args: [address]
-  });
+  })
   return {
     voterInfo: voterInfo as any
   }
@@ -32,89 +36,98 @@ export const useVoterInfoSet = (chainId: number, address: `0x${string}` | undefi
 
 export const useVoterAddress = (chainId: number) => {
   const { data, isSuccess: voterAddressSuccess } = useReadContract({
-    address: getContractAddress(chainId, 'oracle'),
+    address: getContractAddress(chainId, "oracle"),
     abi: oracleAbi,
-    functionName: 'getVoterAddresses',
-  });
+    functionName: "getVoterAddresses"
+  })
   return {
     voterAddress: data,
     voterAddressSuccess
-  } as any;
+  } as any
 }
 
 export const useLatestId = (chainId: number, enabled: boolean) => {
   const { data: latestId, isLoading: getLatestIdLoading, refetch } = useReadContract({
-    address: getContractAddress(chainId, 'powerVoting'),
+    address: getContractAddress(chainId, "powerVoting"),
     abi: fileCoinAbi,
-    functionName: 'proposalId',
+    functionName: "proposalId",
     query: {
       enabled
     }
-  });
+  })
   return {
     latestId,
     getLatestIdLoading,
     refetch
-  };
+  }
 }
 
 export const useProposalDataSet = (params: any) => {
-  const { chainId, total, page, pageSize } = params;
-  const contracts: any[] = [];
-  const offset = (page - 1) * pageSize;
+  const { chainId, total, page, pageSize } = params
+  const contracts: any[] = []
+  const offset = (page - 1) * pageSize
   // Generate contract calls for fetching proposals based on pagination
   for (let i = total - offset; i > Math.max(total - offset - pageSize, 0); i--) {
     contracts.push({
-      address: getContractAddress(chainId, 'powerVoting'),
+      address: getContractAddress(chainId, "powerVoting"),
       abi: fileCoinAbi,
-      functionName: 'idToProposal',
-      args: [i],
-    });
+      functionName: "idToProposal",
+      args: [i]
+    })
   }
   const {
     data: proposalData,
     isLoading: getProposalIdLoading,
     isSuccess: getProposalIdSuccess,
-    error,
+    error
   } = useReadContracts({
     contracts: contracts,
     query: { enabled: contracts.length > 0 }
-  });
+  })
   return {
     proposalData: proposalData || [],
     getProposalIdLoading,
     getProposalIdSuccess,
-    error,
-  };
-}
-
-export const useMinerIdSet = (chainId: number, address: `0x${string}` | undefined) => {
-  const { data: minerIdData, isLoading: getMinerIdsLoading, isSuccess: getMinerIdsSuccess } = useReadContract({
-    address: getContractAddress(chainId || 0, 'oracle'),
-    abi: oracleAbi,
-    functionName: 'getVoterInfo',
-    args: [address]
-  });
-  return {
-    minerIdData: minerIdData as any,
-    getMinerIdsLoading,
-    getMinerIdsSuccess
+    error
   }
 }
 
-export const useOwnerDataSet = (contracts: any[]) => {
-  const {
-    data: ownerData,
-    isLoading: getOwnerLoading,
-    isSuccess: getOwnerSuccess
-  } = useReadContracts({
-    contracts: contracts,
-    query: { enabled: !!contracts.length }
-  });
+export const useFilSnapMessage = async ({ abi, contractAddress, functionName, functionParams, address }: {
+  abi: any,
+  contractAddress: string,
+  functionName: string,
+  functionParams: any[],
+  address: string
+}) => {
 
+  const provider = new ethers.JsonRpcProvider(powerVotingCalibrationChainRpc)
+  const contract = new Contract(
+    contractAddress,
+    abi,
+    provider
+  )
+
+  let data = contract.interface.encodeFunctionData(functionName, functionParams)
+
+  const estimatedGas = await provider.estimateGas({
+    to: contractAddress,
+    data
+  })
+
+  data = data.replace("0x", "")
+  const bytes = new Uint8Array(data.match(/../g)!.map(byte => parseInt(byte, 16)))
+  const serializedData = cbor.encode(bytes)
+  const params = btoa(String.fromCharCode.apply(null, [...serializedData].slice(2)))
+
+  const message = new Message({
+    from: address,
+    to: contractAddress,
+    value: "0",
+    gasLimit: Number(estimatedGas),
+    method: 0,
+    params
+  })
   return {
-    ownerData: ownerData as any[],
-    getOwnerLoading,
-    getOwnerSuccess,
-  };
+    message
+  }
 }

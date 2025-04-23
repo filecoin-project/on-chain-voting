@@ -18,7 +18,7 @@ import { useTranslation } from 'react-i18next';
 import type { Chain } from "viem";
 import { VOTE_OPTIONS, web3AvatarUrl } from "../../common/consts";
 import type { ProposalVotes } from "../../common/types";
-import { bigNumberToFloat, convertBytes } from "../../utils";
+import { bigNumberToFloat, convertBytes, getBlockExplorers } from "../../utils"
 import EllipsisMiddle from "../EllipsisMiddle";
 import './index.less';
 interface Props {
@@ -44,11 +44,11 @@ const VoteList: React.FC<Props> = ({ voteList, chain, rolePercent }) => {
       title: t('content.power'),
       dataIndex: 'power',
       key: 'power',
-      render: (text: string, record: any) => {
-        if (record.role === 'TokenHolder') {
-          return `${text} ${chain?.nativeCurrency?.symbol}`
+      render: (value: any) => {
+        if (Number(value.value)) {
+          return `${value.value} ${value.unit}`
         } else {
-          return text
+          return value.value
         }
       }
     },
@@ -56,11 +56,11 @@ const VoteList: React.FC<Props> = ({ voteList, chain, rolePercent }) => {
       title: t('content.totalPower'),
       dataIndex: 'total',
       key: 'total',
-      render: (text: string, record: any) => {
-        if (record.role === 'TokenHolder') {
-          return `${text} ${chain?.nativeCurrency?.symbol}`
+      render: (value: any) => {
+        if (Number(value.value)) {
+          return `${value.value} ${value.unit}`
         } else {
-          return text
+          return value.value || 0
         }
       }
     },
@@ -69,10 +69,10 @@ const VoteList: React.FC<Props> = ({ voteList, chain, rolePercent }) => {
       dataIndex: 'percent',
       key: 'percent',
       render: (text: string, record: any) => {
-        if (record.power === '0') {
+        if (record.power.value === '0') {
           return 'NO VOTES'
         } else {
-          const percent = (record.power / record.total) * record.rolePercent
+          const percent = (record.power.value / record.total.value) * record.rolePercent
           return `${percent.toFixed(2)}%`
         }
       }
@@ -92,36 +92,54 @@ const VoteList: React.FC<Props> = ({ voteList, chain, rolePercent }) => {
         key: 'sp',
         role: 'SP',
         powerBlockHeight: votePower.blockHeight,
-        power: convertBytes(votePower.spPower),
-        total: convertBytes(votePower.totalSpPower),
-        // percent: votePower.spPowerPercent === 0 ? '0%' : `${votePower.spPowerPercent.toFixed(2)}%`,
+        power: {
+          value: convertBytes(votePower.spPower, true).value,
+          unit: convertBytes(votePower.spPower, true).units
+        },
+        total: {
+          value: convertBytes(votePower.totalSpPower, true).value,
+          unit: convertBytes(votePower.totalSpPower, true).units
+        },
         rolePercent: rolePercent.sp_percentage
       },
       {
         key: 'client',
         role: 'Client',
         powerBlockHeight: votePower.blockHeight,
-        power: convertBytes(Number(votePower.clientPower) / (10 ** 18)),
-        total: convertBytes(Number(votePower.totalClientPower) / (10 ** 18)),
-        // percent: votePower.clientPowerPercent === 0 ? '0%' : `${votePower.clientPowerPercent.toFixed(2)}%`,
+        power: {
+          value: convertBytes(Number(votePower.clientPower) / (10 ** 18), true).value,
+          unit: convertBytes(Number(votePower.clientPower) / (10 ** 18), true).units
+        },
+        total: {
+          value: convertBytes(Number(votePower.totalClientPower) / (10 ** 18), true).value,
+          unit: convertBytes(Number(votePower.totalClientPower) / (10 ** 18), true).units
+        },
         rolePercent: rolePercent.client_percentage
       },
       {
         key: 'developer',
         role: 'Developer',
         powerBlockHeight: votePower.blockHeight,
-        power: votePower.developerPower,
-        total: votePower.totalDeveloperPower,
-        // percent: votePower.developerPowerPercent === 0 ? '0%' : `${votePower.developerPowerPercent.toFixed(2)}%`,
+        power: {
+          value: votePower.developerPower,
+        },
+        total: {
+          value: votePower.totalDeveloperPower
+        },
         rolePercent: rolePercent.developer_percentage
       },
       {
         key: 'tokenHolder',
         role: 'TokenHolder',
         powerBlockHeight: votePower.blockHeight,
-        power: bigNumberToFloat(votePower.tokenHolderPower),
-        total: bigNumberToFloat(votePower.totalTokenHolderPower),
-        // percent: votePower.tokenHolderPowerPercent === 0 ? '0%' : `${votePower.tokenHolderPowerPercent.toFixed(2)}%`,
+        power: {
+          value: bigNumberToFloat(votePower.tokenHolderPower),
+          unit: chain?.nativeCurrency?.symbol
+        },
+        total: {
+          value: bigNumberToFloat(votePower.totalTokenHolderPower),
+          unit: chain?.nativeCurrency?.symbol
+        },
         rolePercent: rolePercent.token_holder_percentage
       },
     ];
@@ -142,7 +160,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain, rolePercent }) => {
     data.forEach(item => {
       const { total, percent, power, rolePercent } = item;
       // Check if total is not '0'
-      if (power !== '0') {
+      if (total.value !== '0') {
         arr.push({ percent, power, total, rolePercent });
       }
     });
@@ -152,11 +170,11 @@ const VoteList: React.FC<Props> = ({ voteList, chain, rolePercent }) => {
         // Check if it's not the last item in the array
         if (index < arr.length - 1) {
           // Append percent value and count with a plus sign
-          currentPercent += `(${item.power} / ${item.total}) * ${item.rolePercent}% + `;
+          currentPercent += `(${item.power.value} / ${Number(item.total.value).toFixed(2)}) * ${item.rolePercent}% + `;
           totalPercent += `${item.rolePercent}% + `
         } else {
           // Append percent value and count without a plus sign
-          currentPercent += `(${item.power} / ${item.total}) * ${item.rolePercent}%`;
+          currentPercent += `(${item.power.value} / ${Number(item.total.value).toFixed(2)}) * ${item.rolePercent}%`;
           totalPercent += `${item.rolePercent}%`
         }
       });
@@ -164,7 +182,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain, rolePercent }) => {
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <span>{title}&nbsp;</span>
           <div>
-            {numerator.toFixed(2)}% / {denominator}%
+            {Number(numerator) === 0 ? 0 : numerator.toFixed(2)}% / {Number(denominator) === 0 ? 0 : denominator.toFixed(2)}%
           </div>
           <Popover content={
             <div>
@@ -206,21 +224,29 @@ const VoteList: React.FC<Props> = ({ voteList, chain, rolePercent }) => {
                 let currentPowerPercent = 0
                 if (item.tokenHolderPower > 0) {
                   powers.push("TokenHolder");
-                  totalPercent += rolePercent.token_holder_percentage
-                  currentPowerPercent += (item.tokenHolderPower / item.totalTokenHolderPower) * rolePercent.token_holder_percentage
                 }
                 if (item.spPower > 0) {
                   powers.push("Sp")
-                  totalPercent += rolePercent.sp_percentage
-                  currentPowerPercent += (item.spPower / item.totalSpPower) * rolePercent.sp_percentage
                 }
                 if (item.developerPower > 0) {
                   powers.push("Developer")
-                  totalPercent += rolePercent.developer_percentage
-                  currentPowerPercent += (item.developerPower / item.totalDeveloperPower) * rolePercent.developer_percentage
                 }
                 if (item.clientPower > 0) {
                   powers.push("Client")
+                }
+                if (item.totalSpPower > 0) {
+                  totalPercent += rolePercent.sp_percentage
+                  currentPowerPercent += (item.spPower / item.totalSpPower) * rolePercent.sp_percentage
+                }
+                if (item.totalTokenHolderPower > 0) {
+                  totalPercent += rolePercent.token_holder_percentage
+                  currentPowerPercent += (item.tokenHolderPower / item.totalTokenHolderPower) * rolePercent.token_holder_percentage
+                }
+                if (item.totalDeveloperPower > 0) {
+                  totalPercent += rolePercent.developer_percentage
+                  currentPowerPercent += (item.developerPower / item.totalDeveloperPower) * rolePercent.developer_percentage
+                }
+                if (item.totalClientPower > 0) {
                   totalPercent += rolePercent.client_percentage
                   currentPowerPercent += (item.clientPower / item.totalClientPower) * rolePercent.client_percentage
                 }
@@ -234,7 +260,7 @@ const VoteList: React.FC<Props> = ({ voteList, chain, rolePercent }) => {
                         className="text-[#313D4F] text-sm font-medium"
                         target="_blank"
                         rel="noopener noreferrer"
-                        href={`${chain?.blockExplorers?.default.url}/address/${item?.address}`}
+                        href={getBlockExplorers(chain, item.address)}
                       >
                         {EllipsisMiddle({ suffixCount: 4, children: item?.address })}
                       </a>
@@ -262,10 +288,10 @@ const VoteList: React.FC<Props> = ({ voteList, chain, rolePercent }) => {
                             dataSource={getPowerData(item)}
                             columns={columns}
                             pagination={false}
-                            footer={(currentData: any) => renderFooter(currentData, Number(votes.toFixed(2)), currentPowerPercent, totalPercent)}
+                            footer={(currentData: any) => renderFooter(currentData, Number(votes) === 0 ? 0 : Number(votes.toFixed(2)), currentPowerPercent, totalPercent)}
                           />
                         }>
-                          <span className='text-[14px] text-[#273141] text-sm'>{votes.toFixed(2)}% <InfoCircleOutlined style={{ fontSize: 14 }} /></span>
+                          <span className='text-[14px] text-[#273141] text-sm'>{Number(votes) === 0 ? 0 : votes.toFixed(2)}% <InfoCircleOutlined style={{ fontSize: 14 }} /></span>
                         </Popover>
                       </div>
 

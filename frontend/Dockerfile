@@ -9,7 +9,6 @@ COPY frontend/package*.json ./
 RUN pnpm install
 
 COPY frontend .
-
 RUN pnpm run build
 
 FROM nginx:alpine

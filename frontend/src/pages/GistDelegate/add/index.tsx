@@ -21,6 +21,8 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from "react-router-dom";
 import type { BaseError } from "wagmi";
 import { useAccount, useSignMessage, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import type { UserRejectedRequestError } from 'viem';
+import { useSendMessage, useSign } from "iso-filecoin-react"
 import {
   OPERATION_CANCELED_MSG,
   STORING_DATA_MSG,
@@ -31,16 +33,20 @@ import {
 } from "../../../common/consts";
 import LoadingButton from "../../../components/LoadingButton";
 import Table from '../../../components/Table';
-import { getContractAddress, validateValue } from '../../../utils';
+import { getContractAddress, isFilAddress, validateValue } from "../../../utils"
 import './index.less';
 import oracleAbi from "../../../common/abi/oracle.json";
 import MDEditor from "../../../../src/components/MDEditor";
-import { useGistList } from "../../../common/store.ts";
+import { useGistList, useTransactionHash } from "../../../common/store.ts";
 import axios from "axios";
+import { CopyButton } from "../../../components/CopyButton.tsx";
+import { useFilSnapMessage } from "../../../common/hooks.ts"
 
 const GistDelegate = () => {
   const { isConnected, address, chain } = useAccount();
   const { signMessageAsync } = useSignMessage();
+  const { mutateAsync: sendMessage } = useSendMessage();
+  const { mutateAsync: sign } = useSign();
   const { openConnectModal } = useConnectModal();
   const navigate = useNavigate();
   const prevAddressRef = useRef(address);
@@ -48,8 +54,10 @@ const GistDelegate = () => {
 
   const [githubSignature, setGithubSignature] = useState('');
   const [githubStep, setGithubStep] = useState(GITHUB_STEP_1);
+  const [filOperationSuccess, setFilOperationSuccess] = useState(false);
   const setGistList = useGistList((state: any) => state.setGistList);
   const gistList = useGistList((state: any) => state.gistList);
+  const setStoringHash = useTransactionHash((state: any) => state.setTransactionHash)
 
   const [formValue] = useState({
     aud: '',
@@ -95,16 +103,17 @@ const GistDelegate = () => {
   }, [address]);
 
   useEffect(() => {
-    if (writeContractSuccess) {
+    if (writeContractSuccess || filOperationSuccess) {
       messageApi.open({
         type: 'success',
         content: t(STORING_DATA_MSG),
       });
+      setStoringHash({ 'gistAudHash': hash })
       setTimeout(() => {
         navigate("/home");
       }, 3000);
     }
-  }, [writeContractSuccess])
+  }, [writeContractSuccess, filOperationSuccess])
 
   useEffect(() => {
     if (error) {
@@ -142,7 +151,7 @@ const GistDelegate = () => {
 
   const setValue = async (value: string) => {
     const params = {
-      gistId: value,
+      gistId: value.trim(),
       address
     }
 
@@ -155,14 +164,43 @@ const GistDelegate = () => {
       setAuthorizeLoading(false);
       return
     }
-    writeContract({
-      abi: oracleAbi,
-      address: getContractAddress(chain?.id || calibrationChainId, 'oracle'),
-      functionName: 'updateGistId',
-      args: [
-        value
-      ],
-    });
+    if (address && isFilAddress(address)) {
+      try {
+        const { message } = await useFilSnapMessage({
+          abi: oracleAbi,
+          contractAddress: getContractAddress(chain?.id || calibrationChainId, 'oracle'),
+          address: address as string,
+          functionName: "updateGistId",
+          functionParams: [value],
+        })
+        await sendMessage(message);
+        setFilOperationSuccess(true);
+      } catch (error) {
+        console.log(error)
+        if (error as UserRejectedRequestError) {
+          messageApi.open({
+            type: "warning",
+            content: t("content.rejectedSignature")
+          })
+        } else {
+          messageApi.open({
+            type: "error",
+            content: (error as BaseError)?.shortMessage || JSON.stringify(error)
+          })
+        }
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      writeContract({
+        abi: oracleAbi,
+        address: getContractAddress(chain?.id || calibrationChainId, 'oracle'),
+        functionName: 'updateGistId',
+        args: [
+          value
+        ],
+      });
+    }
     setGistList([])
     setAuthorizeLoading(false);
   }
@@ -186,7 +224,12 @@ const GistDelegate = () => {
         let signature = "";
         try {
           // Sign the concatenated header and params
-          signature = await signMessageAsync({ message: `${JSON.stringify(signatureParams)}` })
+          if (address && isFilAddress(address)) {
+            const jsonData = await sign(`${JSON.stringify(signatureParams)}`);
+            signature = jsonData.toLotusHex();
+          } else {
+            signature = await signMessageAsync({ message: `${JSON.stringify(signatureParams)}` });
+          }
         } catch (e) {
           messageApi.open({
             type: 'error',
@@ -271,17 +314,19 @@ const GistDelegate = () => {
       name: t('content.signature'),
       width: 100,
       comp: (
-        <>
+        <div style={{ position: 'relative', width: '830px' }}>
+          <div style={{ position: 'absolute', right: 10, top: 10, zIndex: 100 }}><CopyButton text={githubSignature} /></div>
           <MDEditor
             value={githubSignature}
             readOnly={true}
             onChange={() => undefined}
             className="border-none rounded-[16px] bg-transparent"
-            style={{ height: '100%', width: '820px', whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
+            style={{ height: '100%', width: '100%', whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
             view={{ menu: false, md: false, html: true, both: false, fullScreen: true, hideMenu: false }}
-          />
+          >
+          </MDEditor>
           <a target="_blank" href="https://gist.github.com/" style={{ color: "blue", fontSize: '16px' }}>{t('content.getGistID')}↗</a>
-        </>
+        </div>
       )
     },
     {
@@ -294,7 +339,7 @@ const GistDelegate = () => {
             control={control}
             render={() => <input
               className={classNames(
-                'form-input w-full rounded bg-[#ffffff] border border-[#eeeeee] text-black',
+                'form-input rounded bg-[#ffffff] border border-[#eeeeee] text-black w-[830px]',
                 errors.gistId && 'border-red-500 focus:border-red-500'
               )}
               {...register('gistId', { required: true, validate: validateValue })}

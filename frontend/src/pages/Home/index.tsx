@@ -23,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from "react-router-dom";
 import VoteStatusBtn from "../../../src/components/VoteStatusBtn";
 import { useAccount, useWaitForTransactionReceipt } from "wagmi";
+import { useAddresses } from 'iso-filecoin-react'
 import {
   COMPLETED_STATUS,
   IN_PROGRESS_STATUS,
@@ -37,6 +38,7 @@ import {
   VOTE_FILTER_LIST,
   VOTE_OPTIONS,
   filecoinId,
+  githubApi,
   proposalListApi,
   web3AvatarUrl
 } from "../../common/consts";
@@ -45,7 +47,7 @@ import type { VotingList } from '../../common/types';
 import EllipsisMiddle from "../../components/EllipsisMiddle";
 import ListFilter from "../../components/ListFilter";
 import Loading from "../../components/Loading";
-import { markdownToText } from "../../utils";
+import { getBlockExplorers, isFilAddress, markdownToText } from "../../utils"
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -53,6 +55,7 @@ const Home = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { chain, address, isConnected } = useAccount();
+  const { address0x } = useAddresses({ address: address as string })
   const chainId = chain?.id || filecoinId;
 
   const { openConnectModal } = useConnectModal();
@@ -116,12 +119,16 @@ const Home = () => {
       pageSize: 5,
       searchKey: searchValue,
       status: proposalStatus === VOTE_ALL_STATUS ? 0 : proposalStatus,
-      addr: address
+      address: isFilAddress(address!) && address0x.data ? address0x.data.toString() : address
     }
-    setLoading(isLoading || false);
-    const { data: { data: votingData } } = await axios.get(proposalListApi, { params });
-    setVotingList({ votingList: votingData?.list || [], totalPage: votingData?.total });
-    setLoading(false);
+    try {
+      setLoading(isLoading || false);
+      const { data: { data: votingData } } = await axios.get(proposalListApi, { params });
+      setVotingList({ votingList: votingData?.list || [], totalPage: votingData?.total });
+      setLoading(false);
+    } catch (e) {
+      setLoading(false);
+    }
   }
   useEffect(() => {
     //When the search value changes, display all by default
@@ -169,7 +176,6 @@ const Home = () => {
     // setProposalStatus(VOTE_ALL_STATUS);
     setPage(page);
   }
-
   /**
    * render proposal list
    * @param list
@@ -194,9 +200,9 @@ const Home = () => {
       let img = '';
       if (item?.githubName) {
         href = `https://github.com/${item.githubName}`;
-        img = `${item.githubAvatar}`;
+        img = `${githubApi}/${item.githubName}`;
       } else {
-        href = `${chain?.blockExplorers?.default.url}/address/${item.address}`;
+        href = getBlockExplorers(chain, item.address);
         img = `${web3AvatarUrl}:${item.address}`
       }
       const votStatus = item.status === COMPLETED_STATUS ? (
@@ -213,7 +219,7 @@ const Home = () => {
         }
       ]
       const maxOption = option.reduce((max, current) => {
-        return (current.count > max.count) ? current : max;
+        return (current.count >= max.count) ? current : max;
       });
       return (
         <div
@@ -257,7 +263,7 @@ const Home = () => {
               {item.title}
             </h3>
           </div>
-          <div className="mb-2 line-clamp-2 break-words text-normal text-lg">
+          <div className="mb-2 line-clamp-2 break-words text-normal text-lg leading-[1.2rem]">
             {markdownToText(item.content)}
           </div>
           {
@@ -291,7 +297,7 @@ const Home = () => {
                               strokeWidth="2" d="m5 13l4 4L19 7" />
                           </svg>
                         }
-                        {option.name == VOTE_OPTIONS[0] ? t('content.approve') : t('content.rejected')}
+                        {option.name == VOTE_OPTIONS[0] ? t('content.approved') : t('content.rejected')}
                       </div>
                       <div className="font-semibold absolute right-0 mr-3 leading-[35px]" style={{ color: txColor }}>{option.count}%</div>
                       {option.count > 0 && <div className="h-[35px] border-[1px] border-solid rounded-md bg-[#E3FFEE]" style={{ width: `${option.count}%`, backgroundColor: bgColor, borderColor: borderColor }} />
