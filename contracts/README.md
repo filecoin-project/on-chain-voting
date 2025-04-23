@@ -5,7 +5,6 @@ The PowerVoting-Contract is a suite of smart contracts designed to facilitate se
 1. **Vote Contract**: Manages the creation of proposals and the voting process on those proposals, allowing users to participate in decision-making.
 2. **FipEditor Contract**: Handles permission management for the FipEditor role. It supports the addition and removal of FipEditors via proposals, ensuring decentralized control.
 3. **Oracle Contract**: Supplies external data to support contract interactions. This includes critical updates such as miner IDs and authorization information, enhancing the contracts' ability to interact with real-world data.
-4. **Powers Contract**: A library that provides functions to interact with the Filecoin network, specifically for retrieving miner ownership information and resolving Ethereum addresses to their corresponding Filecoin actor IDs.
 ## Deployment and Upgrade Process
 
 ### Prerequisites
@@ -42,16 +41,10 @@ npx hardhat run scripts/deploy_vote.ts --network [network_name]
 ```bash
 npx hardhat run scripts/deploy_oracle.ts --network [network_name]
 ```
-4. **Deploy the Powers Contract**
-   Run the following command to deploy the Powers contract:
-```bash
-npx hardhat run scripts/deploy_powers.ts --network [network_name]
-```
-5. **Contract Address Storage**
+4. **Contract Address Storage**
    After the contracts are deployed, the contract addresses will be saved in the `[network_name]_config.json` file in the `scripts` directory. The content format is as follows:
 ```json
 {
-  "POWER_VOTING_POWER": "",
   "POWER_VOTING_ORACLE": "",
   "POWER_VOTING_FIP": "",
   "POWER_VOTING_VOTE": ""
@@ -90,10 +83,6 @@ Here’s a brief overview of the available scripts in the `scripts` directory:
 #### `check.ts`
 
 - **Purpose**: Performs checks on various contract parameters or statuses.
-
-#### `deploy_powers.ts`
-
-- **Purpose**: Deploys the `Powers` contract
 
 #### `deploy_fip.ts`
 
