@@ -20,13 +20,12 @@ FROM alpine:latest
 WORKDIR /dist
 
 COPY --from=backend-builder /build/app .
-COPY --from=backend-builder /build/configuration.yaml .
+COPY --from=backend-builder /build/configuration-backend.yaml .
+
 COPY --from=backend-builder /build/abi/power-voting.json ./
-COPY --from=backend-builder /build/abi/oracle.json ./
 COPY --from=backend-builder /build/abi/power-voting-fip.json ./
+# Copy oracle abi to instance
 COPY --from=backend-builder /build/abi/oracle-powers.json ./
-
-
-EXPOSE 18007
-
+COPY --from=backend-builder /build/abi/oracle.json ./
+COPY --from=backend-builder /build/.env ./
 CMD ["/dist/app"]

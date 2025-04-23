@@ -27,6 +27,10 @@ import (
 type MockProposalService struct {
 }
 
+// GetGitHubNameByCreaters implements service.ProposalRepo.
+func (m *MockProposalService) GetGitHubNameByCreaters(ctx context.Context, creators []string) (map[string]model.GiuthubInfo, error) {
+	panic("unimplemented")
+}
 
 var _ service.ProposalRepo = (*MockProposalService)(nil)
 

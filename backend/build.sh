@@ -1,17 +1,17 @@
 #!/bin/bash
 set -e
 
-IMAGE_NAME="pv-test-backend"
+IMAGE_NAME="pv-backend-mainnet"
 
-if [ ! -f "configuration.yaml" ]; then
-    echo "Error: configuration.yaml does not exist."
+if [ ! -f ".env" ]; then
+    echo "Error: .env does not exist."
     exit 1
 fi
 
-PORT=$(awk '/^server:/{flag=1;next} /^  port:/{if(flag) print $2; flag=0}' "configuration.yaml" | tr -d ':')
+PORT=$(awk -F'=' '/^PORT=/ {gsub(/[^0-9]/, "", $2); print $2}' .env)
 
 if [ -z "$PORT" ]; then
-  echo "Error: Can not get port from configuration."
+  echo "Error: Can not get port from .env."
   exit 1
 fi
 
@@ -38,4 +38,4 @@ else
     echo "Container $IMAGE_NAME does not exist or is already stopped."
 fi
 
-docker run --name $IMAGE_NAME -v ./configuration.yaml:/dist/configuration.yaml -p $PORT:$PORT -d $IMAGE_NAME
+docker run --name $IMAGE_NAME  -p $PORT:$PORT -d $IMAGE_NAME

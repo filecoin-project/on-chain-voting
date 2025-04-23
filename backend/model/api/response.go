@@ -49,6 +49,7 @@ type ProposalRep struct {
 	ProposalId     int64                  `json:"proposalId"`               // Proposal ID
 	Creator        string                 `json:"address"`                  // Creator address
 	GithubName     string                 `json:"githubName"`               // Github name
+	GithubAvatar   string                 `json:"githubAvatar"`             // Github avatar
 	StartTime      int64                  `json:"startTime"`                // Start time
 	EndTime        int64                  `json:"endTime"`                  // End time
 	ChainId        int64                  `json:"chainId"`                  // Chain ID
@@ -129,4 +130,6 @@ type FipEditorRep struct {
 type FipEditorGistInfoRep struct {
 	GistId     string          `json:"gistId"`
 	GistSigObj model.SigObject `json:"gistSigObj"`
+	MinerIds   []string        `json:"minerIds"`
+	ActorId    string          `json:"actorId"`
 }

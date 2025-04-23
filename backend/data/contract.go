@@ -59,7 +59,6 @@ func GetClient(syncService service.ISyncService, chainId int64) (*model.GoEthCli
 		OracleContract:       network.OracleContract,
 		SyncEventStartHeight: network.SyncEventStartHeight,
 		FipContract:          network.FipContract,
-		OraclePowersContract: network.OraclePowersContract,
 	}
 
 	if err := syncService.CreateFipEditor(context.Background(), &model.FipEditorTbl{
@@ -119,7 +118,6 @@ func getGoEthClient(clientConfig model.ClientConfig, abiPath config.ABIPath) (mo
 			PowerVotingAbi:  GetAbiFromLocalFile(abiPath.PowerVotingAbi),
 			OracleAbi:       GetAbiFromLocalFile(abiPath.OracleAbi),
 			FipAbi:          GetAbiFromLocalFile(abiPath.FipAbi),
-			OraclePowersAbi: GetAbiFromLocalFile(abiPath.OraclePowersAbi),
 		},
 	}
 	return goEthClient, nil

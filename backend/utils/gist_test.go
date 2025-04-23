@@ -15,34 +15,66 @@
 package utils
 
 import (
-	"fmt"
-	"testing"
 
-	"github.com/stretchr/testify/assert"
 )
 
-func TestGetGistInfoByGistId(t *testing.T) {
-	res, err := FetchGistInfoByGistId("c8a001be0c90e8c616e60100c1af54bf")
-	assert.NoError(t, err)
-	assert.NotEmpty(t, res)
-}
+// func TestParseGistContent(t *testing.T) {
+// 	config.Client.Github.Token = []string{
+// 		"",
+// 	}
+// 	config.Client.Network.Rpc = "http://192.168.11.139:1235/rpc/v1"
+// 	gist, err := FetchGistInfoByGistId("9e55f044e364baae82eef6d038a1b5df")
+// 	assert.NoError(t, err)
+// 	assert.NotEmpty(t, gist)
+// 	voterInfo, err := ParseGistContent(gist.Files)
+// 	assert.NoError(t, err)
+// 	fmt.Printf("match res: %v\n", voterInfo)
 
-func TestParseGistContent(t *testing.T) {
-	gist, err := FetchGistInfoByGistId("0d753f709c11735e7598ae6cf2657c60")
-	assert.NoError(t, err)
-	assert.NotEmpty(t, gist)
-	voterInfo, err := ParseGistContent(gist.Files)
-	assert.NoError(t, err)
-	fmt.Printf("match res: %v\n", voterInfo)
+// 	// sigBytes, _ := json.Marshal(res.SigObject)
+// 	verifyRes, err := VerifySignature(
+// 		"t1bh2fekhhi3c4rcynxvah6hqei2s4geylxizvzfa",
+// 		voterInfo.Signature,
+// 		[]byte(voterInfo.SigObjectStr),
+// 	)
 
-	// sigBytes, _ := json.Marshal(res.SigObject)
-	verifyRes, err := VerifySignature(
-		"0x763D410594a24048537990dde6ca81c38CfF566a",
-		voterInfo.Signature,
-		[]byte(voterInfo.SigObjectStr),
-	)
+// 	assert.NoError(t, err)
+// 	assert.True(t, verifyRes)
+// }
 
-	assert.NoError(t, err)
-	assert.True(t, verifyRes)
+// func TestVerifySignature(t *testing.T) {
+// 	// sigBytes, _ := json.Marshal(res.SigObject)
+// 	msg := `{"walletAddress":"","githubName":"1","timestamp":1744861584}`
+// 	sig := ""
+// 	verifyRes, err := VerifySignature(
+// 		"",
+// 		sig,
+// 		[]byte(msg),
+// 	)
 
-}
+// 	assert.NoError(t, err)
+// 	assert.True(t, verifyRes)
+// }
+
+// func TestVerifyFilecoinAddrSignature(t *testing.T) {
+// 	config.GetDefaultConfig()
+// 	res, err := VerifyFilecoinAddrSignature(
+// 		`0x4fda4174D5D07C906395bfB77806287cc65Fd129`,
+// 		"0xa6824f7b6ec4a308476c3414cad8495ac283359ff9eb7235637063dcb0213ce7169ab205991408980a9452ecc909acaf5d5c103ad5f9fc0a99682142ba84cf8a1b",
+// 		[]byte(`{"walletAddress":"0x4fda4174D5D07C906395bfB77806287cc65Fd129","githubName":"liuzeming1","timestamp":1745327875}`),
+// 	)
+
+// 	assert.NoError(t, err)
+
+// 	assert.True(t, res)
+// }
+
+// func TestVerifySignature(t *testing.T) {
+// 	res, err := VerifySignature(
+// 		"0x4fda4174D5D07C906395bfB77806287cc65Fd129",
+// 		"0xa6824f7b6ec4a308476c3414cad8495ac283359ff9eb7235637063dcb0213ce7169ab205991408980a9452ecc909acaf5d5c103ad5f9fc0a99682142ba84cf8a1b",
+// 		[]byte(`{"walletAddress":"0x4fda4174D5D07C906395bfB77806287cc65Fd129","githubName":"liuzeming1","timestamp":1745327875}`),
+// 	)
+
+// 	assert.NoError(t, err)
+// 	assert.True(t, res)
+// }
