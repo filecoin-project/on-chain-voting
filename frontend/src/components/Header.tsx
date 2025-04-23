@@ -17,9 +17,10 @@ import {
   ConnectButton,
   useConnectModal
 } from "@rainbow-me/rainbowkit"
-import { Dropdown, Input, Modal } from "antd"
+import { useAddresses } from 'iso-filecoin-react'
+import { Dropdown, Input, Modal, Typography } from "antd"
 import "dayjs/locale/zh-cn"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import Countdown from "react-countdown"
 import { useTranslation } from "react-i18next"
 import { Link, useLocation, useNavigate } from "react-router-dom"
@@ -27,11 +28,11 @@ import "tailwindcss/tailwind.css"
 import { useAccount } from "wagmi"
 import timezones from "../json/timezons.json"
 import {
-  getGistListApi,
   calibrationChainId,
+  getGistListApi,
   STORING_DATA_MSG
-} from "../common/consts"
-import { useVoterInfoSet } from "../common/hooks"
+} from "../common/consts";
+import { useVoterInfoSet } from "../common/hooks";
 import {
   useCurrentTimezone,
   useFipList,
@@ -42,14 +43,15 @@ import {
 import "../common/styles/reset.less"
 import "../lang/config"
 import axios from "axios"
-// import ConnectLedger from "./Connect/ConnectLedger"
+import { getBlockExplorers, isFilAddress } from "../utils"
 
 const Header = (props: any) => {
   const { changeLang } = props
   // Destructure values from custom hooks
   const { chain, address, isConnected } = useAccount()
+  const { address0x } = useAddresses({ address: address as string })
+
   const chainId = chain?.id || calibrationChainId
-  const prevAddressRef = useRef(address)
   const { openConnectModal } = useConnectModal()
   const navigate = useNavigate()
   const location = useLocation()
@@ -77,25 +79,15 @@ const Header = (props: any) => {
   const searchValue = useSearchValue((state: any) => state.searchValue)
   const setSearchValue = useSearchValue((state: any) => state.setSearchValue)
   const setGistList = useGistList((state: any) => state.setGistList)
-
   // Update current timezone in state
   const setTimezone = useCurrentTimezone((state: any) => state.setTimezone)
 
   const { pathname } = useLocation()
   const { t } = useTranslation()
 
-
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [pathname])
-
-  // Reload the page if address changes
-  useEffect(() => {
-    const prevAddress = prevAddressRef.current
-    if (address && prevAddress !== address) {
-      window.location.reload()
-    }
-  }, [address])
 
   // Update voter information when available
   useEffect(() => {
@@ -122,20 +114,24 @@ const Header = (props: any) => {
       return
     }
     const params = {
-      address
+      address: isFilAddress(address!) && address0x.data ? address0x.data.toString() : address
     }
-    const { data: { data: gistList } } = await axios.get(getGistListApi, { params })
-    if (gistList) {
-      setGistList([
-        {
-          githubName: gistList.gistSigObj.githubName,
-          walletAddress: gistList.gistSigObj.walletAddress,
-          timestamp: gistList.gistSigObj.timestamp
-        }
-      ])
-      navigate("/gistDelegate/list")
-    } else {
-      setGistList([])
+    try {
+      const { data: { data: gistList } } = await axios.get(getGistListApi, { params })
+      if (gistList?.gistSigObj) {
+        setGistList([
+          {
+            githubName: gistList?.gistSigObj?.githubName,
+            walletAddress: gistList?.gistSigObj?.walletAddress,
+            timestamp: gistList?.gistSigObj?.timestamp
+          }
+        ])
+        navigate("/gistDelegate/list")
+      } else {
+        setGistList([])
+        navigate("/gistDelegate/add")
+      }
+    } catch (e) {
       navigate("/gistDelegate/add")
     }
     return
@@ -164,9 +160,7 @@ const Header = (props: any) => {
       key: "minerId",
       label: (
         <a
-          onClick={() => {
-            handleJump("/minerid")
-          }}
+          onClick={() => handleJump("/minerid")}
         >
           {t("content.minerIDsManagement")}
         </a>
@@ -270,7 +264,7 @@ const Header = (props: any) => {
                   placeholder={t("content.searchProposals")}
                   size="large"
                   prefix={<SearchOutlined onClick={() => setSearchValue(searchValue)}
-                                          className={`${isFocus ? "text-[#1677ff]" : "text-[#8b949e]"} text-xl hover:text-[#1677ff]`} />}
+                    className={`${isFocus ? "text-[#1677ff]" : "text-[#8b949e]"} text-xl hover:text-[#1677ff]`} />}
                   onClick={() => setIsFocus(true)}
                   onBlur={() => setIsFocus(false)}
                   onChange={(e) => setSearchValue(e.currentTarget.value)}
@@ -296,15 +290,52 @@ const Header = (props: any) => {
                 {t("content.tools")}
               </button>
             </Dropdown>
-            <div className="connect flex items-center">
+            <div className="connect flex items-center justify-center">
               <ConnectButton showBalance={false} label={t("content.connectWallet")} />
-              {/*<ConnectLedger />*/}
+              {
+                address0x.data && isFilAddress(address!) && <a
+                  target='_blank'
+                  rel="noopener noreferrer"
+                  href={getBlockExplorers(chain, address!)}
+                  className="ml-4 py-2 text-[#25292E] text-[14px] font-[700] flex items-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+
+                    width={props.width ?? 24}
+                    height={props.height ?? 24}
+                    viewBox="0 0 24 24"
+                  >
+                    <title>Ethereum Token</title>
+                    <path
+                      fill="currentColor"
+                      d="M12 3v6.652l5.625 2.516zm0 0l-5.625 9.166L12 9.652zm0 13.478V21l5.625-7.785zM12 21v-4.522l-5.625-3.263z"
+                    />
+                    <path
+                      fill="currentColor"
+                      d="m12 15.43l5.625-3.263L12 9.652zm-5.625-3.263L12 15.43V9.652z"
+                    />
+                    <path
+                      fill="currentColor"
+                      fillRule="evenodd"
+                      d="m12 15.43l-5.625-3.262L12 3l5.625 9.166zm-5.25-3.528l5.162-8.41v6.115zm-.077.229l5.239-2.327v5.364zm5.418-2.327v5.364l5.233-3.037zm0-.197l5.162 2.295l-5.162-8.41z"
+                      clipRule="evenodd"
+                    />
+                    <path
+                      fill="currentColor"
+                      fillRule="evenodd"
+                      d="m12 16.407l-5.625-3.195L12 21l5.625-7.789zm-4.995-2.633l4.906 2.79v4.005zm5.085 2.79v4.005l4.904-6.795z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <Typography.Paragraph style={{ margin: 0 }} copyable={{ text: address0x.data.toString() }}>({address0x.data.toString().substring(0, 4)}...{address0x.data.toString().substring(38)})</Typography.Paragraph>
+                </a>
+              }
               <div className="px-4 py-2 h-full flex flex-nowrap text-sm">
                 {languageOptions.map((item) => {
                   return (
                     <div key={item.label}
-                         className={`h-full mr-1.5 cursor-pointer text-black font-semibold ${item.value === lang ? "border-solid border-b-2 border-current" : "border-none"}`}
-                         onClick={() => changeLanguage(item.value)}>
+                      className={`h-full mr-1.5 cursor-pointer text-black font-semibold ${item.value === lang ? "border-solid border-b-2 border-current" : "border-none"}`}
+                      onClick={() => changeLanguage(item.value)}>
                       <div className="h-5 leading-6 text-center my-*">{item.label}</div>
                     </div>
                   )

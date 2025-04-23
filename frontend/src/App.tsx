@@ -16,6 +16,7 @@ import {
   lightTheme,
   RainbowKitProvider,
 } from "@rainbow-me/rainbowkit";
+import { useConnect, useAddresses } from "iso-filecoin-react"
 import { ConfigProvider, FloatButton, theme } from 'antd';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
@@ -36,6 +37,7 @@ import Footer from './components/Footer';
 import './lang/config';
 import routes from "./router";
 import axios from "axios";
+import { isFilAddress } from "./utils"
 
 const lang = localStorage.getItem("lang") || "en"
 dayjs.locale(lang === 'en' ? lang : "zh-cn")
@@ -43,10 +45,19 @@ dayjs.locale(lang === 'en' ? lang : "zh-cn")
 const App: React.FC = () => {
   // Destructure values from custom hooks
   const { chain, address, isConnected } = useAccount();
+  const { address0x} = useAddresses({ address: address as string });
+
+  const { adapters, mutate: connect } = useConnect();
   const chainId = chain?.id || calibrationChainId;
   const prevAddressRef = useRef(address);
   const setFipList = useFipList((state: any) => state.setFipList)
   const { i18n } = useTranslation();
+
+  useEffect(() => {
+    if (isConnected && address!.indexOf("0x") < 0) {
+      connect({ adapter: adapters[0] });
+    }
+  }, [isConnected, address])
 
   // Render routes based on URL
   const element = useRoutes(routes);
@@ -89,7 +100,7 @@ const App: React.FC = () => {
   // Reload the page if address changes
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
-    if (address && prevAddress !== address) {
+    if (address && address.indexOf('0x') > 0 && prevAddress !== address) {
       window.location.reload();
     }
   }, [address]);
@@ -112,7 +123,11 @@ const App: React.FC = () => {
       chainId,
     }
     const { data: { data: fipList } } = await axios.get(getFipListApi, { params });
-    setFipList(fipList, address)
+    if (isFilAddress(address!) && address0x.data) {
+      setFipList(fipList, address0x.data.toString())
+    } else {
+      setFipList(fipList, address)
+    }
   }
   useEffect(() => {
     if (!address || !chainId || !isConnected) {
@@ -121,6 +136,7 @@ const App: React.FC = () => {
     }
     getFipList()
   }, [address, chainId, isConnected])
+
   const lang = localStorage.getItem("lang") || "en";
 
   return (
