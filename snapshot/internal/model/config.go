@@ -16,15 +16,16 @@ package models
 
 // Config represents the overall configuration structure.
 type Config struct {
-	Server   Server
-	Nats     Nats
-	Network  Network // Network configuration details.
-	Github   GitHub    // Github configuration details.
-	Redis    Redis     // Redis configuration details.
-	Mysql    Mysql     // Mysql configuration details.
-	W3Client W3Client  // W3Client configuration details.
-	Rate     Rate      // Rate configuration details.
-	DataPath DataPath    // Data path for storing files.
+	Server        Server
+	Nats          Nats
+	Network       Network  // Network configuration details.
+	Github        GitHub   // Github configuration details.
+	Redis         Redis    // Redis configuration details.
+	Mysql         Mysql    // Mysql configuration details.
+	W3Client      W3Client // W3Client configuration details.
+	Rate          Rate     // Rate configuration details.
+	DataPath      DataPath // Data path for storing files.
+	SyncStartDate string   // Start date for syncing
 }
 
 // Network  configuration for a blockchain network.

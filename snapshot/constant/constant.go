@@ -30,6 +30,7 @@ const (
 	TaskActionActor            = "actor"
 	TaskActionMiner            = "miner"
 	DeveloperWeightsFilePrefix = "developer_weights_"
+	SavedHeightDuration        = -DataExpiredDuration * 2880
 )
 
 var TimeoutSecond = 15 * time.Second
