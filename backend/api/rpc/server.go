@@ -41,7 +41,7 @@ func (b *BackendRpc) GetVoterInfo(ctx context.Context, req *pb.GetVoterInfoReque
 	return &pb.GetVoterInfoResponse{
 		MinerIds:      voteInfo.MinerIds,
 		ActorId:       voteInfo.OwnerId,
-		GithubAccount: voteInfo.GithubId,
+		GithubAccount: voteInfo.GithubName,
 	}, nil
 
 }
