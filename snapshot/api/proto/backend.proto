@@ -24,7 +24,7 @@ message GetAllVoterAddressResponse {
 }
 
 message GetVoterInfoResponse {
-  repeated string miner_ids = 1;
-  string actor_id =2;
-  string github_account = 3;
+  string actor_id = 1;
+  string github_account = 2;
+  repeated string miner_ids = 3;
 }

@@ -57,11 +57,12 @@ func (p *ProposalRepoImpl) GetProposalListWithPagination(ctx context.Context, re
 		return nil, 0, fmt.Errorf("get proposal list count error: %w", err)
 	}
 
+	ethAddr, _ := req.AddressReq.ToEthAddr()
 	subQuery := p.mydb.Model(&model.VoteTbl{}).
 		Select("1").
 		Where("proposal_id = proposal_tbl.proposal_id").
 		Where("chain_id = proposal_tbl.chain_id").
-		Where("address = ?", req.Addr)
+		Where("address = ?", ethAddr)
 
 	queryList.Select("proposal_tbl.*, (?) AS voted", subQuery)
 
@@ -71,6 +72,32 @@ func (p *ProposalRepoImpl) GetProposalListWithPagination(ctx context.Context, re
 	}
 
 	return proposals, count, nil
+}
+
+func (p *ProposalRepoImpl) GetGitHubNameByCreaters(ctx context.Context, creators []string) (map[string]model.GiuthubInfo, error) {
+	if len(creators) == 0 {
+		return make(map[string]model.GiuthubInfo), nil
+	}
+
+	var voters []model.VoterInfoTbl
+	query := p.mydb.Model(&model.VoterInfoTbl{}).
+		WithContext(ctx).
+		Where("address IN ?", creators).
+		Select("address, github_name").Find(&voters)
+
+	if err := query.Error; err != nil {
+		return nil, fmt.Errorf("get github name by creators error: %w", err)
+	}
+
+	res := make(map[string]model.GiuthubInfo)
+	for _, v := range voters {
+		res[v.Address] = model.GiuthubInfo{
+			GithubName:   v.GithubName,
+			GithubAvatar: v.GithubAvatar,
+		}
+	}
+
+	return res, nil
 }
 
 // GetProposalById retrieves a proposal from the database based on the provided proposal ID and chain ID.
@@ -197,7 +224,6 @@ func (p *ProposalRepoImpl) UpdateProposal(ctx context.Context, in *model.Proposa
 
 	return err
 }
-
 
 // GetUnCountedProposalList retrieves a list of proposals based on the provided network ID and timestamp.
 // It queries the database for proposals with the following conditions:

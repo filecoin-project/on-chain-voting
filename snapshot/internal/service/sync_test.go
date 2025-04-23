@@ -415,7 +415,7 @@ func TestSyncDateHeight(t *testing.T) {
 }
 
 func TestGetActorBalance(t *testing.T) {
-	walletBalance, clientBalance, err := getMockSyncService(t).GetActorBalance(context.Background(), "f0114153", 314159, 2539001)
+	walletBalance, clientBalance, err := getMockSyncService(t).GetActorBalance(context.Background(), "t0161747", 314159, 2539001)
 	assert.NoError(t, err)
 	assert.Equal(t, "1000", walletBalance)
 	assert.Equal(t, "0", clientBalance)
@@ -439,4 +439,31 @@ func TestUploadSnapshotInfoByDay(t *testing.T) {
 	height, err := getMockSyncService(t).UploadSnapshotInfoByDay(context.Background(), allPower, "20240511", 314159)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(1603697), height)
+}
+
+func TestGetBalance(t *testing.T) {
+	ser := getSyncService(t)
+	a, b, err := ser.GetActorBalance(context.Background(), "t0161980", 314159, 2599001)
+	assert.NoError(t, err)
+	fmt.Printf("a:%s\n b:%s\n", a, b)
+}
+
+func TestSyncWorker(t *testing.T) {
+	ser := getSyncService(t)
+	message, err := ser.syncRepo.GetTask(context.Background(), 314159)
+	assert.NoError(t, err)
+	for taskMsg := range message.Messages() {
+		zap.L().Info("task", zap.Any("task", taskMsg))
+		var task models.Task
+		err := json.Unmarshal(taskMsg.Data(), &task)
+		if err != nil {
+			zap.S().Error("failed to unmarshal task", err)
+
+			if err := taskMsg.Ack(); err != nil {
+				zap.S().Error("failed to ack task", err)
+			}
+
+			return
+		}
+	}
 }

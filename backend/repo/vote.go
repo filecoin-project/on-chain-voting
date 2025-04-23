@@ -186,7 +186,7 @@ func (v *VoteRepoImpl) UpdateVoterByGistInfo(ctx context.Context, in *model.Vote
 			},
 			DoUpdates: clause.AssignmentColumns([]string{
 				"gist_id",
-				"github_id",
+				"github_name",
 				"gist_info",
 				"block_number",
 				"timestamp",
@@ -198,12 +198,12 @@ func (v *VoteRepoImpl) UpdateVoterByGistInfo(ctx context.Context, in *model.Vote
 
 	if err := v.mydb.Model(model.VoterInfoTbl{}).
 		WithContext(ctx).
-		Where("address <> ? and github_id = ?", in.Address, in.GithubId).
+		Where("address <> ? and github_name = ?", in.Address, in.GithubName).
 		UpdateColumns(map[string]any{
-			"gist_id":    "",
-			"github_id":  "",
-			"gist_info":  "",
-			"updated_at": time.Now(),
+			"gist_id":     "",
+			"github_name": "",
+			"gist_info":   "",
+			"updated_at":  time.Now(),
 		}).Error; err != nil {
 		return err
 	}

@@ -14,7 +14,9 @@
 
 package constant
 
-import "time"
+import (
+	"time"
+)
 
 const (
 	PowerVotingApiPrefix = "/power_voting/api"
@@ -27,7 +29,7 @@ const (
 
 	// http request timeout time
 	RequestTimeout = time.Second * 15
-	MaxFileSize = 1024*2
+	MaxFileSize    = 1024 * 2
 
 	// geth The maximum supported event parsing block limit
 	SyncBlockLimit = 2880
@@ -56,4 +58,9 @@ const (
 	OracleUpdateMinerIdsEvt = "UpdateMinerIdsEvent"
 	// mysql duplicate error code
 	MysqlDuplicateEntryErrorCode = 1062
+
+	KTBLS       = "bls"       // BLS key type.
+	KTSecp256k1 = "secp256k1" // Secp256k1 key type.
+	SigTypeSecp256k1 = 1 // Signature type for Secp256k1.
+	SigTypeBLS       = 2 // Signature type for BLS.
 )

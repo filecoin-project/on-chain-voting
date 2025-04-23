@@ -17,23 +17,28 @@ package service
 import (
 	"context"
 	"errors"
+	"strconv"
+	"strings"
 
 	"go.uber.org/zap"
 
+	"powervoting-server/config"
 	"powervoting-server/constant"
 	"powervoting-server/model"
 	"powervoting-server/utils"
 )
 
 type RpcService struct {
-	voteRepo VoteRepo
-	logger   *zap.Logger
+	voteRepo  VoteRepo
+	lotusRepo LotusRepo
+	logger    *zap.Logger
 }
 
-func NewRpcService(voteRepo VoteRepo) *RpcService {
+func NewRpcService(voteRepo VoteRepo, lotusRepo LotusRepo) *RpcService {
 	return &RpcService{
-		voteRepo: voteRepo,
-		logger:   zap.L().With(zap.String("service", "RPC")),
+		voteRepo:  voteRepo,
+		lotusRepo: lotusRepo,
+		logger:    zap.L().With(zap.String("service", "RPC")),
 	}
 }
 
@@ -75,12 +80,36 @@ func (r *RpcService) GetVoterInfoByAddress(ctx context.Context, address string) 
 		return nil, err
 	}
 
-	clearGist := func ()  {
+	if len(voterInfo.MinerIds) != 0 {
+		minerIds := make([]uint64, 0, len(voterInfo.MinerIds))
+		for _, minerId := range voterInfo.MinerIds {
+			cutId := strings.ReplaceAll(minerId, config.Client.Network.MinerIdPrefix, "")
+			id, err := strconv.ParseInt(cutId, 10, 64)
+			if err != nil {
+				r.logger.Error("ParseInt error", zap.Error(err), zap.Any("minerId", minerId))
+				continue
+			}
+			minerIds = append(minerIds, uint64(id))
+		}
+
+		validMinerIds, err := r.lotusRepo.GetValidMinerIds(ctx, voterInfo.OwnerId, minerIds)
+		if err != nil {
+			r.logger.Error("verfy minerIds error", zap.Error(err))
+		} else {
+			voterInfo.MinerIds = validMinerIds
+
+			if err := r.voteRepo.UpdateVoterByMinerInfo(ctx, voterInfo); err != nil {
+				r.logger.Warn("UpdateVoterByMinerInfo error for GetVoterInfoByAddress", zap.Any("voterInfo", voterInfo), zap.Error(err))
+			}
+		}
+	}
+
+	clearGist := func() {
 		voterInfo.GistId = ""
-		voterInfo.GithubId = ""
+		voterInfo.GithubName = ""
 		voterInfo.GistInfo = ""
 	}
-	
+
 	if voterInfo.GistId != "" {
 		gist, err := utils.FetchGistInfoByGistId(voterInfo.GistId)
 		if err != nil {
@@ -96,7 +125,19 @@ func (r *RpcService) GetVoterInfoByAddress(ctx context.Context, address string) 
 			return voterInfo, nil
 		}
 
-		isValid := utils.VerifyAuthorizeAllow(voterInfo.Address, voterInfo.GithubId, gist)
+		isValid := utils.VerifyAuthorizeAllow(voterInfo.GithubName, gist, func(gistAddr string) bool {
+			if gistAddr == voterInfo.Address {
+				return true
+			}
+
+			gistAddrActorId, err := r.lotusRepo.GetActorIdByAddress(ctx, gistAddr)
+			if err != nil {
+				zap.L().Error("GetActorIdByAddress failed by VerifyGist", zap.String("address", gistAddr), zap.Error(err))
+				return false
+			}
+
+			return voterInfo.OwnerId == gistAddrActorId
+		})
 		if !isValid {
 			r.logger.Warn("VerifyAuthorizeAllow error", zap.Any("gist", gist), zap.Any("voterInfo", voterInfo))
 			clearGist()

@@ -14,7 +14,13 @@
 
 package model
 
-import "github.com/shopspring/decimal"
+import (
+	"database/sql/driver"
+	"encoding/json"
+	"fmt"
+
+	"github.com/shopspring/decimal"
+)
 
 // vote table
 type VoteTbl struct {
@@ -34,15 +40,19 @@ type VoteTbl struct {
 
 type VoterInfoTbl struct {
 	BaseField
-	Address     string   `json:"address" gorm:"not null;uniqueIndex:idx_address_chain"`  // Voter address
-	ChainId     int64    `json:"chain_id" gorm:"not null;uniqueIndex:idx_address_chain"` // Chain ID
-	MinerIds    []string `json:"miner_ids" gorm:"type:json"`                             // Miner IDs
-	GistId      string   `json:"gist_id" gorm:"not null"`                                // Github Gist ID
-	GistInfo    string   `json:"gist_info" gorm:"type:longtext;not null"`                // Github Gist Info
-	OwnerId     string   `json:"owner_id" gorm:"not null"`                               // Voter Owner ID
-	GithubId    string   `json:"github_id" gorm:"not null"`                              // Github Name
-	BlockNumber int64    `json:"block_number" gorm:"not null"`                           // Voter create block number
-	Timestamp   int64    `json:"timestamp" gorm:"not null"`                              // Voter create time
+	Address     string      `json:"address" gorm:"not null;uniqueIndex:idx_address_chain"`  // Voter address
+	ChainId     int64       `json:"chain_id" gorm:"not null;uniqueIndex:idx_address_chain"` // Chain ID
+	MinerIds    StringSlice `json:"miner_ids" gorm:"type:json"`                             // Miner IDs
+	GistId      string      `json:"gist_id" gorm:"not null"`                                // Github Gist ID
+	GistInfo    string      `json:"gist_info" gorm:"type:longtext;not null"`                // Github Gist Info
+	OwnerId     string      `json:"owner_id" gorm:"not null"`                               // Voter Owner ID                         // Github Avatar
+	BlockNumber int64       `json:"block_number" gorm:"not null"`                           // Voter create block number
+	Timestamp   int64       `json:"timestamp" gorm:"not null"`                              // Voter create time
+	GiuthubInfo
+}
+type GiuthubInfo struct {
+	GithubName   string `json:"github_name" gorm:"not null"`   // Github Name
+	GithubAvatar string `json:"github_avatar" gorm:"not null"` // Github Avatar
 }
 
 // vote result count
@@ -75,8 +85,9 @@ type GistFiles struct {
 }
 
 type GistOwner struct {
-	Login string `json:"login"`
-	Id    int64  `json:"id"`
+	Login     string `json:"login"`
+	Id        int64  `json:"id"`
+	AvatarUrl string `json:"avatar_url"`
 }
 
 type GistVoterInfo struct {
@@ -89,4 +100,28 @@ type SigObject struct {
 	GitHubName    string `json:"githubName"`
 	WalletAddress string `json:"walletAddress"`
 	Timestamp     int64  `json:"timestamp"`
+}
+
+type StringSlice []string
+
+func (s *StringSlice) Scan(src interface{}) error {
+	if src == nil {
+		*s = []string{}
+		return nil
+	}
+
+	b, ok := src.([]byte)
+	if !ok {
+		return fmt.Errorf("unsupport type: %T", src)
+	}
+
+	return json.Unmarshal(b, s)
+}
+
+func (s StringSlice) Value() (driver.Value, error) {
+	if s == nil {
+		return nil, nil
+	}
+
+	return json.Marshal(s)
 }

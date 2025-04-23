@@ -15,27 +15,40 @@
 package utils
 
 import (
+	"context"
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	filecoinAddress "github.com/filecoin-project/go-address"
+	"github.com/filecoin-project/go-state-types/crypto"
 	"github.com/go-resty/resty/v2"
 	"github.com/storyicon/sigverify"
+	"github.com/ybbus/jsonrpc/v3"
 	"go.uber.org/zap"
 
+	"powervoting-server/config"
 	"powervoting-server/constant"
 	"powervoting-server/model"
 )
 
 var (
 	objRex       = regexp.MustCompile(`(?i)signing this object\s*({.*?})\s*`)
-	signatureRex = regexp.MustCompile(`(?i)signature:\s*(0x[\da-fA-F]+)`)
+	signatureRex = regexp.MustCompile(`(?i)signature:\s*([\da-fA-Fx]+)`)
 )
 
 func FetchGistInfoByGistId(gistId string) (model.Gist, error) {
+	tokenManager := NewGitHubTokenManager(config.Client.Github.Token)
+
+	token := tokenManager.GetCoreAvailableToken()
+	defer tokenManager.CoreDecreaseUsage(token)
+
 	client := resty.New().
 		SetTimeout(constant.RequestTimeout).
 		SetRetryCount(3).
@@ -46,6 +59,7 @@ func FetchGistInfoByGistId(gistId string) (model.Gist, error) {
 
 	resp, err := client.R().
 		SetHeader("Accept", "application/vnd.github.v3+json").
+		SetHeader("Authorization", "token "+token).
 		SetResult(&result).
 		Get(url)
 
@@ -104,13 +118,23 @@ func ParseGistContent(files map[string]model.GistFiles) (model.GistVoterInfo, er
 	}, nil
 }
 
-func VerifyAuthorizeAllow(address, githubName string, gist model.Gist) bool {
+func VerifyAuthorizeAllow(githubName string, gist model.Gist, mustEqAddr func(gistAddr string) bool) bool {
 	sigObj, err := ParseGistContent(gist.Files)
 	if err != nil {
-		zap.L().Error("ParseGistContent error",  zap.Error(err))
+		zap.L().Error("ParseGistContent error", zap.Error(err))
 		return false
 	}
 
+	address := sigObj.SigObject.WalletAddress
+	isEq := mustEqAddr(address)
+	if !isEq {
+		zap.L().Warn(
+			"Address not equal",
+			zap.String("expected address", address),
+		)
+
+		return false
+	}
 	isValid, err := VerifySignature(address, sigObj.Signature, []byte(sigObj.SigObjectStr))
 	if !isValid || err != nil {
 		zap.L().Warn(
@@ -145,15 +169,98 @@ func VerifyAuthorizeAllow(address, githubName string, gist model.Gist) bool {
 }
 
 func VerifySignature(address string, signature string, msgData []byte) (bool, error) {
-	isValid, err := sigverify.VerifyEllipticCurveHexSignatureEx(
-		common.HexToAddress(address),
-		msgData,
-		signature,
-	)
 
+	if strings.HasPrefix(address, "0x") {
+		isValid, err := sigverify.VerifyEllipticCurveHexSignatureEx(
+			common.HexToAddress(address),
+			msgData,
+			signature,
+		)
+
+		if err != nil {
+			return isValid, err
+		}
+
+		return isValid, nil
+	} else {
+		isValid, err := VerifyFilecoinAddrSignature(address, signature, msgData)
+		if !isValid || err != nil {
+			return false, errors.New("verify signature failed")
+		}
+
+		return isValid, nil
+	}
+}
+
+func VerifyFilecoinAddrSignature(address string, signature string, msgData []byte) (bool, error) {
+	signatureBytes, err := hex.DecodeString(signature)
 	if err != nil {
-		return isValid, err
+		return false, err
 	}
 
-	return isValid, nil
+	if len(signatureBytes) != 66 {
+		return false, errors.New("invalid signature length")
+	}
+
+	alg := ""
+	switch signatureBytes[0] {
+	case byte(constant.SigTypeSecp256k1):
+		alg = constant.KTSecp256k1
+	case byte(constant.SigTypeBLS):
+		alg = constant.KTBLS
+	default:
+		return false, errors.New("unsupported filecoin signature algorithm")
+	}
+
+	sig, err := createFilecoinSignature(alg, signatureBytes[1:])
+
+	verify, err := WalletVerify(context.Background(), address, sig, msgData)
+	if err != nil {
+		return verify, err
+	}
+
+	return verify, nil
+}
+
+func WalletVerify(ctx context.Context, address string, signature crypto.Signature, data []byte) (bool, error) {
+	lotusRpcClient := jsonrpc.NewClient(config.Client.Network.Rpc)
+
+	addressStr, err := filecoinAddress.NewFromString(address)
+	if err != nil {
+		return false, err
+	}
+	resp, err := lotusRpcClient.Call(ctx, "Filecoin.WalletVerify", addressStr, data, signature)
+	if err != nil {
+		return false, err
+	}
+
+	if resp.Error != nil {
+		return false, resp.Error
+	}
+
+	getBool, err := resp.GetBool()
+	if err != nil {
+		return false, err
+	}
+
+	return getBool, err
+}
+
+func createFilecoinSignature(alg string, signatureBytes []byte) (crypto.Signature, error) {
+	switch alg {
+
+	case constant.KTSecp256k1:
+		return crypto.Signature{
+			Type: crypto.SigType(constant.SigTypeSecp256k1),
+			Data: signatureBytes,
+		}, nil
+
+	case constant.KTBLS:
+		return crypto.Signature{
+			Type: crypto.SigType(constant.SigTypeBLS),
+			Data: signatureBytes,
+		}, nil
+	default:
+		return crypto.Signature{}, errors.New("unsupported filecoin signature algorithm")
+	}
 }

@@ -61,7 +61,7 @@ func InitConfig(path string) {
 		replacedValue = strings.ReplaceAll(replacedValue, "'", "")
 		replacedValue = strings.ReplaceAll(replacedValue, "\"", "")
 
-		if key == "xxl-job.serveraddrs" {
+		if key == "github.token" {
 			viper.Set(key, strings.Split(replacedValue, ","))
 		} else {
 			viper.Set(key, replacedValue)
@@ -81,4 +81,50 @@ func replaceEnvVariables(value string) string {
 	return os.Expand(value, func(key string) string {
 		return os.Getenv(key)
 	})
+}
+
+func GetDefaultConfig(client ...*Config) {
+	Client = DefaultConfig
+	if len(client) == 0 {
+		return
+	}
+
+	var config *Config = client[0]
+	if client != nil {
+		if config.Server.Port != "" {
+			Client.Server.Port = config.Server.Port
+		}
+
+		if config.Server.RpcPort != "" {
+			Client.Server.RpcPort = config.Server.RpcPort
+		}
+
+		if config.Network.ChainId != 0 {
+			Client.Network.ChainId = config.Network.ChainId
+		}
+
+		if config.Network.Name != "" {
+			Client.Network.Name = config.Network.Name
+		}
+
+		if config.Network.Rpc != "" {
+			Client.Network.Rpc = config.Network.Rpc
+		}
+
+		if config.Network.MinerIdPrefix != "" {
+			Client.Network.MinerIdPrefix = config.Network.MinerIdPrefix
+		}
+
+	}
+
+}
+
+var DefaultConfig = Config{
+	Server: Server{Port: "8000", RpcPort: "9000"},
+	Network: Network{
+		ChainId:       314159,
+		Name:          "FileCoin-Calibration ",
+		Rpc:           "https://filecoin-calibration.chainup.net/rpc/v1",
+		MinerIdPrefix: "t0",
+	},
 }

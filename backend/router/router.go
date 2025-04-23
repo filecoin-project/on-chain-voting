@@ -60,9 +60,9 @@ func powerRouter(rg *gin.RouterGroup) {
 
 // fipEditor sets up routes for handling FIP (Federated Identity Proposal) related operations.
 func fipEditor(rg *gin.RouterGroup, fh *api.FipHandle, vh *api.VoteHandler) {
-	rg.GET("/fipProposal/list", wrap(fh.GetFipProposalList))           // Get a list of fipProposals
-	rg.GET("/fipEditor/list", wrap(fh.GetFipEditorList))               // Get a list of fipEditors
-	rg.GET("/fipEditor/gistAuthorized", wrap(vh.GetFipEditorGistInfo)) // Get FIP editor gist info
+	rg.GET("/fipProposal/list", wrap(fh.GetFipProposalList)) // Get a list of fipProposals
+	rg.GET("/fipEditor/list", wrap(fh.GetFipEditorList))     // Get a list of fipEditors
+	rg.GET("/voter/info", wrap(vh.GetFipEditorGistInfo))     // Get FIP editor gist info
 	rg.GET("/fipEditor/checkGist", wrap(vh.VerifyGistValid))
 	// The wrap function is used to handle the request and response, passing the fh.GetFipEditorList handler.
 }

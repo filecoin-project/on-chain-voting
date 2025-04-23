@@ -86,7 +86,7 @@ func (s *BaseRepoImpl) GetDateHeightMap(ctx context.Context, netId int64) (map[s
 	jsonStr, err := s.redisClient.Get(ctx, key).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return nil, nil
+			return make(map[string]int64), nil
 		}
 		return nil, err
 	}

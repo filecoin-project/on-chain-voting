@@ -22,7 +22,6 @@ func InifMockConfig() {
 			PowerVotingAbi:  "../abi/power-voting.json",
 			OracleAbi:       "../abi/oracle.json",
 			FipAbi:          "../abi/power-voting-fip.json",
-			OraclePowersAbi: "../abi/oracle-powers.json",
 		},
 		Drand: config.Drand{
 			Url: []string{

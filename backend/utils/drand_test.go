@@ -45,9 +45,6 @@ func initConfig() {
 			ChainId:              314159,
 			Name:                 "FileCoin-Calibration",
 			Rpc:                  "https://filecoin-calibration.chainup.net/rpc/v1",
-			PowerVotingContract:  "0x4fe1B0D71FBFe97458D5c29D47928e1EA3b4466b",
-			SyncEventStartHeight: 240000,
-			OracleContract:       "0x974e0AffA36Ef25ad3F99Edda6a0f9Cc09D354Ff",
 		},
 		Snapshot: config.Snapshot{},
 	}

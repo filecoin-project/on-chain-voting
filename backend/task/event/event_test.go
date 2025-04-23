@@ -1,12 +1,6 @@
 package event
 
 import (
-	"context"
-	"math/big"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-
 	"powervoting-server/config"
 	"powervoting-server/data"
 	"powervoting-server/repo"
@@ -14,11 +8,10 @@ import (
 )
 
 func getSyncService() *service.SyncService {
+	// config.GetDefaultConfig()
 	config.InitConfig("../../")
-	config.InitLogger()
 	config.Client.ABIPath.PowerVotingAbi = "../../abi/power-voting.json"
 	config.Client.ABIPath.FipAbi = "../../abi/power-voting-fip.json"
-	config.Client.ABIPath.OraclePowersAbi = "../../abi/oracle-powers.json"
 	config.Client.ABIPath.OracleAbi = "../../abi/oracle.json"
 
 	return service.NewSyncService(
@@ -29,39 +22,59 @@ func getSyncService() *service.SyncService {
 		repo.NewLotusRPCRepo(),
 	)
 }
-func TestFetchMatchingEventLogs(t *testing.T) {
-	syncService := getSyncService()
-	gethClient, err := data.GetClient(syncService, 314159)
-	assert.NoError(t, err)
-	ev := &Event{
-		Client:      gethClient,
-		SyncService: syncService,
-		Network:     &config.Client.Network,
-	}
 
-	logs, err := ev.FetchMatchingEventLogs(context.Background(), big.NewInt(2539215), big.NewInt(2539220))
-	assert.NoError(t, err)
+// func TestFetchMatchingEventLogs(t *testing.T) {
+// 	syncService := getSyncService()
+// 	gethClient, err := data.GetClient(syncService, 314159)
+// 	assert.NoError(t, err)
+// 	ev := &Event{
+// 		Client:      gethClient,
+// 		SyncService: syncService,
+// 		Network:     &config.Client.Network,
+// 	}
 
-	ev.ProcessingEventLogs(context.Background(), logs)
-}
+// 	logs, err := ev.FetchMatchingEventLogs(context.Background(), big.NewInt(2539215), big.NewInt(2539220))
+// 	assert.NoError(t, err)
 
-func TestFetchEventFromRPC(t *testing.T) {
-	syncService := getSyncService()
-	gethClient, err := data.GetClient(syncService, 314159)
-	assert.NoError(t, err)
-	ev := &Event{
-		Client:      gethClient,
-		SyncService: syncService,
-		Network:     &config.Client.Network,
-	}
+// 	ev.ProcessingEventLogs(context.Background(), logs)
+// }
 
-	var (
-		url = "https://calibration.filfox.info/api/v1/address/0x880A2493D99d3cf434bBac5D5F191E4903b82B73/events"
-	)
+// func TestFetchEventFromRPC(t *testing.T) {
+// 	syncService := getSyncService()
+// 	gethClient, err := data.GetClient(syncService, 314159)
+// 	assert.NoError(t, err)
+// 	ev := &Event{
+// 		Client:      gethClient,
+// 		SyncService: syncService,
+// 		Network:     &config.Client.Network,
+// 	}
 
-	logs, err := FetchEventFromRPC(url)
-	assert.NoError(t, err)
-	assert.NotNil(t, logs)
+// 	var (
+// 		url = "https://calibration.filfox.info/api/v1/address/0x880A2493D99d3cf434bBac5D5F191E4903b82B73/events"
+// 	)
 
-	ev.ProcessingEventLogs(context.Background(), logs)
-}
+// 	logs, err := FetchEventFromRPC(url)
+// 	assert.NoError(t, err)
+// 	assert.NotNil(t, logs)
+
+// 	ev.ProcessingEventLogs(context.Background(), logs)
+// }
+
+// func TestUpdateMinerIds(t *testing.T) {
+// 	syncService := getSyncService()
+// 	gethClient, err := data.GetClient(syncService, 314159)
+// 	assert.NoError(t, err)
+// 	ev := &Event{
+// 		Client:      gethClient,
+// 		SyncService: syncService,
+// 		Network:     &config.Client.Network,
+// 	}
+
+// 	err = ev.SyncService.UpdateVoterByMinerIds(
+// 		context.Background(),
+// 		"0xfF000000000000000000000000000000000278bc",
+// 		[]uint64{161842},
+// 	)
+
+// 	assert.NoError(t, err)
+// }

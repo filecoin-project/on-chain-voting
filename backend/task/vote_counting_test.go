@@ -23,11 +23,11 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 
-	"powervoting-server/config"
 	"powervoting-server/constant"
 	"powervoting-server/data"
 	"powervoting-server/mock"
 	"powervoting-server/model"
+	"powervoting-server/utils"
 )
 
 func newVoteCount(t *testing.T) *VoteCount {
@@ -96,27 +96,26 @@ func TestCountWeightCredits(t *testing.T) {
 
 func TestCalculateVotesPercentage(t *testing.T) {
 	vc := newVoteCount(t)
-	config.InitLogger()
 	votesPower := map[string]model.VoterPowerCount{
 		constant.VoteApprove: {
-			SpPower:        decimal.NewFromInt(1000),
-			DeveloperPower: decimal.NewFromInt(2000),
-			ClientPower:    decimal.NewFromInt(1000),
-			TokenPower:     decimal.NewFromInt(1000),
+			SpPower:        decimal.NewFromInt(0),
+			DeveloperPower: decimal.NewFromInt(0),
+			ClientPower:    decimal.NewFromInt(0),
+			TokenPower:     utils.StringToDecimal("33194990143253993597"),
 		},
 		constant.VoteReject: {
-			SpPower:        decimal.NewFromInt(9000),
-			DeveloperPower: decimal.NewFromInt(8000),
-			ClientPower:    decimal.NewFromInt(1000),
-			TokenPower:     decimal.NewFromInt(1000),
+			SpPower:        decimal.NewFromInt(7112465842176),
+			DeveloperPower: decimal.NewFromInt(0),
+			ClientPower:    decimal.NewFromInt(0),
+			TokenPower:     utils.StringToDecimal("340180597209849844417"),
 		},
 	}
 
 	totalPower := model.VoterPowerCount{
-		SpPower:        decimal.NewFromInt(10000),
-		DeveloperPower: decimal.NewFromInt(10000),
-		ClientPower:    decimal.NewFromInt(2000),
-		TokenPower:     decimal.NewFromInt(2000),
+		SpPower:        decimal.NewFromInt(7112465842176),
+		DeveloperPower: decimal.NewFromInt(0),
+		ClientPower:    decimal.NewFromInt(0),
+		TokenPower:     utils.StringToDecimal("373375587353103838014"),
 	}
 
 	// Calculation formula:
@@ -133,7 +132,7 @@ func TestCalculateVotesPercentage(t *testing.T) {
 	// if tokenPower != 0 -> percentage += TokenHolderPercentage
 	//
 	// res := weight / percentage * 100%
-	res := vc.calculateVotesPercentage(votesPower[constant.VoteApprove], totalPower, model.Percentage{
+	res := vc.calculateVotesPercentage(votesPower[constant.VoteReject], totalPower, model.Percentage{
 		SpPercentage:          uint16(2500),
 		DeveloperPercentage:   uint16(2500),
 		ClientPercentage:      uint16(2500),

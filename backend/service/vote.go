@@ -112,12 +112,14 @@ var _ IVoteService = (*VoteService)(nil)
 // It encapsulates the dependencies required for interacting with vote data,
 // such as creating, retrieving, and updating vote records.
 type VoteService struct {
-	repo VoteRepo // repo provides access to the underlying vote repository
+	repo      VoteRepo // repo provides access to the underlying vote repository
+	lotusRepo LotusRepo
 }
 
-func NewVoteService(repo VoteRepo) *VoteService {
+func NewVoteService(repo VoteRepo, lotusRepo LotusRepo) *VoteService {
 	return &VoteService{
-		repo: repo,
+		repo:      repo,
+		lotusRepo: lotusRepo,
 	}
 }
 
@@ -159,9 +161,15 @@ func (v *VoteService) GetCountedVotedList(ctx context.Context, chainId, proposal
 }
 
 func (f *VoteService) GetFipEditorGistInfo(ctx context.Context, req api.AddressReq) (*api.FipEditorGistInfoRep, error) {
-	voterInfo, err := f.repo.GetVoterInfoByAddress(ctx, req.Address)
+	ethAddr, err := req.ToEthAddr()
 	if err != nil {
-		zap.L().Error("GetVoterInfoByAddress failed", zap.String("address", req.Address), zap.Error(err))
+		zap.L().Error("req.ToEthAddr failed", zap.String("address", req.Address), zap.Error(err))
+		return nil, err
+	}
+
+	voterInfo, err := f.repo.GetVoterInfoByAddress(ctx, ethAddr)
+	if err != nil {
+		zap.L().Error("GetVoterInfoByAddress failed", zap.String("address", ethAddr), zap.Error(err))
 		return nil, err
 	}
 
@@ -175,11 +183,30 @@ func (f *VoteService) GetFipEditorGistInfo(ctx context.Context, req api.AddressR
 		return nil, err
 	}
 
-	isValid := utils.VerifyAuthorizeAllow(req.Address, voterInfo.GithubId, gist)
+	isValid := utils.VerifyAuthorizeAllow(voterInfo.GithubName, gist, func(gistAddr string) bool {
+		if gistAddr == req.Address {
+			return true
+		}
+
+		reqAddrActorId, err := f.lotusRepo.GetActorIdByAddress(ctx, req.Address)
+		if err != nil {
+			zap.L().Error("GetActorIdByAddress failed by VerifyGist", zap.String("address", req.Address), zap.Error(err))
+			return false
+		}
+
+		gistAddrActorId, err := f.lotusRepo.GetActorIdByAddress(ctx, gistAddr)
+		if err != nil {
+			zap.L().Error("GetActorIdByAddress failed by VerifyGist", zap.String("address", gistAddr), zap.Error(err))
+			return false
+		}
+
+		return reqAddrActorId == gistAddrActorId
+	})
 	if !isValid {
 		voterInfo.GistId = ""
-		voterInfo.GithubId = ""
+		voterInfo.GithubName = ""
 		voterInfo.GistInfo = ""
+		voterInfo.GithubAvatar = ""
 		if err := f.repo.UpdateVoterByGistInfo(ctx, voterInfo); err != nil {
 			zap.L().Error("UpdateVoterByGistInfo failed", zap.String("address", req.Address), zap.Error(err))
 		}
@@ -195,6 +222,8 @@ func (f *VoteService) GetFipEditorGistInfo(ctx context.Context, req api.AddressR
 			WalletAddress: sigObj.SigObject.WalletAddress,
 			Timestamp:     sigObj.SigObject.Timestamp,
 		},
+		MinerIds: voterInfo.MinerIds,
+		ActorId:  voterInfo.OwnerId,
 	}, nil
 }
 
@@ -211,11 +240,29 @@ func (f *VoteService) VerifyGist(ctx context.Context, req api.VerifyGistReq) (*m
 		return nil, err
 	}
 
-	if isValid := utils.VerifyAuthorizeAllow(req.Address, sigObj.SigObject.GitHubName, gist); !isValid {
+	if isValid := utils.VerifyAuthorizeAllow(sigObj.SigObject.GitHubName, gist, func(gistAddr string) bool {
+		if gistAddr == req.Address {
+			return true
+		}
+
+		reqAddrActorId, err := f.lotusRepo.GetActorIdByAddress(ctx, req.Address)
+		if err != nil {
+			zap.L().Error("GetActorIdByAddress failed by VerifyGist", zap.String("address", req.Address), zap.Error(err))
+			return false
+		}
+
+		gistAddrActorId, err := f.lotusRepo.GetActorIdByAddress(ctx, gistAddr)
+		if err != nil {
+			zap.L().Error("GetActorIdByAddress failed by VerifyGist", zap.String("address", gistAddr), zap.Error(err))
+			return false
+		}
+
+		return reqAddrActorId == gistAddrActorId
+	}); !isValid {
 		zap.L().Error("verify authorize allow failed by VerifyGist", zap.String("gistId", req.GistId), zap.Error(err))
 		return nil, fmt.Errorf("gist content is invalid")
 	}
-	
+
 	return &model.SigObject{
 		GitHubName:    sigObj.SigObject.GitHubName,
 		WalletAddress: sigObj.SigObject.WalletAddress,

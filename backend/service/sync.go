@@ -66,7 +66,9 @@ type SyncRepo interface {
 
 type LotusRepo interface {
 	GetActorIdByAddress(ctx context.Context, addr string) (string, error)
-	GetValidMinerIds(ctx context.Context, minerId string, minerIds []uint64) ([]string, error)
+	GetValidMinerIds(ctx context.Context, minerId string, minerIds []uint64) (model.StringSlice, error)
+	EthAddrToFilcoinAddr(ctx context.Context, addr string) (string, error)
+	FilecoinAddressToID(ctx context.Context, addr string) (string, error)
 }
 type ISyncService interface {
 	UpdateSyncEventInfo(ctx context.Context, addr string, height int64) error
@@ -498,15 +500,35 @@ func (s *SyncService) UpdateVoterAndProposalGithubNameByGistInfo(ctx context.Con
 		zap.String("github id", gist.Owner.Login),
 	)
 
-	voterInfo.GithubId = gist.Owner.Login
+	voterInfo.GithubName = gist.Owner.Login
+	voterInfo.GithubAvatar = gist.Owner.AvatarUrl
 	voterInfo.GistInfo = gistInfo
 	voterInfo.OwnerId = actorId
-	isValid := utils.VerifyAuthorizeAllow(voterInfo.Address, gist.Owner.Login, gist)
 
+	isValid := utils.VerifyAuthorizeAllow(gist.Owner.Login, gist, func(gistAddr string) bool {
+		if gistAddr == voterInfo.Address {
+			return true
+		}
+
+		reqAddrActorId, err := s.lotusRepo.GetActorIdByAddress(ctx, voterInfo.Address)
+		if err != nil {
+			zap.L().Error("GetActorIdByAddress failed by VerifyGist", zap.String("address", voterInfo.Address), zap.Error(err))
+			return false
+		}
+
+		gistAddrActorId, err := s.lotusRepo.GetActorIdByAddress(ctx, gistAddr)
+		if err != nil {
+			zap.L().Error("GetActorIdByAddress failed by VerifyGist", zap.String("address", gistAddr), zap.Error(err))
+			return false
+		}
+
+		return reqAddrActorId == gistAddrActorId
+	})
 	if !isValid {
-		voterInfo.GithubId = ""
+		voterInfo.GithubName = ""
 		voterInfo.GistInfo = ""
 		voterInfo.GistId = ""
+		voterInfo.GithubAvatar = ""
 	}
 
 	if err := s.voteRepo.UpdateVoterByGistInfo(ctx, voterInfo); err != nil {
