@@ -347,9 +347,9 @@ const Header = (props: any) => {
                         <a
                             target='_blank'
                             rel="noopener noreferrer"
-                            href={"https://staging.vote.fil.org/"}
-                            className="py-2 text-[#25292E] text-[14px] font-[700] flex items-center">
-                            Calibration
+                            href={"https://vote.storswift.io/"}
+                            className="py-2 text-[#0000FF] text-[14px] font-[700] flex items-center">
+                            Calibration↗
                         </a>
                     </div>
                     <Modal
