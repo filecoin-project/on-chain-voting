@@ -48,7 +48,6 @@ jobs:
       - name: Copy config file to test dir
         run: |
           cd ./backend
-          mv configuration.yaml.example configuration.yaml
           cp ./abi/* ./task/event
           cp ./abi/* ./task
           cp ./abi/* ./utils
