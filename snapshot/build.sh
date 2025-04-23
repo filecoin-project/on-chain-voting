@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-IMAGE_NAME="pv-snapshot"
+IMAGE_NAME="pv-snapshot-mainnet"
 
 if [ ! -f "configuration.yaml" ]; then
     echo "Error: configuration.yaml does not exist."
