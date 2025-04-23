@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-IMAGE_NAME="power-voting-frontend"
+IMAGE_NAME="pv-frontend-mainnet"
 
 if [ ! -f "configuration.yaml" ]; then
     echo "Error: configuration.yaml does not exist."
