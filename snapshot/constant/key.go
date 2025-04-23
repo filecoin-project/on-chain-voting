@@ -19,5 +19,5 @@ const (
 	RedisAddrSyncedDate      = "%d_SYNCED_DATE"
 	RedisAddrPower           = "%d_POWER_%s"
 	RedisDeveloperPower      = "DEV_POWER"
-	RedisTipset              = "TIPSET_%d"
+	RedisTipset              = "%d_TIPSET"
 )

@@ -19,10 +19,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
 	filecoinAddress "github.com/filecoin-project/go-address"
 	"github.com/redis/go-redis/v9"
 	"github.com/ybbus/jsonrpc/v3"
+	"go.uber.org/zap"
 
 	"power-snapshot/config"
 	"power-snapshot/constant"
@@ -44,6 +46,10 @@ func NewLotusRPCRepo(redisClient *redis.Client) *LotusRPCRepo {
 
 func (l *LotusRPCRepo) GetTipSetByHeight(ctx context.Context, netId, height int64) ([]any, error) {
 	key := fmt.Sprintf(constant.RedisTipset, netId)
+	defer func() {
+		go l.cleanExpiredHeights(ctx, netId)
+	}()
+
 	res, err := l.redisClient.HGet(ctx, key, strconv.FormatInt(height, 10)).Result()
 	if err != nil {
 		if err != redis.Nil {
@@ -65,7 +71,8 @@ func (l *LotusRPCRepo) GetTipSetByHeight(ctx context.Context, netId, height int6
 	}
 
 	if resp.Error != nil {
-		return nil, resp.Error
+		zap.L().Error("get tipset by height error", zap.Int64("height", height), zap.Error(resp.Error))
+		return []any{}, nil
 	}
 
 	rMap, ok := resp.Result.(map[string]interface{})
@@ -75,16 +82,70 @@ func (l *LotusRPCRepo) GetTipSetByHeight(ctx context.Context, netId, height int6
 
 	resTipSet := rMap["Cids"].([]interface{})
 
-	jsonData, err := json.Marshal(resTipSet)
-	if err != nil {
-		return nil, err
+	if err := l.cacheWithExpiration(ctx, key, height, resTipSet); err != nil {
+		zap.L().Warn("cache with expiration failed", zap.Error(err))
 	}
-
-	if err = l.redisClient.HSet(ctx, key, strconv.FormatInt(height, 10), string(jsonData)).Err(); err != nil {
-		return nil, err
-	}
-
 	return resTipSet, nil
+}
+
+func (l *LotusRPCRepo) cleanExpiredHeights(ctx context.Context, netId int64) {
+	lastBlockHeight, err := l.GetNewestHeight(ctx, netId)
+	if err != nil {
+		zap.L().Error("get newest height failed", zap.Error(err))
+		return
+	}
+	expirationThreshold := lastBlockHeight + constant.SavedHeightDuration
+	key := fmt.Sprintf(constant.RedisTipset, netId)
+
+	var cursor uint64
+	for {
+		fields, nextCursor, err := l.redisClient.HScan(ctx, key, cursor, "", 1000).Result()
+		if err != nil {
+			zap.L().Error("HSCAN failed", zap.Error(err))
+			return
+		}
+
+		var toDelete []string
+		for i := 0; i < len(fields); i += 2 {
+			heightStr := fields[i]
+			height, err := strconv.ParseInt(heightStr, 10, 64)
+			if err != nil || height < expirationThreshold {
+				toDelete = append(toDelete, heightStr)
+			}
+		}
+
+		if len(toDelete) > 0 {
+			if err := l.redisClient.HDel(ctx, key, toDelete...).Err(); err != nil {
+				zap.L().Error("HDEL failed", zap.Strings("keys", toDelete), zap.Error(err))
+			} else {
+				zap.L().Info("cleaned expired heights",
+					zap.Int("count", len(toDelete)),
+					zap.Int64("threshold", expirationThreshold))
+			}
+		}
+
+		cursor = nextCursor
+		if cursor == 0 {
+			break
+		}
+	}
+}
+
+func (l *LotusRPCRepo) cacheWithExpiration(ctx context.Context, key string, height int64, data []any) error {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	pipe := l.redisClient.Pipeline()
+	pipe.HSet(ctx, key, strconv.FormatInt(height, 10), string(jsonData))
+
+	pipe.Expire(ctx, key, constant.DataExpiredDuration*24*time.Hour)
+
+	if _, err := pipe.Exec(ctx); err != nil {
+		return fmt.Errorf("pipeline failed: %w", err)
+	}
+	return nil
 }
 
 func (l *LotusRPCRepo) GetAddrBalanceBySpecialHeight(ctx context.Context, addr string, netId, height int64) (string, error) {
@@ -228,16 +289,13 @@ func (l *LotusRPCRepo) GetWalletBalanceByHeight(ctx context.Context, id string, 
 		return "0", err
 	}
 
-	addressStr, err := filecoinAddress.NewFromString(id)
+	resp, err := l.rpcClient.Call(ctx, "Filecoin.StateGetActor", id, tipSetKey)
 	if err != nil {
 		return "0", err
 	}
 
-	tipSetList := append([]any{}, addressStr, tipSetKey)
-
-	resp, err := l.rpcClient.Call(ctx, "Filecoin.StateGetActor", &tipSetList)
-	if err != nil {
-		return "0", err
+	if resp.Error != nil {
+		return "0", resp.Error
 	}
 
 	tmp, err := json.Marshal(resp.Result)
@@ -278,3 +336,4 @@ func (l *LotusRPCRepo) GetClientBalanceByHeight(ctx context.Context, netId, heig
 
 	return t, nil
 }
+

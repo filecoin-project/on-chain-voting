@@ -70,6 +70,5 @@ func getSafeJob(t *testing.T) *Safejob {
 }
 
 func TestSyncPower(t *testing.T) {
-	syncPowerFunc := getSafeJob(t).SyncPower()
-	syncPowerFunc()
+	getSafeJob(t).SyncPower()
 }
