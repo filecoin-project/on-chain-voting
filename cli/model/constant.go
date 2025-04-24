@@ -11,7 +11,7 @@ const (
 
 	Approve             = "approve"
 	Reject              = "reject"
-	BaseProposalAPIPath = "/power_voting/api/proposal/"
+	BaseProposalAPIPath = "/api/proposal/"
 )
 
 const (
