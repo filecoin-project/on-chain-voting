@@ -13,7 +13,7 @@ The PowerVoting-Contract is a suite of smart contracts designed to facilitate se
 ### Installation
 Install the necessary libraries by running the following command:
 ```bash
-npm install
+npm install 
 ```
 
 ### Environment Variable Configuration
@@ -73,7 +73,7 @@ npx hardhat run scripts/upgrade_oracle.ts --network [network_name]
 ### Test Cases
 You can run the contract's test cases using the following command:
 ```bash
-npx hardhat test
+npx hardhat test 
 ```
 
 ### Script Descriptions
