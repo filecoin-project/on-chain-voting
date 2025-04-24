@@ -170,7 +170,7 @@ func getDeveloperWeights(ctx context.Context, repositories []string, weight int,
 			continue
 		}
 		org, repoName := parts[0], parts[1]
-
+		
 		wg.Add(1)
 		go func(org, repo string) {
 			defer wg.Done()
@@ -214,7 +214,7 @@ func getDeveloperWeights(ctx context.Context, repositories []string, weight int,
 	for w := range weightsCh {
 		for user, cnt := range w {
 			if cnt >= 2 {
-				finalWeights[user] += int64(weight)
+				finalWeights[user] = int64(weight)
 			}
 		}
 	}
