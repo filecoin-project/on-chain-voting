@@ -12,3 +12,35 @@ on:
 env:
   FOUNDRY_PROFILE: ci
 
+jobs:
+  check-powervoting-contracts:
+    name: hardhat project
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install Dependencies
+        run: |
+          cd ./contracts
+          yarn install --frozen-lockfile 
+
+      - name: Install Hardhat
+        run: |
+          cd ./contracts
+          npm install
+
+      - name: Create .env file with private keys
+        run: |
+          echo "PRIVATE_KEY_TESTNET=151668a21bb4c2e717233d14bdc08bf3483ce9b2436efed4133da1d596e0bdb3" >> ./contracts/.env
+          echo "PRIVATE_KEY_MAINNET=151668a21bb4c2e717233d14bdc08bf3483ce9b2436efed4133da1d596e0bdb3" >> ./contracts/.env
+
+      - name: Run Hardhat tests
+        run: |
+          cd ./contracts
+          yarn hardhat test
