@@ -76,6 +76,16 @@ You can run the contract's test cases using the following command:
 npx hardhat test
 ```
 
+### Contract Config
+#### Update the maximum snapshot random days  
+1. Edit the update_vote_snapshot_random_day.ts file and then configure the value of newSnapshotMaxRandomOffsetDays
+
+2. Run the following command to update snapshotMaxRandomOffsetDays:
+```bash
+npx hardhat run scripts/update_vote_snapshot_random_day.ts --network [network_name]
+```
+
+
 ### Script Descriptions
 
 Here’s a brief overview of the available scripts in the `scripts` directory:
@@ -111,6 +121,10 @@ Here’s a brief overview of the available scripts in the `scripts` directory:
 #### `update_fipetidor_address.ts`
 
 - **Purpose**: Update the FipEditor contract address to the vote contract.
+
+#### `update_vote_snapshot_random_day.ts`
+
+- **Purpose**: Update the maximum snapshot random days in the vote contract.
 
 #### `utils.ts`
 

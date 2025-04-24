@@ -14,13 +14,12 @@ async function main() {
   );
   try {
     const currentImplementationAddress =
-      await upgrades.erc1967.getImplementationAddress(PowerVotingFipEditor);
+      await upgrades.erc1967.getImplementationAddress(POWER_VOTING_FIP_ADDRESS);
     console.log("currentImplementationAddress ", currentImplementationAddress);
-  } catch (error) {
-    console.log("Force importing existing proxy...");
-    await upgrades.forceImport(POWER_VOTING_FIP_ADDRESS, PowerVotingFipEditor);
-    console.log("Proxy contract successfully registered");
-  }
+  } catch (error) {}
+  console.log("Force importing existing proxy...");
+  await upgrades.forceImport(POWER_VOTING_FIP_ADDRESS, PowerVotingFipEditor);
+  console.log("Proxy contract successfully registered");
 
   await upgrades.upgradeProxy(POWER_VOTING_FIP_ADDRESS, PowerVotingFipEditor);
   console.log("Upgrade completed successfully");
