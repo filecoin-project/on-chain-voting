@@ -95,8 +95,7 @@ func (vc *VoteCount) voteCounting(syncedHeight int64) error {
 
 	for _, p := range proposals {
 		// Retrieve the snapshot of voting power for all addresses at the specified block height
-		// todo: replace with snapshot sync data
-		allPowers, err := snapshot.GetAllAddressPowerByDay(vc.EthClient.ChainId, "20250421")
+		allPowers, err := snapshot.GetAllAddressPowerByDay(vc.EthClient.ChainId, p.SnapshotDay)
 		if err != nil {
 			errList = append(errList, fmt.Errorf("get address power for proposal %d: %w", p.ProposalId, err))
 		}
