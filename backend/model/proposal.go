@@ -71,6 +71,6 @@ type ProposalDraftTbl struct {
 	Timezone  string `json:"timezone" gorm:"not null"`           // Proposal timezone
 	ChainId   int64  `json:"chain_id" gorm:"not null"`           // Network ID
 	Title     string `json:"title" gorm:"not null,default:''"`   // Name
-	Content   string `json:"content" gorm:"type:longtext;not null,default:''"` // Descriptions
+	Content   string `json:"content" gorm:"not null,default:''"` // Descriptions
 	Percentage
 }

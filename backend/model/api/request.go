@@ -61,32 +61,32 @@ type GetPowerReq struct {
 
 // ChainIdParam represents a request parameter for chain ID.
 type ChainIdParam struct {
-	ChainId int64 `form:"chainId" validate:"required"` // Chain ID
+	ChainId int64 `form:"chainId" validate:"required,gt=0"` // Chain ID
 }
 
 // ProposalReq represents a request for retrieving a specific proposal by its ID and chain ID.
 type ProposalReq struct {
-	ProposalId   int64 `form:"proposalId" validate:"required"` // Proposal ID
+	ProposalId   int64 `form:"proposalId" validate:"required,gt=0"` // Proposal ID
 	ChainIdParam       // Embedded chain ID parameter
 }
 
 // AddProposalDraftReq represents a request for creating or updating a proposal draft.
 type AddProposalDraftReq struct {
-	Creator   string `json:"creator"`   // Creator address
-	StartTime int64  `json:"startTime"` // Start time of the proposal
-	EndTime   int64  `json:"endTime"`   // End time of the proposal
-	Timezone  string `json:"timezone"`  // Timezone of the proposal
-	ChainId   int64  `json:"chainId"`   // Chain ID associated with the proposal
-	Title     string `json:"title"`     // Title of the proposal
-	Content   string `json:"content"`   // Description of the proposal
+	Creator   string `json:"creator" validate:"required"`                // Creator address
+	StartTime int64  `json:"startTime" validate:"required"`              // Start time of the proposal
+	EndTime   int64  `json:"endTime" validate:"required"`                // End time of the proposal
+	Timezone  string `json:"timezone" validate:"required"`               // Timezone of the proposal
+	Title     string `json:"title" validate:"required,min=2,max=254"`    // Title of the proposal
+	Content   string `json:"content" validate:"required,min=2,max=2000"` // Description of the proposal
+	ChainIdParam
 	ProposalPercentage
 }
 
 type ProposalPercentage struct {
-	TokenHolderPercentage uint16 `json:"tokenHolderPercentage"` // Voting power percentage for token holders
-	SpPercentage          uint16 `json:"spPercentage"`          // Voting power percentage for SPs
-	ClientPercentage      uint16 `json:"clientPercentage"`      // Voting power percentage for clients
-	DeveloperPercentage   uint16 `json:"developerPercentage"`   // Voting power percentage for developers
+	TokenHolderPercentage uint16 `json:"tokenHolderPercentage" validate:"number,is-integer"` // Voting power percentage for token holders
+	SpPercentage          uint16 `json:"spPercentage" validate:"number,is-integer"`           // Voting power percentage for SPs
+	ClientPercentage      uint16 `json:"clientPercentage" validate:"number,is-integer"`       // Voting power percentage for clients
+	DeveloperPercentage   uint16 `json:"developerPercentage" validate:"number,is-integer"`    // Voting power percentage for developers
 }
 
 type FipProposalListReq struct {
@@ -141,4 +141,3 @@ func (a *AddressReq) ToEthAddr() (string, error) {
 
 	return resp.Result.(string), nil
 }
-
