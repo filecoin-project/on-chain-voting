@@ -30,7 +30,7 @@ import {
   STORING_DATA_MSG,
   WRONG_MINER_ID_MSG
 } from "../../common/consts";
-import { useFilSnapMessage } from "../../common/hooks.ts";
+import { useFilAddressMessage } from "../../common/hooks.ts";
 import Loading from '../../components/Loading.tsx';
 import LoadingButton from '../../components/LoadingButton';
 import Table from '../../components/Table';
@@ -197,7 +197,7 @@ const MinerId = () => {
       } else {
         if (address && isFilAddress(address)) {
           try {
-            const { message } = await useFilSnapMessage({
+            const { message } = await useFilAddressMessage({
               abi: oracleAbi,
               contractAddress: getContractAddress(chain?.id || calibrationChainId, 'oracle'),
               address: address as string,

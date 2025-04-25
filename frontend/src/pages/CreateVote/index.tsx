@@ -51,7 +51,7 @@ import timezoneOption from '../../json/timezons.json';
 // import { getContractAddress, hexToString, isFilAddress, validateValue } from "../../utils"
 import { getContractAddress, hexToString, multiplyWithPrecision, validateValue } from "../../utils"
 import './index.less';
-// import { useFilSnapMessage } from "../../common/hooks.ts"
+// import { useFilAddressMessage } from "../../common/hooks.ts"
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -265,7 +265,7 @@ const CreateVote = () => {
 
         /*if (address && isFilAddress(address)) {
           try {
-            const { message } = await useFilSnapMessage({
+            const { message } = await useFilAddressMessage({
               abi: fileCoinAbi,
               contractAddress: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
               address: address as string,

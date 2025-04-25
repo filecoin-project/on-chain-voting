@@ -15,11 +15,10 @@
 import { useReadContract, useReadContracts } from "wagmi"
 import cbor from "cbor"
 import { ethers, Contract } from "ethers"
-import { Message } from "iso-filecoin/message"
 import { getContractAddress } from "../utils"
 import oracleAbi from "./abi/oracle.json"
 import fileCoinAbi from "./abi/power-voting.json"
-import { powerVotingCalibrationChainRpc } from "./consts.ts"
+import { network, filecoinChainRpc, calibrationChainRpc } from "./consts.ts"
 
 export const useVoterInfoSet = (chainId: number, address: `0x${string}` | undefined) => {
   const { data: voterInfo } = useReadContract({
@@ -92,7 +91,7 @@ export const useProposalDataSet = (params: any) => {
   }
 }
 
-export const useFilSnapMessage = async ({ abi, contractAddress, functionName, functionParams, address }: {
+export const useFilAddressMessage = async ({ abi, contractAddress, functionName, functionParams, address }: {
   abi: any,
   contractAddress: string,
   functionName: string,
@@ -100,7 +99,7 @@ export const useFilSnapMessage = async ({ abi, contractAddress, functionName, fu
   address: string
 }) => {
 
-  const provider = new ethers.JsonRpcProvider(powerVotingCalibrationChainRpc)
+  const provider = new ethers.JsonRpcProvider(network === 'testnet' ? calibrationChainRpc : filecoinChainRpc)
   const contract = new Contract(
     contractAddress,
     abi,
@@ -119,14 +118,15 @@ export const useFilSnapMessage = async ({ abi, contractAddress, functionName, fu
   const serializedData = cbor.encode(bytes)
   const params = btoa(String.fromCharCode.apply(null, [...serializedData].slice(2)))
 
-  const message = new Message({
+  const message = {
     from: address,
     to: contractAddress,
     value: "0",
     gasLimit: Number(estimatedGas),
     method: 0,
     params
-  })
+  }
+
   return {
     message
   }

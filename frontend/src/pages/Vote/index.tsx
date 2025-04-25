@@ -35,7 +35,7 @@ import LoadingButton from "../../components/LoadingButton"
 import MDEditor from "../../components/MDEditor"
 import { bigNumberToFloat, convertBytes } from "../../utils"
 import "./index.less"
-import { useFilSnapMessage } from "../../common/hooks.ts"
+import { useFilAddressMessage } from "../../common/hooks.ts"
 
 const Vote = () => {
 
@@ -271,14 +271,13 @@ const Vote = () => {
         // f1 or f3 address
         if (address && isFilAddress(address)) {
           try {
-            const { message } = await useFilSnapMessage({
+            const { message } = await useFilAddressMessage({
               abi: fileCoinAbi,
               contractAddress: getContractAddress(chain?.id || calibrationChainId, 'powerVoting'),
               address: address as string,
               functionName: "vote",
               functionParams: [Number(id), encryptValue],
             })
-
             await sendMessage(message);
             messageApi.open({
               type: "success",

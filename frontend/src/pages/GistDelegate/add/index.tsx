@@ -40,7 +40,7 @@ import MDEditor from "../../../../src/components/MDEditor";
 import { useGistList, useTransactionHash } from "../../../common/store.ts";
 import axios from "axios";
 import { CopyButton } from "../../../components/CopyButton.tsx";
-import { useFilSnapMessage } from "../../../common/hooks.ts"
+import { useFilAddressMessage } from "../../../common/hooks.ts"
 
 const GistDelegate = () => {
   const { isConnected, address, chain } = useAccount();
@@ -166,7 +166,7 @@ const GistDelegate = () => {
     }
     if (address && isFilAddress(address)) {
       try {
-        const { message } = await useFilSnapMessage({
+        const { message } = await useFilAddressMessage({
           abi: oracleAbi,
           contractAddress: getContractAddress(chain?.id || calibrationChainId, 'oracle'),
           address: address as string,
