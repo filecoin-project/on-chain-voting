@@ -26,8 +26,14 @@ import (
 )
 
 type AtomicTokenCounter struct {
-	count atomic.Int32
+	count *atomic.Int32
 	_     [64 - 4]byte
+}
+
+func NewAtomicTokenCounter() *AtomicTokenCounter {
+	return &AtomicTokenCounter{
+		count: new(atomic.Int32),
+	}
 }
 
 func (a *AtomicTokenCounter) Add(n int32) {
@@ -81,10 +87,11 @@ func NewGitHubTokenManager(tokens []string) *GitHubTokenManager {
 	}
 
 	for _, token := range tokens {
-		manager.graphQLUsage[token] = new(AtomicTokenCounter)
-		manager.coreUsage[token] = new(AtomicTokenCounter)
-		manager.graphQLCap[token] = new(AtomicTokenCounter)
-		manager.coreCap[token] = new(AtomicTokenCounter)
+		manager.graphQLUsage[token] = NewAtomicTokenCounter()
+		manager.coreUsage[token] = NewAtomicTokenCounter()
+		manager.graphQLCap[token] = NewAtomicTokenCounter()
+		manager.coreCap[token] = NewAtomicTokenCounter()
+
 	}
 
 	manager.RefreshToken()
@@ -94,9 +101,9 @@ func NewGitHubTokenManager(tokens []string) *GitHubTokenManager {
 func (m *GitHubTokenManager) RefreshToken() {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
+
 	for _, token := range m.tokens {
 		gCap, cCap := CheckRateLimitBeforeRequest(token)
-
 		m.graphQLCap[token].Set(gCap)
 		m.coreCap[token].Set(cCap)
 
@@ -169,7 +176,7 @@ func (m *GitHubTokenManager) GetCoreAvailableToken() string {
 func (m *GitHubTokenManager) CoreDecreaseUsage(token string) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	if m.coreUsage[token].Get() > 0 {
 		m.coreUsage[token].Add(-1)
 	}
