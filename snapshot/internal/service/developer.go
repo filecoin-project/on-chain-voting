@@ -114,8 +114,8 @@ var GithubUser = []string{
 	"xbankingorg",
 }
 
-// FetchDeveloperWeights Calculates the weight of a developer based on their contributions to a given repository
-func FetchDeveloperWeights(fromTime time.Time) (map[string]int64, []models.Nodes, error) {
+// GetDeveloperWeights Calculates the weight of a developer based on their contributions to a given repository
+func GetDeveloperWeights(fromTime time.Time) (map[string]int64, []models.Nodes, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	eg, ctx := errgroup.WithContext(ctx)
@@ -163,21 +163,31 @@ func getDeveloperWeights(ctx context.Context, repositories []string, weight int,
 		sem         = make(chan struct{}, maxConcurrency)
 	)
 
-	for index, repo := range repositories {
+	for _, repo := range repositories {
 		parts := strings.Split(repo, "/")
 		if len(parts) != 2 {
 			zap.L().Warn("invalid repository format", zap.String("repo", repo))
 			continue
 		}
 		org, repoName := parts[0], parts[1]
-
+		
 		wg.Add(1)
 		go func(org, repo string) {
 			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
 
-			weightMap, commits, err := getRepoData(ctx, index, len(repositories), org, repo, fromTime, tokenManager)
+			token := tokenManager.GetAvailableToken()
+			if token == "" {
+				errCh <- fmt.Errorf("no available tokens")
+				return
+			}
+			defer tokenManager.DecreaseUsage(token)
+
+			repoCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+			defer cancel()
+
+			weightMap, commits, err := getRepoData(repoCtx, org, repo, fromTime, token)
 			if err != nil {
 				errCh <- fmt.Errorf("repo %s error: %w", repo, err)
 				return
@@ -189,7 +199,7 @@ func getDeveloperWeights(ctx context.Context, repositories []string, weight int,
 
 			select {
 			case weightsCh <- weightMap:
-			case <-ctx.Done():
+			case <-repoCtx.Done():
 			}
 		}(org, repoName)
 	}
@@ -220,16 +230,16 @@ func getDeveloperWeights(ctx context.Context, repositories []string, weight int,
 	return finalWeights, commitsPool, nil
 }
 
-func getRepoData(ctx context.Context, index, repoCount int, org, repo string, fromTime time.Time, tokenManager *GitHubTokenManager) (map[string]int64, []models.Nodes, error) {
+func getRepoData(ctx context.Context, org, repo string, fromTime time.Time, token string) (map[string]int64, []models.Nodes, error) {
 	queryStart := utils.AddMonths(fromTime, -constant.GithubDataWithinXMonths)
 	since := queryStart.Format(time.RFC3339)
 
-	return getDeveloperWeightsByRepo(ctx, index, repoCount, org, repo, since, tokenManager)
+	return getDeveloperWeightsByRepo(ctx, org, repo, since, token)
 }
 
 // getDeveloperWeightsByRepo calculates the weights of developers for a specific repository.
-func getDeveloperWeightsByRepo(ctx context.Context, index, repoCount int, organization, repository, since string, tokenManager *GitHubTokenManager) (map[string]int64, []models.Nodes, error) {
-	commits, err := getContributorsWithRetry(ctx, index, repoCount, organization, repository, since, tokenManager, 5*time.Second)
+func getDeveloperWeightsByRepo(ctx context.Context, organization, repository, since, token string) (map[string]int64, []models.Nodes, error) {
+	commits, err := getContributorsWithRetry(ctx, organization, repository, since, token, 5*time.Second)
 	if err != nil {
 		zap.L().Error("failed to get contributors", zap.Error(err))
 		return nil, nil, err
@@ -334,38 +344,33 @@ func getContributors(ctx context.Context, owner, name, since, token string) ([]m
 }
 
 // getContributorsWithRetry retries fetching contributors for a repository with backoff and retry logic.
-func getContributorsWithRetry(ctx context.Context, index, repoCount int, organization, repository, since string, tokenManager *GitHubTokenManager, retryInterval time.Duration) ([]models.Nodes, error) {
-	reqToken := tokenManager.GetAvailableToken()
-	if reqToken == "" {
-		zap.L().Warn("All tokens are reached with the usage rate limit, wait for an hour and try again")
-		time.Sleep(1 * time.Hour)
+func getContributorsWithRetry(ctx context.Context, organization, repository, since, token string, retryInterval time.Duration) ([]models.Nodes, error) {
+	noCancelCtx := context.WithoutCancel(ctx)
+
+	if err := ctx.Err(); err != nil {
+		zap.L().Info("Abort before execution",
+			zap.String("organization", organization),
+			zap.String("repository", repository),
+			zap.Error(err),
+		)
+		return nil, fmt.Errorf("pre-check failed: %w", err)
 	}
 
-	defer tokenManager.DecreaseUsage(reqToken)
-
+	const maxRetries = 3
 	var commits []models.Nodes
 	var lastErr error
-	for attempt := 0; attempt < constant.MaxGithubGraphRequetRetries; attempt++ {
+
+	for attempt := 0; attempt < maxRetries; attempt++ {
 		select {
 		case <-ctx.Done():
 			zap.L().Warn("Operation canceled",
 				zap.Error(ctx.Err()),
 				zap.Int("attempt", attempt))
-			continue
+			return nil, ctx.Err()
 		default:
-			commits, lastErr = getContributors(ctx, organization, repository, since, reqToken)
+			commits, lastErr = getContributors(noCancelCtx, organization, repository, since, token)
 			if lastErr == nil {
 				break
-			}
-
-			if strings.Contains(lastErr.Error(), "API rate limit exceeded") {
-				zap.L().Warn("Rate limit exceeded, refreshing token")
-				tokenManager.RefreshToken()
-				reqToken = tokenManager.GetAvailableToken()
-			}
-
-			if tokenManager.graphQLCap[reqToken].Get() == 0 {
-				reqToken = tokenManager.GetAvailableToken()
 			}
 
 			waitTime := time.Duration(math.Pow(2, float64(attempt))) * retryInterval
@@ -380,17 +385,15 @@ func getContributorsWithRetry(ctx context.Context, index, repoCount int, organiz
 
 	if lastErr != nil {
 		zap.L().Error("Permanent failure after retries",
-			zap.Int("max_retries", constant.MaxGithubGraphRequetRetries),
+			zap.Int("max_retries", maxRetries),
 			zap.Error(lastErr))
-		return nil, fmt.Errorf("after %d retries: %w", constant.MaxGithubGraphRequetRetries, lastErr)
+		return nil, fmt.Errorf("after %d retries: %w", maxRetries, lastErr)
 	}
 
 	zap.L().Info("Finalizing data processing",
 		zap.Int("count", len(commits)),
 		zap.String("organization", organization),
-		zap.String("repository", repository),
-		zap.String("Syncd progress", fmt.Sprintf("%d/%d", index+1, repoCount)),
-	)
+		zap.String("repository", repository))
 
 	return commits, nil
 }

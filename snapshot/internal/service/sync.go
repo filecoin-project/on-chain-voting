@@ -319,7 +319,7 @@ func (s *SyncService) ExistDeveloperWeight(ctx context.Context, dayStr string) (
 
 func (s *SyncService) SyncDeveloperWeight(ctx context.Context, dayStr string) error {
 	dayEndTime := carbon.ParseByLayout(dayStr, carbon.ShortDateLayout).EndOfDay()
-	m, commits, err := FetchDeveloperWeights(dayEndTime.ToStdTime())
+	m, commits, err := GetDeveloperWeights(dayEndTime.ToStdTime())
 	if err != nil {
 		return err
 	}
@@ -733,7 +733,7 @@ func (s *SyncService) GetAddrInfo(ctx context.Context, netID int64, addr string)
 func (s *SyncService) SyncAllDeveloperWeight(ctx context.Context) error {
 	base := carbon.Now().SubDay().EndOfDay()
 	for i := 0; i < constant.DataExpiredDuration; i++ {
-		m, commits, err := FetchDeveloperWeights(base.ToStdTime())
+		m, commits, err := GetDeveloperWeights(base.ToStdTime())
 		if err != nil {
 			return err
 		}
