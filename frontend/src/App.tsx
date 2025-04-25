@@ -16,7 +16,7 @@ import {
   lightTheme,
   RainbowKitProvider,
 } from "@rainbow-me/rainbowkit";
-import { useConnect, useAddresses } from "iso-filecoin-react"
+import { useConnect as FilUseConnect, useAddresses } from "iso-filecoin-react"
 import { ConfigProvider, FloatButton, theme } from 'antd';
 import {
   useAccount as FilAccount
@@ -29,7 +29,7 @@ import { useTranslation } from 'react-i18next';
 import { useEffect, useRef } from "react";
 import { useLocation, useRoutes } from "react-router-dom";
 import "tailwindcss/tailwind.css";
-import { useAccount } from "wagmi";
+import { useAccount, useConnect } from "wagmi";
 import timezones from './json/timezons.json';
 import { calibrationChainId, getFipListApi } from "./common/consts"
 import { useVoterInfoSet } from "./common/hooks"
@@ -48,22 +48,28 @@ dayjs.locale(lang === 'en' ? lang : "zh-cn")
 const App: React.FC = () => {
   // Destructure values from custom hooks
   const { chain, address, isConnected } = useAccount();
-  const { adapter} = FilAccount();
-
+  const { adapter, state} = FilAccount();
+  const { connect, connectors } = useConnect()
   const { address0x} = useAddresses({ address: address as string });
-  const { mutate: connect, adapters } = useConnect();
+  const { mutate: FilConnect, adapters } = FilUseConnect();
   const chainId = chain?.id || calibrationChainId;
   const prevAddressRef = useRef(address);
   const setFipList = useFipList((state: any) => state.setFipList)
   const { i18n } = useTranslation();
 
+  useEffect(()=>{
+    if(state=="connected"){
+      connect({connector:connectors[0]})
+    }
+  },[state])
+
   useEffect(() => {
     const adapterId = window.localStorage.getItem('adapter');
     if (isConnected) {
       if (adapter) {
-        connect({ adapter: adapter });
+        FilConnect({ adapter: adapter });
       } else {
-        connect({ adapter: adapters.find(item => item.id === adapterId) || adapters[0] });
+        FilConnect({ adapter: adapters.find(item => item.id === adapterId) || adapters[0] });
       }
     }
   }, [isConnected, adapter])
@@ -149,34 +155,34 @@ const App: React.FC = () => {
   const lang = localStorage.getItem("lang") || "en";
 
   return (
-    <RainbowKitProvider
-      locale={lang === "en" ? "en-US" : "zh-CN"}
-      theme={lightTheme({
-        accentColor: "#7b3fe4",
-        accentColorForeground: "white",
-      })}
-      modalSize="compact"
-    >
-      <ConfigProvider theme={{
-        algorithm: theme.defaultAlgorithm,
-        components: {
-          Radio: {
-            buttonSolidCheckedBg: ''
-          }
-        }
-      }} locale={lang === "en" ? enUS : zhCN}>
-        <div className="layout font-body">
-          {!isLanding && <Header changeLang={handleChange} />}
-          <div className='content w-[1000px] mx-auto pt-10 pb-10'>
-            {
-              element
+      <RainbowKitProvider
+          locale={lang === "en" ? "en-US" : "zh-CN"}
+          theme={lightTheme({
+            accentColor: "#7b3fe4",
+            accentColorForeground: "white",
+          })}
+          modalSize="compact"
+      >
+        <ConfigProvider theme={{
+          algorithm: theme.defaultAlgorithm,
+          components: {
+            Radio: {
+              buttonSolidCheckedBg: ''
             }
+          }
+        }} locale={lang === "en" ? enUS : zhCN}>
+          <div className="layout font-body">
+            {!isLanding && <Header changeLang={handleChange} />}
+            <div className='content w-[1000px] mx-auto pt-10 pb-10'>
+              {
+                element
+              }
+            </div>
+            <Footer />
+            <FloatButton.BackTop style={{ bottom: 100 }} />
           </div>
-          <Footer />
-          <FloatButton.BackTop style={{ bottom: 100 }} />
-        </div>
-      </ConfigProvider>
-    </RainbowKitProvider>
+        </ConfigProvider>
+      </RainbowKitProvider>
   )
 }
 
