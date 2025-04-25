@@ -38,4 +38,4 @@ else
     echo "Container $IMAGE_NAME does not exist or is already stopped."
 fi
 
-docker run --name $IMAGE_NAME -p $PORT:$PORT -d $IMAGE_NAME
+docker run --name $IMAGE_NAME -p 9000:$PORT -d $IMAGE_NAME
