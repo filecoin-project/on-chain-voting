@@ -199,12 +199,24 @@ func TestPostDraft_Success(t *testing.T) {
 	voteService := new(MockVoteService)
 	fipService := new(MockFipService)
 	router := setupRouter(proposalService, voteService, fipService)
-	body := `{"title": "Test Proposal"}`
+	body := `{"title": "Test Proposal","creator": "0x1234567890123456789012345678901234567890","startTime": 1,"endTime": 2,"chainId": 3,"content": "test content","tokenHolderPercentage":1,"spPercentage":1,"clientPercentage":1,"developerPercentage":1,"timezone": "Asia/Shanghai"}`
 
 	proposalService.On("AddDraft",
 		mock.Anything,
 		&api.AddProposalDraftReq{
-			Title: "Test Proposal",
+			Title:        "Test Proposal",
+			Creator:      "0x1234567890123456789012345678901234567890",
+			StartTime:    1,
+			EndTime:      2,
+			ChainIdParam: api.ChainIdParam{ChainId: 3},
+			Content:      "test content",
+			ProposalPercentage: api.ProposalPercentage{
+				TokenHolderPercentage: 1,
+				SpPercentage:          1,
+				ClientPercentage:      1,
+				DeveloperPercentage:   1,
+			},
+			Timezone: "Asia/Shanghai",
 		}).Return(nil)
 	req, _ := http.NewRequest("POST", constant.PowerVotingApiPrefix+"/proposal/draft/add", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")

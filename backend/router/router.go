@@ -15,6 +15,8 @@
 package router
 
 import (
+	"reflect"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 
@@ -69,7 +71,22 @@ func fipEditor(rg *gin.RouterGroup, fh *api.FipHandle, vh *api.VoteHandler) {
 
 // wrap is a utility function to wrap handlers with additional context and validation.
 func wrap(h func(c *constant.Context)) gin.HandlerFunc {
+	validate := validator.New()
+	validate.RegisterValidation("is-integer", func(fl validator.FieldLevel) bool {
+		field := fl.Field()
+		switch field.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return true
+		case reflect.Float32, reflect.Float64:
+			floatValue := field.Float()
+			return floatValue == float64(int64(floatValue))
+		default:
+			return false
+		}
+	})
+
 	return func(c *gin.Context) {
-		h(&constant.Context{Context: c, Validate: validator.New()}) // Pass context and validator to the handler
+		h(&constant.Context{Context: c, Validate: validate}) // Pass context and validator to the handler
 	}
 }

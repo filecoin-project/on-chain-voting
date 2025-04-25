@@ -1,6 +1,7 @@
 package proposal
 
 import (
+	"fil-vote/config"
 	"fil-vote/model"
 	"fil-vote/service"
 	"fmt"
@@ -93,10 +94,21 @@ func printProposalContents(proposal model.Proposal, votes []model.Vote) {
 	for _, v := range votes {
 		tokenPower, err := convertStringToBigInt(v.TokenHolderPower)
 		if err != nil {
-			logError("Failed to convert SpPower", err, v.TokenHolderPower)
+			logError("Failed to convert TokenHolderPower", err, v.TokenHolderPower)
 			return
 		}
 
+		tokenPowerInTFIL := new(big.Float).SetInt(tokenPower)
+		tokenPowerInTFIL = tokenPowerInTFIL.Quo(tokenPowerInTFIL, big.NewFloat(1e18))
+
+		var tokenPowerWithUnit string
+		if config.Client.Network.ChainID == 314 {
+			tokenPowerWithUnit = fmt.Sprintf("%.2f FIL", tokenPowerInTFIL)
+		} else if config.Client.Network.ChainID == 314159 {
+			tokenPowerWithUnit = fmt.Sprintf("%.2f tFIL", tokenPowerInTFIL)
+		}
+
+		// Calculate the percentage of token power
 		percentage := calculatePercentage(tokenPower, tokenHolderPower)
 
 		// Determine the result of the vote (Approve/Reject)
@@ -105,7 +117,7 @@ func printProposalContents(proposal model.Proposal, votes []model.Vote) {
 		// Add the vote data to the vote table
 		voteTable.Append([]string{
 			v.VoterAddress,
-			tokenPower.String(),
+			tokenPowerWithUnit,
 			percentage,
 			votedResult,
 		})

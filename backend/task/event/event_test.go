@@ -50,7 +50,7 @@ func getSyncService() *service.SyncService {
 // 	}
 
 // 	var (
-// 		url = "https://calibration.filfox.info/api/v1/address/0x880A2493D99d3cf434bBac5D5F191E4903b82B73/events"
+// 		url = "https://calibration.filfox.info/api/v1/address/0xBd87133b920e3147705362512f3897465f35f50E/events"
 // 	)
 
 // 	logs, err := FetchEventFromRPC(url)

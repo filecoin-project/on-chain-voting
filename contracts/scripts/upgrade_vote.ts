@@ -17,7 +17,6 @@ async function main() {
 
     const PowerVotingFactory = await ethers.getContractFactory("PowerVoting");
 
-    // check forceImport
     try {
       const currentImplementationAddress =
         await upgrades.erc1967.getImplementationAddress(
@@ -27,12 +26,10 @@ async function main() {
         "currentImplementationAddress ",
         currentImplementationAddress
       );
-    } catch (error) {
-      console.log("Force importing existing proxy...");
-      await upgrades.forceImport(POWER_VOTING_VOTE_ADDRESS, PowerVotingFactory);
-      console.log("Proxy contract successfully registered");
-    }
-
+    } catch (error) {}
+    console.log("Force importing existing proxy...");
+    await upgrades.forceImport(POWER_VOTING_VOTE_ADDRESS, PowerVotingFactory);
+    console.log("Proxy contract successfully registered");
     // upgrade
     console.log("Executing upgrade...");
     await upgrades.upgradeProxy(POWER_VOTING_VOTE_ADDRESS, PowerVotingFactory);

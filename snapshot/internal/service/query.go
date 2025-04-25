@@ -78,6 +78,11 @@ func (q *QueryService) GetAddressPowerByDay(ctx context.Context, netId int64, ad
 	}
 
 	if power == nil {
+		if err := q.syncSrv.SyncDateHeight(ctx, netId); err != nil {
+			zap.L().Error("error sync date height", zap.Error(err))
+			return nil, err
+		}
+
 		// get power from chain now and sync all power sync
 		err := q.syncSrv.AddAddrPowerTaskToMQ(ctx, netId, address)
 		if err != nil {
@@ -198,6 +203,10 @@ func (q *QueryService) GetAddressPowerByDay(ctx context.Context, netId int64, ad
 }
 
 func (q *QueryService) GetDataHeight(ctx context.Context, netId int64, dayStr string) (int64, error) {
+	if err := q.syncSrv.SyncDateHeight(ctx, netId); err != nil {
+		zap.L().Error("error sync date height", zap.Error(err))
+	}
+
 	dh, err := q.baseRepo.GetDateHeightMap(ctx, netId)
 	if err != nil {
 		zap.L().Error("error getting date height map", zap.Error(err))

@@ -10,7 +10,6 @@ async function main() {
   }
   console.log(`Target proxy contract address: ${POWER_VOTING_ORACLE_ADDRESS}`);
   const PowerVotingOracle = await ethers.getContractFactory("Oracle");
-  // check forceImport
   try {
     const currentImplementationAddress =
       await upgrades.erc1967.getImplementationAddress(
@@ -18,10 +17,11 @@ async function main() {
       );
     console.log("currentImplementationAddress ", currentImplementationAddress);
   } catch (error) {
-    console.log("Force importing existing proxy...");
-    await upgrades.forceImport(POWER_VOTING_ORACLE_ADDRESS, PowerVotingOracle);
-    console.log("Proxy contract successfully registered");
+    
   }
+  console.log("Force importing existing proxy...");
+  await upgrades.forceImport(POWER_VOTING_ORACLE_ADDRESS, PowerVotingOracle);
+  console.log("Proxy contract successfully registered");
   await upgrades.upgradeProxy(POWER_VOTING_ORACLE_ADDRESS, PowerVotingOracle);
   console.log("Upgrade completed successfully");
 }
