@@ -16,24 +16,20 @@ package constant
 
 import (
 	"time"
-
-	models "power-snapshot/internal/model"
 )
 
 const (
-	DataExpiredDuration        = 60
-	GithubDataWithinXMonths    = 6
-	SnapshotBackupSync         = 0
-	RetryCount                 = 3
-	SnapshotBackupSyncd        = 4
-	TwoHoursBlockNumber        = 2 * 3600 / 30
-	TaskActionActor            = "actor"
-	TaskActionMiner            = "miner"
-	DeveloperWeightsFilePrefix = "developer_weights_"
-	SavedHeightDuration        = -DataExpiredDuration * 2880
+	DataExpiredDuration         = 60
+	GithubDataWithinXMonths     = 6
+	SnapshotBackupSync          = 0
+	RetryCount                  = 3
+	SnapshotBackupSyncd         = 4
+	TwoHoursBlockNumber         = 2 * 3600 / 30
+	TaskActionActor             = "actor"
+	TaskActionMiner             = "miner"
+	DeveloperWeightsFilePrefix  = "developer_weights_"
+	SavedHeightDuration         = -DataExpiredDuration * 2880
+	MaxGithubGraphRequetRetries = 5
 )
 
 var TimeoutSecond = 15 * time.Second
-var ChainAddressPrefix = models.ChainPrefix{
-	314159: "t0",
-}
