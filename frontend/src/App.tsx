@@ -18,6 +18,9 @@ import {
 } from "@rainbow-me/rainbowkit";
 import { useConnect, useAddresses } from "iso-filecoin-react"
 import { ConfigProvider, FloatButton, theme } from 'antd';
+import {
+  useAccount as FilAccount
+} from 'iso-filecoin-react'
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 import enUS from 'antd/locale/en_US';
@@ -45,19 +48,25 @@ dayjs.locale(lang === 'en' ? lang : "zh-cn")
 const App: React.FC = () => {
   // Destructure values from custom hooks
   const { chain, address, isConnected } = useAccount();
-  const { address0x} = useAddresses({ address: address as string });
+  const { adapter} = FilAccount();
 
-  const { adapters, mutate: connect } = useConnect();
+  const { address0x} = useAddresses({ address: address as string });
+  const { mutate: connect, adapters } = useConnect();
   const chainId = chain?.id || calibrationChainId;
   const prevAddressRef = useRef(address);
   const setFipList = useFipList((state: any) => state.setFipList)
   const { i18n } = useTranslation();
 
   useEffect(() => {
-    if (isConnected && address!.indexOf("0x") < 0) {
-      connect({ adapter: adapters[0] });
+    const adapterId = window.localStorage.getItem('adapter');
+    if (isConnected) {
+      if (adapter) {
+        connect({ adapter: adapter });
+      } else {
+        connect({ adapter: adapters.find(item => item.id === adapterId) || adapters[0] });
+      }
     }
-  }, [isConnected, address])
+  }, [isConnected, adapter])
 
   // Render routes based on URL
   const element = useRoutes(routes);

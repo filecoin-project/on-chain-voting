@@ -12,16 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { filecoinCalibration, filecoin } from 'wagmi/chains';
-export const filecoinId = filecoin.id;
-export const calibrationChainId = filecoinCalibration.id;
+export const network = import.meta.env.VITE_CHAIN_NETWORK || 'mainnet';
 export const powerVotingMainNetContractAddress = import.meta.env.VITE_POWER_VOTING_MAINNET_CONTRACT_ADDRESS || '';
 export const oracleMainNetContractAddress = import.meta.env.VITE_ORACLE_MAINNET_CONTRACT_ADDRESS || '';
 export const powerVotingCalibrationContractAddress = import.meta.env.VITE_POWER_VOTING_CALIBRATION_CONTRACT_ADDRESS || '';
 export const oracleCalibrationContractAddress = import.meta.env.VITE_ORACLE_CALIBRATION_CONTRACT_ADDRESS || '';
 export const powerVotingFipMainNetContractAddress = import.meta.env.VITE_POWER_VOTING_FIP_MAINNET_CONTRACT_ADDRESS || '';
 export const powerVotingFipCalibrationContractAddress = import.meta.env.VITE_POWER_VOTING_FIP_CALIBRATION_CONTRACT_ADDRESS || '';
-export const powerVotingCalibrationChainRpc = import.meta.env.VITE_CALIBRATION_CHAIN_RPC || '';
 export const walletConnectProjectId = import.meta.env.VITE_WALLET_CONNECT_ID || '';
+export const filecoinId = filecoin.id;
+export const calibrationChainId = filecoinCalibration.id;
+export const filecoinChainRpc = filecoin.rpcUrls.default.http[0];
+export const calibrationChainRpc = filecoinCalibration.rpcUrls.default.http[0];
 export const githubApi = 'https://avatars.githubusercontent.com';
 export const baseUrl = import.meta.env.VITE_BASE_API_URL || ''
 export const proposalListApi = `${baseUrl}/proposal/list`;

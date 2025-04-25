@@ -37,7 +37,7 @@ import EllipsisMiddle from "../../../components/EllipsisMiddle";
 import Loading from "../../../components/Loading";
 import { getBlockExplorers, getContractAddress, isFilAddress } from "../../../utils"
 import "./index.less";
-import { useFilSnapMessage } from "../../../common/hooks.ts"
+import { useFilAddressMessage } from "../../../common/hooks.ts"
 const FipEditorApprove = () => {
   const { isConnected, address, chain } = useAccount();
   const { address0x } = useAddresses({ address: address as string })
@@ -305,7 +305,7 @@ const FipEditorApprove = () => {
 
     if (address && isFilAddress(address)) {
       try {
-        const { message } = await useFilSnapMessage({
+        const { message } = await useFilAddressMessage({
           abi: votingFipeditorAbi,
           contractAddress: getContractAddress(chainId || calibrationChainId, 'powerVotingFip'),
           address: address as string,

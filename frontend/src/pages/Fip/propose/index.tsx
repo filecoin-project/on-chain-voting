@@ -42,7 +42,7 @@ import LoadingButton from '../../../components/LoadingButton';
 import Table from '../../../components/Table';
 import { getContractAddress, hexToString, isFilAddress } from "../../../utils"
 import axios from "axios";
-import { useFilSnapMessage } from "../../../common/hooks.ts"
+import { useFilAddressMessage } from "../../../common/hooks.ts"
 
 const FipEditorPropose = () => {
   const { isConnected, address, chain } = useAccount();
@@ -251,7 +251,7 @@ const FipEditorPropose = () => {
 
     if (address && isFilAddress(address)) {
       try {
-        const { message } = await useFilSnapMessage({
+        const { message } = await useFilAddressMessage({
           abi: votingFipEditorAbi,
           contractAddress: getContractAddress(chainId, 'powerVotingFip'),
           address: address as string,

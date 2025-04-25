@@ -109,16 +109,13 @@ vim .env
 Example configuration:
 
 ```
-POWER_VOTING_MAINNET_CONTRACT_ADDRESS=<mainnet_contract_address>
-POWER_VOTING_CALIBRATION_CONTRACT_ADDRESS=<calibration_contract_address>
+VITE_POWER_VOTING_MAINNET_CONTRACT_ADDRESS = <mainnet_contract_address>
+VITE_ORACLE_MAINNET_CONTRACT_ADDRESS = <mainnet_oracle_contract_address>
+VITE_POWER_VOTING_FIP_MAINNET_CONTRACT_ADDRESS = <mainnet_fip_contract_address>
 
-ORACLE_MAINNET_CONTRACT_ADDRESS=<mainnet_oracle_contract_address>
-ORACLE_CALIBRATION_CONTRACT_ADDRESS=<calibration_oracle_contract_address>
-
-ORACLE_POWER_MAINNET_CONTRACT_ADDRESS=<mainnet_oracle_power_contract_address>
-ORACLE_POWER_CALIBRATION_CONTRACT_ADDRESS=<calibration_oracle_power_contract_address>
-
-WALLET_CONNECT_ID=43a5e091da6b7d42e521c6cce175bc94 
+VITE_CHAIN_NETWORK =  /* testnet or mainnet */
+VITE_BASE_API_URL=  /* default: /api */
+VITE_WALLET_CONNECT_ID =43a5e091da6b7d42e521c6cce175bc94 
 ```
 
 #### 3. Configure Nginx

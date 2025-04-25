@@ -32,6 +32,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.35.1
         version: 5.74.2(react@18.3.1)
+      '@zondax/ledger-filecoin':
+        specifier: ^2.0.4
+        version: 2.0.4
       add:
         specifier: ^2.0.6
         version: 2.0.6
@@ -881,6 +884,9 @@ packages:
   '@ledgerhq/cryptoassets-evm-signatures@13.5.6':
     resolution: {integrity: sha512-BWHu2jhBtspzR2aNcjU4V2mYjc5rqQijXx51EQjmLBJWeV4pEb+CLvyRz6FN12TBUJkpseNmYHof8EcCeNz2yg==}
 
+  '@ledgerhq/cryptoassets@13.13.0':
+    resolution: {integrity: sha512-Egl86pXuyGdvGwwTwnq8NxzDBixqs1uImQtA79FuBFb0c3zgHjDsFUAmsuzz+xMbT3U0FyaW7G8rDLzYuApoCQ==}
+
   '@ledgerhq/devices@8.4.4':
     resolution: {integrity: sha512-sz/ryhe/R687RHtevIE9RlKaV8kkKykUV4k29e7GAVwzHX1gqG+O75cu1NCJUHLbp3eABV5FdvZejqRUlLis9A==}
 
@@ -892,6 +898,9 @@ packages:
 
   '@ledgerhq/evm-tools@1.6.2':
     resolution: {integrity: sha512-ezdrW7qhu81YhUp5ZHysW+LqJ9SyO1JuY2cCwehJQ6HU7APof5Voglk0CaR+5JMXJX7N6tTZbu72tTAv5OmI2g==}
+
+  '@ledgerhq/hw-app-eth@6.42.9':
+    resolution: {integrity: sha512-rjvZNVYrXBvyhGpx0f1SPf6T4LSKl0mJsbtFVmKjAstXTOEgLVf/pyzUH2EBRH12to78uQiMTKM6nczgKnX3bw==}
 
   '@ledgerhq/hw-app-eth@6.45.0':
     resolution: {integrity: sha512-omUVUiBjICM+wYJ5P9f0LdX43FHrDRtLijaFGRJm18NNJcyU+wNh0YVY/Yk96hUketCr+K+cl8o8BB8OJ5yphQ==}
@@ -1790,6 +1799,9 @@ packages:
   '@xtuc/long@4.2.2':
     resolution: {integrity: sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==}
 
+  '@zondax/ledger-filecoin@2.0.4':
+    resolution: {integrity: sha512-z1JX/c2mDjNWEr86Od9/IfpJcWytYoF78vK8L1ttoB85nkBRnmx8TiaU1J7tgptc2gcs1bdibAAc/IFTK56jEA==}
+
   abitype@1.0.8:
     resolution: {integrity: sha512-ZeiI6h3GnW06uYDLx0etQtX/p8E24UaHHBj57RSjK7YBFe7iuVn07EDpOeP451D06sF27VOz9JJPlIKJmXgkEg==}
     peerDependencies:
@@ -1942,6 +1954,9 @@ packages:
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
 
+  base-x@3.0.11:
+    resolution: {integrity: sha512-xz7wQ8xDhdyP7tQxwdteLYeFfS68tSMNCZ/Y37WJ4bhGfKPpqEIlmIyueQHqOyoPhE6xNUqjzRr8ra0eF9VRvA==}
+
   base-x@5.0.1:
     resolution: {integrity: sha512-M7uio8Zt++eg3jPj+rHMfCC+IuygQHHCOU+IYsVtik6FWjuYpVt/+MRKcgsAMHh8mMFAwnB+Bs+mTrFiXjMzKg==}
 
@@ -2024,8 +2039,14 @@ packages:
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
 
+  bs58@4.0.1:
+    resolution: {integrity: sha512-Ok3Wdf5vOIlBrgCvTq96gBkJw+JUEzdBgyaza5HLtPm7yTHkjRy8+JzNyHF7BHa0bNWOQIp3m5YF0nnFcOIKLw==}
+
   bs58@6.0.0:
     resolution: {integrity: sha512-PD0wEnEYg6ijszw/u8s+iI3H17cTymlrwkKhDhPZq+Sokl3AU4htyBFTjAeNAlCCmg0f53g6ih3jATyCKftTfw==}
+
+  bs58check@2.1.2:
+    resolution: {integrity: sha512-0TS1jicxdU09dwJMNZtVAfzPi6Q6QeN0pM1Fkzrjn+XYHvzMKPU3pHVpva+769iNVSfIYWf7LJ6WR+BuuMf8cA==}
 
   buffer-from@1.1.2:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
@@ -2983,6 +3004,9 @@ packages:
 
   ini@1.3.8:
     resolution: {integrity: sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==}
+
+  invariant@2.2.4:
+    resolution: {integrity: sha512-phJfQVBuaJM5raOpJjSfkiD6BpbCE4Ns//LaXl6wGYtUBY83nWS6Rf9tXm2e8VaK60JEjYldbPif/A2B1C2gNA==}
 
   iron-webcrypto@1.2.1:
     resolution: {integrity: sha512-feOM6FaSr6rEABp/eDfVseKyTMDt+KGpeB35SkVn9Tyn0CqvVsY3EwI0v5i8nMHyJnzCIQf7nsy3p41TPkJZhg==}
@@ -4935,6 +4959,9 @@ packages:
       react:
         optional: true
 
+  varint@6.0.0:
+    resolution: {integrity: sha512-cXEIW6cfr15lFv563k4GuVuW/fiwjknytD37jIOLSdSWuOI6WnO/oKwmP2FQTU2l01LP8/M5TSAJpzUaGe3uWg==}
+
   viem@2.23.2:
     resolution: {integrity: sha512-NVmW/E0c5crMOtbEAqMF0e3NmvQykFXhLOc/CkLIXOlzHSA6KXVz3CYVmaKqBF8/xtjsjHAGjdJN3Ru1kFJLaA==}
     peerDependencies:
@@ -5942,6 +5969,15 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
+  '@ledgerhq/cryptoassets@13.13.0':
+    dependencies:
+      '@ledgerhq/live-env': 2.8.0
+      axios: 1.7.7
+      bs58check: 2.1.2
+      invariant: 2.2.4
+    transitivePeerDependencies:
+      - debug
+
   '@ledgerhq/devices@8.4.4':
     dependencies:
       '@ledgerhq/errors': 6.19.1
@@ -5971,6 +6007,25 @@ snapshots:
       '@ledgerhq/live-env': 2.8.0
       axios: 1.7.7
       crypto-js: 4.2.0
+    transitivePeerDependencies:
+      - debug
+
+  '@ledgerhq/hw-app-eth@6.42.9':
+    dependencies:
+      '@ethersproject/abi': 5.8.0
+      '@ethersproject/rlp': 5.8.0
+      '@ethersproject/transactions': 5.8.0
+      '@ledgerhq/cryptoassets-evm-signatures': 13.5.6
+      '@ledgerhq/domain-service': 1.2.25
+      '@ledgerhq/errors': 6.19.1
+      '@ledgerhq/evm-tools': 1.6.2
+      '@ledgerhq/hw-transport': 6.31.4
+      '@ledgerhq/hw-transport-mocker': 6.29.4
+      '@ledgerhq/logs': 6.12.0
+      '@ledgerhq/types-live': 6.66.0
+      axios: 1.7.7
+      bignumber.js: 9.2.1
+      semver: 7.7.1
     transitivePeerDependencies:
       - debug
 
@@ -7837,6 +7892,16 @@ snapshots:
 
   '@xtuc/long@4.2.2': {}
 
+  '@zondax/ledger-filecoin@2.0.4':
+    dependencies:
+      '@babel/runtime': 7.27.0
+      '@ledgerhq/cryptoassets': 13.13.0
+      '@ledgerhq/hw-app-eth': 6.42.9
+      '@ledgerhq/hw-transport': 6.31.4
+      varint: 6.0.0
+    transitivePeerDependencies:
+      - debug
+
   abitype@1.0.8(typescript@5.4.2)(zod@3.22.4):
     optionalDependencies:
       typescript: 5.4.2
@@ -8043,6 +8108,10 @@ snapshots:
 
   balanced-match@1.0.2: {}
 
+  base-x@3.0.11:
+    dependencies:
+      safe-buffer: 5.2.1
+
   base-x@5.0.1: {}
 
   base64-js@1.5.1: {}
@@ -8146,9 +8215,19 @@ snapshots:
       node-releases: 2.0.19
       update-browserslist-db: 1.1.3(browserslist@4.24.4)
 
+  bs58@4.0.1:
+    dependencies:
+      base-x: 3.0.11
+
   bs58@6.0.0:
     dependencies:
       base-x: 5.0.1
+
+  bs58check@2.1.2:
+    dependencies:
+      bs58: 4.0.1
+      create-hash: 1.2.0
+      safe-buffer: 5.2.1
 
   buffer-from@1.1.2: {}
 
@@ -9259,6 +9338,10 @@ snapshots:
   inherits@2.0.4: {}
 
   ini@1.3.8: {}
+
+  invariant@2.2.4:
+    dependencies:
+      loose-envify: 1.4.0
 
   iron-webcrypto@1.2.1: {}
 
@@ -11371,6 +11454,8 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.20
       react: 18.3.1
+
+  varint@6.0.0: {}
 
   viem@2.23.2(bufferutil@4.0.9)(typescript@5.4.2)(utf-8-validate@5.0.10)(zod@3.24.2):
     dependencies:
