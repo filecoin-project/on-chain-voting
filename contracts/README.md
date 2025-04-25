@@ -8,7 +8,7 @@ The PowerVoting-Contract is a suite of smart contracts designed to facilitate se
 ## Deployment and Upgrade Process
 
 ### Prerequisites
-- Node.js version v18.13.0 or higher.
+- Node.js version v18.13.0 or higher. 
 
 ### Installation
 Install the necessary libraries by running the following command:
