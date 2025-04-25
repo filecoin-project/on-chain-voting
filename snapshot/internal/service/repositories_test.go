@@ -34,7 +34,7 @@ func TestGetRepoNames(t *testing.T) {
 		log.Fatalf("Failed to load config: %v", err)
 		return
 	}
-	tokenManager := NewGitHubTokenManager(config.Client.Github.Token)
+	tokenManager := NewGitHubTokenManager(config.Client.Github.Token, GithubRateLimit{})
 	allRepos := GetRepoNames(EcosystemOrg, GithubUser, tokenManager)
 	fmt.Println(len(allRepos))
 

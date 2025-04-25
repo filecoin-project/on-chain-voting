@@ -15,6 +15,7 @@
 package task
 
 import (
+	"fmt"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -76,4 +77,29 @@ func TestSyncPower(t *testing.T) {
 func TestSyncDev(t *testing.T) {
 
 	getSafeJob(t).SyncDevWeightStepDay()
+}
+
+type TestGithubRateLimit struct {
+}
+
+func (g TestGithubRateLimit) CheckRateLimitBeforeRequest(token string) (int32, int32) {
+	if token == "token1" {
+		return 10, 10
+	}
+	return 20, 100
+}
+
+func TestRateLimit(t *testing.T) {
+	tokenManager := service.NewGitHubTokenManager([]string{
+		"token1",
+		"token2",
+	}, TestGithubRateLimit{})
+
+	for i := 0; i < 40; i++ {
+		token := tokenManager.GetAvailableToken()
+		fmt.Println("token", token)
+		if token == "token1" {
+		    tokenManager.RefreshToken()
+		}
+	}
 }

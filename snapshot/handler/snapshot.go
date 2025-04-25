@@ -205,3 +205,4 @@ func (s *Snapshot) SyncAllDeveloperWeight(context.Context, *pb.SyncAllDeveloperW
 
 	return &pb.SyncAllDeveloperWeightResponse{}, nil
 }
+

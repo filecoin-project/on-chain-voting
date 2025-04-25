@@ -71,10 +71,15 @@ func (j *Safejob) SyncDevWeightStepDay() {
 			if err != nil {
 				return
 			}
+			if i != end {
+				err := j.syncService.SyncDeveloperWeight(ctx, end.ToShortDateString())
+				if err != nil {
+					return
+				}
+			}
 			break
 		}
 	}
-
 }
 
 // UploadPowerToIPFS returns a function that uploads power data to IPFS.

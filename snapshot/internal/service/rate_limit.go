@@ -75,15 +75,17 @@ type GitHubTokenManager struct {
 	coreUsage    map[string]*AtomicTokenCounter
 	coreCap      map[string]*AtomicTokenCounter
 	mu           sync.RWMutex
+	githubApi    GithubLimit
 }
 
-func NewGitHubTokenManager(tokens []string) *GitHubTokenManager {
+func NewGitHubTokenManager(tokens []string, githubApi GithubLimit) *GitHubTokenManager {
 	manager := &GitHubTokenManager{
 		tokens:       tokens,
 		graphQLUsage: make(map[string]*AtomicTokenCounter),
 		graphQLCap:   make(map[string]*AtomicTokenCounter),
 		coreUsage:    make(map[string]*AtomicTokenCounter),
 		coreCap:      make(map[string]*AtomicTokenCounter),
+		githubApi:    githubApi,
 	}
 
 	for _, token := range tokens {
@@ -103,9 +105,12 @@ func (m *GitHubTokenManager) RefreshToken() {
 	defer m.mu.RUnlock()
 
 	for _, token := range m.tokens {
-		gCap, cCap := CheckRateLimitBeforeRequest(token)
+		gCap, cCap := m.githubApi.CheckRateLimitBeforeRequest(token)
 		m.graphQLCap[token].Set(gCap)
 		m.coreCap[token].Set(cCap)
+		m.graphQLUsage[token].Set(gCap)
+		m.coreUsage[token].Set(cCap)
+
 
 		zap.L().Info("TokenRefresh",
 			zap.String("token", token),
@@ -127,7 +132,7 @@ func (m *GitHubTokenManager) GetAvailableToken() string {
 		currentCap := m.graphQLCap[token].Get()
 		currentUsage := m.graphQLUsage[token].Get()
 
-		if currentUsage < currentCap && currentCap > maxCap && currentCap > 0 {
+		if currentUsage <= currentCap && currentCap > maxCap && currentCap > 0 {
 			maxToken = token
 			maxCap = currentCap
 		}
@@ -150,6 +155,13 @@ func (m *GitHubTokenManager) DecreaseUsage(token string) {
 			usage.Set(0)
 		}
 	}
+}
+
+func (m *GitHubTokenManager) GetApiCap(token string) (int32, int32) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	return m.graphQLCap[token].Get(), m.coreCap[token].Get()
 }
 
 func (m *GitHubTokenManager) GetCoreAvailableToken() string {
@@ -211,7 +223,14 @@ type RateLimitResponse struct {
 	} `json:"rate"`
 }
 
-func CheckRateLimitBeforeRequest(token string) (int32, int32) {
+type GithubLimit interface {
+	CheckRateLimitBeforeRequest(token string) (int32, int32)
+}
+
+type GithubRateLimit struct {
+}
+
+func (g GithubRateLimit) CheckRateLimitBeforeRequest(token string) (int32, int32) {
 	// Perform a GET request to the GitHub rate limit endpoint
 	url := "https://api.github.com/rate_limit"
 	client := http.Client{

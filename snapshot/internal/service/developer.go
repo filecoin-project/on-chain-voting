@@ -122,7 +122,7 @@ func FetchDeveloperWeights(fromTime time.Time) (map[string]int64, []models.Nodes
 
 	var coreFilecoin, ecosystem map[string]int64
 	var coreCommits, ecosystemCommits, commitsResult []models.Nodes
-	tokenManager := NewGitHubTokenManager(config.Client.Github.Token)
+	tokenManager := NewGitHubTokenManager(config.Client.Github.Token, GithubRateLimit{})
 
 	eg.Go(func() error {
 		var err error
@@ -338,7 +338,7 @@ func getContributorsWithRetry(ctx context.Context, index, repoCount int, organiz
 	reqToken := tokenManager.GetAvailableToken()
 	if reqToken == "" {
 		zap.L().Warn("All tokens are reached with the usage rate limit, wait for an hour and try again")
-		time.Sleep(1 * time.Hour)
+		return nil, fmt.Errorf("all tokens are reached with the usage rate limit, wait for an hour and try again")
 	}
 
 	defer tokenManager.DecreaseUsage(reqToken)
@@ -364,7 +364,8 @@ func getContributorsWithRetry(ctx context.Context, index, repoCount int, organiz
 				reqToken = tokenManager.GetAvailableToken()
 			}
 
-			if tokenManager.graphQLCap[reqToken].Get() == 0 {
+			gCap, _ := tokenManager.GetApiCap(reqToken)
+			if gCap == 0 {
 				reqToken = tokenManager.GetAvailableToken()
 			}
 

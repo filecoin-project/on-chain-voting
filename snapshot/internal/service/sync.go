@@ -323,6 +323,12 @@ func (s *SyncService) SyncDeveloperWeight(ctx context.Context, dayStr string) er
 	if err != nil {
 		return err
 	}
+
+	if len(m) == 0 {
+		zap.L().Info("no developer weight to sync", zap.String("date", dayEndTime.ToShortDateString()))
+		return nil
+	}
+
 	err = s.syncRepo.SetDeveloperWeights(ctx, dayEndTime.ToShortDateString(), m)
 	if err != nil {
 		zap.S().Error("failed to set developer power", zap.String("date", dayEndTime.ToShortDateString()), zap.Error(err))
@@ -737,6 +743,11 @@ func (s *SyncService) SyncAllDeveloperWeight(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+
+		if len(m) == 0 {
+			zap.L().Info("no developer weight to sync", zap.String("date", base.ToShortDateString()))
+			return nil
+		}
 		if err = s.syncRepo.SetDeveloperWeights(ctx, base.ToShortDateString(), m); err != nil {
 			zap.S().Error("failed to set developer power", zap.String("date", base.ToShortDateString()), zap.Error(err))
 			return err
@@ -750,7 +761,6 @@ func (s *SyncService) SyncAllDeveloperWeight(ctx context.Context) error {
 	}
 
 	return nil
-
 }
 
 func (s *SyncService) UploadSnapshotInfoByDay(ctx context.Context, allPower map[string]any, day string, chainId int64) (int64, error) {
