@@ -72,3 +72,8 @@ func getSafeJob(t *testing.T) *Safejob {
 func TestSyncPower(t *testing.T) {
 	getSafeJob(t).SyncPower()
 }
+
+func TestSyncDev(t *testing.T) {
+
+	getSafeJob(t).SyncDevWeightStepDay()
+}
