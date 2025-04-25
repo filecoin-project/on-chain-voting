@@ -1,5 +1,11 @@
 FROM golang:alpine
 
+RUN apk add --no-cache tzdata
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+    && echo $TZ > /etc/timezone
+    
+
 # env
 ENV GO111MODULE=on \
     GOPROXY=https://goproxy.cn,direct \
@@ -28,7 +34,8 @@ RUN cp /build/configuration.yaml .
 
 COPY configuration.yaml .
 COPY proof.ucan .
-
+COPY --from=snapshot-builder /usr/share/zoneinfo /usr/share/zoneinfo
+ENV TZ=Asia/Shanghai
 # expose server port
 EXPOSE 8001
 

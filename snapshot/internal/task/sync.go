@@ -59,22 +59,20 @@ func (j *Safejob) SyncDevWeightStepDay() {
 	end := carbon.Now().Yesterday().EndOfDay()
 
 	// find latest index
-	for l := 0; l < len(config.Client.Github.Token)*2; {
-		for i := start; i.Timestamp() <= end.Timestamp(); i = i.AddDay() {
-			exist, err := j.syncService.ExistDeveloperWeight(ctx, i.ToShortDateString())
+
+	for i := start; i.Timestamp() <= end.Timestamp(); i = i.AddDay() {
+		exist, err := j.syncService.ExistDeveloperWeight(ctx, i.ToShortDateString())
+		if err != nil {
+			zap.L().Error("SyncDevWeightStepDay", zap.String("date", i.ToShortDateString()))
+			return
+		}
+		if !exist {
+			err := j.syncService.SyncDeveloperWeight(ctx, i.ToShortDateString())
 			if err != nil {
-				zap.L().Error("SyncDevWeightStepDay", zap.String("date", i.ToShortDateString()))
 				return
 			}
-			if !exist {
-				err := j.syncService.SyncDeveloperWeight(ctx, i.ToShortDateString())
-				if err != nil {
-					return
-				}
-				break
-			}
+			break
 		}
-		l++
 	}
 
 }
