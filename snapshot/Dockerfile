@@ -1,10 +1,10 @@
-FROM golang:alpine
+FROM golang:alpine AS snapshot-builder
 
 RUN apk add --no-cache tzdata
 ENV TZ=Asia/Shanghai
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
     && echo $TZ > /etc/timezone
-    
+
 
 # env
 ENV GO111MODULE=on \
@@ -23,18 +23,17 @@ COPY . .
 RUN go mod tidy
 RUN go build -o app .
 
+
+FROM alpine:latest
 # move to /dist
 WORKDIR /dist
 
 # copy file to /dist
-RUN cp /build/app .
-RUN cp /build/configuration.yaml .
-# RUN cp /build/abi/oracle.json .
-# RUN cp /build/proof.ucan .
-
-COPY configuration.yaml .
-COPY proof.ucan .
+COPY --from=snapshot-builder /build/app .
+COPY --from=snapshot-builder /build/configuration.yaml  .
+COPY --from=snapshot-builder /build/proof.ucan ./
 COPY --from=snapshot-builder /usr/share/zoneinfo /usr/share/zoneinfo
+
 ENV TZ=Asia/Shanghai
 # expose server port
 EXPOSE 8001
