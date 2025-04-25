@@ -19,7 +19,7 @@ import {
 import { useConnect as FilUseConnect, useAddresses } from "iso-filecoin-react"
 import { ConfigProvider, FloatButton, theme } from 'antd';
 import {
-  useAccount as FilAccount
+  useAccount as useFilAccount
 } from 'iso-filecoin-react'
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
@@ -48,7 +48,7 @@ dayjs.locale(lang === 'en' ? lang : "zh-cn")
 const App: React.FC = () => {
   // Destructure values from custom hooks
   const { chain, address, isConnected } = useAccount();
-  const { adapter, state} = FilAccount();
+  const { adapter, state} = useFilAccount();
   const { connect, connectors } = useConnect()
   const { address0x} = useAddresses({ address: address as string });
   const { mutate: FilConnect, adapters } = FilUseConnect();
@@ -56,23 +56,23 @@ const App: React.FC = () => {
   const prevAddressRef = useRef(address);
   const setFipList = useFipList((state: any) => state.setFipList)
   const { i18n } = useTranslation();
+  const adapterId = window.localStorage.getItem('adapter');
 
   useEffect(()=>{
-    if(state=="connected"){
-      connect({connector:connectors[0]})
+    if  (state === "connected" && isConnected){
+      connect({connector:connectors.find(item => item.id === adapterId) || connectors[0]})
     }
-  },[state])
+  },[isConnected, state])
 
   useEffect(() => {
-    const adapterId = window.localStorage.getItem('adapter');
-    if (isConnected) {
+    if (isConnected && isFilAddress(address!)) {
       if (adapter) {
         FilConnect({ adapter: adapter });
       } else {
         FilConnect({ adapter: adapters.find(item => item.id === adapterId) || adapters[0] });
       }
     }
-  }, [isConnected, adapter])
+  }, [isConnected, adapter, address])
 
   // Render routes based on URL
   const element = useRoutes(routes);
@@ -155,34 +155,34 @@ const App: React.FC = () => {
   const lang = localStorage.getItem("lang") || "en";
 
   return (
-      <RainbowKitProvider
-          locale={lang === "en" ? "en-US" : "zh-CN"}
-          theme={lightTheme({
-            accentColor: "#7b3fe4",
-            accentColorForeground: "white",
-          })}
-          modalSize="compact"
-      >
-        <ConfigProvider theme={{
-          algorithm: theme.defaultAlgorithm,
-          components: {
-            Radio: {
-              buttonSolidCheckedBg: ''
-            }
+    <RainbowKitProvider
+      locale={lang === "en" ? "en-US" : "zh-CN"}
+      theme={lightTheme({
+        accentColor: "#7b3fe4",
+        accentColorForeground: "white",
+      })}
+      modalSize="compact"
+    >
+      <ConfigProvider theme={{
+        algorithm: theme.defaultAlgorithm,
+        components: {
+          Radio: {
+            buttonSolidCheckedBg: ''
           }
-        }} locale={lang === "en" ? enUS : zhCN}>
-          <div className="layout font-body">
-            {!isLanding && <Header changeLang={handleChange} />}
-            <div className='content w-[1000px] mx-auto pt-10 pb-10'>
-              {
-                element
-              }
-            </div>
-            <Footer />
-            <FloatButton.BackTop style={{ bottom: 100 }} />
+        }
+      }} locale={lang === "en" ? enUS : zhCN}>
+        <div className="layout font-body">
+          {!isLanding && <Header changeLang={handleChange} />}
+          <div className='content w-[1000px] mx-auto pt-10 pb-10'>
+            {
+              element
+            }
           </div>
-        </ConfigProvider>
-      </RainbowKitProvider>
+          <Footer />
+          <FloatButton.BackTop style={{ bottom: 100 }} />
+        </div>
+      </ConfigProvider>
+    </RainbowKitProvider>
   )
 }
 
