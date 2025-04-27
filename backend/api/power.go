@@ -27,7 +27,7 @@ func GetAddressPower(c *constant.Context) {
 	// Declare a variable of type request.GetPower to hold the request parameters.
 	var req api.GetPowerReq
 	if err := c.BindAndValidate(&req); err != nil {
-		zap.L().Error("GetAddressPower bind parmas error: ", zap.Error(err))
+		zap.L().Error("GetAddressPower bind parmas error: ", zap.Errors("errors", err.Errors()))
 		ParamError(c.Context)
 		return
 	}

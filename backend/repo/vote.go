@@ -23,6 +23,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"powervoting-server/api/rpc"
 	"powervoting-server/model"
 	"powervoting-server/service"
 )
@@ -145,6 +146,7 @@ func (v *VoteRepoImpl) CreateVoterAddress(ctx context.Context, in *model.VoterIn
 		return 0, fmt.Errorf("create or update voter address error: %w", err)
 	}
 
+	rpc.SyncAddressPower( in.ChainId, in.Address)
 	// Return the ID of the created or updated record
 	return in.BaseField.ID, nil
 }

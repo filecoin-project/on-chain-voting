@@ -62,7 +62,7 @@ func (ev *Event) SubscribeEvent() error {
 	endBlock := header.Number.Int64()
 	if endBlock <= syncInfo.SyncedHeight {
 		if endBlock == syncInfo.SyncedHeight {
-			zap.L().Info("It has been synchronized to the latest block height", zap.Int64("latest block height", endBlock))
+			zap.L().Debug("It has been synchronized to the latest block height", zap.Int64("latest block height", endBlock))
 			return constant.ErrAlreadySyncHeight
 		}
 

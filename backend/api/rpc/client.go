@@ -12,10 +12,10 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	pb "powervoting-server/api/rpc/proto"
 	"powervoting-server/config"
 	"powervoting-server/constant"
 	"powervoting-server/model"
-	pb "powervoting-server/api/rpc/proto"
 )
 
 var (
@@ -176,4 +176,15 @@ func UploadSnapshotInfo(chainId int64, snapshotDay string) (model.SnapshotHeight
 		Height: grpcRes.Height,
 		Day:    grpcRes.Day,
 	}, nil
+}
+
+func SyncAddressPower(chainId int64, ethAddr string) {
+	ctx, cancel := context.WithTimeout(context.Background(), constant.RequestTimeout)
+	defer cancel()
+
+	grpcReq := &pb.SyncAddrPowerRequest{}
+	if _, err := getClient().SyncAddrPower(ctx, grpcReq); err != nil {
+		zap.L().Error("failed to sync address power", zap.Error(err))
+	}
+
 }

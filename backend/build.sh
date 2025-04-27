@@ -9,13 +9,19 @@ if [ ! -f ".env" ]; then
 fi
 
 PORT=$(awk -F'=' '/^PORT=/ {gsub(/[^0-9]/, "", $2); print $2}' .env)
+RPC_PORT=$(awk -F'=' '/^RPC_PORT=/ {gsub(/[^0-9]/, "", $2); print $2}' .env)
 
 if [ -z "$PORT" ]; then
   echo "Error: Can not get port from .env."
   exit 1
 fi
 
-echo "project: $IMAGE_NAME, port: $PORT"
+if [ -z "$RPC_PORT" ]; then
+  echo "Error: Can not get RPC_PORT from .env."
+  exit 1
+fi
+
+echo "project: $IMAGE_NAME, port: $PORT, RPC port: $RPC_PORT"
 
 (
     if ! git show-ref --verify --quiet "refs/heads/main"; then
@@ -38,4 +44,4 @@ else
     echo "Container $IMAGE_NAME does not exist or is already stopped."
 fi
 
-docker run --name $IMAGE_NAME  -p $PORT:$PORT -d $IMAGE_NAME
+docker run --name $IMAGE_NAME  -p $PORT:$PORT  -p $RPC_PORT:$RPC_PORT --env-file .env -d $IMAGE_NAME
