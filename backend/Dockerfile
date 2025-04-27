@@ -5,7 +5,6 @@ ENV TZ=Asia/Shanghai
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
     && echo $TZ > /etc/timezone
 
-
 ENV GO111MODULE=on \
     GOPROXY=https://goproxy.cn,direct \
     CGO_ENABLED=0 \
@@ -24,7 +23,7 @@ RUN go build -o app .
 FROM alpine:latest
 
 WORKDIR /dist
-ENV TZ=Asia/Shanghai
+
 COPY --from=backend-builder /build/app .
 COPY --from=backend-builder /build/configuration-backend.yaml .
 
@@ -34,4 +33,7 @@ COPY --from=backend-builder /build/abi/power-voting-fip.json ./
 COPY --from=backend-builder /build/abi/oracle-powers.json ./
 COPY --from=backend-builder /build/abi/oracle.json ./
 COPY --from=backend-builder /build/.env ./
+
+COPY --from=backend-builder /usr/share/zoneinfo /usr/share/zoneinfo
+ENV TZ=Asia/Shanghai
 CMD ["/dist/app"]

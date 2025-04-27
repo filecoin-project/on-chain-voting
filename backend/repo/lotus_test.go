@@ -65,3 +65,23 @@ func TestEthAddrToFilcoinAddr(t *testing.T) {
 // 	assert.NoError(t, resp.Error)
 // 	fmt.Printf("resp: %s\n", resp.Result)
 // }
+
+func TestFilecoinAddrToEthAddr(t *testing.T) {
+	config.GetDefaultConfig()
+	lotusRepo := repo.NewLotusRPCRepo()
+	res, err := lotusRepo.FilecoinAddrToEthAddr(context.Background(), "t1bh2fekhhi3c4rcynxvah6hqei2s4geylxizvzfa")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, res)
+}
+
+func TestGetValidMinerIds(t *testing.T) {
+	config.GetDefaultConfig()
+
+	lotusRepo := repo.NewLotusRPCRepo()
+	res, err := lotusRepo.GetValidMinerIds(context.Background(), "t0161980", []uint64{
+		161842,
+	})
+
+	assert.NoError(t, err)
+	assert.NotEmpty(t, res)
+}
