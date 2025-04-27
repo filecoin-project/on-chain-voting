@@ -118,7 +118,7 @@ func (s *BaseRepoImpl) SetDateHeightMap(ctx context.Context, netId int64, height
 	return nil
 }
 
-func (s *BaseRepoImpl) SetDeveloperWeights(ctx context.Context, dayStr string, commits []models.Nodes) error {
+func (s *BaseRepoImpl) SaveDeveloperWeightsToFile(ctx context.Context, dayStr string, commits []models.Nodes) error {
 	path := config.Client.DataPath.DeveloperWeights
 	filename := filepath.Join(path, constant.DeveloperWeightsFilePrefix+dayStr+".json")
 	jsonData, err := json.Marshal(commits)

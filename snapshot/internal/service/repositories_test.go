@@ -17,11 +17,11 @@ package service
 import (
 	"fmt"
 	"log"
+	"power-snapshot/config"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"power-snapshot/config"
 )
 
 func TestGetRepoNames(t *testing.T) {

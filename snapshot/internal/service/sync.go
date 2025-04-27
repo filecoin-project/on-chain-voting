@@ -206,6 +206,7 @@ func (s *SyncService) SyncAllAddrPower(ctx context.Context, netID int64) error {
 
 	dateMap, err := s.syncRepo.GetAllAddrSyncedDateMap(ctx, netID)
 	if err != nil {
+		zap.L().Error("failed to get all address synced date map", zap.Error(err))
 		return err
 	}
 
@@ -335,7 +336,7 @@ func (s *SyncService) SyncDeveloperWeight(ctx context.Context, dayStr string) er
 		return err
 	}
 
-	err = s.baseRepo.SetDeveloperWeights(ctx, dayStr, commits)
+	err = s.baseRepo.SaveDeveloperWeightsToFile(ctx, dayStr, commits)
 	if err != nil {
 		zap.S().Error("failed to set developer power", zap.String("date", dayStr), zap.Error(err))
 		return err
@@ -736,28 +737,35 @@ func (s *SyncService) GetAddrInfo(ctx context.Context, netID int64, addr string)
 }
 
 // fixme: Check whether this function is used
-func (s *SyncService) SyncAllDeveloperWeight(ctx context.Context) error {
+func (s *SyncService) SyncLatestDeveloperWeight(ctx context.Context) error {
 	base := carbon.Now().SubDay().EndOfDay()
-	for i := 0; i < constant.DataExpiredDuration; i++ {
-		m, commits, err := FetchDeveloperWeights(base.ToStdTime())
-		if err != nil {
-			return err
-		}
+	exist, err := s.ExistDeveloperWeight(ctx, base.ToShortDateString())
+	if err != nil {
+		zap.L().Error("SyncDevWeightStepDay", zap.String("date", base.ToShortDateString()))
+		return err
+	}
 
-		if len(m) == 0 {
-			zap.L().Info("no developer weight to sync", zap.String("date", base.ToShortDateString()))
-			return nil
-		}
-		if err = s.syncRepo.SetDeveloperWeights(ctx, base.ToShortDateString(), m); err != nil {
-			zap.S().Error("failed to set developer power", zap.String("date", base.ToShortDateString()), zap.Error(err))
-			return err
-		}
+	if exist {
+		return nil
+	}
 
-		if err := s.baseRepo.SetDeveloperWeights(ctx, base.ToShortDateString(), commits); err != nil {
-			zap.S().Error("failed to set developer power", zap.String("date", base.ToShortDateString()), zap.Error(err))
-			return err
-		}
-		base = base.SubDay()
+	m, commits, err := FetchDeveloperWeights(base.ToStdTime())
+	if err != nil {
+		return err
+	}
+
+	if len(m) == 0 {
+		zap.L().Info("no developer weight to sync", zap.String("date", base.ToShortDateString()))
+		return nil
+	}
+	if err = s.syncRepo.SetDeveloperWeights(ctx, base.ToShortDateString(), m); err != nil {
+		zap.S().Error("failed to set developer power", zap.String("date", base.ToShortDateString()), zap.Error(err))
+		return err
+	}
+
+	if err := s.baseRepo.SaveDeveloperWeightsToFile(ctx, base.ToShortDateString(), commits); err != nil {
+		zap.S().Error("failed to set developer power", zap.String("date", base.ToShortDateString()), zap.Error(err))
+		return err
 	}
 
 	return nil

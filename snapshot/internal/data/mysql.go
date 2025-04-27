@@ -46,7 +46,7 @@ func NewMysql() *Mysql {
 	if err != nil {
 		panic(fmt.Errorf("mysql connect error: %v", err))
 	}
-	fmt.Printf("user: %s, password: %s, url: %s\n", config.Client.Mysql.Username, config.Client.Mysql.Password, config.Client.Mysql.Url)
+
 	db.AutoMigrate(&models.SnapshotBackupTbl{})
 
 	return &Mysql{db}

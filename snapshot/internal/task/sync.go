@@ -71,12 +71,7 @@ func (j *Safejob) SyncDevWeightStepDay() {
 			if err != nil {
 				return
 			}
-			if i != end {
-				err := j.syncService.SyncDeveloperWeight(ctx, end.ToShortDateString())
-				if err != nil {
-					return
-				}
-			}
+
 			break
 		}
 	}

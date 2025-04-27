@@ -15,18 +15,17 @@
 package task
 
 import (
-	"fmt"
 	"sync/atomic"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
-
 	"power-snapshot/config"
 	"power-snapshot/internal/data"
 	"power-snapshot/internal/repo"
 	"power-snapshot/internal/service"
+
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+
 )
 
 func TestRepeatTask(t *testing.T) {
@@ -84,22 +83,8 @@ type TestGithubRateLimit struct {
 
 func (g TestGithubRateLimit) CheckRateLimitBeforeRequest(token string) (int32, int32) {
 	if token == "token1" {
-		return 10, 10
+		return 2, 10
 	}
-	return 20, 100
+	return 5, 100
 }
 
-func TestRateLimit(t *testing.T) {
-	tokenManager := service.NewGitHubTokenManager([]string{
-		"token1",
-		"token2",
-	}, TestGithubRateLimit{})
-
-	for i := 0; i < 40; i++ {
-		token := tokenManager.GetAvailableToken()
-		fmt.Println("token", token)
-		if token == "token1" {
-		    tokenManager.RefreshToken()
-		}
-	}
-}

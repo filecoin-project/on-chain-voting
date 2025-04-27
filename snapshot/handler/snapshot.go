@@ -25,6 +25,7 @@ import (
 
 	pb "power-snapshot/api/proto"
 	"power-snapshot/internal/service"
+	"power-snapshot/utils"
 )
 
 type Snapshot struct {
@@ -48,7 +49,7 @@ func NewSnapshot(query *service.QueryService, sync *service.SyncService) *Snapsh
 // If the query fails, it returns an internal error with the corresponding error message.
 // Otherwise, it constructs and returns an AddressPowerResponse with the retrieved power details.
 func (s *Snapshot) GetAddressPower(ctx context.Context, req *pb.AddressPowerRequest) (*pb.AddressPowerResponse, error) {
-	m, err := s.querySrv.GetAddressPower(ctx, req.GetNetId(), req.GetAddress(), req.GetRandomNum())
+	m, err := s.querySrv.GetAddressPower(ctx, req.GetNetId(), utils.EthStandardAddressToHex(req.GetAddress()), req.GetRandomNum())
 	if err != nil {
 		return &pb.AddressPowerResponse{}, status.Error(codes.Internal, err.Error())
 	}
@@ -73,7 +74,7 @@ func (s *Snapshot) GetAddressPower(ctx context.Context, req *pb.AddressPowerRequ
 func (s *Snapshot) GetAddressPowerByDay(ctx context.Context, req *pb.AddressPowerByDayRequest) (*pb.AddressPowerResponse, error) {
 	day := req.GetDay()
 	dayTime := carbon.Parse(day).EndOfDay().ToStdTime()
-	m, err := s.querySrv.GetAddressPowerByDay(ctx, req.GetNetId(), req.GetAddress(), day, dayTime)
+	m, err := s.querySrv.GetAddressPowerByDay(ctx, req.GetNetId(), utils.EthStandardAddressToHex(req.GetAddress()), day, dayTime)
 	if err != nil {
 		return &pb.AddressPowerResponse{}, status.Error(codes.Internal, err.Error())
 	}
@@ -151,7 +152,12 @@ func (s *Snapshot) SyncDateHeight(_ context.Context, req *pb.SyncDateHeightReque
 // If the synchronization fails, it returns an internal error with the corresponding error message.
 // Otherwise, it returns an empty SyncAddrPowerResponse indicating success.
 func (s *Snapshot) SyncAddrPower(_ context.Context, req *pb.SyncAddrPowerRequest) (*pb.SyncAddrPowerResponse, error) {
-	err := s.syncSrv.AddAddrPowerTaskToMQ(context.Background(), req.GetNetId(), req.GetAddress())
+	err := s.syncSrv.SyncDateHeight(context.Background(), req.GetNetId())
+	if err != nil {
+		return &pb.SyncAddrPowerResponse{}, status.Error(codes.Internal, err.Error())
+	}
+
+	err = s.syncSrv.AddAddrPowerTaskToMQ(context.Background(), req.GetNetId(), utils.EthStandardAddressToHex(req.GetAddress()))
 	if err != nil {
 		return &pb.SyncAddrPowerResponse{}, status.Error(codes.Internal, err.Error())
 	}
@@ -165,7 +171,12 @@ func (s *Snapshot) SyncAddrPower(_ context.Context, req *pb.SyncAddrPowerRequest
 // If the synchronization fails, it returns an internal error with the corresponding error message.
 // Otherwise, it returns an empty SyncAllAddrPowerResponse indicating success.
 func (s *Snapshot) SyncAllAddrPower(_ context.Context, req *pb.SyncAllAddrPowerRequest) (*pb.SyncAllAddrPowerResponse, error) {
-	err := s.syncSrv.SyncAllAddrPower(context.Background(), req.GetNetId())
+	err := s.syncSrv.SyncDateHeight(context.Background(), req.GetNetId())
+	if err != nil {
+		return &pb.SyncAllAddrPowerResponse{}, status.Error(codes.Internal, err.Error())
+	}
+
+	err = s.syncSrv.SyncAllAddrPower(context.Background(), req.GetNetId())
 	if err != nil {
 		return &pb.SyncAllAddrPowerResponse{}, status.Error(codes.Internal, err.Error())
 	}
@@ -198,11 +209,10 @@ func (s *Snapshot) UploadSnapshotInfoByDay(_ context.Context, req *pb.UploadSnap
 }
 
 func (s *Snapshot) SyncAllDeveloperWeight(context.Context, *pb.SyncAllDeveloperWeightRequest) (*pb.SyncAllDeveloperWeightResponse, error) {
-	err := s.syncSrv.SyncAllDeveloperWeight(context.Background())
+	err := s.syncSrv.SyncLatestDeveloperWeight(context.Background())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &pb.SyncAllDeveloperWeightResponse{}, nil
 }
-
