@@ -1,4 +1,4 @@
-### Fil Vote 
+### Fil Vote
 
 `fil-vote` is a command-line tool for interacting with the Power Voting system, supporting wallet management and proposal operations.
 
@@ -16,13 +16,14 @@ Ensure that Go version 1.23.0 is installed.
 ### 2. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/fil-vote.git
+git clone https://github.com/filecoin-project/on-chain-voting.git
+cd on-chain-voting
 ```
 
 ### 3. Navigate to the Project Directory
 
 ```bash
-cd fil-vote
+cd cli
 ```
 
 ### 4. Install Dependencies
@@ -31,41 +32,39 @@ cd fil-vote
 go mod tidy
 ```
 
-### 5. Build the Project
+### 5. Add Configuration
+Configure the network connection parameters for the Power Voting system in the `config/config.go` file. Modify these settings according to your environment.
+
+vim configuration.yaml
+```
+network:
+  chainID: {CHAIN_ID} # chain id
+  rpc: "{RPC_URL}" # your lotus rpc which is used for CLI to connect lotus
+  token: "{JWT_TOKEN}" # your lotus token which is used for CLI to connect lotus
+  powerVotingContract: "{POWER_VOTING_CONTRACT}" # the f0 address of POWER_VOTING_VOTE contract, you can retrieve it by searching the EVM address in a browser.
+                                                 # POWER_VOTING_VOTE contract EVM address can be found here: https://github.com/filecoin-project/on-chain-voting/blob/main/contracts/scripts/filecoin_mainnet_config.json
+  powerBackendURL: "{POWER_BACKEND_URL}" # backend service url, e.g. https://vote.fil.org
+
+abiPath:
+  powerVotingAbi: "./power-voting-vote.json"
+  
+drand:
+  urls:
+    - "https://api.drand.secureweb3.com:6875"
+    - "https://api.drand.sh/"
+    - "https://api2.drand.sh/"
+    - "https://api3.drand.sh/"
+    - "https://drand.cloudflare.com/"
+  chainHash: "52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971"
+```
+
+### 6. Build the Project
 
 ```bash
 go build -o fil-vote
 ```
 
 This will generate an executable file named `fil-vote`.
-
-## Configuration
-
-Configure the network connection parameters for the Power Voting system in the `config/config.go` file. Modify these settings according to your environment.
-
-```
-network:
-  chainID: {CHAIN_ID}
-  rpc: "{RPC_URL}"
-  token: "{JWT_TOKEN}"
-  powerVotingContract: "{POWER_VOTING_CONTRACT}"
-  powerBackendURL: "{POWER_BACKEND_URL}"
-
-abiPath:
-  powerVotingAbi: "{POWER_VOTING_ABI_PATH}"
-
-drand:
-  urls:
-    - "{DRAND_URL_1}"
-    - "{DRAND_URL_2}"
-    - "{DRAND_URL_3}"
-    - "{DRAND_URL_4}"
-    - "{DRAND_URL_5}"
-  chainHash: "{DRAND_CHAIN_HASH}"
-
-```
-
-
 
 ## Usage
 
@@ -81,7 +80,7 @@ fil-vote wallet add [walletType] [privateKey]
 
 **Parameters**:
 
-- `walletType`: The type of wallet.
+- `walletType`: The types of wallets are secp256k1, bls and delegated.
 - `privateKey`: The wallet's private key.
 
 #### 2. List Wallets

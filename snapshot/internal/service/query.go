@@ -17,7 +17,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"math/big"
 	"time"
 
@@ -78,6 +77,10 @@ func (q *QueryService) GetAddressPowerByDay(ctx context.Context, netId int64, ad
 	}
 
 	if power == nil {
+		if err := q.syncSrv.SyncDateHeight(ctx, netId); err != nil {
+			zap.L().Error("error sync date height", zap.Error(err))
+			return nil, err
+		}
 		// get power from chain now and sync all power sync
 		err := q.syncSrv.AddAddrPowerTaskToMQ(ctx, netId, address)
 		if err != nil {
@@ -158,7 +161,7 @@ func (q *QueryService) GetAddressPowerByDay(ctx context.Context, netId int64, ad
 		}
 
 		if len(info.GithubAccount) != 0 {
-			dwm, commits, err := GetDeveloperWeights(dayTime)
+			dwm, err := q.queryRepo.GetDeveloperWeights(ctx, dayStr)
 			if err != nil {
 				zap.L().Error("error getting developer weights", zap.Error(err))
 				power.DeveloperPower = big.NewInt(0)
@@ -167,37 +170,18 @@ func (q *QueryService) GetAddressPowerByDay(ctx context.Context, netId int64, ad
 					power.DeveloperPower = big.NewInt(weight)
 				}
 			}
-
-			err = q.baseRepo.SetDeveloperWeights(ctx, dayStr, commits)
-			if err != nil {
-				zap.S().Error("failed to set developer power", zap.String("date", dayStr), zap.Error(err))
-				return nil, fmt.Errorf("failed to set developer power: %w", err)
-			}
 		}
 	}
 
-	devWeight, err := q.queryRepo.GetDeveloperWeights(ctx, dayStr)
-	if err != nil {
-		zap.L().Error("error getting developer weight", zap.Error(err))
-		return nil, err
-	}
-
-	// if this day's history have not synced, return 0 and log error
-	if devWeight == nil {
-		zap.L().Error("no developer weight synced from github",
-			zap.String("date", dayStr),
-			zap.String("address", address),
-			zap.String("account", power.GithubAccount))
-	} else {
-		if w, ok := devWeight[info.GithubAccount]; ok {
-			power.DeveloperPower = big.NewInt(w)
-		}
-	}
 
 	return power, nil
 }
 
 func (q *QueryService) GetDataHeight(ctx context.Context, netId int64, dayStr string) (int64, error) {
+	if err := q.syncSrv.SyncDateHeight(ctx, netId); err != nil {
+		zap.L().Error("error sync date height", zap.Error(err))
+	}
+
 	dh, err := q.baseRepo.GetDateHeightMap(ctx, netId)
 	if err != nil {
 		zap.L().Error("error getting date height map", zap.Error(err))

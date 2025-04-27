@@ -13,6 +13,8 @@
 // limitations under the License.
 
 import { create } from 'zustand';
+import { ethers } from 'ethers';
+
 interface StoringCidState {
   storingCid: string[];
 }
@@ -84,11 +86,11 @@ export const useFipList = create(set => ({
     isFipEditorAddress: false,
   },
   setFipList: (value: any[], address: '') => {
-    const isHas = value.filter((item: any) => item.editor === address)[0];
+    const isHas = (value || []).filter((item: any) => item.editor ===  ethers.getAddress(address))[0];
     const data = {
       fipList: value,
-      totalSize: value.length,
-      isFipEditorAddress: isHas ? true : false,
+      totalSize: value?.length,
+      isFipEditorAddress: !!isHas,
     }
     set({ data });
     localStorage.setItem('fipList', JSON.stringify(data));

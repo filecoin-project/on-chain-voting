@@ -20,7 +20,6 @@ import FipEditorApprove from "../pages/Fip/approve";
 import FipEditorPropose from "../pages/Fip/propose";
 import FipEditorRevoke from "../pages/Fip/revoke";
 import GistDelegateAdd from "../pages/GistDelegate/add/index";
-import GistDelegateDelete from "../pages/GistDelegate/delete/index";
 import Home from "../pages/Home";
 import MinerId from "../pages/MinerId";
 import Vote from "../pages/Vote";
@@ -66,10 +65,6 @@ const routes = [
   {
     path: "/gistDelegate/list",
     element: <GistDelegateList />,
-  },
-  {
-    path: "/gistDelegate/delete",
-    element: <GistDelegateDelete />,
   },
   {
     path: "/vote/:id",

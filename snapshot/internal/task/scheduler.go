@@ -47,7 +47,7 @@ func TaskScheduler(syncService *service.SyncService) {
 
 	_, err = crontab.AddFunc("0 0 0/1 * * ?", job.RunSyncDevWeightStepDay)
 	if err != nil {
-		zap.L().Error("failed to add RunSyncDevWeightStopDay task to scheduler", zap.Error(err))
+		zap.L().Error("failed to add RunSyncDevWeightStepDay task to scheduler", zap.Error(err))
 	}
 
 	_, err = crontab.AddFunc("0 0/10 * * * ?", job.RunUploadPowerToIPFS)

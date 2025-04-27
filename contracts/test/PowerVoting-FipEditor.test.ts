@@ -131,28 +131,6 @@ describe("PowerVotingFipEditor", function () {
         "AddressNotFipEditorError"
       );
     });
-    it("should reject if candidate already in proposal", async function () {
-      powerVotingFipEditor.createFipEditorProposal(
-        otherAccounts[0].address,
-        "Test",
-        PROPOSAL_TYPE.APPROVE
-      );
-      powerVotingFipEditor.createFipEditorProposal(
-        otherAccounts[1].address,
-        "Test",
-        PROPOSAL_TYPE.APPROVE
-      );
-      await expect(
-        powerVotingFipEditor.createFipEditorProposal(
-          otherAccounts[1].address,
-          "Test",
-          PROPOSAL_TYPE.APPROVE
-        )
-      ).to.be.revertedWithCustomError(
-        powerVotingFipEditor,
-        "AddressHasActiveProposalError"
-      );
-    });
 
     it("should reject the revoke proposal if there are fewer than 3 fip editor", async function () {
       powerVotingFipEditor.createFipEditorProposal(

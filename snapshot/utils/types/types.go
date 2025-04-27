@@ -16,7 +16,9 @@ package types
 
 type BalanceInfo struct {
 	Balance string `json:"Balance"`
+	Nonce   int64  `json:"Nonce"`
 }
+
 
 type PieceCID struct {
 	CID string `json:"/"`

@@ -13,35 +13,40 @@
 // limitations under the License.
 
 import { message } from 'antd';
+import { useSendMessage, useAddresses } from "iso-filecoin-react";
+import axios from 'axios';
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from "react-router-dom";
+import type { UserRejectedRequestError } from 'viem';
 import type { BaseError } from "wagmi";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { filecoinCalibration } from "wagmi/chains";
-import oraclePowerAbi from "../../common/abi/oracle-powers.json";
 import oracleAbi from "../../common/abi/oracle.json";
 import {
-  DUPLICATED_MINER_ID_MSG, calibrationChainId,
+  calibrationChainId,
+  DUPLICATED_MINER_ID_MSG,
+  getGistListApi,
   STORING_DATA_MSG,
   WRONG_MINER_ID_MSG
-} from "../../common/consts"
-import { useMinerIdSet, useOwnerDataSet } from "../../common/hooks";
-import Loading from "../../components/Loading";
+} from "../../common/consts";
+import { useFilAddressMessage } from "../../common/hooks.ts";
+import Loading from '../../components/Loading.tsx';
 import LoadingButton from '../../components/LoadingButton';
 import Table from '../../components/Table';
-import { getContractAddress, hasDuplicates } from "../../utils";
+import { batchGetMinerOwners, getContractAddress, hasDuplicates, hexToString, isFilAddress } from "../../utils";
+
 const MinerId = () => {
   const { chain, isConnected, address } = useAccount();
+  const { address0x} = useAddresses({ address: address as string });
+  const { mutateAsync: sendMessage } = useSendMessage();
   const chainId = chain?.id || calibrationChainId;
   const navigate = useNavigate();
   const { t } = useTranslation();
   const prevAddressRef = useRef(address);
   const [minerIds, setMinerIds] = useState(['']);
-  const [contracts, setContracts] = useState([] as any);
+  const [showLoading, setShowLoading] = useState<boolean>(false)
 
-  const { minerIdData, getMinerIdsLoading, getMinerIdsSuccess } = useMinerIdSet(chainId, address);
-  const { ownerData } = useOwnerDataSet(contracts);
   const [messageApi, contextHolder] = message.useMessage()
 
   const {
@@ -57,10 +62,25 @@ const MinerId = () => {
 
   useEffect(() => {
     if (error) {
-      messageApi.open({
-        type: 'error',
-        content: (error as BaseError)?.shortMessage || error?.message,
-      });
+      if (error) {
+        const errorStr = JSON.stringify(error);
+        // Get error cause
+        if (error as UserRejectedRequestError) {
+          messageApi.open({
+            type: 'warning',
+            content: t('content.rejectedSignature'),
+          });
+
+        } else {
+          // Intercepts the first hexadecimal in the string
+          const reg = /revert reason:\s*0x[0-9A-Fa-f]+/;
+          const match = errorStr.match(reg) || [];
+          messageApi.open({
+            type: 'error',
+            content: hexToString(match[0]) || (error as BaseError)?.shortMessage,
+          });
+        }
+      }
     }
     reset();
   }, [error]);
@@ -79,9 +99,6 @@ const MinerId = () => {
     }
   }, [address]);
 
-  useEffect(() => {
-    initState();
-  }, [chain, getMinerIdsSuccess]);
 
   useEffect(() => {
     if (writeContractSuccess) {
@@ -95,9 +112,6 @@ const MinerId = () => {
     }
   }, [writeContractSuccess])
 
-  const initState = async () => {
-    setMinerIds(addMinerIdPrefix(minerIdData?.minerIds?.map((id: any) => Number(id))));
-  }
 
   /**
    * Handle changes in the miner IDs input field
@@ -105,18 +119,7 @@ const MinerId = () => {
    */
   const handleMinerChange = (ids: string) => {
     const arr = ids ? ids.split(',') : [];
-
     setMinerIds(arr);
-    const { value } = removeMinerIdPrefix(arr);
-    const contracts = value.map((item: number) => {
-      return {
-        address: getContractAddress(chain?.id || calibrationChainId, 'oraclePower'),
-        abi: oraclePowerAbi,
-        functionName: 'getOwner',
-        args: [item],
-      } as const;
-    });
-    setContracts(contracts);
   }
 
   /**
@@ -131,9 +134,9 @@ const MinerId = () => {
    * Add prefix to each miner ID based on the chain ID
    * @param minerIds
    */
-  const addMinerIdPrefix = (minerIds: number[]) => {
-    return minerIds?.length ? minerIds.map(minerId => `${getMinerIdPrefix(chainId)}${minerId}`) : [];
-  }
+  // const addMinerIdPrefix = (minerIds: number[]) => {
+  //   return minerIds?.length ? minerIds.map(minerId => `${getMinerIdPrefix(chainId)}${minerId}`) : [];
+  // }
 
   /**
    * Remove prefix from each miner ID and validate the format
@@ -142,18 +145,16 @@ const MinerId = () => {
   const removeMinerIdPrefix = (minerIds: string[]) => {
     const prefix = getMinerIdPrefix(chainId);
     const prefixRegex = new RegExp('^' + prefix);
-    let hasError = false;
+    const minerId = minerIds.find(minerId => minerId.indexOf(prefix) < 0);
     const arr = minerIds?.length > 0 ? minerIds.map(minerId => {
+
       const str = minerId.replace(prefixRegex, '');
-      if (isNaN(Number(str)) || str?.length > 7) {
-        hasError = true;
-      }
       return Number(str);
     }) : [];
 
     return {
       value: arr,
-      hasError
+      hasError: !!minerId
     };
   }
 
@@ -184,15 +185,9 @@ const MinerId = () => {
       return;
     }
     try {
-      // Check if all requests were successful
-      let allSuccessful = ownerData?.every((res: any) => {
-        return res.status === 'success';
-      });
-      //if empty ,ignore check
-      if (!minerIds.length) {
-        allSuccessful = true
-      }
-      if (!allSuccessful) {
+      const list = await batchGetMinerOwners(minerIds, chain!.rpcUrls.default.http[0]);
+      const errMinerId = list.find(item => !item.owner);
+      if (errMinerId) {
         messageApi.open({
           type: 'error',
           content: t(WRONG_MINER_ID_MSG),
@@ -200,14 +195,46 @@ const MinerId = () => {
         setLoading(false);
         return;
       } else {
-        writeContract({
-          abi: oracleAbi,
-          address: getContractAddress(chain?.id || calibrationChainId, 'oracle'),
-          functionName: 'updateMinerIds',
-          args: [
-            value
-          ],
-        });
+        if (address && isFilAddress(address)) {
+          try {
+            const { message } = await useFilAddressMessage({
+              abi: oracleAbi,
+              contractAddress: getContractAddress(chain?.id || calibrationChainId, 'oracle'),
+              address: address as string,
+              functionName: "updateMinerIds",
+              functionParams: [value],
+            })
+            await sendMessage(message);
+            messageApi.open({
+              type: "success",
+              content: t(STORING_DATA_MSG)
+            })
+          } catch (error) {
+            console.log(error)
+            if (error as UserRejectedRequestError) {
+              messageApi.open({
+                type: "warning",
+                content: t("content.rejectedSignature")
+              })
+            } else {
+              messageApi.open({
+                type: "error",
+                content: (error as BaseError)?.shortMessage || JSON.stringify(error)
+              })
+            }
+          } finally {
+            setLoading(false);
+          }
+        } else {
+          writeContract({
+            abi: oracleAbi,
+            address: getContractAddress(chain?.id || calibrationChainId, 'oracle'),
+            functionName: 'updateMinerIds',
+            args: [
+              value
+            ],
+          });
+        }
       }
     } catch (error) {
       console.log(error);
@@ -220,8 +247,23 @@ const MinerId = () => {
       hash,
     })
 
+  useEffect(() => {
+    const getMinerId = async () => {
+      setShowLoading(true)
+      const params = {
+        address: isFilAddress(address!) && address0x.data ? address0x.data.toString() : address
+      }
+      const { data: { data: list } } = await axios.get(getGistListApi, { params })
+      if (list?.minerIds) {
+        const valueList: string[] = Object.values(list?.minerIds) || [];
+        setMinerIds(valueList)
+      }
+      setShowLoading(false)
+    }
+    getMinerId()
+  }, [])
   return (
-    getMinerIdsLoading ? <Loading /> : <div className="px-3 mb-6 md:px-0">
+    <div className="px-3 mb-6 md:px-0">
       {contextHolder}
       <button>
         <div className="inline-flex items-center mb-8 gap-1 text-skin-text hover:text-skin-link">
@@ -235,27 +277,30 @@ const MinerId = () => {
         </div>
       </button>
       <div className='flow-root space-y-8'>
-        <Table
-          title={t('content.minerIDsManagement')}
-          list={[
-            {
-              name: 'Miner IDs',
-              width: 100,
-              comp: (
-                <textarea
-                  defaultValue={minerIds}
-                  placeholder={t('content.inputMinerIDmultiplEseparate')}
-                  className='form-input h-[320px] w-full rounded bg-[#ffffff] border border-[#EEEEEE] text-black'
-                  onBlur={e => { handleMinerChange(e.target.value) }}
-                />
-              )
-            }
-          ]}
-        />
-
-        <div className='text-center'>
-          <LoadingButton text={t('content.submit')} loading={loading || writeContractPending || transactionLoading} handleClick={onSubmit} />
-        </div>
+        {showLoading ? <Loading /> :
+          <>
+            <Table
+              title={t('content.minerIDsManagement')}
+              list={[
+                {
+                  name: 'Miner IDs',
+                  width: 100,
+                  comp: (
+                    <textarea
+                      defaultValue={minerIds}
+                      placeholder={t('content.inputMinerIDmultiplEseparate')}
+                      className='form-input h-[320px] w-full rounded bg-[#ffffff] border border-[#EEEEEE] text-black'
+                      onBlur={e => { handleMinerChange(e.target.value) }}
+                    />
+                  )
+                }
+              ]}
+            />
+            <div className='text-center'>
+              <LoadingButton text={t('content.submit')} loading={loading || writeContractPending || transactionLoading} handleClick={onSubmit} />
+            </div>
+          </>
+        }
       </div>
     </div>
   )

@@ -12,18 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { filecoinCalibration, filecoin } from 'wagmi/chains';
-export const filecoinId = filecoin.id;
-export const calibrationChainId = filecoinCalibration.id;
+export const network = import.meta.env.VITE_CHAIN_NETWORK || 'mainnet';
 export const powerVotingMainNetContractAddress = import.meta.env.VITE_POWER_VOTING_MAINNET_CONTRACT_ADDRESS || '';
 export const oracleMainNetContractAddress = import.meta.env.VITE_ORACLE_MAINNET_CONTRACT_ADDRESS || '';
-export const oraclePowerMainNetContractAddress = import.meta.env.VITE_ORACLE_POWER_MAINNET_CONTRACT_ADDRESS || '';
 export const powerVotingCalibrationContractAddress = import.meta.env.VITE_POWER_VOTING_CALIBRATION_CONTRACT_ADDRESS || '';
 export const oracleCalibrationContractAddress = import.meta.env.VITE_ORACLE_CALIBRATION_CONTRACT_ADDRESS || '';
-export const oraclePowerCalibrationContractAddress = import.meta.env.VITE_ORACLE_POWER_CALIBRATION_CONTRACT_ADDRESS || '';
 export const powerVotingFipMainNetContractAddress = import.meta.env.VITE_POWER_VOTING_FIP_MAINNET_CONTRACT_ADDRESS || '';
 export const powerVotingFipCalibrationContractAddress = import.meta.env.VITE_POWER_VOTING_FIP_CALIBRATION_CONTRACT_ADDRESS || '';
 export const walletConnectProjectId = import.meta.env.VITE_WALLET_CONNECT_ID || '';
-export const githubApi = 'https://api.github.com/users';
+export const filecoinId = filecoin.id;
+export const calibrationChainId = filecoinCalibration.id;
+export const filecoinChainRpc = filecoin.rpcUrls.default.http[0];
+export const calibrationChainRpc = filecoinCalibration.rpcUrls.default.http[0];
+export const githubApi = 'https://avatars.githubusercontent.com';
 export const baseUrl = import.meta.env.VITE_BASE_API_URL || ''
 export const proposalListApi = `${baseUrl}/proposal/list`;
 export const proposalVoteDataApi = `${baseUrl}/proposal/votes`;
@@ -33,7 +34,7 @@ export const votePowerGetApi = `${baseUrl}/power/getPower`;
 export const getVoteDetail = `${baseUrl}/proposal/details`;
 export const getFipListApi = `${baseUrl}/fipEditor/list`;
 export const getFipProposalApi = `${baseUrl}/fipProposal/list`;
-export const getGistListApi = `${baseUrl}/fipEditor/gistAuthorized`
+export const getGistListApi = `${baseUrl}/voter/info`
 export const checkGistApi = `${baseUrl}/fipEditor/checkGist`
 export const IN_PROGRESS_STATUS = 2;
 export const COMPLETED_STATUS = 4;

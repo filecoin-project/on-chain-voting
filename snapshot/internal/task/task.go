@@ -47,11 +47,11 @@ func (j *Safejob) RunSyncDevWeightStepDay() {
 	if atomic.CompareAndSwapInt32(&j.isRunningDevWeightStepDayTask, 0, 1) {
 		defer atomic.StoreInt32(&j.isRunningDevWeightStepDayTask, 0)
 
-		zap.L().Info("start sync dev weight stop day")
+		zap.L().Info("start sync dev weight step day")
 		j.SyncDevWeightStepDay()
-		zap.L().Info("sync weight stop day finished, end time:", zap.Int64("end time", time.Now().Unix()))
+		zap.L().Info("sync weight step day finished, end time:", zap.Int64("end time", time.Now().Unix()))
 	} else {
-		zap.L().Info("sync weight stop day task is running, continue")
+		zap.L().Info("sync weight step day task is running, continue")
 	}
 }
 

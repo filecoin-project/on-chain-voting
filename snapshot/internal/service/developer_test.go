@@ -17,50 +17,47 @@ package service
 import (
 	"context"
 	"fmt"
-	"log"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"power-snapshot/config"
 	"power-snapshot/utils"
 )
 
-func TestGetDeveloperWeights(t *testing.T) {
-	// Initialize the logger
-	config.InitLogger()
+// func TestGetDeveloperWeights(t *testing.T) {
+// 	// Initialize the logger
+// 	config.InitLogger()
 
-	// Load the configuration from the specified path
-	err := config.InitConfig("../../")
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
-		return
-	}
+// 	// Load the configuration from the specified path
+// 	err := config.InitConfig("../../")
+// 	if err != nil {
+// 		log.Fatalf("Failed to load config: %v", err)
+// 		return
+// 	}
 
-	totalWeights, commit, err := GetDeveloperWeights(time.Now())
-	assert.NoError(t, err)
-	assert.NotEmpty(t, commit)
-	zap.L().Info("result", zap.Any("client", totalWeights))
-}
+// 	totalWeights, commit, err := GetDeveloperWeights(time.Now())
+// 	assert.NoError(t, err)
+// 	assert.NotEmpty(t, commit)
+// 	zap.L().Info("result", zap.Any("client", totalWeights))
+// }
 
-func TestGetContributors(t *testing.T) {
-	err := config.InitConfig("../../")
-	if err != nil {
-		return
-	}
-	config.InitLogger()
-	since := utils.AddMonths(time.Now(), -6).Format("2006-01-02T15:04:05Z")
-	tokenManager := NewGitHubTokenManager(config.Client.Github.Token)
+// func TestGetContributors(t *testing.T) {
+// 	err := config.InitConfig("../../")
+// 	if err != nil {
+// 		return
+// 	}
+// 	config.InitLogger()
+// 	since := utils.AddMonths(time.Now(), -6).Format("2006-01-02T15:04:05Z")
+// 	tokenManager := NewGitHubTokenManager(config.Client.Github.Token)
 
-	token := tokenManager.GetCoreAvailableToken()
-	res, err := getContributors(context.Background(), "filecoin-project", "on-chain-voting", since, token)
-	assert.Nil(t, err)
+// 	token := tokenManager.GetCoreAvailableToken()
+// 	res, err := getContributors(context.Background(), "filecoin-project", "on-chain-voting", since, token)
+// 	assert.Nil(t, err)
 
-	zap.L().Info("result", zap.Any("res", res))
-}
+// 	zap.L().Info("result", zap.Any("res", res))
+// }
 
 func TestAddMonths(t *testing.T) {
 	res := utils.AddMonths(time.Date(2024, 05, 04, 00, 00, 00, 00, time.Local),

@@ -33,3 +33,4 @@ w3client:
 
 rate:
   githubRequestLimit: 50   # Request interval time, unit in microseconds
+syncStartDate: 20250401
