@@ -15,9 +15,12 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
+	"power-snapshot/constant"
 	models "power-snapshot/internal/model"
 )
 
@@ -42,5 +45,10 @@ func InitConfig(path string) error { // configuration file name
 		zap.L().Error("unmarshal error: ", zap.Error(err))
 		return err
 	}
+
+	if len(Client.Github.Token) < constant.MinimumTokenNum {
+		return fmt.Errorf("github token maust be greater than %d", constant.MinimumTokenNum)
+	}
+
 	return nil
 }

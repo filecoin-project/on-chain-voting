@@ -71,10 +71,10 @@ func (j *Safejob) SyncDevWeightStepDay() {
 			if err != nil {
 				return
 			}
+
 			break
 		}
 	}
-
 }
 
 // UploadPowerToIPFS returns a function that uploads power data to IPFS.

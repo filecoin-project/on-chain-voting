@@ -16,13 +16,10 @@ package service
 
 import (
 	"fmt"
+	"power-snapshot/utils"
 	"sync"
-	"time"
 
 	"go.uber.org/zap"
-
-	"power-snapshot/config"
-	"power-snapshot/utils"
 )
 
 // Repository represents a GitHub repository.
@@ -43,7 +40,6 @@ func GetRepoNames(orgs []string, users []string, tokenManager *GitHubTokenManage
 		if token == "" {
 			return
 		}
-		defer tokenManager.CoreDecreaseUsage(token)
 
 		repos, err := fetchFunc(entity, token)
 		if err != nil {
@@ -61,13 +57,11 @@ func GetRepoNames(orgs []string, users []string, tokenManager *GitHubTokenManage
 
 	// Fetch repositories for organizations
 	for _, org := range orgs {
-		time.Sleep(time.Duration(config.Client.Rate.GithubRequestLimit) * time.Millisecond)
 		go fetchRepos(org, "organization", getAllOrgRepos)
 	}
 
 	// Fetch repositories for users
 	for _, user := range users {
-		time.Sleep(time.Duration(config.Client.Rate.GithubRequestLimit) * time.Millisecond)
 		go fetchRepos(user, "user", getAllUserRepos)
 	}
 
@@ -80,7 +74,7 @@ func GetRepoNames(orgs []string, users []string, tokenManager *GitHubTokenManage
 	for repos := range reposChan {
 		allRepos = append(allRepos, repos...)
 	}
-	
+
 	return allRepos
 }
 
