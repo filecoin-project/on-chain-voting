@@ -106,7 +106,6 @@ const CreateVote = () => {
   // const [cid, setCid] = useState('');
   const [loading, setLoading] = useState<boolean>(writeContractPending);
   const [isDraftSave, setDraftSave] = useState(false);
-  const [hasDraft, setHasDraft] = useState(false);
 
   useEffect(() => {
     if (error) {
@@ -172,8 +171,6 @@ const CreateVote = () => {
           developerPercentage: result?.developerPercentage / 100,
           tokenHolderPercentage: result?.tokenHolderPercentage / 100,
         })
-
-        setHasDraft(true)
       }
     } catch (e) {
       console.log(e)
@@ -191,9 +188,7 @@ const CreateVote = () => {
         content: t(STORING_DATA_MSG),
       });
       //clear draft
-      if (hasDraft) {
-        clearDraft()
-      }
+      clearDraft()
       addStoringCid([{
         hash,
       }]);
@@ -366,7 +361,6 @@ const CreateVote = () => {
       await axios.delete(proposalDraftDeleteApi, {
         data
       })
-      setHasDraft(false);
     } catch (e) {
       console.log(e)
     }
