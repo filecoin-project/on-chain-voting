@@ -27,6 +27,11 @@ import (
 type MockProposalService struct {
 }
 
+// DeleteProposalDraft implements service.ProposalRepo.
+func (m *MockProposalService) DeleteProposalDraft(ctx context.Context, req api.DelProposalDraftReq) error {
+	panic("unimplemented")
+}
+
 // GetGitHubNameByCreaters implements service.ProposalRepo.
 func (m *MockProposalService) GetGitHubNameByCreaters(ctx context.Context, creators []string) (map[string]model.GiuthubInfo, error) {
 	panic("unimplemented")

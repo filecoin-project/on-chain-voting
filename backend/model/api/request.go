@@ -77,10 +77,15 @@ type AddProposalDraftReq struct {
 	StartTime int64  `json:"startTime" validate:"required"`              // Start time of the proposal
 	EndTime   int64  `json:"endTime" validate:"required"`                // End time of the proposal
 	Timezone  string `json:"timezone" validate:"required"`               // Timezone of the proposal
-	Title     string `json:"title" validate:"required,min=2,max=254"`    // Title of the proposal
-	Content   string `json:"content" validate:"required,min=2,max=2000"` // Description of the proposal
+	Title     string `json:"title" validate:"required,min=1,max=254"`    // Title of the proposal
+	Content   string `json:"content" validate:"required,min=1,max=2000"` // Description of the proposal
 	ChainIdParam
 	ProposalPercentage
+}
+
+type DelProposalDraftReq struct {
+    AddressReq
+	ChainIdParam
 }
 
 type ProposalPercentage struct {

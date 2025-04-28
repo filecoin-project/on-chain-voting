@@ -49,10 +49,11 @@ func InitRouters(r *gin.Engine, proposalService service.IProposalService, voteSe
 func proposalRouter(rg *gin.RouterGroup, ph *api.ProposalHandler, vh *api.VoteHandler) {
 	rg.GET("/proposal/votes", wrap(vh.GetCountedVotesInfo)) // Get counted votes for a proposal
 
-	rg.GET("/proposal/list", wrap(ph.GetProposalList))      // Get a list of proposals
-	rg.GET("/proposal/details", wrap(ph.GetProposalDetail)) // Get details of a specific proposal
-	rg.POST("/proposal/draft/add", wrap(ph.PostDraft))      // Add a new proposal draft
-	rg.GET("/proposal/draft/get", wrap(ph.GetDraft))        // Get a specific proposal draft
+	rg.GET("/proposal/list", wrap(ph.GetProposalList))        // Get a list of proposals
+	rg.GET("/proposal/details", wrap(ph.GetProposalDetail))   // Get details of a specific proposal
+	rg.POST("/proposal/draft/add", wrap(ph.PostDraft))        // Add a new proposal draft
+	rg.DELETE("/proposal/draft/delete", wrap(ph.DeleteDraft)) // Delete a specific proposal draft
+	rg.GET("/proposal/draft/get", wrap(ph.GetDraft))          // Get a specific proposal draft
 }
 
 // powerRouter defines routes related to power distribution and management.
