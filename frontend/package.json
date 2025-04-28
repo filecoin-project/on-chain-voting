@@ -22,7 +22,7 @@
     "@zondax/ledger-filecoin": "^2.0.4",
     "add": "^2.0.6",
     "antd": "5.17.3",
-    "axios": "^1.7.4",
+    "axios": "^1.8.4",
     "buffer": "^6.0.3",
     "cbor": "^10.0.3",
     "classnames": "latest",
