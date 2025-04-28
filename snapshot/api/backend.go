@@ -27,6 +27,7 @@ import (
 	"power-snapshot/config"
 	"power-snapshot/constant"
 	models "power-snapshot/internal/model"
+	"power-snapshot/utils"
 )
 
 var (
@@ -64,14 +65,19 @@ func GetAllVoterAddresss(chainId int64) ([]string, error) {
 		return nil, err
 	}
 
-	return grpcResp.GetAddresses(), nil
+	var addresses []string
+	for _, addr := range grpcResp.Addresses {
+		addresses = append(addresses, utils.EthStandardAddressToHex(addr))
+	}
+
+	return addresses, nil
 }
 
 func GetVoterInfo(address string) (models.VoterInfo, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), constant.TimeoutSecond)
 	defer cancel()
 	grpcReq := &pb.GetVoterInfoRequest{
-		Address: address,
+		Address: utils.EthStandardAddressToHex(address),
 	}
 
 	grpcResp, err := getClient().GetVoterInfo(ctx, grpcReq)

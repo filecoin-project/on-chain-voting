@@ -99,3 +99,8 @@ func ConvertTopics(topics []string) []common.Hash {
 func StringToDecimal(s string) decimal.Decimal {
 	return decimal.NewFromBigInt(StringConvToBigInt(s), 0)
 }
+
+func EthStandardAddressToHex(v string) string {
+	address := common.HexToAddress(v)
+	return address.Hex()
+}

@@ -18,6 +18,7 @@ import (
 	"math/big"
 	"strconv"
 
+	"github.com/ethereum/go-ethereum/common"
 	"go.uber.org/zap"
 )
 
@@ -41,4 +42,9 @@ func SafeParseInt(v string) int64 {
 		return 0
 	}
 	return res
+}
+
+func EthStandardAddressToHex(v string) string {
+	address := common.HexToAddress(v)
+	return address.Hex()
 }

@@ -41,7 +41,8 @@ network:
   chainID: {CHAIN_ID} # chain id
   rpc: "{RPC_URL}" # your lotus rpc which is used for CLI to connect lotus
   token: "{JWT_TOKEN}" # your lotus token which is used for CLI to connect lotus
-  powerVotingContract: "{POWER_VOTING_CONTRACT}" # the f0 address of POWER_VOTING_VOTE contract, you can retrieve it by searching the EVM address in a browser
+  powerVotingContract: "{POWER_VOTING_CONTRACT}" # the f0 address of POWER_VOTING_VOTE contract, you can retrieve it by searching the EVM address in a browser.
+                                                 # POWER_VOTING_VOTE contract EVM address can be found here: https://github.com/filecoin-project/on-chain-voting/blob/main/contracts/scripts/filecoin_mainnet_config.json
   powerBackendURL: "{POWER_BACKEND_URL}" # backend service url, e.g. https://vote.fil.org
 
 abiPath:

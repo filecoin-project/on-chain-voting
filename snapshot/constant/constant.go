@@ -16,8 +16,6 @@ package constant
 
 import (
 	"time"
-
-	models "power-snapshot/internal/model"
 )
 
 const (
@@ -31,9 +29,9 @@ const (
 	TaskActionMiner            = "miner"
 	DeveloperWeightsFilePrefix = "developer_weights_"
 	SavedHeightDuration        = -DataExpiredDuration * 2880
+
+	MinimumTokenCapacity = 18000
+	MinimumTokenNum      = 4
 )
 
 var TimeoutSecond = 15 * time.Second
-var ChainAddressPrefix = models.ChainPrefix{
-	314159: "t0",
-}

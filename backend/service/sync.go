@@ -69,6 +69,7 @@ type LotusRepo interface {
 	GetValidMinerIds(ctx context.Context, minerId string, minerIds []uint64) (model.StringSlice, error)
 	EthAddrToFilcoinAddr(ctx context.Context, addr string) (string, error)
 	FilecoinAddressToID(ctx context.Context, addr string) (string, error)
+	FilecoinAddrToEthAddr(ctx context.Context, addr string) (string, error) 
 }
 type ISyncService interface {
 	UpdateSyncEventInfo(ctx context.Context, addr string, height int64) error

@@ -67,7 +67,7 @@ func (m *mockBaseRepo) GetLotusClientByHashKey(ctx context.Context, netID int64,
 	return jsonrpc.NewClient(client.QueryRpc[index]), nil
 }
 
-func (s *mockBaseRepo) SetDeveloperWeights(ctx context.Context, dayStr string, commits []models.Nodes) error {
+func (s *mockBaseRepo) SaveDeveloperWeightsToFile(ctx context.Context, dayStr string, commits []models.Nodes) error {
 	return nil
 }
 
@@ -466,4 +466,27 @@ func TestSyncWorker(t *testing.T) {
 			return
 		}
 	}
+}
+
+
+func TestGetAllAddrSyncedDateMap(t *testing.T) {
+	config.InitConfig("../../")
+	redis, err := data.NewRedisClient()
+	assert.NoError(t, err)
+
+	client, err := data.NewJetstreamClient()
+	assert.NoError(t, err)
+
+	repo, err := repo.NewSyncRepoImpl(
+		314159,
+		redis,
+		client,
+	)
+
+	res, err := repo.GetAllAddrSyncedDateMap(
+		context.Background(),
+		314159,
+	)
+	assert.NoError(t, err)
+	fmt.Println(res)
 }

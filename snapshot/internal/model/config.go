@@ -77,14 +77,3 @@ type Rate struct {
 type DataPath struct {
 	DeveloperWeights string // Path to the developer weights file
 }
-
-type ChainPrefix map[int64]string
-
-func (c *ChainPrefix) GetPrefix(netId int64) string {
-	value, exist := (*c)[netId]
-	if !exist {
-		return ""
-	}
-
-	return value
-}

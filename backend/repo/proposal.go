@@ -209,7 +209,7 @@ func (p *ProposalRepoImpl) UpdateProposal(ctx context.Context, in *model.Proposa
 	err := p.mydb.Model(model.ProposalTbl{}).
 		WithContext(ctx).
 		// Specify the condition to find the proposal by its ID.
-		Where("id = ?", in.ID).
+		Where("proposal_id = ?", in.ProposalId).
 		// Update the specified columns with new values from the input proposal.
 		UpdateColumns(map[string]any{
 			"counted":                  in.Counted,

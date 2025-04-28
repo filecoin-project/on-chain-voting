@@ -92,3 +92,19 @@ func (l *LotusRPCRepo) GetValidMinerIds(ctx context.Context, actorId string, min
 	return ids, nil
 }
 
+func (l *LotusRPCRepo) FilecoinAddrToEthAddr(ctx context.Context, addr string) (string, error) {
+	if strings.HasPrefix(addr, "0x") {
+		return addr, nil
+	}
+
+	resp, err := l.client.Call(ctx, "Filecoin.FilecoinAddressToEthAddress", addr)
+	if err != nil {
+		return "", err
+	}
+
+	if resp.Error != nil {
+		return "", resp.Error
+	}
+
+	return resp.Result.(string), nil
+}
