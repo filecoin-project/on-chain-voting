@@ -26,10 +26,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { UserRejectedRequestError } from "viem";
 import type { BaseError } from "wagmi";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
-// import { useSendMessage } from "iso-filecoin-react"
 import fileCoinAbi from "../../common/abi/power-voting.json";
 import type { ProposalDraft } from "../../common/types";
-
 import {
   calibrationChainId,
   DEFAULT_TIMEZONE,
@@ -48,10 +46,8 @@ import CreateTable from "../../components/CreateTable";
 import LoadingButton from "../../components/LoadingButton";
 import Editor from '../../components/MDEditor';
 import timezoneOption from '../../json/timezons.json';
-// import { getContractAddress, hexToString, isFilAddress, validateValue } from "../../utils"
 import { getContractAddress, hexToString, multiplyWithPrecision, validateValue } from "../../utils"
 import './index.less';
-// import { useFilAddressMessage } from "../../common/hooks.ts"
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -60,7 +56,6 @@ const { RangePicker } = DatePicker;
 
 const CreateVote = () => {
   const { isConnected, address, chain } = useAccount();
-  // const { mutateAsync: sendMessage } = useSendMessage();
   const chainId = chain?.id || calibrationChainId;
   const { t } = useTranslation();
   const { openConnectModal } = useConnectModal();
@@ -106,7 +101,6 @@ const CreateVote = () => {
     error,
     reset
   } = useWriteContract();
-  // const [cid, setCid] = useState('');
   const [loading, setLoading] = useState<boolean>(writeContractPending);
   const [isDraftSave, setDraftSave] = useState(false);
   const [hasDraft, setHasDraft] = useState(false);
@@ -218,8 +212,13 @@ const CreateVote = () => {
     const startTimestamp = dayjs(values.time[0]).add(offset, 'minute').unix();
     const expTimestamp = dayjs(values.time[1]).add(offset, 'minute').unix();
     const currentTime = Math.floor(Date.now() / 1000);
+    const sp = multiplyWithPrecision(values.percent.spPercentage, 100);
+    const client = multiplyWithPrecision(values.percent.clientPercentage, 100);
+    const developer = multiplyWithPrecision(values.percent.developerPercentage, 100);
+    const tokenHolder = multiplyWithPrecision(values.percent.tokenHolderPercentage, 100);
     // Check if the role proportion is equal to 100
-    const total = values.percent.clientPercentage * 100 + values.percent.developerPercentage * 100 + values.percent.spPercentage * 100 + values.percent.tokenHolderPercentage * 100
+    const total = sp + client + developer + tokenHolder;
+
     if (total !== 10000) {
       messageApi.open({
         type: "warning",
@@ -228,6 +227,7 @@ const CreateVote = () => {
       setLoading(false);
       return
     }
+
     // Check if current time is after start time
     if (currentTime > startTimestamp) {
       messageApi.open({
@@ -567,19 +567,12 @@ const CreateVote = () => {
             <Controller
               name='percent'
               control={control}
-              rules={{
-                required: true,
-                validate: (v) => !!v.clientPercentage && !!v.developerPercentage && !!v.spPercentage && !!v.tokenHolderPercentage
-              }}
               render={({ field: { onChange, value: data } }) => {
                 return (
                   <div className="gap-[10px] flex">
                     <div>
                       <p className="text-[#4B535B] text-sm mb-[1px]">SP</p>
                       <InputNumber
-                        className={classNames(
-                          !data.spPercentage && '!border-red-500 focus:!border-red-500'
-                        )}
                         value={data.spPercentage}
                         style={{ width: '148px', border: '1px solid #EEEEEE' }}
                         min={0}
@@ -589,16 +582,10 @@ const CreateVote = () => {
                         onChange={(v) => onChange({ ...data, spPercentage: v })}
                         precision={2}
                       />
-                      {errors.percent && !data.spPercentage && (
-                        <p className='text-red-500 mt-2 text-sm'>{t('content.percentageRequired')}</p>
-                      )}
                     </div>
                     <div>
                       <p className="text-[#4B535B] text-sm mb-[1px]">Client</p>
                       <InputNumber
-                        className={classNames(
-                          !data.clientPercentage && '!border-red-500 focus:!border-red-500'
-                        )}
                         value={data.clientPercentage}
                         type="number"
                         style={{ width: '148px' }}
@@ -609,16 +596,10 @@ const CreateVote = () => {
                         onChange={(v) => onChange({ ...data, clientPercentage: v })}
                         precision={2}
                       />
-                      {errors.percent && !data.clientPercentage && (
-                        <p className='text-red-500 mt-2 text-sm'>{t('content.percentageRequired')}</p>
-                      )}
                     </div>
                     <div>
                       <p className="text-[#4B535B] text-sm mb-[1px]">Developer</p>
                       <InputNumber
-                        className={classNames(
-                          !data.developerPercentage && '!border-red-500 focus:!border-red-500'
-                        )}
                         value={data.developerPercentage}
                         type="number"
                         style={{ width: '148px' }}
@@ -629,16 +610,10 @@ const CreateVote = () => {
                         onChange={(v) => onChange({ ...data, developerPercentage: v })}
                         precision={2}
                       />
-                      {errors.percent && !data.developerPercentage && (
-                        <p className='text-red-500 mt-2 text-sm'>{t('content.percentageRequired')}</p>
-                      )}
                     </div>
                     <div>
                       <p className="text-[#4B535B] text-sm mb-[1px]">TokenHolder</p>
                       <InputNumber
-                        className={classNames(
-                          !data.tokenHolderPercentage && '!border-red-500 focus:!border-red-500'
-                        )}
                         type="number"
                         value={data.tokenHolderPercentage}
                         style={{ width: '148px' }}
@@ -649,9 +624,6 @@ const CreateVote = () => {
                         onChange={(v) => onChange({ ...data, tokenHolderPercentage: v })}
                         precision={2}
                       />
-                      {errors.percent && !data.tokenHolderPercentage && (
-                        <p className='text-red-500 mt-2 text-sm'>{t('content.percentageRequired')}</p>
-                      )}
                     </div>
                   </div>
                 )

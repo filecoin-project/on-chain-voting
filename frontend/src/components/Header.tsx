@@ -344,7 +344,7 @@ const Header = (props: any) => {
               <a
                 target='_blank'
                 rel="noopener noreferrer"
-                href={network === 'testnet' ? "https://vote.fil.org/" : "https://staging.vote.fil.org/"}
+                href={network === 'testnet' ? "https://vote.fil.org/" : "https://vote.storswift.io/"}
                 className="py-2 text-[#0000FF] text-[14px] flex items-center">
                 {network === 'testnet' ? 'Mainnet↗' : 'Calibration↗'}
 
