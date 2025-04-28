@@ -182,7 +182,6 @@ func getDeveloperWeights(ctx context.Context, repositories []string, weight int,
 			zap.L().Warn("invalid repository format", zap.String("repo", repo))
 			continue
 		}
-
 		org, repoName := parts[0], parts[1]
 
 		eg.Go(func() error {
@@ -252,6 +251,7 @@ func getDeveloperWeightsByRepo(ctx context.Context, index, repoCount int, organi
 // getContributorsWithRetry retries fetching contributors for a repository with backoff and retry logic.
 func getContributorsWithRetry(ctx context.Context, index, repoCount int, organization, repository, since string, tokenManager *GitHubTokenManager, retryInterval time.Duration) ([]models.Nodes, error) {
 	retries := len(config.Client.Github.Token) + 1
+
 	var commits []models.Nodes
 	var lastErr error
 	for attempt := 0; attempt < retries; attempt++ {
