@@ -17,6 +17,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -110,15 +111,25 @@ func (m *GitHubTokenManager) RefreshToken() string {
 
 	res := ""
 	for _, token := range m.tokens {
+		log.Default().Printf("token: %s", token)
+
+		zap.L().Info("TokenRefresh Before",
+			zap.String("token", token),
+			zap.String("graphQL", fmt.Sprintf("limit: %d, used: %d", m.graphQLCap[token].Get(), m.graphQLUsage[token].Get())),
+			zap.String("core", fmt.Sprintf("limit: %d, used: %d", m.coreCap[token].Get(), m.coreUsage[token].Get())),
+		)
+
 		gCap, cCap := m.githubApi.CheckRateLimitBeforeRequest(token)
 		m.graphQLCap[token].Set(gCap)
 		m.coreCap[token].Set(cCap)
+		m.graphQLUsage[token].Set(0)
+		m.coreUsage[token].Set(0)
 
-		zap.L().Info("TokenRefresh",
+		zap.L().Info("TokenRefresh After",
 			zap.String("token", token),
 			zap.String("graphQL", fmt.Sprintf("limit: %d, used: %d", gCap, m.graphQLUsage[token].Get())),
 			zap.String("core", fmt.Sprintf("limit: %d, used: %d", cCap, m.coreUsage[token].Get())))
-
+		fmt.Printf("\n\n")
 		if gCap > 0 && cCap > 0 {
 			res = token
 		}
@@ -128,24 +139,25 @@ func (m *GitHubTokenManager) RefreshToken() string {
 		m.graphQLUsage[res].Add(1)
 		m.coreUsage[res].Add(1)
 	}
-	
+
 	return res
 }
 
 func (m *GitHubTokenManager) GetAvailableToken() string {
 	m.mu.Lock()
-	defer m.mu.Unlock()
 
 	for token := range m.graphQLCap {
 		currentCap := m.graphQLCap[token].Get()
 		currentUsage := m.graphQLUsage[token].Get()
 
-		if currentUsage < currentCap && currentCap > 0 {
+		if currentUsage < currentCap && currentCap > 0 && currentCap-currentUsage > 15 {
 			m.graphQLUsage[token].Add(1)
+			m.mu.Unlock()
 			return token
 		}
 	}
-
+	
+	m.mu.Unlock()
 	return m.RefreshToken()
 
 }
@@ -171,18 +183,18 @@ func (m *GitHubTokenManager) GetApiCap(token string) (int32, int32) {
 
 func (m *GitHubTokenManager) GetCoreAvailableToken() string {
 	m.mu.Lock()
-	defer m.mu.Unlock()
 
 	for token := range m.coreCap {
 		currentCap := m.coreCap[token].Get()
 		currentUsage := m.coreUsage[token].Get()
 		if currentUsage < currentCap && currentCap > 0 {
 			m.coreUsage[token].Add(1)
-
+			m.mu.Unlock()
 			return token
 		}
 	}
 
+	m.mu.Unlock()
 	return m.RefreshToken()
 }
 

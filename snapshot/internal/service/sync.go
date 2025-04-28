@@ -768,6 +768,7 @@ func (s *SyncService) SyncLatestDeveloperWeight(ctx context.Context) error {
 		return err
 	}
 
+	zap.L().Info("SyncLatestDeveloperWeight Success", zap.String("date", base.ToShortDateString()))
 	return nil
 }
 

@@ -28,7 +28,7 @@ import (
 
 func FetchGithubDeveloper(url, token string, queryParams map[string]string, v any) (string, error) {
 	client := resty.New().
-		SetTimeout(constant.TimeoutSecond).
+		SetTimeout(constant.TimeoutWith15s).
 		SetRetryCount(constant.RetryCount).
 		SetRetryWaitTime(2 * time.Second).
 		SetAuthToken(token)

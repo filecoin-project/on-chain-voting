@@ -34,4 +34,7 @@ const (
 	MinimumTokenNum      = 4
 )
 
-var TimeoutSecond = 15 * time.Second
+var (
+	TimeoutWith15s = 15 * time.Second
+	TimeoutWith3M  = 15 * time.Second * 12
+)
