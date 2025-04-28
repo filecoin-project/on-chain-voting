@@ -210,6 +210,7 @@ export const isFilAddress = (address: string | `0x${string}`) => {
   return isAddress(filAddress);
 }
 export const multiplyWithPrecision = (number: number, multiple: number) => {
+  if (!number) return 0;
   return new Decimal(number).times(multiple).toNumber();
 }
 

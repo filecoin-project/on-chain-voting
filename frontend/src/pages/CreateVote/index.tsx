@@ -28,11 +28,12 @@ import type { BaseError } from "wagmi";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import fileCoinAbi from "../../common/abi/power-voting.json";
 import type { ProposalDraft } from "../../common/types";
+
 import {
   calibrationChainId,
   DEFAULT_TIMEZONE,
   NOT_FIP_EDITOR_MSG,
-  proposalDraftAddApi,
+  proposalDraftAddApi, proposalDraftDeleteApi,
   proposalDraftGetApi,
   SAVE_DRAFT_FAIL,
   SAVE_DRAFT_SUCCESS,
@@ -56,6 +57,7 @@ const { RangePicker } = DatePicker;
 
 const CreateVote = () => {
   const { isConnected, address, chain } = useAccount();
+  // const { mutateAsync: sendMessage } = useSendMessage();
   const chainId = chain?.id || calibrationChainId;
   const { t } = useTranslation();
   const { openConnectModal } = useConnectModal();
@@ -101,9 +103,9 @@ const CreateVote = () => {
     error,
     reset
   } = useWriteContract();
+  // const [cid, setCid] = useState('');
   const [loading, setLoading] = useState<boolean>(writeContractPending);
   const [isDraftSave, setDraftSave] = useState(false);
-  const [hasDraft, setHasDraft] = useState(false);
 
   useEffect(() => {
     if (error) {
@@ -169,8 +171,6 @@ const CreateVote = () => {
           developerPercentage: result?.developerPercentage / 100,
           tokenHolderPercentage: result?.tokenHolderPercentage / 100,
         })
-
-        setHasDraft(true)
       }
     } catch (e) {
       console.log(e)
@@ -188,9 +188,7 @@ const CreateVote = () => {
         content: t(STORING_DATA_MSG),
       });
       //clear draft
-      if (hasDraft) {
-        clearDraft()
-      }
+      clearDraft()
       addStoringCid([{
         hash,
       }]);
@@ -357,25 +355,16 @@ const CreateVote = () => {
   const clearDraft = async () => {
     try {
       const data = {
-        creator: address,
-        title: '',
-        content: '',
-        startTime: 0,
-        endTime: 0,
-        chainId: chainId,
-        spPercentage: 25 * 100,
-        clientPercentage: 25 * 100,
-        developerPercentage: 25 * 100,
-        tokenHolderPercentage: 25 * 100,
-        timezone: DEFAULT_TIMEZONE,
+        address,
+        chainId,
       }
-      await axios.post(proposalDraftAddApi, data)
-      setHasDraft(false);
+      await axios.delete(proposalDraftDeleteApi, {
+        data
+      })
     } catch (e) {
       console.log(e)
     }
   }
-
   const saveDraft = async () => {
     if (loading || writeContractPending || transactionLoading) {
       return
@@ -532,7 +521,7 @@ const CreateVote = () => {
       desc: <div className="text-red">
         <span className="text-sm">
           {t('content.describeFIPObjectives')} <a target="_blank"
-            rel="noopener" href="" className="text-sm" style={{ color: "blue" }}>{t('content.here')}↗</a>.
+                                                  rel="noopener" href="" className="text-sm" style={{ color: "blue" }}>{t('content.here')}↗</a>.
           <br /> {t('content.markdownFormattingInField')}.
         </span>
 
@@ -728,7 +717,7 @@ const CreateVote = () => {
         <div className='flow-root space-y-8'>
           <CreateTable title={t('content.createProposal')} subTitle={<div className="text-base font-normal">
             {t('content.proposalsClear')} <a target="_blank"
-              rel="noopener" href="" style={{ color: "blue" }}>{t('content.codePractices')}↗</a>.
+                                             rel="noopener" href="" style={{ color: "blue" }}>{t('content.codePractices')}↗</a>.
           </div>} list={list} />
 
           <div className="flex justify-center items-center text-center ">
