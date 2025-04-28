@@ -46,6 +46,21 @@ func (p *ProposalHandler) PostDraft(c *constant.Context) {
 	Success(c.Context)
 }
 
+func (p *ProposalHandler) DeleteDraft(c *constant.Context) {
+	var req api.DelProposalDraftReq
+	if err := c.BindAndValidate(&req); err != nil {
+		Error(c.Context, err.Error())
+		return
+	}
+
+	if err := p.proposqlService.DeleteDraft(c.Request.Context(), req); err != nil {
+		Error(c.Context, err)
+		return
+	}
+
+	Success(c.Context)
+}
+
 // GetDraft function handles an HTTP request to retrieve a draft proposal from the database.
 func (p *ProposalHandler) GetDraft(c *constant.Context) {
 	var req api.AddressReq

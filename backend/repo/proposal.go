@@ -148,6 +148,20 @@ func (p *ProposalRepoImpl) CreateProposalDraft(ctx context.Context, in *model.Pr
 	return in.ID, nil
 }
 
+func (p *ProposalRepoImpl) DeleteProposalDraft(ctx context.Context, req api.DelProposalDraftReq) error {
+	if err := p.mydb.Model(model.ProposalDraftTbl{}).
+		WithContext(ctx).
+		Where("creator = ? AND chain_id = ?", req.Address, req.ChainId).
+		Delete(&model.ProposalDraftTbl{
+			Creator: req.Address,
+			ChainId:  req.ChainId,
+		}).Error; err != nil {
+		return fmt.Errorf("delete proposal draft error: %w", err)
+	}
+	
+	return nil
+}
+
 // GetProposalDraftByAddress retrieves a proposal draft from the database based on the creator's address.
 func (p *ProposalRepoImpl) GetProposalDraftByAddress(ctx context.Context, req api.AddressReq) (*model.ProposalDraftTbl, error) {
 	var proposalDraft model.ProposalDraftTbl
