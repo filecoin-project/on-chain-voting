@@ -736,7 +736,6 @@ func (s *SyncService) GetAddrInfo(ctx context.Context, netID int64, addr string)
 	return m, nil
 }
 
-// fixme: Check whether this function is used
 func (s *SyncService) SyncLatestDeveloperWeight(ctx context.Context) error {
 	base := carbon.Now().SubDay().EndOfDay()
 	exist, err := s.ExistDeveloperWeight(ctx, base.ToShortDateString())
@@ -768,6 +767,7 @@ func (s *SyncService) SyncLatestDeveloperWeight(ctx context.Context) error {
 		return err
 	}
 
+	zap.L().Info("SyncLatestDeveloperWeight Success", zap.String("date", base.ToShortDateString()))
 	return nil
 }
 

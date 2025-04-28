@@ -47,7 +47,7 @@ func NewLotusRPCRepo(redisClient *redis.Client) *LotusRPCRepo {
 func (l *LotusRPCRepo) GetTipSetByHeight(ctx context.Context, netId, height int64) ([]any, error) {
 	key := fmt.Sprintf(constant.RedisTipset, netId)
 	defer func() {
-		go l.cleanExpiredHeights(ctx, netId)
+		go l.cleanExpiredHeights(context.Background(), netId)
 	}()
 
 	res, err := l.redisClient.HGet(ctx, key, strconv.FormatInt(height, 10)).Result()
@@ -113,8 +113,9 @@ func (l *LotusRPCRepo) cleanExpiredHeights(ctx context.Context, netId int64) {
 				toDelete = append(toDelete, heightStr)
 			}
 		}
-
 		if len(toDelete) > 0 {
+
+			zap.L().Info("cleaning expired heights", zap.Int("count", len(toDelete)), zap.Any("cleaned heights", toDelete))
 			if err := l.redisClient.HDel(ctx, key, toDelete...).Err(); err != nil {
 				zap.L().Error("HDEL failed", zap.Strings("keys", toDelete), zap.Error(err))
 			} else {
@@ -336,4 +337,3 @@ func (l *LotusRPCRepo) GetClientBalanceByHeight(ctx context.Context, netId, heig
 
 	return t, nil
 }
-

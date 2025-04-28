@@ -53,7 +53,7 @@ func getClient() pb.BackendClient {
 }
 
 func GetAllVoterAddresss(chainId int64) ([]string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), constant.TimeoutSecond)
+	ctx, cancel := context.WithTimeout(context.Background(), constant.TimeoutWith15s)
 	defer cancel()
 	grpcReq := &pb.GetAllVoterAddressRequest{
 		ChainId: chainId,
@@ -74,7 +74,7 @@ func GetAllVoterAddresss(chainId int64) ([]string, error) {
 }
 
 func GetVoterInfo(address string) (models.VoterInfo, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), constant.TimeoutSecond)
+	ctx, cancel := context.WithTimeout(context.Background(), constant.TimeoutWith15s)
 	defer cancel()
 	grpcReq := &pb.GetVoterInfoRequest{
 		Address: utils.EthStandardAddressToHex(address),

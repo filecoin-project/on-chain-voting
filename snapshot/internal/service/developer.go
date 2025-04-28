@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -164,19 +163,18 @@ func FetchDeveloperWeights(fromTime time.Time) (map[string]int64, []models.Nodes
 func getDeveloperWeights(ctx context.Context, repositories []string, weight int, fromTime time.Time, tokenManager *GitHubTokenManager) (map[string]int64, []models.Nodes, error) {
 	const maxConcurrency = 10
 	var (
-		wg          sync.WaitGroup
-		mu          sync.Mutex
-		errCh       = make(chan error, len(repositories))
-		weightsCh   = make(chan map[string]int64, len(repositories))
-		commitsPool []models.Nodes
-		sem         = make(chan struct{}, maxConcurrency)
-		stopTag     int32
+		mu           sync.Mutex
+		stopTag      int32
+		finalWeights = make(map[string]int64)
+		commitsPool  []models.Nodes
+		errs         []error
+		eg           errgroup.Group
 	)
-
+	eg.SetLimit(maxConcurrency)
 	for index, repo := range repositories {
 		if atomic.LoadInt32(&stopTag) == 1 {
-			zap.L().Warn("!!!!!stop get developer weights", zap.Int("index", index), zap.String("repo", repo))
-			break
+			zap.L().Error("!!!!!! Failed to process repos, break loop !!!!!", zap.Error(constant.ErrorNoTokenAvailable))
+			return nil, nil, constant.ErrorNoTokenAvailable
 		}
 
 		parts := strings.Split(repo, "/")
@@ -184,56 +182,37 @@ func getDeveloperWeights(ctx context.Context, repositories []string, weight int,
 			zap.L().Warn("invalid repository format", zap.String("repo", repo))
 			continue
 		}
-
 		org, repoName := parts[0], parts[1]
 
-		wg.Add(1)
-		go func(org, repo string) {
-			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
-
-			weightMap, commits, err := getRepoData(ctx, index, len(repositories), org, repo, fromTime, tokenManager)
+		eg.Go(func() error {
+			weightMap, commits, err := getRepoData(ctx, index, len(repositories), org, repoName, fromTime, tokenManager)
 			if err != nil {
 				if errors.Is(err, constant.ErrorNoTokenAvailable) {
 					atomic.StoreInt32(&stopTag, 1)
 				}
-				errCh <- fmt.Errorf("repo %s/%s error: %w", org, repo, err)
-				return
+
+				mu.Lock()
+				errs = append(errs, fmt.Errorf("repo %s/%s error: %w", org, repoName, err))
+				mu.Unlock()
+
+				return nil
 			}
 
 			mu.Lock()
 			commitsPool = append(commitsPool, commits...)
+			for user, cnt := range weightMap {
+				if cnt >= 2 {
+					finalWeights[user] = int64(weight)
+				}
+			}
 			mu.Unlock()
-
-			select {
-			case weightsCh <- weightMap:
-			case <-ctx.Done():
-			}
-		}(org, repoName)
+			return nil
+		})
 	}
 
-	go func() {
-		wg.Wait()
-		close(weightsCh)
-		close(errCh)
-	}()
-
-	finalWeights := make(map[string]int64)
-	for w := range weightsCh {
-		for user, cnt := range w {
-			if cnt >= 2 {
-				finalWeights[user] = int64(weight)
-			}
-		}
-	}
-
-	var errs []error
-	for err := range errCh {
-		errs = append(errs, err)
-	}
+	_ = eg.Wait()
 	if len(errs) > 0 {
-		zap.L().Error("!!!!!Error getting developer weights", zap.Int("errors occurred", len(errs)), zap.Errors("errors", errs))
+		zap.L().Error("!!!!!! Failed to process repos !!!!!!", zap.Int("err count", len(errs)), zap.Errors("errors", errs))
 		if len(errs) > 3 {
 			return finalWeights, commitsPool, fmt.Errorf("%d errors occurred: %v", len(errs), errors.Join(errs...))
 		}
@@ -241,7 +220,6 @@ func getDeveloperWeights(ctx context.Context, repositories []string, weight int,
 
 	return finalWeights, commitsPool, nil
 }
-
 func getRepoData(ctx context.Context, index, repoCount int, org, repo string, fromTime time.Time, tokenManager *GitHubTokenManager) (map[string]int64, []models.Nodes, error) {
 	queryStart := utils.AddMonths(fromTime, -constant.GithubDataWithinXMonths)
 	since := queryStart.Format(time.RFC3339)
@@ -273,6 +251,7 @@ func getDeveloperWeightsByRepo(ctx context.Context, index, repoCount int, organi
 // getContributorsWithRetry retries fetching contributors for a repository with backoff and retry logic.
 func getContributorsWithRetry(ctx context.Context, index, repoCount int, organization, repository, since string, tokenManager *GitHubTokenManager, retryInterval time.Duration) ([]models.Nodes, error) {
 	retries := len(config.Client.Github.Token) + 1
+
 	var commits []models.Nodes
 	var lastErr error
 	for attempt := 0; attempt < retries; attempt++ {
@@ -289,7 +268,7 @@ func getContributorsWithRetry(ctx context.Context, index, repoCount int, organiz
 				return nil, constant.ErrorNoTokenAvailable
 			}
 
-			commits, lastErr = getContributors(ctx, organization, repository, since, reqToken)
+			commits, lastErr = getContributors(organization, repository, since, reqToken)
 			if lastErr == nil {
 				break
 			}
@@ -299,13 +278,14 @@ func getContributorsWithRetry(ctx context.Context, index, repoCount int, organiz
 				tokenManager.RefreshToken()
 			}
 
-			waitTime := time.Duration(math.Pow(2, float64(attempt))) * retryInterval
 			zap.L().Warn("Retrying...",
+				zap.Int("fetch index", index),
+				zap.String("repo", fmt.Sprintf("%s/%s", organization, repository)),
 				zap.Int("attempt", attempt+1),
-				zap.Duration("wait", waitTime),
+				zap.Duration("wait", retryInterval),
 				zap.Error(lastErr))
 
-			time.Sleep(waitTime)
+			time.Sleep(retryInterval)
 		}
 	}
 
@@ -344,7 +324,7 @@ func addMerge(coreFilecoin, ecosystem map[string]int64) map[string]int64 {
 }
 
 // getContributors retrieves the commit history of a repository from GitHub GraphQL API.
-func getContributors(ctx context.Context, owner, name, since, token string) ([]models.Nodes, error) {
+func getContributors(owner, name, since, token string) ([]models.Nodes, error) {
 	client := resty.New().
 		SetTimeout(30 * time.Second).
 		SetRetryCount(3).
@@ -360,7 +340,6 @@ func getContributors(ctx context.Context, owner, name, since, token string) ([]m
 		var response models.Developer
 		resp, err := client.R().
 			SetAuthToken(token).
-			SetContext(ctx).
 			SetHeaders(map[string]string{
 				"Content-Type": "application/json",
 				"Accept":       "application/vnd.github.v3+json",
@@ -422,7 +401,7 @@ func getContributors(ctx context.Context, owner, name, since, token string) ([]m
 		}
 
 		endCursor = &history.PageInfo.EndCursor
-		time.Sleep(1 * time.Second)
+		time.Sleep(time.Second)
 	}
 
 	return allNodes, nil
