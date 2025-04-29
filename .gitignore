@@ -5,6 +5,7 @@
 .env
 configuration.yaml
 configuration.yml
+fil-vote
 powervoting-contracts/yarn.lock
 powervoting-contracts/artifacts
 powervoting-contracts/ignition/deployments
