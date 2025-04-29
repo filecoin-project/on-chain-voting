@@ -32,22 +32,34 @@ cd cli
 go mod tidy
 ```
 
-### 5. Add Configuration
+### 5. Build the Project
+
+```bash
+go build -o fil-vote
+```
+
+This will generate an executable file named `fil-vote`.
+
+### 6. Add Configuration
+
 Configure the network connection parameters for the Power Voting system in the `config/config.go` file. Modify these settings according to your environment.
 
+**NOTE:** If you do not have a Lotus Node already setup, you can use a [Lotus Lite Node](https://docs.filecoin.io/nodes/lite-nodes/spin-up-a-lite-node) in combination with an RPC provider to provide the RPC_URL and JWT_TOKEN values.
+
 vim configuration.yaml
+
 ```
 network:
-  chainID: {CHAIN_ID} # chain id
-  rpc: "{RPC_URL}" # your lotus rpc which is used for CLI to connect lotus
-  token: "{JWT_TOKEN}" # your lotus token which is used for CLI to connect lotus
+  chainID: {CHAIN_ID} # chain id, i.e. filecoin mainnet is 314
+  rpc: "{RPC_URL}" # your lotus rpc which is used for CLI to connect lotus, i.e. http://localhost:1234/rpc/v1 (url component can be found in ~/.lotus/api but needs transforming from a multiaddr)
+  token: "{JWT_TOKEN}" # your lotus token which is used for CLI to connect lotus, can be found in ~/.lotus/token
   powerVotingContract: "{POWER_VOTING_CONTRACT}" # the f0 address of POWER_VOTING_VOTE contract, you can retrieve it by searching the EVM address in a browser.
                                                  # POWER_VOTING_VOTE contract EVM address can be found here: https://github.com/filecoin-project/on-chain-voting/blob/main/contracts/scripts/filecoin_mainnet_config.json
   powerBackendURL: "{POWER_BACKEND_URL}" # backend service url, e.g. https://vote.fil.org
 
 abiPath:
   powerVotingAbi: "./power-voting-vote.json"
-  
+
 drand:
   urls:
     - "https://api.drand.secureweb3.com:6875"
@@ -58,17 +70,17 @@ drand:
   chainHash: "52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971"
 ```
 
-### 6. Build the Project
-
-```bash
-go build -o fil-vote
-```
-
-This will generate an executable file named `fil-vote`.
-
 ## Usage
 
 ### Wallet Management
+
+**NOTE:** These commands are **not** required if you are using an existing Lotus node that already contains the wallets you would like to use for voting.
+
+Optionally, you can add wallets to your Lotus node directly using the Lotus CLI:
+
+```bash
+lotus wallet import [privateKey]
+```
 
 #### 1. Add Wallet
 
