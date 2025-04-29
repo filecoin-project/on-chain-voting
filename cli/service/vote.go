@@ -90,7 +90,12 @@ func Vote(client *RPCClient, from, action string, proposalId int64) (string, err
 	}
 
 	// Display the estimated gas cost to the user
-	fmt.Printf("The maximum estimated gas cost for voting is: %d \n", estimatedMsg.GasLimit)
+	gasFeeCapInNanoFIL := new(big.Rat).SetFrac(estimatedMsg.GasFeeCap.Int, big.NewInt(1000000000))
+	// Output the result in nanoFIL with a more user-friendly message
+	gasFeeCapInFILFloat, _ := gasFeeCapInNanoFIL.Float64()
+
+	decimalPlaces := len(estimatedMsg.GasFeeCap.String())
+	fmt.Printf("The total fee rate set by sender: %.*f nanoFIL\n", decimalPlaces, gasFeeCapInFILFloat)
 
 	// Prompt the user for confirmation to proceed with the vote
 	for {
