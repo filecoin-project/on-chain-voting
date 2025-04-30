@@ -440,7 +440,7 @@ func (s *SyncService) StartSyncWorker(ctx context.Context, netID int64) error {
 					if err := taskMsg.Ack(); err != nil {
 						zap.S().Error("failed to ack task", err)
 					}
-					zap.L().Info("ack task success", zap.Any("task_uid", taskMsg.Data()))
+					zap.L().Info("ack task success")
 				}()
 
 				// Unmarshal the task message into a Task struct.
@@ -456,7 +456,7 @@ func (s *SyncService) StartSyncWorker(ctx context.Context, netID int64) error {
 				// Fetch the existing power data form redis for the address.
 				power, err := s.syncRepo.GetAddrPower(ctx, netID, task.Address)
 				if err != nil {
-					zap.S().Error("failed to get addr power, task not ack", zap.Error(err))
+					zap.S().Error("failed to get addr power, ", zap.Error(err))
 					return err
 				}
 
@@ -475,7 +475,7 @@ func (s *SyncService) StartSyncWorker(ctx context.Context, netID int64) error {
 					/// get developer power
 					developerPower, err := s.syncRepo.GetUserDeveloperWeights(ctx, subTask.DateStr, task.GithubAccount)
 					if err != nil {
-						zap.L().Error("failed to get developer power, task not ack", zap.Error(err))
+						zap.L().Error("failed to get developer power, ", zap.Error(err))
 						return err
 					}
 
@@ -495,18 +495,8 @@ func (s *SyncService) StartSyncWorker(ctx context.Context, netID int64) error {
 					if subTask.Typ == constant.TaskActionActor {
 						walletBalance, clientBalance, err := s.GetActorBalance(ctx, subTask.IDStr, netID, subTask.BlockHeight)
 						if err != nil {
-							if strings.Contains(err.Error(), constant.ActorNotFound) {
-								zap.L().Warn(
-									"actor not found, continue",
-									zap.String("subTask uid", subTask.UID),
-									zap.Int64("height", subTask.BlockHeight),
-									zap.String("actor id", subTask.IDStr),
-								)
-
-								continue
-							}
 							zap.L().Error(
-								"failed to get actor power, task not ack",
+								"failed to get actor power, ",
 								zap.String("subTask uid", subTask.UID),
 								zap.Int64("height", subTask.BlockHeight),
 								zap.String("actor id", subTask.IDStr),
@@ -526,7 +516,7 @@ func (s *SyncService) StartSyncWorker(ctx context.Context, netID int64) error {
 					if subTask.Typ == constant.TaskActionMiner {
 						tipsetKey, err := s.lotusRepo.GetTipSetByHeight(ctx, netID, subTask.BlockHeight)
 						if err != nil {
-							zap.L().Error("failed to get tipset key, task not ack", zap.String("subTask uid", subTask.UID), zap.Error(err))
+							zap.L().Error("failed to get tipset key, ", zap.String("subTask uid", subTask.UID), zap.Error(err))
 							return err
 						}
 
@@ -543,7 +533,7 @@ func (s *SyncService) StartSyncWorker(ctx context.Context, netID int64) error {
 								continue
 							}
 
-							zap.L().Error("failed to get miner power, task not ack", zap.String("subTask uid", subTask.UID), zap.Error(err))
+							zap.L().Error("failed to get miner power, ", zap.String("subTask uid", subTask.UID), zap.Error(err))
 							return err
 						}
 
@@ -551,7 +541,7 @@ func (s *SyncService) StartSyncWorker(ctx context.Context, netID int64) error {
 						if len(minerPower.MinerPower.RawBytePower) != 0 {
 							ml, ok := big.NewInt(0).SetString(minerPower.MinerPower.RawBytePower, 10)
 							if !ok {
-								zap.L().Error("failed to parse miner power, task not ack", zap.String("subTask uid", subTask.UID), zap.Error(err))
+								zap.L().Error("failed to parse miner power, ", zap.String("subTask uid", subTask.UID), zap.Error(err))
 								return err
 							}
 							temp.SpPower = temp.SpPower.Add(temp.SpPower, ml)
@@ -581,14 +571,14 @@ func (s *SyncService) StartSyncWorker(ctx context.Context, netID int64) error {
 				// Save the updated power data to the sync repository.
 				err = s.syncRepo.SetAddrPower(ctx, netID, task.Address, power)
 				if err != nil {
-					zap.S().Error("failed to set addr power, task not ack", zap.Error(err))
+					zap.S().Error("failed to set addr power, ", zap.Error(err))
 					return err
 				}
 
 				// Update the list of synced dates for the address.
 				oldDates, err := s.syncRepo.GetAddrSyncedDate(ctx, netID, task.Address)
 				if err != nil {
-					zap.S().Error("failed to get addr synced date, task not ack", zap.Error(err))
+					zap.S().Error("failed to get addr synced date, ", zap.Error(err))
 					return err
 				}
 
@@ -598,7 +588,7 @@ func (s *SyncService) StartSyncWorker(ctx context.Context, netID int64) error {
 
 				err = s.syncRepo.SetAddrSyncedDate(ctx, netID, task.Address, newDates)
 				if err != nil {
-					zap.S().Error("failed to set addr synced, task not ack", zap.Error(err))
+					zap.S().Error("failed to set addr synced, ", zap.Error(err))
 					return err
 				}
 
@@ -613,7 +603,7 @@ func (s *SyncService) StartSyncWorker(ctx context.Context, netID int64) error {
 			zap.L().Error("failed to sync address", zap.Error(err))
 			return err
 		}
-		
+
 
 	}
 }

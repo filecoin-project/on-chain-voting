@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	filecoinAddress "github.com/filecoin-project/go-address"
@@ -203,7 +204,8 @@ func (l *LotusRPCRepo) GetMinerPowerByHeight(ctx context.Context, netId int64, a
 
 	return minerPower, nil
 }
-//FIXME: StateMarketDeals is verry large, need to optimize
+
+// FIXME: StateMarketDeals is verry large, need to optimize
 func (l *LotusRPCRepo) GetClientBalanceBySpecialHeight(ctx context.Context, netId, height int64) (models.StateMarketDeals, error) {
 	// tipSetKey, err := l.GetTipSetByHeight(ctx, netId, height)
 	// if err != nil {
@@ -296,6 +298,11 @@ func (l *LotusRPCRepo) GetWalletBalanceByHeight(ctx context.Context, id string, 
 	}
 
 	if resp.Error != nil {
+		if strings.HasPrefix(resp.Error.Message, "load state tree") || strings.HasPrefix(resp.Error.Message, "actor not found") {
+			zap.L().Error("get wallet balance failed", zap.String("actor id", id), zap.String("error", resp.Error.Message))
+			return "0", nil
+		}
+		
 		return "0", resp.Error
 	}
 
@@ -312,7 +319,7 @@ func (l *LotusRPCRepo) GetWalletBalanceByHeight(ctx context.Context, id string, 
 	return t.Balance, nil
 }
 
-//FIXME: StateMarketDeals is verry large, need to optimize
+// FIXME: StateMarketDeals is verry large, need to optimize
 func (l *LotusRPCRepo) GetClientBalanceByHeight(ctx context.Context, netId, height int64) (types.StateMarketDeals, error) {
 	// tipSetKey, err := l.GetTipSetByHeight(ctx, netId, height)
 	// if err != nil {
