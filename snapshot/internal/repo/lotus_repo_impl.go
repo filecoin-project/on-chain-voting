@@ -203,31 +203,31 @@ func (l *LotusRPCRepo) GetMinerPowerByHeight(ctx context.Context, netId int64, a
 
 	return minerPower, nil
 }
-
+//FIXME: StateMarketDeals is verry large, need to optimize
 func (l *LotusRPCRepo) GetClientBalanceBySpecialHeight(ctx context.Context, netId, height int64) (models.StateMarketDeals, error) {
-	tipSetKey, err := l.GetTipSetByHeight(ctx, netId, height)
-	if err != nil {
-		return models.StateMarketDeals{}, err
-	}
+	// tipSetKey, err := l.GetTipSetByHeight(ctx, netId, height)
+	// if err != nil {
+	// 	return models.StateMarketDeals{}, err
+	// }
 
-	tipSetList := append([]any{}, tipSetKey)
+	// tipSetList := append([]any{}, tipSetKey)
 
-	var t models.StateMarketDeals
-	resp, err := l.rpcClient.Call(ctx, "Filecoin.StateMarketDeals", tipSetList)
-	if err != nil {
-		return models.StateMarketDeals{}, err
-	}
+	// var t models.StateMarketDeals
+	// resp, err := l.rpcClient.Call(ctx, "Filecoin.StateMarketDeals", tipSetList)
+	// if err != nil {
+	// 	return models.StateMarketDeals{}, err
+	// }
 
-	tmp, err := json.Marshal(resp.Result)
-	if err != nil {
-		return models.StateMarketDeals{}, err
-	}
+	// tmp, err := json.Marshal(resp.Result)
+	// if err != nil {
+	// 	return models.StateMarketDeals{}, err
+	// }
 
-	if err := json.Unmarshal(tmp, &t); err != nil {
-		return models.StateMarketDeals{}, err
-	}
+	// if err := json.Unmarshal(tmp, &t); err != nil {
+	// 	return models.StateMarketDeals{}, err
+	// }
 
-	return t, nil
+	return models.StateMarketDeals{}, nil
 }
 
 func (l *LotusRPCRepo) GetNewestHeight(ctx context.Context, netId int64) (height int64, err error) {
@@ -312,28 +312,29 @@ func (l *LotusRPCRepo) GetWalletBalanceByHeight(ctx context.Context, id string, 
 	return t.Balance, nil
 }
 
+//FIXME: StateMarketDeals is verry large, need to optimize
 func (l *LotusRPCRepo) GetClientBalanceByHeight(ctx context.Context, netId, height int64) (types.StateMarketDeals, error) {
-	tipSetKey, err := l.GetTipSetByHeight(ctx, netId, height)
-	if err != nil {
-		return types.StateMarketDeals{}, err
-	}
+	// tipSetKey, err := l.GetTipSetByHeight(ctx, netId, height)
+	// if err != nil {
+	// 	return types.StateMarketDeals{}, err
+	// }
 
-	tipSetList := append([]any{}, tipSetKey)
+	// tipSetList := append([]any{}, tipSetKey)
 
-	var t types.StateMarketDeals
-	resp, err := l.rpcClient.Call(ctx, "Filecoin.StateMarketDeals", tipSetList)
-	if err != nil {
-		return types.StateMarketDeals{}, err
-	}
+	// var t types.StateMarketDeals
+	// resp, err := l.rpcClient.Call(ctx, "Filecoin.StateMarketDeals", tipSetList)
+	// if err != nil {
+	// 	return types.StateMarketDeals{}, err
+	// }
 
-	tmp, err := json.Marshal(resp.Result)
-	if err != nil {
-		return types.StateMarketDeals{}, err
-	}
+	// tmp, err := json.Marshal(resp.Result)
+	// if err != nil {
+	// 	return types.StateMarketDeals{}, err
+	// }
 
-	if err := json.Unmarshal(tmp, &t); err != nil {
-		return types.StateMarketDeals{}, err
-	}
+	// if err := json.Unmarshal(tmp, &t); err != nil {
+	// 	return types.StateMarketDeals{}, err
+	// }
 
-	return t, nil
+	return types.StateMarketDeals{}, nil
 }
