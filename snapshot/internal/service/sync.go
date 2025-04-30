@@ -33,6 +33,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"power-snapshot/api"
+	"power-snapshot/config"
 	"power-snapshot/constant"
 	"power-snapshot/internal/data"
 	models "power-snapshot/internal/model"
@@ -90,6 +91,10 @@ func NewSyncService(baseRepo BaseRepo, syncRepo SyncRepo, mysqlRepo MysqlRepo, l
  * @return error
  */
 func (s *SyncService) SyncDateHeight(ctx context.Context, netID int64) error {
+	if netID != config.Client.Network.ChainId {
+		return errors.New("valid chain id")
+	}
+
 	dhMap, err := s.getDateHeight(ctx,
 		netID,
 		carbon.Now().SubDay().EndOfDay().ToStdTime(),
@@ -191,6 +196,10 @@ func (s *SyncService) getDateHeight(ctx context.Context, netId int64, syncEndTim
 }
 
 func (s *SyncService) SyncAllAddrPower(ctx context.Context, netID int64) error {
+	if netID != config.Client.Network.ChainId {
+		return errors.New("valid chain id")
+	}
+
 	dhMap, err := s.baseRepo.GetDateHeightMap(ctx, netID)
 	if err != nil {
 		zap.L().Error("failed to get dates-height map", zap.Error(err))
@@ -228,8 +237,6 @@ func (s *SyncService) SyncAllAddrPower(ctx context.Context, netID int64) error {
 		if len(missDates) == 0 {
 			zap.L().Info("address no miss date to sync", zap.String("addr", info.Addr))
 			continue
-		} else {
-			zap.L().Info("address add task", zap.String("addr", info.Addr))
 		}
 
 		subTaskList := make([]models.SubTask, 0)
@@ -285,7 +292,7 @@ func (s *SyncService) GetAllAddrInfoList(ctx context.Context, netID int64) ([]mo
 	for _, addr := range list {
 		voteInfo, err := api.GetVoterInfo(addr)
 		if err != nil {
-			zap.L().Error("failed to get vote info, skip this addr", zap.String("addr", addr), zap.Error(err))
+			zap.L().Named("GetAllAddrInfoList").Error("failed to get vote info, skip this addr", zap.String("addr", addr), zap.Error(err))
 			continue
 		}
 		pendingSyncAddrList = append(pendingSyncAddrList, models.AddrInfo{
@@ -428,16 +435,19 @@ func (s *SyncService) StartSyncWorker(ctx context.Context, netID int64) error {
 		eg.SetLimit(10)
 		for taskMsg := range taskMsg.Messages() {
 			eg.Go(func() error {
+				defer func() {
+					// Acknowledge the message to mark it as processed.
+					if err := taskMsg.Ack(); err != nil {
+						zap.S().Error("failed to ack task", err)
+					}
+					zap.L().Info("ack task success", zap.Any("task_uid", taskMsg.Data()))
+				}()
+
 				// Unmarshal the task message into a Task struct.
 				var task models.Task
 				err := json.Unmarshal(taskMsg.Data(), &task)
 				if err != nil {
 					zap.S().Error("failed to unmarshal task", err)
-
-					if err := taskMsg.Ack(); err != nil {
-						zap.S().Error("failed to ack task", err)
-					}
-
 					return err
 				}
 
@@ -461,12 +471,20 @@ func (s *SyncService) StartSyncWorker(ctx context.Context, netID int64) error {
 						zap.Int64("retry count", subTask.RetryCount),
 						zap.String("sub task type", subTask.Typ),
 					)
+
+					/// get developer power
+					developerPower, err := s.syncRepo.GetUserDeveloperWeights(ctx, subTask.DateStr, task.GithubAccount)
+					if err != nil {
+						zap.L().Error("failed to get developer power, task not ack", zap.Error(err))
+						return err
+					}
+
 					// Initialize a SyncPower struct for the subtask.
 					temp := models.SyncPower{
 						Address:          subTask.Address,
 						DateStr:          subTask.DateStr,
 						GithubAccount:    task.GithubAccount,
-						DeveloperPower:   big.NewInt(0),
+						DeveloperPower:   big.NewInt(developerPower),
 						SpPower:          big.NewInt(0),
 						ClientPower:      big.NewInt(0),
 						TokenHolderPower: big.NewInt(0),
@@ -547,6 +565,7 @@ func (s *SyncService) StartSyncWorker(ctx context.Context, netID int64) error {
 						result[subTask.DateStr].SpPower.Add(result[subTask.DateStr].SpPower, temp.SpPower)
 						result[subTask.DateStr].TokenHolderPower.Add(result[subTask.DateStr].TokenHolderPower, temp.TokenHolderPower)
 						result[subTask.DateStr].ClientPower.Add(result[subTask.DateStr].ClientPower, temp.ClientPower)
+						result[subTask.DateStr].DeveloperPower.Add(result[subTask.DateStr].DeveloperPower, temp.DeveloperPower)
 					}
 
 					zap.L().Info("finish sync subtask", zap.String("subTask uid", subTask.UID), zap.String("sync date", subTask.DateStr), zap.Int64("block height", subTask.BlockHeight), zap.Int64("retry count", subTask.RetryCount), zap.String("sub task type", subTask.Typ))
@@ -585,13 +604,6 @@ func (s *SyncService) StartSyncWorker(ctx context.Context, netID int64) error {
 
 				zap.L().Info("sync address success", zap.Any("task_uid", task.UID))
 
-				// Acknowledge the message to mark it as processed.
-				err = taskMsg.Ack()
-				if err != nil {
-					zap.S().Error("failed to ack task", zap.Error(err))
-					return err
-				}
-
 				zap.L().Info("The sync worker task is running finished", zap.Any("task", task))
 				return nil
 			})
@@ -601,6 +613,7 @@ func (s *SyncService) StartSyncWorker(ctx context.Context, netID int64) error {
 			zap.L().Error("failed to sync address", zap.Error(err))
 			return err
 		}
+		
 
 	}
 }
@@ -736,6 +749,7 @@ func (s *SyncService) GetAddrInfo(ctx context.Context, netID int64, addr string)
 	return m, nil
 }
 
+// fixme: Check whether this function is used
 func (s *SyncService) SyncLatestDeveloperWeight(ctx context.Context) error {
 	base := carbon.Now().SubDay().EndOfDay()
 	exist, err := s.ExistDeveloperWeight(ctx, base.ToShortDateString())

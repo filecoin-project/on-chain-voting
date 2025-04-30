@@ -60,20 +60,21 @@ func (j *Safejob) SyncDevWeightStepDay() {
 
 	// find latest index
 
-	for i := start; i.Timestamp() <= end.Timestamp(); i = i.AddDay() {
-		exist, err := j.syncService.ExistDeveloperWeight(ctx, i.ToShortDateString())
+	for end.Gte(start) {
+		exist, err := j.syncService.ExistDeveloperWeight(ctx, end.ToShortDateString())
 		if err != nil {
-			zap.L().Error("SyncDevWeightStepDay", zap.String("date", i.ToShortDateString()))
+			zap.L().Error("SyncDevWeightStepDay", zap.String("date", end.ToShortDateString()))
 			return
 		}
 		if !exist {
-			err := j.syncService.SyncDeveloperWeight(ctx, i.ToShortDateString())
+			err := j.syncService.SyncDeveloperWeight(ctx, end.ToShortDateString())
 			if err != nil {
 				return
 			}
 
 			break
 		}
+		end = end.SubDay()
 	}
 }
 
