@@ -44,9 +44,7 @@ This will generate an executable file named `fil-vote`.
 
 Configure the network connection parameters for the Power Voting system in the `config/config.go` file. Modify these settings according to your environment.
 
-**NOTE:** If you do not have a Lotus Node already setup, you can use a [Lotus Lite Node](https://docs.filecoin.io/nodes/lite-nodes/spin-up-a-lite-node) in combination with an RPC provider to provide the RPC_URL and JWT_TOKEN values.
-
-vim configuration.yaml
+`vim configuration.yaml`
 
 ```
 network:
