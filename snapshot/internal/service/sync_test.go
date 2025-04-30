@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-module/carbon"
 	"github.com/nats-io/nats.go/jetstream"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -450,7 +451,7 @@ func TestGetBalance(t *testing.T) {
 
 func TestSyncWorker(t *testing.T) {
 	ser := getSyncService(t)
-	message, err := ser.syncRepo.GetTask(context.Background(), 314159)
+	message, err := ser.syncRepo.GetTask(context.Background(), 314)
 	assert.NoError(t, err)
 	for taskMsg := range message.Messages() {
 		zap.L().Info("task", zap.Any("task", taskMsg))
@@ -489,4 +490,15 @@ func TestGetAllAddrSyncedDateMap(t *testing.T) {
 	)
 	assert.NoError(t, err)
 	fmt.Println(res)
+}
+
+func TestSyncDeveloperDay(t *testing.T)  {
+	start := carbon.Now().SubDays(constant.DataExpiredDuration).EndOfDay()
+	// Calculate the end date as yesterday and set it to the end of the day.
+	end := carbon.Now().Yesterday().EndOfDay()
+
+	for end.Gte(start) {
+		fmt.Println(end.ToDateString())
+		end = end.SubDay()
+	}
 }
