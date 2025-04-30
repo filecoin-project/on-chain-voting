@@ -444,7 +444,7 @@ func TestUploadSnapshotInfoByDay(t *testing.T) {
 
 func TestGetBalance(t *testing.T) {
 	ser := getSyncService(t)
-	a, b, err := ser.GetActorBalance(context.Background(), "t0161980", 314159, 2599001)
+	a, b, err := ser.GetActorBalance(context.Background(), "f03091589", 314, 4921079)
 	assert.NoError(t, err)
 	fmt.Printf("a:%s\n b:%s\n", a, b)
 }
