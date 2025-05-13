@@ -218,7 +218,48 @@ export const getBlockExplorers = (chain: any, address: string) => {
   return `${chain?.blockExplorers?.default.url}/wallet/${address}?network=${chain?.testnet ? "calibrationnet" : ""}`
 }
 
+export function formatNumberWithCommas({
+  value,
+  digits = 4,
+  integerWithDigits = false,
+  keepOriginalDecimals = false
+}: {
+  value: string | number,
+  digits?: number,
+  integerWithDigits?: boolean,
+  keepOriginalDecimals?: boolean
+}) {
+  const num = Number(value);
+  const isInteger = Number.isInteger(num);
 
+  if (isInteger) {
+      if (integerWithDigits) {
+          return num === 0 ? "0" : num.toFixed(digits);
+      } else {
+          return num.toLocaleString();
+      }
+  } else {
+      if (keepOriginalDecimals) {
+          return num.toLocaleString();
+      }
+      const strNum = num.toString();
+
+      const [integerPart, decimalPart = ""] = strNum.split(".");
+
+      const truncatedDecimal = decimalPart.slice(0, digits);
+
+      const formattedInteger = Number(integerPart).toLocaleString();
+
+      if (truncatedDecimal.length === 0) {
+          return formattedInteger;
+      } else if (truncatedDecimal.length < digits) {
+          const zeroCount = digits - truncatedDecimal.length
+          return `${formattedInteger}.${truncatedDecimal}${'0'.repeat(zeroCount)}`;
+      } else {
+          return `${formattedInteger}.${truncatedDecimal}`;
+      }
+  }
+}
 
 
 

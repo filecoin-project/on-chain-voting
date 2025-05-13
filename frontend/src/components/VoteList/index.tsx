@@ -72,8 +72,8 @@ const VoteList: React.FC<Props> = ({ voteList, chain, rolePercent }) => {
         if (record.power.value === '0') {
           return 'NO VOTES'
         } else {
-          const percent = (record.power.value / record.total.value) * record.rolePercent
-          return `${percent.toFixed(2)}%`
+          const percent = record.total.originalValue ? (record.power.originalValue / record.total.originalValue) * record.rolePercent : 0
+          return `${percent ? percent.toFixed(2) : 0}%`
         }
       }
     },
@@ -94,10 +94,12 @@ const VoteList: React.FC<Props> = ({ voteList, chain, rolePercent }) => {
         powerBlockHeight: votePower.blockHeight,
         power: {
           value: convertBytes(votePower.spPower, true).value,
+          originalValue: votePower.spPower,
           unit: convertBytes(votePower.spPower, true).units
         },
         total: {
           value: convertBytes(votePower.totalSpPower, true).value,
+          originalValue: votePower.totalSpPower,
           unit: convertBytes(votePower.totalSpPower, true).units
         },
         rolePercent: rolePercent.sp_percentage
@@ -108,10 +110,12 @@ const VoteList: React.FC<Props> = ({ voteList, chain, rolePercent }) => {
         powerBlockHeight: votePower.blockHeight,
         power: {
           value: convertBytes(Number(votePower.clientPower) / (10 ** 18), true).value,
+          originalValue: votePower.clientPower,
           unit: convertBytes(Number(votePower.clientPower) / (10 ** 18), true).units
         },
         total: {
           value: convertBytes(Number(votePower.totalClientPower) / (10 ** 18), true).value,
+          originalValue: votePower.totalClientPower,
           unit: convertBytes(Number(votePower.totalClientPower) / (10 ** 18), true).units
         },
         rolePercent: rolePercent.client_percentage
@@ -122,9 +126,11 @@ const VoteList: React.FC<Props> = ({ voteList, chain, rolePercent }) => {
         powerBlockHeight: votePower.blockHeight,
         power: {
           value: votePower.developerPower,
+          originalValue: votePower.developerPower,
         },
         total: {
-          value: votePower.totalDeveloperPower
+          value: votePower.totalDeveloperPower,
+          originalValue: votePower.totalDeveloperPower
         },
         rolePercent: rolePercent.developer_percentage
       },
@@ -134,10 +140,12 @@ const VoteList: React.FC<Props> = ({ voteList, chain, rolePercent }) => {
         powerBlockHeight: votePower.blockHeight,
         power: {
           value: bigNumberToFloat(votePower.tokenHolderPower),
+          originalValue: votePower.tokenHolderPower,
           unit: chain?.nativeCurrency?.symbol
         },
         total: {
           value: bigNumberToFloat(votePower.totalTokenHolderPower),
+          originalValue: votePower.totalTokenHolderPower,
           unit: chain?.nativeCurrency?.symbol
         },
         rolePercent: rolePercent.token_holder_percentage
