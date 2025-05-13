@@ -12,7 +12,7 @@ import { mainnetClient, roundAt, timelockEncrypt } from "tlock-js"
 import { UserRejectedRequestError } from "viem"
 import type { BaseError } from "wagmi"
 import { useAccount, useWriteContract } from "wagmi"
-import { getBlockExplorers, getContractAddress, isFilAddress } from "../../utils"
+import { formatNumberWithCommas, getBlockExplorers, getContractAddress, isFilAddress } from "../../utils"
 import { useSendMessage, useAddresses } from "iso-filecoin-react"
 import fileCoinAbi from "../../common/abi/power-voting.json"
 import {
@@ -89,25 +89,25 @@ const Vote = () => {
       {
         key: "sp",
         role: "SP",
-        blockHeight: votingData?.snapshotInfo?.snapshotHeight,
+        blockHeight: formatNumberWithCommas({ value: votingData?.snapshotInfo?.snapshotHeight }),
         power: convertBytes(votePower?.spPower)
       },
       {
         key: "client",
         role: "Client",
-        blockHeight: votingData?.snapshotInfo?.snapshotHeight,
+        blockHeight: formatNumberWithCommas({ value: votingData?.snapshotInfo?.snapshotHeight }),
         power: convertBytes(Number(votePower?.clientPower) / 10 ** 18)
       },
       {
         key: "developer",
         role: "Developer",
-        blockHeight: votingData?.snapshotInfo?.snapshotHeight,
+        blockHeight: formatNumberWithCommas({ value: votingData?.snapshotInfo?.snapshotHeight }),
         power: votePower?.developerPower || 0,
       },
       {
         key: "tokenHolder",
         role: "TokenHolder",
-        blockHeight: votingData?.snapshotInfo?.snapshotHeight,
+        blockHeight: formatNumberWithCommas({ value: votingData?.snapshotInfo?.snapshotHeight }),
         power: bigNumberToFloat(votePower?.tokenHolderPower)
       }
     ]
@@ -452,7 +452,7 @@ const Vote = () => {
                   <span className="text-[#313D4F] text-sm font-normal">
                     {votingData?.startTime &&
                       dayjs(votingData.startTime * 1000).format(
-                        "MMM.D, YYYY, h:mm A"
+                        "MMM. D, YYYY, h:mm A"
                       )}
                   </span>
                 </div>
@@ -461,7 +461,7 @@ const Vote = () => {
                   <span className="text-[#313D4F] text-sm font-normal">
                     {votingData?.endTime &&
                       dayjs(votingData.endTime * 1000).format(
-                        "MMM.D, YYYY, h:mm A"
+                        "MMM. D, YYYY, h:mm A"
                       )}
                   </span>
                 </div>
@@ -476,7 +476,7 @@ const Vote = () => {
                     {t("content.snapshotBlockHeight")}
                   </div>
                   <span className="text-[#313D4F] font-normal">
-                    {votingData.snapshotInfo?.snapshotHeight || "-"}
+                    {formatNumberWithCommas({ value: votingData.snapshotInfo?.snapshotHeight }) || "-"}
                   </span>
                 </div>
               </div>
@@ -517,8 +517,8 @@ const Vote = () => {
                     >
                       <div
                         className={`w-full h-[45px] border-[#eeeeee] ${selectedOptionIndex === index
-                            ? "border-[#0190FF] bg-[#F3FAFF]"
-                            : ""
+                          ? "border-[#0190FF] bg-[#F3FAFF]"
+                          : ""
                           } hover:border-[#0190FF] flex justify-between items-center pl-8 pr-4 md:border border-solid rounded-full cursor-pointer`}
                       >
                         <div className="text-ellipsis h-[100%] overflow-hidden">
