@@ -38,6 +38,7 @@ func (j *Safejob) SyncPower() {
 	err := j.syncService.SyncDateHeight(ctx, config.Client.Network.ChainId)
 	if err != nil {
 		zap.L().Error("failed to sync date height, it will skipped ", zap.Error(err), zap.Int64("network_id", config.Client.Network.ChainId))
+		return
 	}
 
 	err = j.syncService.SyncAllAddrPower(ctx, config.Client.Network.ChainId)
