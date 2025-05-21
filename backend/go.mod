@@ -1,8 +1,7 @@
 module powervoting-server
 
 go 1.23
-
-toolchain go1.23.7
+toolchain go1.24.1
 
 require (
 	github.com/drand/tlock v1.2.0
@@ -133,7 +132,7 @@ require (
 	github.com/ybbus/jsonrpc/v3 v3.1.6
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.8.0 // indirect
-	golang.org/x/crypto v0.33.0 // indirect
+	golang.org/x/crypto v0.35.0 // indirect
 	golang.org/x/mod v0.21.0 // indirect
 	golang.org/x/net v0.35.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
