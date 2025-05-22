@@ -173,7 +173,7 @@ const App: React.FC = () => {
       }} locale={lang === "en" ? enUS : zhCN}>
         <div className="layout font-body">
           {!isLanding && <Header changeLang={handleChange} />}
-          <div className='content w-[1000px] mx-auto pt-10 pb-10'>
+          <div className='content mx-auto pt-10 px-8 pb-24'>
             {
               element
             }
