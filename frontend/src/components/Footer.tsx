@@ -55,10 +55,6 @@ const Footer = () => {
       text: `${t('content.codeConduct')} ↗`
     }
     ,
-    {
-      href: "",
-      text: " "
-    }
   ]
 
   return (
@@ -69,9 +65,9 @@ const Footer = () => {
 
         <div className="grid grid-cols-2 gap-2">
           <a target="_blank"
-            rel="noopener" href="https://www.storswift.com"><img src="/images/logo_1.png" alt="" className='w-[144px] h-[31px] shrink-0' /></a>
+            rel="noopener" href="https://www.storswift.com"><img src="/images/logo_1.png" alt="StorSwift company logo" className='w-[144px] h-[31px]  shrink-0' /></a>
           <a target="_blank"
-            rel="noopener" href="https://fil.org/"><img src="/images/logo_2.png" alt="" className='w-[120px] shrink-0' /></a>
+            rel="noopener" href="https://fil.org/"><img src="/images/logo_2.png" alt="Filecoin Foundation logo" className='w-[120px] shrink-0' /></a>
         </div>
 
         <div style={{
