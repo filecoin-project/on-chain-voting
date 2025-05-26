@@ -240,12 +240,11 @@ const Header = (props: any) => {
 
   return (
     <>
-      <header className="h-[96px] bg-[#ffffff] border-b border-solid border-[#DFDFDF]">
-        <div className="w-full h-[88px] flex items-center" style={{ justifyContent: "space-evenly" }}>
+      <header className="h-[96px] bg-[#ffffff] border-b border-solid border-[#DFDFDF] w-full h-[88px] grid grid-cols-2 gap-8 items-center justify-between">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <Link to="/">
-                <img className="logo" src="/images/logo.png" alt="" />
+                <img className="logo" src="/images/logo.png" alt="Power Voting Platform Logo" />
               </Link>
             </div>
             <div className="ml-6 flex items-baseline space-x-20">
@@ -347,7 +346,6 @@ const Header = (props: any) => {
                 href={network === 'testnet' ? "https://vote.fil.org/" : "https://vote.storswift.io/"}
                 className="py-2 text-[#0000FF] text-[14px] flex items-center">
                 {network === 'testnet' ? 'Mainnet↗' : 'Calibration↗'}
-
               </a>
             </div>
           </div>
@@ -378,7 +376,6 @@ const Header = (props: any) => {
               />
             </p>
           </Modal>
-        </div>
       </header>
     </>
   )
