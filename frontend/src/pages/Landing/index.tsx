@@ -15,6 +15,7 @@
 import { Collapse } from "antd";
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from "react-router-dom";
+import "../../common/styles/homepage.less";
 const { Panel } = Collapse;
 
 const Landing = () => {
@@ -132,7 +133,16 @@ const Landing = () => {
             </div>
         </div>
 
-        <img width={"100%"} src="/images/landing_1.png" alt="" />
+        <div className="rounded-3xl primary-shadow">
+            <img
+                className="rounded-3xl"
+                src="/images/landing_1.png"
+                alt=""
+            />
+        </div>
+
+
+
 
         <div className="text-[#000000] text-[40px] text-center leading-tight">
             Frequently Asked Questions
