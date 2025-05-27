@@ -124,7 +124,7 @@ const Landing = () => {
                         t('content.headButtonLeft')
                     }
                 </div>
-                <div onClick={goHome} className="px-6 py-3 cursor-pointer flex items-center justify-center ml-5 text-center rounded bg-[#0190FF] text-[#ffffff]">
+                <div onClick={goHome} className="px-6 py-3 cursor-pointer flex items-center justify-center ml-5 text-center rounded bg-primary text-black">
                     {
                         t('content.headButtonRight')
                     }

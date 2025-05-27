@@ -283,7 +283,7 @@ const Header = (props: any) => {
               arrow
             >
               <button
-                className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-xl mr-4"
+                className="h-[40px] bg-primary hover:bg-primary/80 text-black font-bold py-2 px-4 rounded-xl mr-4"
               >
                 {t("content.tools")}
               </button>
