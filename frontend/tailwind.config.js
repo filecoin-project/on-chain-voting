@@ -29,6 +29,7 @@ module.exports = {
     },
     extend: {
       colors: {
+        primary: '#1677ff',
         skin: {
           'block-bg': '#ffffff', // set bg color
         },
