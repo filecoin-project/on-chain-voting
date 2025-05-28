@@ -103,7 +103,7 @@ const Landing = () => {
                 <div className='flex-shrink-0'>
                     <img height={"50px"} width={"50px"} src="/images/logo.png" alt="" />
                 </div>
-                <div className='ml-3 flex items-baseline space-x-20'>
+                <div className='ml-3 flex items-baseline'>
                     <span className='text-black text-2xl font-semibold hover:opacity-80'>
                         Power Voting
                     </span>
