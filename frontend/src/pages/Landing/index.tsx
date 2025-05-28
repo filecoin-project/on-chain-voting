@@ -120,12 +120,12 @@ const Landing = () => {
                 }
             </p>
             <div className="w-full flex items-center justify-center">
-                <div className="px-6 py-3 cursor-pointer flex items-center justify-center text-center rounded border-solid border-[1px] border-[#DFDFDF] bg-white text-[#575757]">
+                {/* <div className="px-6 py-3 cursor-pointer flex items-center justify-center text-center rounded border-solid border-[1px] border-[#DFDFDF] bg-white text-[#575757]">
                     {
                         t('content.headButtonLeft')
                     }
-                </div>
-                <div onClick={goHome} className="px-6 py-3 cursor-pointer flex items-center justify-center ml-5 text-center rounded bg-primary text-black">
+                </div> */}
+                <div onClick={goHome} className="px-6 py-3 cursor-pointer flex items-center justify-center ml-5 text-center rounded bg-primary text-white">
                     {
                         t('content.headButtonRight')
                     }

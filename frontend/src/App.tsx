@@ -158,7 +158,7 @@ const App: React.FC = () => {
     <RainbowKitProvider
       locale={lang === "en" ? "en-US" : "zh-CN"}
       theme={lightTheme({
-        accentColor: "#7b3fe4",
+        accentColor: "#1677ff",
         accentColorForeground: "white",
       })}
       modalSize="compact"

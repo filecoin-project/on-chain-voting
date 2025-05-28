@@ -29,7 +29,7 @@ module.exports = {
     },
     extend: {
       colors: {
-        primary: '#2390FF', // filecoin logo blue
+        primary: '#1677ff',
         skin: {
           'block-bg': '#ffffff', // set bg color
         },

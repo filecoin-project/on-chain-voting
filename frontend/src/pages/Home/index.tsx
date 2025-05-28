@@ -227,12 +227,12 @@ const Home = () => {
             handleJump(item)
           }}
           key={item.proposalId}
-          className="relative overflow-hidden rounded-xl border-[1px] border-solid border-[#DFDFDF] bg-[#FFFFFF] px-[30px] py-[12px] mb-[16px] cursor-pointer"
+          className="relative overflow-hidden rounded-xl border-[1px] border-solid border-[#DFDFDF] bg-[#FFFFFF] p-6 cursor-pointer space-y-8"
         >
           {item.voted &&
             <div className="absolute bg-[green] text-[#FFFFFF] w-[75px] h-[18px] top-[9px] left-[-20px] -rotate-[48deg] flex justify-center items-center text-[12px]">{t('content.voted')}</div>
           }
-          <div className="flex justify-between mb-3">
+          <div className="flex justify-between">
             <div
               className="flex justify-center items-center"
             >
@@ -244,7 +244,7 @@ const Home = () => {
                   e.stopPropagation();
                 }}
               >
-                <div className="bg-[#F5F5F5] rounded-full  flex p-[5px] justify-center items-center">
+                <div className="bg-[#F5F5F5] rounded-full flex p-[5px] justify-center items-center">
                   <img className="w-[20px] h-[20px] rounded-full mr-2" src={img} alt="" />
                   <div className="truncate text-[#313D4F] mr-[5px]">
                     {item.githubName || EllipsisMiddle({ suffixCount: 4, children: item.address })}
@@ -256,15 +256,16 @@ const Home = () => {
               </div>
             </div>
             <VoteStatusBtn status={votStatus} />
-
           </div>
-          <div className="relative mb-4 line-clamp-2 break-words break-all text-lg pr-[80px] leading-7">
-            <h3 className="inline pr-2 text-2xl font-semibold text-[#313D4F]">
-              {item.title}
-            </h3>
-          </div>
-          <div className="mb-2 line-clamp-2 break-words text-normal text-lg leading-[1.2rem]">
-            {markdownToText(item.content)}
+          <div className="space-y-2">
+            <div className="relative line-clamp-2 break-words break-all text-lg pr-[80px] leading-7">
+              <h3 className="inline pr-2 text-2xl font-semibold text-[#313D4F]">
+                {item.title}
+              </h3>
+            </div>
+            <div className="line-clamp-2 break-words text-normal text-lg leading-[1.2rem]">
+              {markdownToText(item.content)}
+            </div>
           </div>
           {
             maxOption.count > 0 &&
@@ -339,7 +340,7 @@ const Home = () => {
     }
 
     return (
-      <div className='home-table overflow-auto'>
+      <div className='home-table overflow-auto space-y-8'>
         {
           renderList(votingList)
         }
