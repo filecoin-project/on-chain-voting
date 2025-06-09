@@ -68,7 +68,7 @@ func GetProposalByID(proposalId int64) (model.Proposal, error) {
 
 // GetVotesByProposalID retrieves votes for a specific proposal by its ID
 func GetVotesByProposalID(proposalId int64) ([]model.Vote, error) {
-	url := fmt.Sprintf(config.Client.Network.PowerBackendURL+model.BaseProposalAPIPath+"votes?chainId=%d&proposalId=%d", config.Client.Network.ChainID, proposalId)
+	url := fmt.Sprintf(config.Client.Network.PowerBackendURL+model.BaseProposalAPIPath+"/proposal/votes?chainId=%d&proposalId=%d", config.Client.Network.ChainID, proposalId)
 	body, err := makeGETRequest(url)
 	if err != nil {
 		return nil, err
@@ -82,4 +82,21 @@ func GetVotesByProposalID(proposalId int64) ([]model.Vote, error) {
 	}
 
 	return result.Data, nil
+}
+
+func GetPower(day, address string) (model.Power, error) {
+	url := fmt.Sprintf(config.Client.Network.PowerBackendURL+model.BaseProposalAPIPath+"/power/getPower?powerDay=%s&chainId=%d&address=%s", day, config.Client.Network.ChainID, address)
+	body, err := makeGETRequest(url)
+	if err != nil {
+		return model.Power{}, err
+	}
+
+	var result model.Power
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		zap.L().Error("failed to parse JSON response", zap.Error(err))
+		return model.Power{}, err
+	}
+
+	return result, nil
 }
