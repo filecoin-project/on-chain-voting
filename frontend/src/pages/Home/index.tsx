@@ -49,7 +49,7 @@ import ListFilter from "../../components/ListFilter";
 import Loading from "../../components/Loading";
 import { getBlockExplorers, isFilAddress, markdownToText } from "../../utils"
 dayjs.extend(utc);
-dayjs.extend(timezone);
+dayjs.extend(timezone)
 
 const Home = () => {
   const navigate = useNavigate();
@@ -152,6 +152,10 @@ const Home = () => {
    * @param item
    */
   const handleJump = (item: VotingList) => {
+    if (!isConnected) {
+      openConnectModal && openConnectModal();
+      return false;
+    }
     if (item.status === STORING_STATUS) {
       messageApi.open({
         type: 'warning',
