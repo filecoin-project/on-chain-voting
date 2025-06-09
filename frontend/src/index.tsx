@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import ReactDOM from "react-dom/client"
-import { type Wallet, connectorsForWallets } from "@rainbow-me/rainbowkit"
+import { type Wallet, getDefaultConfig } from "@rainbow-me/rainbowkit"
 import { metaMaskWallet } from "@rainbow-me/rainbowkit/wallets"
 import "@rainbow-me/rainbowkit/styles.css"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
@@ -22,7 +22,7 @@ import { WalletAdapterFilsnap, WalletAdapterLedger } from 'iso-filecoin-wallets'
 import TransportWebUSB from '@ledgerhq/hw-transport-webusb'
 import { Buffer } from 'buffer';
 import Eth from "@ledgerhq/hw-app-eth";
-import { WagmiProvider, http, createConfig, createConnector } from "wagmi"
+import { WagmiProvider, http, createConnector } from "wagmi"
 import { getProvider } from "filsnap-adapter"
 import { getAddress } from "viem"
 import { filecoin } from "wagmi/chains"
@@ -360,37 +360,42 @@ const ledger = (): Wallet => ({
   }
 })
 
-const connectors = connectorsForWallets(
-  [
+const testnetConfig = getDefaultConfig({
+  appName: 'power-voting',
+  projectId: walletConnectProjectId,
+  chains: [filecoinCalibrationChain],
+  transports: {
+    [filecoinCalibrationChain.id]: http(),
+  },
+  wallets: [
     {
-      groupName: "Recommended",
+      groupName: 'Recommended',
       wallets: [
         metaMaskWallet,
         filSnap,
         ledger
       ]
-    }
+    },
   ],
-  {
-    appName: "power-voting",
-    projectId: walletConnectProjectId,
-  }
-)
+})
 
-const config = createConfig(network === 'testnet' ?{
-  chains: [filecoinCalibrationChain],
-  transports: {
-    [filecoinCalibrationChain.id]: http(),
-  },
-  multiInjectedProviderDiscovery: true,
-  connectors: [...connectors],
-} : {
+const mainnetConfig = getDefaultConfig({
+  appName: 'power-voting',
+  projectId: walletConnectProjectId,
   chains: [filecoin],
   transports: {
     [filecoin.id]: http(),
   },
-  multiInjectedProviderDiscovery: true,
-  connectors: [...connectors],
+  wallets: [
+    {
+      groupName: 'Recommended',
+      wallets: [
+        metaMaskWallet,
+        filSnap,
+        ledger
+      ]
+    },
+  ],
 })
 
 //dynamic add font
@@ -407,7 +412,7 @@ document.head.appendChild(style)
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <BrowserRouter>
-    <WagmiProvider config={config}>
+    <WagmiProvider config={network === 'testnet' ? testnetConfig : mainnetConfig}>
       <FilecoinProvider
         adapters={[filSnapAdapter, ledgerAdapter]}
         network={network}
