@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fil-vote/config"
 	"fil-vote/model"
 	"fmt"
+	"github.com/filecoin-project/go-state-types/crypto"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/ybbus/jsonrpc/v3"
 	"go.uber.org/zap"
@@ -141,4 +143,22 @@ func (rpc *RPCClient) SendMessage(ctx context.Context, msg types.Message) (strin
 	messageCID := resp.Result.(map[string]interface{})["/"].(string)
 	// Return the message CID (assuming this is the response format)
 	return messageCID, nil
+}
+
+func (rpc *RPCClient) WalletSign(ctx context.Context, msg model.SignatureData) (crypto.Signature, error) {
+	msgBytes, err := json.Marshal(msg)
+	if err != nil {
+		zap.L().Error("Error serializing msg", zap.Error(err))
+		return crypto.Signature{}, err
+	}
+
+	var signature crypto.Signature
+
+	err = rpc.client.CallFor(ctx, &signature, "Filecoin.WalletSign", msg.WalletAddress, msgBytes)
+	if err != nil {
+		zap.L().Error("Error calling WalletSign RPC", zap.Error(err))
+		return crypto.Signature{}, err
+	}
+
+	return signature, nil
 }
