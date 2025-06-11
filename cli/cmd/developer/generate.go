@@ -97,7 +97,7 @@ func GenerateCmd(client *service.RPCClient) *cobra.Command {
 
 	cmd.Flags().String("from", "", "Wallet address to generate the proof for (optional)")
 	cmd.Flags().String("githubName", "", "GitHub username to generate the proof for (required)")
-
+	cmd.MarkFlagRequired("githubName")
 	return cmd
 }
 

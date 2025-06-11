@@ -51,7 +51,7 @@ func UpdateGistIdCmd(client *service.RPCClient) *cobra.Command {
 	}
 
 	cmd.Flags().String("from", "", "Wallet address to generate the proof for (optional)")
-	cmd.Flags().String("gistId", "", "Wallet address to generate the proof for (optional)")
-
+	cmd.Flags().String("gistId", "", "Wallet address to generate the proof for (required)")
+	cmd.MarkFlagRequired("gistId")
 	return cmd
 }

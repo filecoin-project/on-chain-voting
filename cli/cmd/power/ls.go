@@ -117,6 +117,7 @@ func LsCmd(client *service.RPCClient) *cobra.Command {
 
 	// Add the 'day' flag to the command
 	cmd.Flags().String("day", "", "The day to retrieve the power for (required)")
+	cmd.MarkFlagRequired("day")
 
 	return cmd
 }
