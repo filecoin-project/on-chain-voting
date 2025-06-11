@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 	"os"
 )
 
@@ -25,6 +26,7 @@ func ClaimMinerActorIdsCmd(client *service.RPCClient) *cobra.Command {
 				var actorId uint64
 				_, err := fmt.Sscanf(arg, "%d", &actorId)
 				if err != nil {
+					zap.L().Error("Invalid actorIds", zap.Error(err))
 					return
 				}
 				actorIds[i] = actorId
