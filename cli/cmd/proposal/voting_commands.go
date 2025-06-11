@@ -90,7 +90,7 @@ func displayMessageHash(messageHash string) {
 
 // AddVoteFlags defines the command-line flags for the 'vote' command.
 func AddVoteFlags(cmd *cobra.Command) {
-	cmd.Flags().String("from", "", "The address from which to send the vote (required)")
+	cmd.Flags().String("from", "", "The address from which to send the vote (optional)")
 	cmd.Flags().Int64("proposalId", 0, "ID of the proposal to vote on (required)")
 
 	// Mark proposalId as required
