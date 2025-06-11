@@ -36,7 +36,7 @@ func UpdateGistIdCmd(client *service.RPCClient) *cobra.Command {
 			// Update the Gist ID with the proof
 			messageHash, err := service.UpdateGistId(client, from, gistId)
 			if err != nil {
-				zap.L().Error("Failed to update Gist ID", zap.Error(err))
+				zap.L().Error("Failed to uploading Gist ID", zap.Error(err))
 				return
 			}
 
