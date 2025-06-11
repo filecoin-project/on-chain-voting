@@ -4,6 +4,7 @@ import (
 	"fil-vote/config"
 	"fil-vote/model"
 	"fil-vote/service"
+	"fil-vote/utils"
 	"fmt"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
@@ -104,7 +105,7 @@ func printProposalContents(proposal model.Proposal, votes []model.Vote) {
 			logError("Failed to convert TokenHolderPower", err, v.TokenHolderPower)
 			return
 		}
-		convertedTokenHolderPower := model.ConvertToFIL(tokenPower, config.Client.Network.ChainID)
+		convertedTokenHolderPower := utils.ConvertToFIL(tokenPower, config.Client.Network.ChainID)
 
 		spPower, _ := new(big.Int).SetString(v.SpPower, 10)
 		clientPower, _ := new(big.Int).SetString(v.ClientPower, 10)
@@ -160,10 +161,13 @@ func printProposalContents(proposal model.Proposal, votes []model.Vote) {
 		// Determine the result of the vote (Approve/Reject)
 		votedResult := getVotedResult(v.VotedResult)
 
+		spPowerInt, err := strconv.ParseInt(v.SpPower, 10, 64)
+		convertedSpPower := utils.ConvertSize(spPowerInt)
+
 		// Add the vote data to the vote table
 		voteTable.Append([]string{
 			v.VoterAddress,
-			v.SpPower,
+			convertedSpPower,
 			v.ClientPower,
 			v.DeveloperPower,
 			convertedTokenHolderPower,

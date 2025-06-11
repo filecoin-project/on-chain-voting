@@ -3,14 +3,15 @@ package power
 import (
 	"context"
 	"fil-vote/config"
-	"fil-vote/model"
 	"fil-vote/service"
+	"fil-vote/utils"
 	"fmt"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"math/big"
 	"os"
+	"strconv"
 )
 
 func LsCmd(client *service.RPCClient) *cobra.Command {
@@ -63,12 +64,14 @@ func LsCmd(client *service.RPCClient) *cobra.Command {
 				tokenHolderPower := new(big.Int)
 				// Assume power.Data.TokenHolderPower is in attoFIL, and convert it
 				tokenHolderPower.SetString(power.Data.TokenHolderPower, 10)
-				convertedTokenHolderPower := model.ConvertToFIL(tokenHolderPower, config.Client.Network.ChainID)
+				convertedTokenHolderPower := utils.ConvertToFIL(tokenHolderPower, config.Client.Network.ChainID)
 
-				// Add row to the table with the converted Token Holder Power
+				spPower, err := strconv.ParseInt(power.Data.SpPower, 10, 64)
+				convertedSpPower := utils.ConvertSize(spPower)
+
 				table.Append([]string{
 					v,
-					power.Data.SpPower,
+					convertedSpPower,
 					power.Data.ClientPower,
 					power.Data.DeveloperPower,
 					convertedTokenHolderPower,
