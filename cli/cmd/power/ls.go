@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 	"math/big"
 	"os"
+	"regexp"
 	"strconv"
 )
 
@@ -24,6 +25,11 @@ func LsCmd(client *service.RPCClient) *cobra.Command {
 			if err != nil || day == "" {
 				// Handle invalid day input and print clear error
 				zap.L().Error("Invalid day", zap.Error(err))
+				return
+			}
+
+			if !validateDay(day) {
+				zap.L().Error("Invalid day, expected YYYYMMDD", zap.String("day", day))
 				return
 			}
 
@@ -41,7 +47,7 @@ func LsCmd(client *service.RPCClient) *cobra.Command {
 
 			// Prepare the table for output
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Wallet", "SP Power", "Client Power", "Developer Power", "Token Holder Power"})
+			table.SetHeader([]string{"Wallet", "SP Power", "Client Power", "Developer Power", "TokenHolder Power"})
 			table.SetBorder(true)
 			table.SetRowLine(true)
 			table.SetAutoFormatHeaders(true)
@@ -88,4 +94,11 @@ func LsCmd(client *service.RPCClient) *cobra.Command {
 	cmd.MarkFlagRequired("day")
 
 	return cmd
+}
+
+func validateDay(day string) bool {
+	var dateRegex = `^\d{4}(0[1-9]|1[0-2])([0-2][1-9]|3[01])$`
+	re := regexp.MustCompile(dateRegex)
+
+	return re.MatchString(day)
 }
