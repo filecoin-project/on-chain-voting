@@ -103,9 +103,9 @@ func LsCmd(client *service.RPCClient) *cobra.Command {
 				// Add row to the table with the converted Token Holder Power
 				table.Append([]string{
 					v,
-					power.Data.DeveloperPower,
 					power.Data.SpPower,
 					power.Data.ClientPower,
+					power.Data.DeveloperPower,
 					convertedTokenHolderPower,
 				})
 			}
