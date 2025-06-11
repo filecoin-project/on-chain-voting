@@ -5,10 +5,11 @@ The PowerVoting-Contract is a suite of smart contracts designed to facilitate se
 1. **Vote Contract**: Manages the creation of proposals and the voting process on those proposals, allowing users to participate in decision-making.
 2. **FipEditor Contract**: Handles permission management for the FipEditor role. It supports the addition and removal of FipEditors via proposals, ensuring decentralized control.
 3. **Oracle Contract**: Supplies external data to support contract interactions. This includes critical updates such as miner IDs and authorization information, enhancing the contracts' ability to interact with real-world data.
+4. **Config Contract**: Stores configuration settings for the PowerVoting-Contract suite, including contract addresses and other relevant parameters.
 ## Deployment and Upgrade Process
 
 ### Prerequisites
-- Node.js version v18.13.0 or higher. 
+- Node.js version v18.13.0 or higher.
 
 ### Installation
 Install the necessary libraries by running the following command:
@@ -41,13 +42,25 @@ npx hardhat run scripts/deploy_vote.ts --network [network_name]
 ```bash
 npx hardhat run scripts/deploy_oracle.ts --network [network_name]
 ```
-4. **Contract Address Storage**
+4. **Deploy the Config Contract**
+   Run the following command to deploy the Config contract:
+```bash
+npx hardhat run scripts/deploy_power_voting_config.ts --network [network_name]
+```
+> Note:Please check the configuration items of the `init_power_voting_config.ts` file.
+
+   Initialize the Config contract with the addresses of the other contracts:
+```bash
+npx hardhat run scripts/init_power_voting_config.ts --network [network_name]
+```
+5. **Contract Address Storage**
    After the contracts are deployed, the contract addresses will be saved in the `[network_name]_config.json` file in the `scripts` directory. The content format is as follows:
 ```json
 {
   "POWER_VOTING_ORACLE": "",
   "POWER_VOTING_FIP": "",
-  "POWER_VOTING_VOTE": ""
+  "POWER_VOTING_VOTE": "",
+  "POWER_VOTING_CONFIG": ""
 }
 ```
 **Note:** Ensure to update and securely manage these addresses for future interactions.
@@ -105,6 +118,14 @@ Here’s a brief overview of the available scripts in the `scripts` directory:
 #### `deploy_oracle.ts`
 
 - **Purpose**: Deploys the `Oracle` contract.
+  
+#### ``deploy_power_voting_config.ts`
+
+- **Purpose**: Deploys the `Config` contract and initializes it with the addresses of other contracts.
+
+#### `init_power_voting_config.ts`
+
+- **Purpose**: Initializes the `Config` contract with the addresses of other contracts.
 
 #### `upgrade_fip.ts`
 

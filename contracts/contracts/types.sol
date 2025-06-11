@@ -90,8 +90,7 @@ struct FipEditorProposalCreateInfo {
     string candidateInfo;
     //proposal content
     address candidateAddress;
-    
-}   
+}
 struct FipEditorProposalVoteInfo {
     address voter;
     uint256 proposalId;
@@ -99,3 +98,14 @@ struct FipEditorProposalVoteInfo {
 struct HasVoted {
     mapping(address => bool) hasVotedAddress;
 }
+
+
+struct GithubRepoInfo {
+    // github repo name
+    string repoName;
+    // github repo type
+    // 0: "CoreFilecoinOrg", 1:"EcosystemOrg", 2: "GithubUser"
+    uint8 orgType;
+}
+
+
