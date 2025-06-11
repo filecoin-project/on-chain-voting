@@ -4,7 +4,9 @@ import (
 	"context"
 	"fil-vote/service"
 	"fmt"
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 func ClaimMinerActorIdsCmd(client *service.RPCClient) *cobra.Command {
@@ -28,12 +30,18 @@ func ClaimMinerActorIdsCmd(client *service.RPCClient) *cobra.Command {
 				actorIds[i] = actorId
 			}
 
-			_, err = service.UpdateMinerIds(client, from, actorIds)
+			messageHash, err := service.UpdateMinerIds(client, from, actorIds)
 			if err != nil {
 				return
 			}
 
-			fmt.Println("Claim successfully processed for actor IDs:", actorIds)
+			table := tablewriter.NewWriter(os.Stdout)
+			table.SetHeader([]string{"Message Hash"})
+			table.SetRowLine(true)
+
+			table.Append([]string{messageHash})
+
+			table.Render()
 		},
 	}
 
