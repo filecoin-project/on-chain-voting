@@ -84,7 +84,7 @@ func UpdateMinerIds(client *RPCClient, from string, minerIds []uint64) (string, 
 			// Send the vote transaction after estimating gas
 			messageHash, err := client.SendMessage(context.Background(), estimatedMsg)
 			if err != nil {
-				zap.L().Error("Failed to send vote message", zap.Error(err))
+				zap.L().Error("Failed to send miner message", zap.Error(err))
 				return "", err
 			}
 			// Return the message hash after successful submission
