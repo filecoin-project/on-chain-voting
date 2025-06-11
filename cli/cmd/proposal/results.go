@@ -76,7 +76,7 @@ func logError(message string, err error, proposalID interface{}) {
 // printProposalContents prints the proposal and votes in a formatted table
 func printProposalContents(proposal model.Proposal, votes []model.Vote) {
 	voteTable := tablewriter.NewWriter(os.Stdout)
-	voteTable.SetHeader([]string{"Voter Address", "SP Power", "Client Power", "Developer Power", "Token Holder Power", "Power Percentage", "Result"})
+	voteTable.SetHeader([]string{"Voter Address", "SP Power", "Client Power", "Developer Power", "TokenHolder Power", "Power Percentage", "Result"})
 	voteTable.SetBorder(true)
 	voteTable.SetRowLine(true)
 	voteTable.SetAutoFormatHeaders(true)
