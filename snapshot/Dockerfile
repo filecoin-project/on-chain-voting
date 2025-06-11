@@ -33,6 +33,7 @@ COPY --from=snapshot-builder /build/app .
 COPY --from=snapshot-builder /build/configuration.yaml  .
 COPY --from=snapshot-builder /build/proof.ucan ./
 COPY --from=snapshot-builder /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=snapshot-builder /build/abi/power-voting-conf.json ./
 
 ENV TZ=Asia/Shanghai
 # expose server port

@@ -12,27 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package utils
+package utils_test
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
-func TestGitHubRequest(t *testing.T) {
-	var res []struct {
-		Name string `json:"name"`
-	}
-	url := fmt.Sprintf("https://api.github.com/orgs/%s/repos", "ArchlyFi")
-	_, err := FetchGithubDeveloper(
-		url,
-		"",
-		map[string]string{
-			"per_page": "100",
-		},
-		&res,
-	)
-	assert.NoError(t, err)
+func TestUtils(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Utils Suite")
 }

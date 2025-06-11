@@ -12,24 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package data
+package utils
 
-import (
-	"testing"
+import "sync"
 
-	"github.com/stretchr/testify/assert"
+type ResetOnce struct {
+    once sync.Once
+    mu   sync.Mutex
+}
 
-	"power-snapshot/config"
-)
+func (ro *ResetOnce) Do(f func()) {
+    ro.mu.Lock()
+    currentOnce := ro.once
+    ro.mu.Unlock()
+    currentOnce.Do(f)
+}
 
-func TestUploadByte(t *testing.T) {
-	config.InitConfig("../../")
-	config.Client.W3Client.Proof = "../../proof.ucan"
-	config.InitLogger()
-
-	w3client := NewW3Client()
-
-	res, err := w3client.UploadByte([]byte("test"))
-	assert.NoError(t, err)
-	assert.NotEmpty(t, res)
+func (ro *ResetOnce) Reset() {
+    ro.mu.Lock()
+    defer ro.mu.Unlock()
+    ro.once = sync.Once{}
 }

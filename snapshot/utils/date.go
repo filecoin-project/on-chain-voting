@@ -21,7 +21,6 @@ import (
 	"github.com/samber/lo"
 
 	"power-snapshot/config"
-	"power-snapshot/constant"
 )
 
 /**
@@ -44,9 +43,8 @@ func CalDateList(syncEndTime time.Time, syncCountedDays int, dates []string) []s
 	return diff
 }
 
-func CalMissDates(dates []string) []string {
+func CalMissDates(dates []string, durationDays int) []string {
 	var startTime = time.Now().Add(-24 * time.Hour)
-	durationDays := constant.DataExpiredDuration
 
 	if config.Client.SyncStartDate != "" {
 		carbonDate, err := time.Parse("20060102", config.Client.SyncStartDate)

@@ -15,9 +15,10 @@
 package config
 
 import (
+	"os"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"os"
 )
 
 // InitLogger initializes the logger with custom configurations.

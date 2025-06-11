@@ -20,8 +20,7 @@ type SubTask struct {
 	DateStr     string
 	BlockHeight int64
 	Typ         string
-	IDStr       string
-	RetryCount  int64
+	ShortID     string
 }
 
 type Task struct {

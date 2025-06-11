@@ -111,8 +111,8 @@ type GoEthClientManager struct {
 	goEthClient models.GoEthClient
 }
 
-func NewGoEthClientManager(network models.Network) (*GoEthClientManager, error) {
-	client, err := getGoEthClient(network)
+func NewGoEthClientManager() (*GoEthClientManager, error) {
+	client, err := getGoEthClient(config.Client.Network)
 	if err != nil {
 		zap.L().Error("init eth client failed", zap.Error(err))
 		return nil, err

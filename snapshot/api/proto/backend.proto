@@ -9,6 +9,8 @@ service Backend {
   rpc GetAllVoterAddresss(GetAllVoterAddressRequest) 
     returns (GetAllVoterAddressResponse);
   rpc GetVoterInfo(GetVoterInfoRequest) returns (GetVoterInfoResponse);
+
+  rpc GetGithubRepoInfo(GetGithubRepoInfoRequest) returns (GetGithubRepoInfoResponse);
 }
 
 message GetAllVoterAddressRequest {
@@ -19,6 +21,10 @@ message GetVoterInfoRequest {
   string address = 1;
 }
 
+message GetGithubRepoInfoRequest {
+  int64 org_type = 1;
+}
+
 message GetAllVoterAddressResponse {
   repeated string addresses = 1;
 }
@@ -27,4 +33,7 @@ message GetVoterInfoResponse {
   string actor_id = 1;
   string github_account = 2;
   repeated string miner_ids = 3;
+}
+message GetGithubRepoInfoResponse {
+  repeated string repo_names = 1;
 }

@@ -22,7 +22,6 @@ import (
 	"go.uber.org/zap"
 
 	"power-snapshot/config"
-	"power-snapshot/constant"
 	"power-snapshot/internal/data"
 )
 
@@ -38,6 +37,7 @@ func (j *Safejob) SyncPower() {
 	err := j.syncService.SyncDateHeight(ctx, config.Client.Network.ChainId)
 	if err != nil {
 		zap.L().Error("failed to sync date height, it will skipped ", zap.Error(err), zap.Int64("network_id", config.Client.Network.ChainId))
+		return
 	}
 
 	err = j.syncService.SyncAllAddrPower(ctx, config.Client.Network.ChainId)
@@ -54,27 +54,28 @@ func (j *Safejob) SyncDevWeightStepDay() {
 	// Create a background context for the operation.
 	ctx := context.Background()
 	// Calculate the start date as the current date minus the data expiration duration, and set it to the end of the day.
-	start := carbon.Now().SubDays(constant.DataExpiredDuration).EndOfDay()
+	start := carbon.Now().SubDays(j.syncService.GetExpirationData()).EndOfDay()
 	// Calculate the end date as yesterday and set it to the end of the day.
 	end := carbon.Now().Yesterday().EndOfDay()
 
 	// find latest index
 
-	for i := start; i.Timestamp() <= end.Timestamp(); i = i.AddDay() {
-		exist, err := j.syncService.ExistDeveloperWeight(ctx, i.ToShortDateString())
+	for end.Gte(start) {
+		exist, err := j.syncService.ExistDeveloperWeight(ctx, end.ToShortDateString())
 		if err != nil {
-			zap.L().Error("SyncDevWeightStepDay", zap.String("date", i.ToShortDateString()))
+			zap.L().Error("SyncDevWeightStepDay", zap.String("date", end.ToShortDateString()))
 			return
 		}
 		if !exist {
-			err := j.syncService.SyncDeveloperWeight(ctx, i.ToShortDateString())
+			err := j.syncService.SyncDeveloperWeight(ctx, end.ToShortDateString())
 			if err != nil {
 				return
 			}
+
 			break
 		}
+		end = end.SubDay()
 	}
-
 }
 
 // UploadPowerToIPFS returns a function that uploads power data to IPFS.

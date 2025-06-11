@@ -18,6 +18,7 @@ import (
 	"math/big"
 	"strconv"
 
+	"github.com/ethereum/go-ethereum/common"
 	"go.uber.org/zap"
 )
 
@@ -35,10 +36,15 @@ func StringToBigInt(v string) *big.Int {
 	return big.NewInt(0)
 }
 
-func SafeParseInt(v string) int64 {
+func SafeParseInt64(v string) int64 {
 	res, err := strconv.ParseInt(v, 10, 64)
 	if err != nil {
 		return 0
 	}
 	return res
+}
+
+func EthStandardAddressToHex(v string) string {
+	address := common.HexToAddress(v)
+	return address.Hex()
 }

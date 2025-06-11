@@ -45,6 +45,10 @@ func (a *AtomicTokenCounter) Set(n int32) {
 }
 
 func (a *AtomicTokenCounter) Get() int32 {
+	if a == nil {
+		a = NewAtomicTokenCounter()
+	}
+
 	return a.count.Load() // atomic get
 }
 
@@ -68,6 +72,7 @@ func (a *AtomicTokenCounter) Lte(v int32) bool {
 	return a.Get() <= v
 }
 
+
 type GitHubTokenManager struct {
 	tokens       []string
 	graphQLUsage map[string]*AtomicTokenCounter
@@ -75,15 +80,17 @@ type GitHubTokenManager struct {
 	coreUsage    map[string]*AtomicTokenCounter
 	coreCap      map[string]*AtomicTokenCounter
 	mu           sync.RWMutex
+	githubApi    GithubLimit
 }
 
-func NewGitHubTokenManager(tokens []string) *GitHubTokenManager {
+func NewGitHubTokenManager(tokens []string, githubApi GithubLimit) *GitHubTokenManager {
 	manager := &GitHubTokenManager{
 		tokens:       tokens,
 		graphQLUsage: make(map[string]*AtomicTokenCounter),
 		graphQLCap:   make(map[string]*AtomicTokenCounter),
 		coreUsage:    make(map[string]*AtomicTokenCounter),
 		coreCap:      make(map[string]*AtomicTokenCounter),
+		githubApi:    githubApi,
 	}
 
 	for _, token := range tokens {
@@ -98,88 +105,96 @@ func NewGitHubTokenManager(tokens []string) *GitHubTokenManager {
 	return manager
 }
 
-func (m *GitHubTokenManager) RefreshToken() {
+func (m *GitHubTokenManager) RefreshToken() string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	res := ""
+	for _, token := range m.tokens {
+		zap.L().Info("TokenRefresh Before",
+			zap.String("token", token),
+			zap.String("graphQL", fmt.Sprintf("limit: %d, used: %d", m.graphQLCap[token].Get(), m.graphQLUsage[token].Get())),
+			zap.String("core", fmt.Sprintf("limit: %d, used: %d", m.coreCap[token].Get(), m.coreUsage[token].Get())),
+		)
+
+		gCap, cCap := m.githubApi.CheckRateLimitBeforeRequest(token)
+		m.graphQLCap[token].Set(gCap)
+		m.coreCap[token].Set(cCap)
+		m.graphQLUsage[token].Set(0)
+		m.coreUsage[token].Set(0)
+
+		zap.L().Info("TokenRefresh After",
+			zap.String("token", token),
+			zap.String("graphQL", fmt.Sprintf("limit: %d, used: %d", gCap, m.graphQLUsage[token].Get())),
+			zap.String("core", fmt.Sprintf("limit: %d, used: %d", cCap, m.coreUsage[token].Get())))
+		fmt.Printf("\n\n")
+		if gCap > 0 && cCap > 0 {
+			res = token
+		}
+	}
+
+	return res
+}
+
+func (m *GitHubTokenManager) CheckTokenUsedNum(token string) (int32, int32) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	for _, token := range m.tokens {
-		gCap, cCap := CheckRateLimitBeforeRequest(token)
-		m.graphQLCap[token].Set(gCap)
-		m.coreCap[token].Set(cCap)
-
-		zap.L().Info("TokenRefresh",
-			zap.String("token", token),
-			zap.Int32("graphQL", m.graphQLCap[token].Get()),
-			zap.Int32("core", m.coreCap[token].Get()))
-	}
-
+	return m.graphQLUsage[token].Get(), m.coreUsage[token].Get()
 }
 
 func (m *GitHubTokenManager) GetAvailableToken() string {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	var (
-		maxToken string
-		maxCap   int32
-	)
+	m.mu.Lock()
 
 	for token := range m.graphQLCap {
 		currentCap := m.graphQLCap[token].Get()
 		currentUsage := m.graphQLUsage[token].Get()
 
-		if currentUsage < currentCap && currentCap > maxCap && currentCap > 0 {
-			maxToken = token
-			maxCap = currentCap
+		if currentUsage < currentCap && currentCap > 0 && currentCap-currentUsage > 15 {
+			m.graphQLUsage[token].Add(1)
+			m.mu.Unlock()
+			return token
 		}
 	}
+	
+	m.mu.Unlock()
+	return m.RefreshToken()
 
-	if maxToken != "" {
-		m.graphQLUsage[maxToken].Add(1)
-	}
-
-	return maxToken
 }
 
-func (m *GitHubTokenManager) DecreaseUsage(token string) {
+func (m *GitHubTokenManager) GetAllTokenCap() int32 {
+	var result int32
+	
+	m.RefreshToken()
+	for _, token := range m.tokens {
+		result += m.graphQLCap[token].Get()
+	}
+
+	return result
+}
+
+func (m *GitHubTokenManager) GetApiCap(token string) (int32, int32) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	if usage := m.graphQLUsage[token]; usage != nil {
-		usage.Add(-1)
-		if current := usage.Get(); current < 0 {
-			usage.Set(0)
-		}
-	}
+	return m.graphQLCap[token].Get(), m.coreCap[token].Get()
 }
 
 func (m *GitHubTokenManager) GetCoreAvailableToken() string {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	m.mu.Lock()
 
-	var maxToken string
-	maxCapacity := int32(0)
-
-	for token, capacity := range m.coreCap {
-		if m.coreUsage[token].Get() < capacity.Get() && capacity.Get() > maxCapacity {
-			maxToken = token
-			maxCapacity = capacity.Get()
+	for token := range m.coreCap {
+		currentCap := m.coreCap[token].Get()
+		currentUsage := m.coreUsage[token].Get()
+		if currentUsage < currentCap && currentCap > 0 {
+			m.coreUsage[token].Add(1)
+			m.mu.Unlock()
+			return token
 		}
 	}
 
-	if maxToken != "" {
-		m.coreUsage[maxToken].Add(1)
-	}
-
-	return maxToken
-}
-
-func (m *GitHubTokenManager) CoreDecreaseUsage(token string) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	if m.coreUsage[token].Get() > 0 {
-		m.coreUsage[token].Add(-1)
-	}
+	m.mu.Unlock()
+	return m.RefreshToken()
 }
 
 type RateLimitResponse struct {
@@ -211,7 +226,14 @@ type RateLimitResponse struct {
 	} `json:"rate"`
 }
 
-func CheckRateLimitBeforeRequest(token string) (int32, int32) {
+type GithubLimit interface {
+	CheckRateLimitBeforeRequest(token string) (int32, int32)
+}
+
+type GithubRateLimit struct {
+}
+
+func (g GithubRateLimit) CheckRateLimitBeforeRequest(token string) (int32, int32) {
 	// Perform a GET request to the GitHub rate limit endpoint
 	url := "https://api.github.com/rate_limit"
 	client := http.Client{

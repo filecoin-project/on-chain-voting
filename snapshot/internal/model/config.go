@@ -24,15 +24,17 @@ type Config struct {
 	Mysql         Mysql    // Mysql configuration details.
 	W3Client      W3Client // W3Client configuration details.
 	Rate          Rate     // Rate configuration details.
-	DataPath      DataPath // Data path for storing files.
+	FilePath      string   // file save path for storing files.
 	SyncStartDate string   // Start date for syncing
 }
 
 // Network  configuration for a blockchain network.
 type Network struct {
-	ChainId  int64    // Identifier for the network.
-	Name     string   // Name of the network.
-	QueryRpc []string // Query RPC endpoint for the network.
+	ChainId                 int64    // Identifier for the network.
+	Name                    string   // Name of the network.
+	QueryRpc                []string // Query RPC endpoint for the network.
+	PowerVotingAbiPath      string   // Path to the ABI file for the network.
+	PowerVotingConfContract string   // Address of the PowerVoting configuration contract.
 }
 
 // GitHub represents the configuration for GitHub integration.
@@ -72,8 +74,4 @@ type W3Client struct {
 
 type Rate struct {
 	GithubRequestLimit int64 // Limit for GitHub requests
-}
-
-type DataPath struct {
-	DeveloperWeights string // Path to the developer weights file
 }

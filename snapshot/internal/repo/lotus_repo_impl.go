@@ -19,7 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"time"
+	"strings"
 
 	filecoinAddress "github.com/filecoin-project/go-address"
 	"github.com/redis/go-redis/v9"
@@ -28,16 +28,17 @@ import (
 
 	"power-snapshot/config"
 	"power-snapshot/constant"
+	"power-snapshot/internal/data"
 	models "power-snapshot/internal/model"
 	"power-snapshot/utils/types"
 )
 
 type LotusRPCRepo struct {
 	rpcClient   jsonrpc.RPCClient
-	redisClient *redis.Client
+	redisClient *data.RedisClient
 }
 
-func NewLotusRPCRepo(redisClient *redis.Client) *LotusRPCRepo {
+func NewLotusRPCRepo(redisClient *data.RedisClient) *LotusRPCRepo {
 	return &LotusRPCRepo{
 		rpcClient:   jsonrpc.NewClientWithOpts(config.Client.Network.QueryRpc[0], &jsonrpc.RPCClientOpts{}),
 		redisClient: redisClient,
@@ -46,11 +47,9 @@ func NewLotusRPCRepo(redisClient *redis.Client) *LotusRPCRepo {
 
 func (l *LotusRPCRepo) GetTipSetByHeight(ctx context.Context, netId, height int64) ([]any, error) {
 	key := fmt.Sprintf(constant.RedisTipset, netId)
-	defer func() {
-		go l.cleanExpiredHeights(ctx, netId)
-	}()
 
-	res, err := l.redisClient.HGet(ctx, key, strconv.FormatInt(height, 10)).Result()
+
+	res, err := l.redisClient.HGet(ctx, key, strconv.FormatInt(height, 10))
 	if err != nil {
 		if err != redis.Nil {
 			return nil, err
@@ -82,71 +81,10 @@ func (l *LotusRPCRepo) GetTipSetByHeight(ctx context.Context, netId, height int6
 
 	resTipSet := rMap["Cids"].([]interface{})
 
-	if err := l.cacheWithExpiration(ctx, key, height, resTipSet); err != nil {
-		zap.L().Warn("cache with expiration failed", zap.Error(err))
-	}
+
 	return resTipSet, nil
 }
 
-func (l *LotusRPCRepo) cleanExpiredHeights(ctx context.Context, netId int64) {
-	lastBlockHeight, err := l.GetNewestHeight(ctx, netId)
-	if err != nil {
-		zap.L().Error("get newest height failed", zap.Error(err))
-		return
-	}
-	expirationThreshold := lastBlockHeight + constant.SavedHeightDuration
-	key := fmt.Sprintf(constant.RedisTipset, netId)
-
-	var cursor uint64
-	for {
-		fields, nextCursor, err := l.redisClient.HScan(ctx, key, cursor, "", 1000).Result()
-		if err != nil {
-			zap.L().Error("HSCAN failed", zap.Error(err))
-			return
-		}
-
-		var toDelete []string
-		for i := 0; i < len(fields); i += 2 {
-			heightStr := fields[i]
-			height, err := strconv.ParseInt(heightStr, 10, 64)
-			if err != nil || height < expirationThreshold {
-				toDelete = append(toDelete, heightStr)
-			}
-		}
-
-		if len(toDelete) > 0 {
-			if err := l.redisClient.HDel(ctx, key, toDelete...).Err(); err != nil {
-				zap.L().Error("HDEL failed", zap.Strings("keys", toDelete), zap.Error(err))
-			} else {
-				zap.L().Info("cleaned expired heights",
-					zap.Int("count", len(toDelete)),
-					zap.Int64("threshold", expirationThreshold))
-			}
-		}
-
-		cursor = nextCursor
-		if cursor == 0 {
-			break
-		}
-	}
-}
-
-func (l *LotusRPCRepo) cacheWithExpiration(ctx context.Context, key string, height int64, data []any) error {
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-
-	pipe := l.redisClient.Pipeline()
-	pipe.HSet(ctx, key, strconv.FormatInt(height, 10), string(jsonData))
-
-	pipe.Expire(ctx, key, constant.DataExpiredDuration*24*time.Hour)
-
-	if _, err := pipe.Exec(ctx); err != nil {
-		return fmt.Errorf("pipeline failed: %w", err)
-	}
-	return nil
-}
 
 func (l *LotusRPCRepo) GetAddrBalanceBySpecialHeight(ctx context.Context, addr string, netId, height int64) (string, error) {
 	tipSetKey, err := l.GetTipSetByHeight(ctx, netId, height)
@@ -201,32 +139,6 @@ func (l *LotusRPCRepo) GetMinerPowerByHeight(ctx context.Context, netId int64, a
 	}
 
 	return minerPower, nil
-}
-
-func (l *LotusRPCRepo) GetClientBalanceBySpecialHeight(ctx context.Context, netId, height int64) (models.StateMarketDeals, error) {
-	tipSetKey, err := l.GetTipSetByHeight(ctx, netId, height)
-	if err != nil {
-		return models.StateMarketDeals{}, err
-	}
-
-	tipSetList := append([]any{}, tipSetKey)
-
-	var t models.StateMarketDeals
-	resp, err := l.rpcClient.Call(ctx, "Filecoin.StateMarketDeals", tipSetList)
-	if err != nil {
-		return models.StateMarketDeals{}, err
-	}
-
-	tmp, err := json.Marshal(resp.Result)
-	if err != nil {
-		return models.StateMarketDeals{}, err
-	}
-
-	if err := json.Unmarshal(tmp, &t); err != nil {
-		return models.StateMarketDeals{}, err
-	}
-
-	return t, nil
 }
 
 func (l *LotusRPCRepo) GetNewestHeight(ctx context.Context, netId int64) (height int64, err error) {
@@ -295,6 +207,11 @@ func (l *LotusRPCRepo) GetWalletBalanceByHeight(ctx context.Context, id string, 
 	}
 
 	if resp.Error != nil {
+		if strings.HasPrefix(resp.Error.Message, "load state tree") || strings.HasPrefix(resp.Error.Message, "actor not found") {
+			zap.L().Error("get wallet balance failed", zap.String("actor id", id), zap.String("error", resp.Error.Message))
+			return "0", nil
+		}
+
 		return "0", resp.Error
 	}
 
@@ -311,29 +228,29 @@ func (l *LotusRPCRepo) GetWalletBalanceByHeight(ctx context.Context, id string, 
 	return t.Balance, nil
 }
 
-func (l *LotusRPCRepo) GetClientBalanceByHeight(ctx context.Context, netId, height int64) (types.StateMarketDeals, error) {
+func (l *LotusRPCRepo) GetDealsByHeight(ctx context.Context, netId, height int64) (types.StateMarketDeals, error) {
 	tipSetKey, err := l.GetTipSetByHeight(ctx, netId, height)
 	if err != nil {
-		return types.StateMarketDeals{}, err
+		return nil, err
 	}
 
 	tipSetList := append([]any{}, tipSetKey)
 
-	var t types.StateMarketDeals
+	var deals types.StateMarketDeals
 	resp, err := l.rpcClient.Call(ctx, "Filecoin.StateMarketDeals", tipSetList)
 	if err != nil {
-		return types.StateMarketDeals{}, err
+		return nil, err
 	}
 
 	tmp, err := json.Marshal(resp.Result)
 	if err != nil {
-		return types.StateMarketDeals{}, err
+		return nil, err
 	}
 
-	if err := json.Unmarshal(tmp, &t); err != nil {
-		return types.StateMarketDeals{}, err
+	if err := json.Unmarshal(tmp, &deals); err != nil {
+		return nil, err
 	}
 
-	return t, nil
+	return deals, nil
 }
 

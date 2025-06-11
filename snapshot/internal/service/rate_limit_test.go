@@ -15,31 +15,50 @@
 package service_test
 
 import (
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"power-snapshot/internal/service"
-	mocks "power-snapshot/mock"
 )
 
-var _ = Describe("Repositories", func() {
-	var mockIgithub *mocks.MockIGithub
+var _ = Describe("RateLimit", func() {
 	var tokenManager *service.GitHubTokenManager
 	BeforeEach(func() {
-		mockIgithub = mocks.NewMockIGithub(mockCtrl)
 		tokenManager = service.NewGitHubTokenManager(
 			[]string{"token1"},
 			mockGithubLimit,
 		)
-		mockIgithub.EXPECT().
-			GetRepoNames(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return([]string{"repo1", "repo2"})
 	})
-	Describe("GetRepoNames", func() {
-		It("should return repo names", func() {
-			repoNames := mockIgithub.GetRepoNames([]string{"org1"}, []string{"user1"}, tokenManager)
-			Expect(repoNames).To(Equal([]string{"repo1", "repo2"}))
+	Context("GitHubTokenManager", func() {
+		When("token not used", func() {
+			It("token cap should be full", func() {
+				cap := tokenManager.GetAllTokenCap()
+				Expect(cap).To(Equal(int32(5000)))
+			})
+			It("should return gap", func() {
+				gCap, cCap := tokenManager.GetApiCap("token1")
+				Expect(gCap).To(Equal(int32(5000)))
+				Expect(cCap).To(Equal(int32(5000)))
+			})
+
+			It("should return token", func() {
+				token := tokenManager.GetCoreAvailableToken()
+				Expect(token).To(Equal("token1"))
+			})
+		})
+
+		When("token used", func() {
+			BeforeEach(func() {
+				for i := 0; i < 100; i++ {
+					tokenManager.GetAvailableToken()
+				}
+			})
+			It("should graph token must be 4900", func() {
+				gCap, cCap := tokenManager.CheckTokenUsedNum("token1")
+				Expect(gCap).To(Equal(int32(100)))
+				Expect(cCap).To(Equal(int32(0)))
+			})
+
 		})
 	})
 })

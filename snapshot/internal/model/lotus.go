@@ -61,12 +61,6 @@ type State struct {
 	SlashEpoch       int64 `json:"SlashEpoch"`
 }
 
-type Deal struct {
-	Proposal Proposal `json:"Proposal"`
-	State    State    `json:"State"`
-}
-
-type StateMarketDeals map[string]Deal
 
 type BlockHeader struct {
 	Height    int64 `json:"Height"`

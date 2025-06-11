@@ -19,17 +19,35 @@ import (
 )
 
 const (
-	DataExpiredDuration         = 60
-	GithubDataWithinXMonths     = 6
-	SnapshotBackupSync          = 0
-	RetryCount                  = 3
-	SnapshotBackupSyncd         = 4
-	TwoHoursBlockNumber         = 2 * 3600 / 30
-	TaskActionActor             = "actor"
-	TaskActionMiner             = "miner"
-	DeveloperWeightsFilePrefix  = "developer_weights_"
-	SavedHeightDuration         = -DataExpiredDuration * 2880
-	MaxGithubGraphRequetRetries = 5
+	DataExpiredDuration     = 60
+	GithubDataWithinXMonths = 6
+	SnapshotBackupSync      = 0
+	RetryCount              = 3
+	SnapshotBackupSyncd     = 4
+	TwoHoursBlockNumber     = 2 * 3600 / 30
+	TaskActionActor         = "actor"
+	TaskActionMiner         = "miner"
+	DeveloperWeightsFile    = "%d_developer_weights_%s"
+	DealsFile               = "%d_deals_%s"
+	FileSuffix              = ".json"
+	SavedHeightDuration     = -DataExpiredDuration * 2880
+
+	MinimumTokenCapacity = 18000
+	MinimumTokenNum      = 4
 )
 
-var TimeoutSecond = 15 * time.Second
+var (
+	TimeoutWith15s = 15 * time.Second
+	TimeoutWith3M  = 15 * time.Second * 12
+)
+
+var (
+	DEALS     = "deals"
+	DEVELOPER = "developer"
+)
+
+const (
+	GithubCoreOrg = iota
+	GithubEcosystemOrg
+	GithubUser
+)

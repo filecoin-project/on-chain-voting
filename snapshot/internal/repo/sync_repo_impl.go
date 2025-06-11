@@ -27,18 +27,19 @@ import (
 	"go.uber.org/zap"
 
 	"power-snapshot/constant"
+	"power-snapshot/internal/data"
 	models "power-snapshot/internal/model"
 )
 
 type SyncRepoImpl struct {
 	netId       int64
-	redisClient *redis.Client
+	redisClient *data.RedisClient
 	stream      jetstream.JetStream
 	consumer    jetstream.Consumer
 	publisher   jetstream.Publisher
 }
 
-func NewSyncRepoImpl(netID int64, redisClient *redis.Client, stream jetstream.JetStream) (*SyncRepoImpl, error) {
+func NewSyncRepoImpl(netID int64, redisClient *data.RedisClient, stream jetstream.JetStream) (*SyncRepoImpl, error) {
 	// init mq
 	cfg := jetstream.StreamConfig{
 		Name:      "TASKS",
@@ -91,7 +92,7 @@ func (s *SyncRepoImpl) GetAllAddrSyncedDateMap(ctx context.Context, netId int64)
 	key := fmt.Sprintf(constant.RedisAddrSyncedDate, netId)
 
 	// Retrieve all fields/values from Redis hash
-	res, err := s.redisClient.HGetAll(ctx, key).Result()
+	res, err := s.redisClient.HGetAll(ctx, key)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return nil, nil
@@ -112,7 +113,7 @@ func (s *SyncRepoImpl) GetAllAddrSyncedDateMap(ctx context.Context, netId int64)
 
 func (s *SyncRepoImpl) GetAddrSyncedDate(ctx context.Context, netId int64, addr string) ([]string, error) {
 	key := fmt.Sprintf(constant.RedisAddrSyncedDate, netId)
-	res, err := s.redisClient.HGet(ctx, key, addr).Result()
+	res, err := s.redisClient.HGet(ctx, key, addr)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return nil, nil
@@ -126,7 +127,9 @@ func (s *SyncRepoImpl) GetAddrSyncedDate(ctx context.Context, netId int64, addr 
 func (s *SyncRepoImpl) SetAddrSyncedDate(ctx context.Context, netId int64, addr string, dates []string) error {
 	key := fmt.Sprintf(constant.RedisAddrSyncedDate, netId)
 	datesStr := strings.Join(dates, ",")
-	err := s.redisClient.HSet(ctx, key, addr, datesStr).Err()
+	err := s.redisClient.HSet(ctx, key, []any{
+		addr, datesStr,
+	}, data.WithoutExpire())
 	if err != nil {
 		return err
 	}
@@ -136,7 +139,7 @@ func (s *SyncRepoImpl) SetAddrSyncedDate(ctx context.Context, netId int64, addr 
 
 func (s *SyncRepoImpl) GetAddrPower(ctx context.Context, netId int64, addr string) (map[string]models.SyncPower, error) {
 	key := fmt.Sprintf(constant.RedisAddrPower, netId, addr)
-	raw, err := s.redisClient.HGetAll(ctx, key).Result()
+	raw, err := s.redisClient.HGetAll(ctx, key)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +172,7 @@ func (s *SyncRepoImpl) SetAddrPower(ctx context.Context, netId int64, addr strin
 		m[k] = string(jsonStr)
 	}
 
-	err := s.redisClient.HSet(ctx, key, m).Err()
+	err := s.redisClient.HSet(ctx, key, []any{m})
 	if err != nil {
 		return err
 	}
@@ -206,7 +209,7 @@ func (s *SyncRepoImpl) SetDeveloperWeights(ctx context.Context, dateStr string, 
 	if err != nil {
 		return err
 	}
-	err = s.redisClient.HSet(ctx, key, dateStr, inJson).Err()
+	err = s.redisClient.HSet(ctx, key, []any{dateStr, inJson})
 	if err != nil {
 		return err
 	}
@@ -216,7 +219,7 @@ func (s *SyncRepoImpl) SetDeveloperWeights(ctx context.Context, dateStr string, 
 
 func (s *SyncRepoImpl) GetUserDeveloperWeights(ctx context.Context, dateStr string, username string) (int64, error) {
 	key := constant.RedisDeveloperPower
-	resStr, err := s.redisClient.HGet(ctx, key, dateStr).Result()
+	resStr, err := s.redisClient.HGet(ctx, key, dateStr)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return 0, nil
@@ -240,7 +243,7 @@ func (s *SyncRepoImpl) GetUserDeveloperWeights(ctx context.Context, dateStr stri
 
 func (s *SyncRepoImpl) GetDeveloperWeights(ctx context.Context, dateStr string) (map[string]int64, error) {
 	key := constant.RedisDeveloperPower
-	resStr, err := s.redisClient.HGet(ctx, key, dateStr).Result()
+	resStr, err := s.redisClient.HGet(ctx, key, dateStr)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return nil, nil
@@ -259,7 +262,7 @@ func (s *SyncRepoImpl) GetDeveloperWeights(ctx context.Context, dateStr string) 
 
 func (s *SyncRepoImpl) ExistDeveloperWeights(ctx context.Context, dateStr string) (bool, error) {
 	key := constant.RedisDeveloperPower
-	exist, err := s.redisClient.HExists(ctx, key, dateStr).Result()
+	exist, err := s.redisClient.HExists(ctx, key, dateStr)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return false, nil

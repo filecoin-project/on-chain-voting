@@ -23,7 +23,6 @@ import (
 	"github.com/golang-module/carbon"
 	"go.uber.org/zap"
 
-	"power-snapshot/constant"
 	models "power-snapshot/internal/model"
 )
 
@@ -51,7 +50,7 @@ func NewQueryService(baseRepo BaseRepo, queryRepo QueryRepo, sync *SyncService, 
 }
 
 func (q *QueryService) GetAddressPower(ctx context.Context, netId int64, address string, dayCount int32) (*models.SyncPower, error) {
-	if dayCount > constant.DataExpiredDuration {
+	if dayCount > int32(q.syncSrv.GetExpirationData()) {
 		return nil, errors.New("day count is too long")
 	}
 	dayStr := carbon.Now().SubDays(int(dayCount)).EndOfDay().ToShortDateString()
@@ -65,6 +64,7 @@ func (q *QueryService) GetAddressPower(ctx context.Context, netId int64, address
 
 func (q *QueryService) GetAddressPowerByDay(ctx context.Context, netId int64, address string, dayStr string, dayTime time.Time) (*models.SyncPower, error) {
 	power, err := q.queryRepo.GetAddressPower(ctx, netId, address, dayStr)
+
 	if err != nil {
 		zap.L().Error("error getting address power ", zap.Error(err))
 		return nil, err
@@ -108,7 +108,7 @@ func (q *QueryService) GetAddressPowerByDay(ctx context.Context, netId int64, ad
 		}
 
 		for _, actionId := range info.ActionIDs {
-			walletBalance, clientBalance, err := q.syncSrv.GetActorBalance(ctx, actionId, netId, height)
+			walletBalance, clientBalance, err := q.syncSrv.GetActorBalance(ctx, actionId, dayStr, netId, height)
 			if err != nil {
 				zap.L().Error("failed to get actor power", zap.Error(err))
 				return nil, err
@@ -172,7 +172,6 @@ func (q *QueryService) GetAddressPowerByDay(ctx context.Context, netId int64, ad
 			}
 		}
 	}
-
 
 	return power, nil
 }

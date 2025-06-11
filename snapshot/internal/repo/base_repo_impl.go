@@ -22,6 +22,7 @@ import (
 	"hash/fnv"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -31,14 +32,15 @@ import (
 	"power-snapshot/constant"
 	"power-snapshot/internal/data"
 	models "power-snapshot/internal/model"
+	"power-snapshot/utils/types"
 )
 
 type BaseRepoImpl struct {
-	ethClient   *data.GoEthClientManager
-	redisClient *redis.Client
+	ethClient     *data.GoEthClientManager
+	redisClient   *data.RedisClient
 }
 
-func NewBaseRepoImpl(manager *data.GoEthClientManager, redisClient *redis.Client) *BaseRepoImpl {
+func NewBaseRepoImpl(manager *data.GoEthClientManager, redisClient *data.RedisClient) *BaseRepoImpl {
 	return &BaseRepoImpl{
 		ethClient:   manager,
 		redisClient: redisClient,
@@ -53,7 +55,6 @@ func (s *BaseRepoImpl) GetLotusClient(ctx context.Context, netId int64) (jsonrpc
 
 func (s *BaseRepoImpl) GetLotusClientByHashKey(ctx context.Context, netId int64, key string) (jsonrpc.RPCClient, error) {
 	client := s.ethClient.GetClient()
-
 
 	h := fnv.New32a()
 	data := fmt.Sprintf("%s_%d", key, time.Now().UnixNano())
@@ -83,7 +84,7 @@ func (s *BaseRepoImpl) GetDateHeightMap(ctx context.Context, netId int64) (map[s
 	key := fmt.Sprintf(constant.RedisDateHeight, netId)
 
 	// Fetch JSON-encoded data from Redis
-	jsonStr, err := s.redisClient.Get(ctx, key).Result()
+	jsonStr, err := s.redisClient.Get(ctx, key)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return make(map[string]int64), nil
@@ -110,7 +111,7 @@ func (s *BaseRepoImpl) SetDateHeightMap(ctx context.Context, netId int64, height
 		return err
 	}
 
-	err = s.redisClient.Set(ctx, key, jsonStr, redis.KeepTTL).Err()
+	err = s.redisClient.Set(ctx, key, jsonStr)
 	if err != nil {
 		return err
 	}
@@ -118,30 +119,38 @@ func (s *BaseRepoImpl) SetDateHeightMap(ctx context.Context, netId int64, height
 	return nil
 }
 
-func (s *BaseRepoImpl) SetDeveloperWeights(ctx context.Context, dayStr string, commits []models.Nodes) error {
-	path := config.Client.DataPath.DeveloperWeights
-	filename := filepath.Join(path, constant.DeveloperWeightsFilePrefix+dayStr+".json")
-	jsonData, err := json.Marshal(commits)
+func (s *BaseRepoImpl) SaveToLocalFile(ctx context.Context, netId int64, dayStr, t string, data any) error {
+	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
 
-	if err := os.MkdirAll(path, 0755); err != nil {
+	var path string
+	var dir = config.Client.FilePath
+	switch t {
+	case constant.DEVELOPER:
+		path = filepath.Join(dir, fmt.Sprintf(constant.DeveloperWeightsFile, netId, dayStr))
+	case constant.DEALS:
+		path = filepath.Join(dir, fmt.Sprintf(constant.DealsFile, netId, dayStr))
+	default:
+		return fmt.Errorf("SaveToLocalFile invalid type: %s", t)
+	}
+
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
 
-	if err := os.WriteFile(filename, jsonData, 0644); err != nil {
+	if err := os.WriteFile(path+constant.FileSuffix, jsonData, 0644); err != nil {
 		return err
 	}
 
-	return s.cleanupOldFiles()
+	return s.cleanupOldFiles(netId, t)
 }
 
-func (s *BaseRepoImpl) GetDeveloperWeights(ctx context.Context, dayStr string) ([]models.Nodes, error) {
-	path := config.Client.DataPath.DeveloperWeights
-	filename := filepath.Join(path, constant.DeveloperWeightsFilePrefix+dayStr+".json")
+func (s *BaseRepoImpl) GetDeveloperWeights(ctx context.Context, netId int64, dayStr string) ([]models.Nodes, error) {
+	filename := filepath.Join(config.Client.FilePath, fmt.Sprintf(constant.DeveloperWeightsFile, netId, dayStr))
 
-	data, err := os.ReadFile(filename)
+	data, err := os.ReadFile(filename + constant.FileSuffix)
 	if err != nil {
 		return nil, err
 	}
@@ -154,9 +163,37 @@ func (s *BaseRepoImpl) GetDeveloperWeights(ctx context.Context, dayStr string) (
 	return commits, nil
 }
 
-func (s *BaseRepoImpl) cleanupOldFiles() error {
-	pattern := filepath.Join(config.Client.DataPath.DeveloperWeights, constant.DeveloperWeightsFilePrefix+"*.json")
+func (s *BaseRepoImpl) GetDealsFromLocal(ctx context.Context, netId int64, dayStr string) (types.StateMarketDeals, error) {
+	filename := filepath.Join(config.Client.FilePath, fmt.Sprintf(constant.DealsFile, netId, dayStr))
+	data, err := os.ReadFile(filename + constant.FileSuffix)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
 
+	var deals types.StateMarketDeals
+	if err := json.Unmarshal(data, &deals); err != nil {
+		return nil, err
+	}
+
+	return deals, nil
+}
+
+func (s *BaseRepoImpl) cleanupOldFiles(netId int64, t string) error {
+	var pattern string
+
+	switch t {
+	case constant.DEVELOPER:
+		pattern = filepath.Join(config.Client.FilePath, fmt.Sprintf(constant.DeveloperWeightsFile, netId, ""))
+	case constant.DEALS:
+		pattern = filepath.Join(config.Client.FilePath, fmt.Sprintf(constant.DealsFile, netId, ""))
+	default:
+		return fmt.Errorf("cleanupOldFiles invalid type: %s", t)
+	}
+
+	pattern += "*"
 	files, err := filepath.Glob(pattern)
 	if err != nil {
 		return err
@@ -166,7 +203,8 @@ func (s *BaseRepoImpl) cleanupOldFiles() error {
 
 	for _, file := range files {
 		dateStr := filepath.Base(file)
-		dateStr = dateStr[len(constant.DeveloperWeightsFilePrefix) : len(dateStr)-5]
+		group := strings.Split(dateStr, "_")
+		dateStr = group[2]
 
 		fileDate, err := time.Parse("20060102", dateStr)
 		if err != nil {

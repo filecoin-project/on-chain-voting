@@ -15,11 +15,13 @@
 package task
 
 import (
+	"context"
 	"sync/atomic"
 	"time"
 
 	"go.uber.org/zap"
 
+	"power-snapshot/config"
 	"power-snapshot/internal/data"
 	"power-snapshot/internal/service"
 )
@@ -29,6 +31,7 @@ type Safejob struct {
 	isRunningSyncPowerTask        int32
 	isRunningDevWeightStepDayTask int32
 	isRunningUploadIPFSTask       int32
+	isRunningFetchDealsTask       int32
 }
 
 func (j *Safejob) RunSyncPower() {
@@ -60,9 +63,23 @@ func (j *Safejob) RunUploadPowerToIPFS() {
 		defer atomic.StoreInt32(&j.isRunningUploadIPFSTask, 0)
 
 		zap.L().Info("start upload address power to ipfs")
-		j.UploadPowerToIPFS( data.NewW3Client())
+		j.UploadPowerToIPFS(data.NewW3Client())
 		zap.L().Info("sync upload address power to ipfs finished, end time:", zap.Int64("end time", time.Now().Unix()))
 	} else {
 		zap.L().Info("sync upload address power to ipfs task is running, continue")
+	}
+}
+
+func (j *Safejob) RunFetchDeals() {
+	if atomic.CompareAndSwapInt32(&j.isRunningFetchDealsTask, 0, 1) {
+		defer atomic.StoreInt32(&j.isRunningFetchDealsTask, 0)
+
+		zap.L().Info("start fetch fetch deals task")
+		if err := j.syncService.FetchDeals(context.Background(), config.Client.Network.ChainId); err != nil {
+			zap.L().Error("fetch  deals task error", zap.Error(err))
+		}
+		zap.L().Info("fetch fetch deals task finished, end time:", zap.Int64("end time", time.Now().Unix()))
+	} else {
+		zap.L().Info("fetch fetch deals task is running, continue")
 	}
 }

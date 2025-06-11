@@ -28,11 +28,11 @@ import (
 )
 
 type QueryRepoImpl struct {
-	redisCli *redis.Client
+	redisCli *data.RedisClient
 	manager  *data.GoEthClientManager
 }
 
-func NewQueryRepoImpl(client *redis.Client, manager *data.GoEthClientManager) (*QueryRepoImpl, error) {
+func NewQueryRepoImpl(client *data.RedisClient, manager *data.GoEthClientManager) (*QueryRepoImpl, error) {
 	return &QueryRepoImpl{
 		redisCli: client,
 		manager:  manager,
@@ -41,7 +41,7 @@ func NewQueryRepoImpl(client *redis.Client, manager *data.GoEthClientManager) (*
 
 func (q *QueryRepoImpl) GetAddressPower(ctx context.Context, netId int64, address string, dayStr string) (*models.SyncPower, error) {
 	key := fmt.Sprintf(constant.RedisAddrPower, netId, address)
-	raw, err := q.redisCli.HGet(ctx, key, dayStr).Result()
+	raw, err := q.redisCli.HGet(ctx, key, dayStr)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return nil, nil
@@ -59,7 +59,7 @@ func (q *QueryRepoImpl) GetAddressPower(ctx context.Context, netId int64, addres
 }
 
 func (q *QueryRepoImpl) GetDeveloperWeights(ctx context.Context, dateStr string) (map[string]int64, error) {
-	resStr, err := q.redisCli.HGet(ctx, constant.RedisDeveloperPower, dateStr).Result()
+	resStr, err := q.redisCli.HGet(ctx, constant.RedisDeveloperPower, dateStr)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return nil, nil
@@ -78,7 +78,7 @@ func (q *QueryRepoImpl) GetDeveloperWeights(ctx context.Context, dateStr string)
 
 func (q *QueryRepoImpl) GetAddressPowerByDay(ctx context.Context, chainId int64, dayStr string) ([]models.SyncPower, error) {
 	prefix := fmt.Sprintf("%d_POWER_", chainId)
-	keys, err := q.redisCli.Keys(ctx, prefix+"*").Result()
+	keys, err := q.redisCli.Keys(ctx, prefix+"*")
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return nil, nil
@@ -88,7 +88,7 @@ func (q *QueryRepoImpl) GetAddressPowerByDay(ctx context.Context, chainId int64,
 
 	var addrPower []models.SyncPower
 	for _, key := range keys {
-		hashValues, err := q.redisCli.HGetAll(ctx, key).Result()
+		hashValues, err := q.redisCli.HGetAll(ctx, key)
 		if err != nil {
 			return nil, err
 		}
@@ -110,7 +110,7 @@ func (q *QueryRepoImpl) GetAddressPowerByDay(ctx context.Context, chainId int64,
 }
 
 func (q *QueryRepoImpl) GetDevPowerByDay(ctx context.Context, dayStr string) (string, error) {
-	devPower, err := q.redisCli.HGet(ctx, constant.RedisDeveloperPower, dayStr).Result()
+	devPower, err := q.redisCli.HGet(ctx, constant.RedisDeveloperPower, dayStr)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return "", nil

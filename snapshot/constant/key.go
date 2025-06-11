@@ -15,9 +15,9 @@
 package constant
 
 const (
-	RedisDateHeight          = "%d_DATA_HEIGHT"
-	RedisAddrSyncedDate      = "%d_SYNCED_DATE"
-	RedisAddrPower           = "%d_POWER_%s"
-	RedisDeveloperPower      = "DEV_POWER"
-	RedisTipset              = "%d_TIPSET"
+	RedisDateHeight     = "%d_DATA_HEIGHT"
+	RedisAddrSyncedDate = "%d_SYNCED_DATE"
+	RedisAddrPower      = "%d_POWER_%s"
+	RedisDeveloperPower = "DEV_POWER"
+	RedisTipset         = "%d_TIPSET"
 )

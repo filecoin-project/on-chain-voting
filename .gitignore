@@ -28,3 +28,4 @@ coverage.json
 contracts/.openzeppelin
 
 */node_modules
+**/tmp

@@ -12,143 +12,95 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package service
+package service_test
 
 import (
 	"context"
-	"fmt"
-	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"golang.org/x/sync/errgroup"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
+	"power-snapshot/constant"
+	models "power-snapshot/internal/model"
+	"power-snapshot/internal/service"
 	"power-snapshot/utils"
 )
 
-// func TestGetDeveloperWeights(t *testing.T) {
-// 	// Initialize the logger
-// 	config.InitLogger()
-
-// 	// Load the configuration from the specified path
-// 	err := config.InitConfig("../../")
-// 	if err != nil {
-// 		log.Fatalf("Failed to load config: %v", err)
-// 		return
-// 	}
-
-// 	totalWeights, commit, err := GetDeveloperWeights(time.Now())
-// 	assert.NoError(t, err)
-// 	assert.NotEmpty(t, commit)
-// 	zap.L().Info("result", zap.Any("client", totalWeights))
-// }
-
-// func TestGetContributors(t *testing.T) {
-// 	err := config.InitConfig("../../")
-// 	if err != nil {
-// 		return
-// 	}
-// 	config.InitLogger()
-// 	since := utils.AddMonths(time.Now(), -6).Format("2006-01-02T15:04:05Z")
-// 	tokenManager := NewGitHubTokenManager(config.Client.Github.Token)
-
-// 	token := tokenManager.GetCoreAvailableToken()
-// 	res, err := getContributors(context.Background(), "filecoin-project", "on-chain-voting", since, token)
-// 	assert.Nil(t, err)
-
-// 	zap.L().Info("result", zap.Any("res", res))
-// }
-
-func TestAddMonths(t *testing.T) {
-	res := utils.AddMonths(time.Date(2024, 05, 04, 00, 00, 00, 00, time.Local),
-		-2)
-
-	expected := time.Date(2024, 03, 04, 00, 00, 00, 00, time.Local)
-
-	assert.Equal(t, res, expected)
-}
-
-func TestAddMerge(t *testing.T) {
-	map1 := map[string]int64{
-		"test1": 1,
-		"test2": 2,
+var _ = Describe("Developer", func() {
+	date, err := time.Parse("2006-01-02", "2022-01-01")
+	Expect(err).To(BeNil())
+	var mockFunc = func(ctx context.Context, repos []string, w int, fromTime time.Time, t *service.GitHubTokenManager) (map[string]int64, []models.Nodes, error) {
+		queryStart := utils.AddMonths(fromTime, constant.GithubDataWithinXMonths)
+		since := queryStart.Format(time.RFC3339)
+		Expect(since).NotTo(BeEmpty())
+		return map[string]int64{
+				"test1": 1,
+				"test2": 2,
+			}, []models.Nodes{
+				{
+					CommittedDate: date,
+					Author: models.Author{
+						User: models.User{
+							Login: "testUser1",
+						},
+					},
+					Committer: models.Committer{
+						User: models.User{
+							Login: "testUser1",
+						},
+					},
+				},
+			}, nil
 	}
 
-	map2 := map[string]int64{
-		"test1": 4,
-		"test3": 5,
-	}
+	BeforeEach(func() {
+		service.GetDeveloperWeights = mockFunc
+	})
 
-	expected := map[string]int64{
-		"test1": 1,
-		"test2": 2,
-		"test3": 5,
-	}
+	Describe("FetchDeveloperWeights", func() {
+		It("should success", func() {
 
-	res := addMerge(map1, map2)
-	assert.Equal(t, res, expected)
-}
-
-func worker(ctx context.Context, id int) error {
-	fmt.Printf("Worker %d is processing business logic\n", id)
-
-	if id == 60 {
-		println("Worker 60 is error")
-		return fmt.Errorf("business logic error in worker %d", id)
-	}
-
-	for i := 0; i < 10; i++ {
-		time.Sleep(1 * time.Second)
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
-	}
-
-	println("Worker done in fact ", id)
-	select {
-	case <-ctx.Done():
-		fmt.Printf("Worker %d cancel\n", id)
-	default:
-		fmt.Printf("Worker %d finished work\n", id)
-	}
-
-	return nil
-}
-
-func nestedWorker(ctx context.Context, id int) error {
-	g, ctx := errgroup.WithContext(ctx)
-
-	for i := 1; i <= 100; i++ {
-		i := i // capture loop variable
-		g.Go(func() error {
-			return worker(ctx, id*10+i)
+			Expect(err).To(BeNil())
+			tokenManager := service.NewGitHubTokenManager(conf.Github.Token, &mockgithubRateLimit{})
+			res, nodes, err := syncService.FetchDeveloperWeights(date, &mockGithubRepo{}, tokenManager)
+			Expect(err).To(BeNil())
+			Expect(res).To(Equal(map[string]int64{
+				"test1": 1,
+				"test2": 2,
+			}))
+			Expect(nodes).ToNot(BeEmpty())
 		})
-	}
+	})
 
-	return g.Wait()
+	Describe("addMerge", func() {
+		It("should equal", func() {
+			map1 := map[string]int64{
+				"test1": 1,
+				"test2": 2,
+			}
+			map2 := map[string]int64{
+				"test1": 1,
+				"test3": 3,
+			}
+			expected := map[string]int64{
+				"test1": 1,
+				"test2": 2,
+				"test3": 3,
+			}
+			Expect(service.AddMerge(map1, map2)).To(Equal(expected))
+		})
+	})
+})
+
+type mockGithubRepo struct{}
+
+func (m *mockGithubRepo) GetRepoNames(orgs []string, users []string, tokenManager *service.GitHubTokenManager) []string {
+	return []string{"testOrg/testRepo"}
 }
 
-func TestContext(t *testing.T) {
-	// Create a context with cancel
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+type mockgithubRateLimit struct{}
 
-	// Create an errgroup with the context
-	g, ctx := errgroup.WithContext(ctx)
-
-	// Launch top-level nested workers
-	for i := 1; i <= 2; i++ {
-		i := i // capture loop variable
-		g.Go(func() error {
-			return nestedWorker(ctx, i)
-		})
-	}
-
-	// Wait for all nested workers to finish or any error to occur
-	if err := g.Wait(); err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return
-	}
-
-	fmt.Println("All workers finish")
+func (m *mockgithubRateLimit) CheckRateLimitBeforeRequest(token string) (int32, int32) {
+	return 20_000, 20_000
 }
