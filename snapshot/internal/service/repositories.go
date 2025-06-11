@@ -17,33 +17,31 @@ package service
 import (
 	"fmt"
 	"sync"
-	"time"
 
 	"go.uber.org/zap"
 
-	"power-snapshot/config"
+	models "power-snapshot/internal/model"
 	"power-snapshot/utils"
 )
 
-// Repository represents a GitHub repository.
-type Repository struct {
-	Name string `json:"name"`
+type IGithub interface{
+	GetRepoNames(orgs []string, users []string, tokenManager *GitHubTokenManager) []string
 }
+type GithubOrg struct{}
 
 // GetRepoNames retrieves names of repositories for given organizations or users.
-func GetRepoNames(orgs []string, users []string, tokenManager *GitHubTokenManager) []string {
+func (g GithubOrg) GetRepoNames(orgs []string, users []string, tokenManager *GitHubTokenManager) []string {
 	var wg sync.WaitGroup
 	wg.Add(len(orgs) + len(users))
 
 	reposChan := make(chan []string, len(orgs)+len(users))
 
-	fetchRepos := func(entity, name string, fetchFunc func(string, string) ([]Repository, error)) {
+	fetchRepos := func(entity, name string, fetchFunc func(string, string) ([]models.Repository, error)) {
 		defer wg.Done()
 		token := tokenManager.GetCoreAvailableToken()
 		if token == "" {
 			return
 		}
-		defer tokenManager.CoreDecreaseUsage(token)
 
 		repos, err := fetchFunc(entity, token)
 		if err != nil {
@@ -61,14 +59,12 @@ func GetRepoNames(orgs []string, users []string, tokenManager *GitHubTokenManage
 
 	// Fetch repositories for organizations
 	for _, org := range orgs {
-		time.Sleep(time.Duration(config.Client.Rate.GithubRequestLimit) * time.Millisecond)
-		go fetchRepos(org, "organization", getAllOrgRepos)
+		go fetchRepos(org, "organization", g.getAllOrgRepos)
 	}
 
 	// Fetch repositories for users
 	for _, user := range users {
-		time.Sleep(time.Duration(config.Client.Rate.GithubRequestLimit) * time.Millisecond)
-		go fetchRepos(user, "user", getAllUserRepos)
+		go fetchRepos(user, "user", g.getAllUserRepos)
 	}
 
 	go func() {
@@ -80,28 +76,28 @@ func GetRepoNames(orgs []string, users []string, tokenManager *GitHubTokenManage
 	for repos := range reposChan {
 		allRepos = append(allRepos, repos...)
 	}
-	
+
 	return allRepos
 }
 
 // getAllOrgRepos fetches all repositories for a given organization from GitHub.
-func getAllOrgRepos(org, token string) ([]Repository, error) {
+func (g GithubOrg) getAllOrgRepos(org, token string) ([]models.Repository, error) {
 	url := fmt.Sprintf("https://api.github.com/orgs/%s/repos", org)
-	return fetchRepositories(url, token)
+	return g.fetchRepositories(url, token)
 }
 
 // getAllUserRepos fetches all repositories for a given user from GitHub.
-func getAllUserRepos(user, token string) ([]Repository, error) {
+func (g GithubOrg) getAllUserRepos(user, token string) ([]models.Repository, error) {
 	url := fmt.Sprintf("https://api.github.com/users/%s/repos", user)
-	return fetchRepositories(url, token)
+	return g.fetchRepositories(url, token)
 }
 
 // fetchRepositories performs the common logic for fetching repositories from GitHub.
-func fetchRepositories(url, token string) ([]Repository, error) {
-	var allRepos []Repository
+func (g GithubOrg) fetchRepositories(url, token string) ([]models.Repository, error) {
+	var allRepos []models.Repository
 
 	for {
-		var repos []Repository
+		var repos []models.Repository
 		linkHeader, err := utils.FetchGithubDeveloper(url, token, map[string]string{"per_page": "100"}, &repos)
 		if err != nil {
 			return nil, err

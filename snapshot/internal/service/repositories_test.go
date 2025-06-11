@@ -12,40 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package service
+package service_test
 
 import (
-	"fmt"
-	"log"
-	"testing"
+	"github.com/golang/mock/gomock"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
-	"github.com/stretchr/testify/assert"
-
-	"power-snapshot/config"
+	"power-snapshot/internal/service"
+	mocks "power-snapshot/mock"
 )
 
-func TestGetRepoNames(t *testing.T) {
-	// Initialize the logger
-	config.InitLogger()
-
-	// Load the configuration from the specified path
-	err := config.InitConfig("../../")
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
-		return
-	}
-	tokenManager := NewGitHubTokenManager(config.Client.Github.Token)
-	allRepos := GetRepoNames(EcosystemOrg, GithubUser, tokenManager)
-	fmt.Println(len(allRepos))
-
-}
-
-func TestFetchRepositories(t *testing.T) {
-	url := fmt.Sprintf("https://api.github.com/orgs/%s/repos", "ArchlyFi")
-	res, err := fetchRepositories(
-		url,
-		"",
-	)
-	assert.NoError(t, err)
-	assert.NotNil(t, res)
-}
+var _ = Describe("Repositories", func() {
+	var mockIgithub *mocks.MockIGithub
+	var tokenManager *service.GitHubTokenManager
+	BeforeEach(func() {
+		mockIgithub = mocks.NewMockIGithub(mockCtrl)
+		tokenManager = service.NewGitHubTokenManager(
+			[]string{"token1"},
+			mockGithubLimit,
+		)
+		mockIgithub.EXPECT().
+			GetRepoNames(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return([]string{"repo1", "repo2"})
+	})
+	Describe("GetRepoNames", func() {
+		It("should return repo names", func() {
+			repoNames := mockIgithub.GetRepoNames([]string{"org1"}, []string{"user1"}, tokenManager)
+			Expect(repoNames).To(Equal([]string{"repo1", "repo2"}))
+		})
+	})
+})

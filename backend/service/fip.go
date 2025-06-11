@@ -43,7 +43,6 @@ type FipRepo interface {
 type IFipService interface {
 	GetFipProposalList(ctx context.Context, req api.FipProposalListReq) (*api.CountListRep, error)
 	GetFipEditorList(ctx context.Context, req api.FipEditorListReq) ([]api.FipEditorRep, error)
-	
 }
 
 type FipService struct {

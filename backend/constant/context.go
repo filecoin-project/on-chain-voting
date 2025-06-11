@@ -15,7 +15,9 @@
 package constant
 
 import (
+	"errors"
 	"fmt"
+	"reflect"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -27,28 +29,95 @@ type Context struct {
 	*validator.Validate
 }
 
+type ValidationErrorResponse struct {
+	Field   string `json:"field"`
+	Message string `json:"message"`
+}
+
+type ValidationErrors []ValidationErrorResponse
+
+func (v ValidationErrors) Errors() []error {
+	var errs []error
+	for _, e := range v {
+		errs = append(errs, fmt.Errorf("%s: %s", e.Field, e.Message))
+	}
+
+	return errs
+}
+
+func (v ValidationErrors) Error() error {
+	var err error
+	for _, e := range v {
+		err = errors.Join(err, fmt.Errorf("%s: %s", e.Field, e.Message))
+	}
+
+	return err
+}
+
 // BindAndValidate binds and validates request params.
-func (c *Context) BindAndValidate(req any) error {
+func (c *Context) BindAndValidate(req any) ValidationErrors {
 	// 1. BindUri binds the passed struct pointer using the specified binding engine.
 	if err := c.ShouldBindUri(req); err != nil {
-		return fmt.Errorf("router parameter error: %v", err)
+		return []ValidationErrorResponse{{
+			Field:   "uri",
+			Message: fmt.Sprintf("uri parameter error: %v", err),
+		}}
 	}
-	
+
 	// 2. BindQuery binds the passed struct pointer using the specified binding engine.
 	if err := c.ShouldBindQuery(req); err != nil {
-		return fmt.Errorf("query parameter error: %v", err)
+		return []ValidationErrorResponse{{
+			Field:   "query",
+			Message: fmt.Sprintf("query parameter error: %v", err),
+		}}
 	}
 
 	// 3. BindJSON binds the passed struct pointer using the specified binding engine.
 	if err := c.ShouldBind(req); err != nil {
-		return fmt.Errorf("body parameter error: %v", err)
+		return []ValidationErrorResponse{{
+			Field:   "body",
+			Message: fmt.Sprintf("body parameter error: %v", err),
+		}}
 	}
 
 	// 4. Validate the request params.
+	var errors []ValidationErrorResponse
 	if err := c.Validate.Struct(req); err != nil {
 		zap.L().Error("Param validate error", zap.Error(err))
-		return fmt.Errorf("param validate error: %v", err)
+		dataType := reflect.TypeOf(req)
+		if dataType.Kind() == reflect.Ptr {
+			dataType = dataType.Elem()
+		}
+
+		for _, err := range err.(validator.ValidationErrors) {
+			var element ValidationErrorResponse
+			field, _ := dataType.FieldByName(err.Field())
+
+			element.Field = err.Field()
+			element.Message = getValidationMessage(field, err.Tag())
+
+			errors = append(errors, element)
+		}
 	}
 
-	return nil
+	return errors
+}
+
+func getValidationMessage(field reflect.StructField, tag string) string {
+	if msg := field.Tag.Get("msg"); msg != "" {
+		return msg
+	}
+
+	switch tag {
+	case "required":
+		return fmt.Sprintf("%s is required", field.Name)
+	case "min":
+		return fmt.Sprintf("%s must be at least %s characters", field.Name, field.Tag.Get("min"))
+	case "max":
+		return fmt.Sprintf("%s must be at most %s characters", field.Name, field.Tag.Get("max"))
+	case "oneof":
+		return fmt.Sprintf("%s must be one of %s", field.Name, field.Tag.Get("oneof"))
+	default:
+		return fmt.Sprintf("Validation failed on %s for %s", field.Name, tag)
+	}
 }

@@ -13,7 +13,8 @@ nats:
 network:
   id: <NETWORK_ID>
   name: <NETWORK_NAME>
-  idPrefix: <ID_PREFIX>
+  powerVotingAbiPath: <><POWER_VOTING_ABI_PATH>
+  powerVotingConfContract: <POWER_VOTING_CONF_CONTRACT>
   queryRpc: [<QUERY_RPC_URL>]
     
 github:
@@ -33,3 +34,4 @@ w3client:
 
 rate:
   githubRequestLimit: 50   # Request interval time, unit in microseconds
+syncStartDate: 20250401

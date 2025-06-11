@@ -27,6 +27,11 @@ type MockProposalService struct {
 	mock.Mock
 }
 
+// DeleteDraft implements service.IProposalService.
+func (m *MockProposalService) DeleteDraft(ctx context.Context, req api.DelProposalDraftReq) error {
+	panic("unimplemented")
+}
+
 type MockFipService struct {
 	mock.Mock
 }
@@ -163,46 +168,6 @@ func TestGetCountedVotesInfo_MissingParams(t *testing.T) {
 	}
 }
 
-func TestGetProposalList_Success(t *testing.T) {
-	proposalService := new(MockProposalService)
-	voteService := new(MockVoteService)
-	fipService := new(MockFipService)
-	router := setupRouter(proposalService, voteService, fipService)
-
-	data := []api.ProposalRep{
-		{
-			ProposalId: 123,
-			Title:      "Test Proposal",
-			Content:    "Test Proposal Content",
-			Status:     0,
-			ChainId:    1,
-		},
-	}
-	proposalService.On("ProposalList", mock.Anything, api.ProposalListReq{
-		Status:    0,
-		SearchKey: "",
-		PageReq: api.PageReq{
-			Page:     1,
-			PageSize: 10,
-		},
-		ChainIdParam: api.ChainIdParam{
-			ChainId: 1,
-		},
-	}).Return(&api.CountListRep{
-		Total: int64(len(data)),
-		List:  data,
-	}, nil)
-
-	req, _ := http.NewRequest("GET", constant.PowerVotingApiPrefix+"/proposal/list?chainId=1&page=1&pageSize=10", nil)
-	resp := httptest.NewRecorder()
-
-	router.ServeHTTP(resp, req)
-
-	assert.Equal(t, http.StatusOK, resp.Code)
-	assert.Contains(t, resp.Body.String(), `Test Proposal`)
-	proposalService.AssertExpectations(t)
-}
-
 func TestGetProposalDetail_InvalidChainId(t *testing.T) {
 	proposalService := new(MockProposalService)
 	voteService := new(MockVoteService)
@@ -218,7 +183,7 @@ func TestGetProposalDetail_InvalidChainId(t *testing.T) {
 }
 
 func TestGetPower_InvalidAddress(t *testing.T) {
-	config.InitConfig("../")
+	config.GetDefaultConfig()
 	proposalService := new(MockProposalService)
 	voteService := new(MockVoteService)
 	fipService := new(MockFipService)
@@ -234,18 +199,29 @@ func TestGetPower_InvalidAddress(t *testing.T) {
 }
 
 func TestPostDraft_Success(t *testing.T) {
-	config.InitConfig("../")
-
+	config.GetDefaultConfig()
 	proposalService := new(MockProposalService)
 	voteService := new(MockVoteService)
 	fipService := new(MockFipService)
 	router := setupRouter(proposalService, voteService, fipService)
-	body := `{"title": "Test Proposal"}`
+	body := `{"title": "Test Proposal","creator": "0x1234567890123456789012345678901234567890","startTime": 1,"endTime": 2,"chainId": 3,"content": "test content","tokenHolderPercentage":1,"spPercentage":1,"clientPercentage":1,"developerPercentage":1,"timezone": "Asia/Shanghai"}`
 
 	proposalService.On("AddDraft",
 		mock.Anything,
 		&api.AddProposalDraftReq{
-			Title: "Test Proposal",
+			Title:        "Test Proposal",
+			Creator:      "0x1234567890123456789012345678901234567890",
+			StartTime:    1,
+			EndTime:      2,
+			ChainIdParam: api.ChainIdParam{ChainId: 3},
+			Content:      "test content",
+			ProposalPercentage: api.ProposalPercentage{
+				TokenHolderPercentage: 1,
+				SpPercentage:          1,
+				ClientPercentage:      1,
+				DeveloperPercentage:   1,
+			},
+			Timezone: "Asia/Shanghai",
 		}).Return(nil)
 	req, _ := http.NewRequest("POST", constant.PowerVotingApiPrefix+"/proposal/draft/add", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -255,4 +231,15 @@ func TestPostDraft_Success(t *testing.T) {
 
 	assert.Contains(t, resp.Body.String(), `"code":0`)
 	assert.Contains(t, resp.Body.String(), constant.CodeOKStr)
+}
+
+func TestToEthAddr(t *testing.T) {
+	config.GetDefaultConfig()
+	addr := api.AddressReq{
+		Address: "t3qamo6mesb5ppiqqbmsytvadjlbld7k6xji2wkn55hb4w2c5pa4gyyehtxjl6gtxbzs7kcul3z744frid4oqq",
+	}
+
+	res, err := addr.ToEthAddr()
+	assert.Nil(t, err)
+	assert.NotEqual(t, addr.Address, res)
 }

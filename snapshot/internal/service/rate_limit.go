@@ -19,128 +19,221 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"go.uber.org/zap"
 )
 
-type GitHubTokenManager struct {
-	tokens               []string
-	graphQLTokenUsage    map[string]int
-	graphQLTokenCapacity map[string]int
-	coreTokenUsage       map[string]int
-	coreTokenCapacity    map[string]int
-	mu                   sync.Mutex
+type AtomicTokenCounter struct {
+	count *atomic.Int32
+	_     [64 - 4]byte
 }
 
-func NewGitHubTokenManager(tokens []string) *GitHubTokenManager {
+func NewAtomicTokenCounter() *AtomicTokenCounter {
+	return &AtomicTokenCounter{
+		count: new(atomic.Int32),
+	}
+}
+
+func (a *AtomicTokenCounter) Add(n int32) {
+	a.count.Add(n) // atomic add
+}
+
+func (a *AtomicTokenCounter) Set(n int32) {
+	a.count.Store(n) // atomic set
+}
+
+func (a *AtomicTokenCounter) Get() int32 {
+	if a == nil {
+		a = NewAtomicTokenCounter()
+	}
+
+	return a.count.Load() // atomic get
+}
+
+func (a *AtomicTokenCounter) Eq(v int32) bool {
+	return a.Get() == v
+}
+
+func (a *AtomicTokenCounter) Gt(v int32) bool {
+	return a.Get() > v
+}
+
+func (a *AtomicTokenCounter) Gte(v int32) bool {
+	return a.Get() >= v
+}
+
+func (a *AtomicTokenCounter) Lt(v int32) bool {
+	return a.Get() < v
+}
+
+func (a *AtomicTokenCounter) Lte(v int32) bool {
+	return a.Get() <= v
+}
+
+
+type GitHubTokenManager struct {
+	tokens       []string
+	graphQLUsage map[string]*AtomicTokenCounter
+	graphQLCap   map[string]*AtomicTokenCounter
+	coreUsage    map[string]*AtomicTokenCounter
+	coreCap      map[string]*AtomicTokenCounter
+	mu           sync.RWMutex
+	githubApi    GithubLimit
+}
+
+func NewGitHubTokenManager(tokens []string, githubApi GithubLimit) *GitHubTokenManager {
 	manager := &GitHubTokenManager{
-		tokens:               tokens,
-		graphQLTokenUsage:    make(map[string]int),
-		graphQLTokenCapacity: make(map[string]int),
-		coreTokenUsage:       make(map[string]int),
-		coreTokenCapacity:    make(map[string]int),
+		tokens:       tokens,
+		graphQLUsage: make(map[string]*AtomicTokenCounter),
+		graphQLCap:   make(map[string]*AtomicTokenCounter),
+		coreUsage:    make(map[string]*AtomicTokenCounter),
+		coreCap:      make(map[string]*AtomicTokenCounter),
+		githubApi:    githubApi,
 	}
 
 	for _, token := range tokens {
-		manager.graphQLTokenCapacity[token], manager.coreTokenCapacity[token] = CheckRateLimitBeforeRequest(token)
-		zap.L().Info("GitHubTokenManager",
-			zap.Int("graphQLTokenCapacity", manager.graphQLTokenCapacity[token]),
-			zap.Int("coreTokenCapacity", manager.coreTokenCapacity[token]))
+		manager.graphQLUsage[token] = NewAtomicTokenCounter()
+		manager.coreUsage[token] = NewAtomicTokenCounter()
+		manager.graphQLCap[token] = NewAtomicTokenCounter()
+		manager.coreCap[token] = NewAtomicTokenCounter()
+
 	}
 
+	manager.RefreshToken()
 	return manager
+}
+
+func (m *GitHubTokenManager) RefreshToken() string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	res := ""
+	for _, token := range m.tokens {
+		zap.L().Info("TokenRefresh Before",
+			zap.String("token", token),
+			zap.String("graphQL", fmt.Sprintf("limit: %d, used: %d", m.graphQLCap[token].Get(), m.graphQLUsage[token].Get())),
+			zap.String("core", fmt.Sprintf("limit: %d, used: %d", m.coreCap[token].Get(), m.coreUsage[token].Get())),
+		)
+
+		gCap, cCap := m.githubApi.CheckRateLimitBeforeRequest(token)
+		m.graphQLCap[token].Set(gCap)
+		m.coreCap[token].Set(cCap)
+		m.graphQLUsage[token].Set(0)
+		m.coreUsage[token].Set(0)
+
+		zap.L().Info("TokenRefresh After",
+			zap.String("token", token),
+			zap.String("graphQL", fmt.Sprintf("limit: %d, used: %d", gCap, m.graphQLUsage[token].Get())),
+			zap.String("core", fmt.Sprintf("limit: %d, used: %d", cCap, m.coreUsage[token].Get())))
+		fmt.Printf("\n\n")
+		if gCap > 0 && cCap > 0 {
+			res = token
+		}
+	}
+
+	return res
+}
+
+func (m *GitHubTokenManager) CheckTokenUsedNum(token string) (int32, int32) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	return m.graphQLUsage[token].Get(), m.coreUsage[token].Get()
 }
 
 func (m *GitHubTokenManager) GetAvailableToken() string {
 	m.mu.Lock()
-	defer m.mu.Unlock()
 
-	var maxToken string
-	maxCapacity := 0
+	for token := range m.graphQLCap {
+		currentCap := m.graphQLCap[token].Get()
+		currentUsage := m.graphQLUsage[token].Get()
 
-	for token, capacity := range m.graphQLTokenCapacity {
-		if m.graphQLTokenUsage[token] < capacity && capacity > maxCapacity {
-			maxToken = token
-			maxCapacity = capacity
+		if currentUsage < currentCap && currentCap > 0 && currentCap-currentUsage > 15 {
+			m.graphQLUsage[token].Add(1)
+			m.mu.Unlock()
+			return token
 		}
 	}
+	
+	m.mu.Unlock()
+	return m.RefreshToken()
 
-	if maxToken != "" {
-		m.graphQLTokenUsage[maxToken]++
-	}
-	return maxToken
 }
 
-func (m *GitHubTokenManager) DecreaseUsage(token string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	if m.graphQLTokenUsage[token] > 0 {
-		m.graphQLTokenUsage[token]--
+func (m *GitHubTokenManager) GetAllTokenCap() int32 {
+	var result int32
+	
+	m.RefreshToken()
+	for _, token := range m.tokens {
+		result += m.graphQLCap[token].Get()
 	}
+
+	return result
+}
+
+func (m *GitHubTokenManager) GetApiCap(token string) (int32, int32) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	return m.graphQLCap[token].Get(), m.coreCap[token].Get()
 }
 
 func (m *GitHubTokenManager) GetCoreAvailableToken() string {
 	m.mu.Lock()
-	defer m.mu.Unlock()
 
-	var maxToken string
-	maxCapacity := 0
-
-	for token, capacity := range m.coreTokenCapacity {
-		if m.coreTokenUsage[token] < capacity && capacity > maxCapacity {
-			maxToken = token
-			maxCapacity = capacity
+	for token := range m.coreCap {
+		currentCap := m.coreCap[token].Get()
+		currentUsage := m.coreUsage[token].Get()
+		if currentUsage < currentCap && currentCap > 0 {
+			m.coreUsage[token].Add(1)
+			m.mu.Unlock()
+			return token
 		}
 	}
 
-	if maxToken != "" {
-		m.coreTokenUsage[maxToken]++
-	}
-	
-	return maxToken
-}
-
-func (m *GitHubTokenManager) CoreDecreaseUsage(token string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	if m.coreTokenUsage[token] > 0 {
-		m.coreTokenUsage[token]--
-	}
+	m.mu.Unlock()
+	return m.RefreshToken()
 }
 
 type RateLimitResponse struct {
 	Resources struct {
 		Core struct {
-			Limit     int `json:"limit"`
-			Used      int `json:"used"`
-			Remaining int `json:"remaining"`
-			Reset     int `json:"reset"`
+			Limit     int32 `json:"limit"`
+			Used      int32 `json:"used"`
+			Remaining int32 `json:"remaining"`
+			Reset     int32 `json:"reset"`
 		} `json:"core"`
 		Search struct {
-			Limit     int `json:"limit"`
-			Used      int `json:"used"`
-			Remaining int `json:"remaining"`
-			Reset     int `json:"reset"`
+			Limit     int32 `json:"limit"`
+			Used      int32 `json:"used"`
+			Remaining int32 `json:"remaining"`
+			Reset     int32 `json:"reset"`
 		} `json:"search"`
 		GraphQL struct {
-			Limit     int `json:"limit"`
-			Used      int `json:"used"`
-			Remaining int `json:"remaining"`
-			Reset     int `json:"reset"`
+			Limit     int32 `json:"limit"`
+			Used      int32 `json:"used"`
+			Remaining int32 `json:"remaining"`
+			Reset     int32 `json:"reset"`
 		} `json:"graphql"`
 	} `json:"resources"`
 	Rate struct {
-		Limit     int `json:"limit"`
-		Used      int `json:"used"`
-		Remaining int `json:"remaining"`
-		Reset     int `json:"reset"`
+		Limit     int32 `json:"limit"`
+		Used      int32 `json:"used"`
+		Remaining int32 `json:"remaining"`
+		Reset     int32 `json:"reset"`
 	} `json:"rate"`
 }
 
-func CheckRateLimitBeforeRequest(token string) (int, int) {
+type GithubLimit interface {
+	CheckRateLimitBeforeRequest(token string) (int32, int32)
+}
+
+type GithubRateLimit struct {
+}
+
+func (g GithubRateLimit) CheckRateLimitBeforeRequest(token string) (int32, int32) {
 	// Perform a GET request to the GitHub rate limit endpoint
 	url := "https://api.github.com/rate_limit"
 	client := http.Client{

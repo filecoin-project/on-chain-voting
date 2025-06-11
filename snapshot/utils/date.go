@@ -20,7 +20,7 @@ import (
 	"github.com/golang-module/carbon"
 	"github.com/samber/lo"
 
-	"power-snapshot/constant"
+	"power-snapshot/config"
 )
 
 /**
@@ -43,10 +43,25 @@ func CalDateList(syncEndTime time.Time, syncCountedDays int, dates []string) []s
 	return diff
 }
 
-func CalMissDates(dates []string) []string {
-	return CalDateList(time.Now().Add(-(24 * time.Hour)), constant.DataExpiredDuration, dates)
-}
+func CalMissDates(dates []string, durationDays int) []string {
+	var startTime = time.Now().Add(-24 * time.Hour)
 
+	if config.Client.SyncStartDate != "" {
+		carbonDate, err := time.Parse("20060102", config.Client.SyncStartDate)
+		if err == nil {
+			elapsed := time.Since(carbonDate)
+			elapsedDays := int(elapsed.Hours() / 24)
+
+			if elapsedDays < durationDays {
+				durationDays = elapsedDays
+			}
+		}
+	} else {
+		startTime = time.Now().Add(-24 * time.Hour)
+	}
+
+	return CalDateList(startTime, durationDays, dates)
+}
 
 // addMonths adds a specified number of months to a given date.
 func AddMonths(input time.Time, months int) time.Time {
@@ -70,4 +85,3 @@ func getLastDayOfMonth(year, month int) int {
 	lastDay = nextMonth.Day()
 	return lastDay
 }
-

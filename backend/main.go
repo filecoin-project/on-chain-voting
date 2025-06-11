@@ -48,21 +48,22 @@ func main() {
 	voteRepoImpl := repo.NewVoteRepo(mydb)
 	syncRepoImpl := repo.NewSyncRepo(mydb)
 	fipRepoImpl := repo.NewFipRepo(mydb)
+	lotusRepoImpl := repo.NewLotusRPCRepo()
 	proposalService := service.NewProposalService(proposalRepoImpl)
-	voteService := service.NewVoteService(voteRepoImpl)
+	voteService := service.NewVoteService(voteRepoImpl, lotusRepoImpl)
 	syncService := service.NewSyncService(
 		syncRepoImpl,
 		voteRepoImpl,
 		proposalRepoImpl,
 		fipRepoImpl,
-		repo.NewLotusRPCRepo(),
+		lotusRepoImpl,
 	)
 	fipService := service.NewFipService(fipRepoImpl)
 	// initialization scheduled task
 	go task.TaskScheduler(syncService)
 
 	// initialization grpc server
-	go RpcServer(rpc.NewBackendRpc(service.NewRpcService(voteRepoImpl)))
+	go RpcServer(rpc.NewBackendRpc(service.NewRpcService(voteRepoImpl, syncRepoImpl, lotusRepoImpl)))
 	// default gin web
 	r := gin.Default()
 	r.Use(Cors())

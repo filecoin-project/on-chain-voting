@@ -86,3 +86,5 @@ interface IPowerVotingFipError is CommonError {
     //The maximum length of the candidate info is ${len}
     error CandidateInfoLimitError(uint256);
 }
+
+

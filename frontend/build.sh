@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-IMAGE_NAME="power-voting-frontend"
+IMAGE_NAME="pv-frontend-mainnet"
 
 if [ ! -f "configuration.yaml" ]; then
     echo "Error: configuration.yaml does not exist."
@@ -38,4 +38,4 @@ else
     echo "Container $IMAGE_NAME does not exist or is already stopped."
 fi
 
-docker run --name $IMAGE_NAME -p $PORT:$PORT -d $IMAGE_NAME
+docker run --name $IMAGE_NAME -p 9000:$PORT -d $IMAGE_NAME

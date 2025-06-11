@@ -44,7 +44,6 @@ func (ev *Event) HandleOracleUpdateGistId(ctx context.Context, event OracleUpdat
 func (ev *Event) HandleOracleUpdateMinerIds(ctx context.Context, event OracleUpdateMinerIdsEvent, blockHeader *types.Header) error {
 	zap.L().Info("oracle update miner ids event handled", zap.String("voter", event.VoterAddress.Hex()), zap.Any("miner ids", event.MinerIds))
 
-
 	if err := ev.SyncService.UpdateVoterByMinerIds(ctx, event.VoterAddress.Hex(), event.MinerIds); err != nil {
 		zap.L().Error("failed to update voter by miner ids", zap.Error(err))
 		return err

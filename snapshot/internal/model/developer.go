@@ -68,3 +68,9 @@ type Committer struct {
 type User struct {
 	Login string `json:"login"` // User login information.
 }
+
+
+// Repository represents a GitHub repository.
+type Repository struct {
+	Name string `json:"name"`
+}

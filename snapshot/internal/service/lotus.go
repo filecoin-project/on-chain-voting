@@ -28,11 +28,10 @@ type LotusRepo interface {
 	GetTipSetByHeight(ctx context.Context, netId, height int64) ([]any, error)
 	GetAddrBalanceBySpecialHeight(ctx context.Context, addr string, netId, height int64) (string, error)
 	GetMinerPowerByHeight(ctx context.Context, netId int64, addr string, tipsetKey []interface{}) (models.LotusMinerPower, error)
-	GetClientBalanceBySpecialHeight(ctx context.Context, netId, height int64) (models.StateMarketDeals, error)
 	GetNewestHeight(ctx context.Context, netId int64) (height int64, err error)
 	GetBlockHeader(ctx context.Context, netId, height int64) (models.BlockHeader, error)
 	GetWalletBalanceByHeight(ctx context.Context, id string, netId, height int64) (string, error)
-	GetClientBalanceByHeight(ctx context.Context, netId, height int64) (types.StateMarketDeals, error)
+	GetDealsByHeight(ctx context.Context, netId, height int64) (types.StateMarketDeals, error)
 }
 
 type LotusService struct {
@@ -81,17 +80,6 @@ func (l *LotusService) GetMinerPowerByHeight(ctx context.Context, netId int64, a
 	return &res, nil
 }
 
-func (l *LotusService) GetClientBalanceBySpecialHeight(ctx context.Context, netId, height int64) (*models.StateMarketDeals, error) {
-	res, err := l.lotusRepo.GetClientBalanceBySpecialHeight(ctx, netId, height)
-	if err != nil {
-		l.logger.Error("error when get client balance", zap.Int64("height", height), zap.Error(err))
-		return nil, err
-	}
-
-	l.logger.Info("get client balance success", zap.Int64("height", height), zap.Any("balance", res))
-	return &res, nil
-}
-
 func (l *LotusService) GetNewestHeight(ctx context.Context, netId int64) (height int64, err error) {
 	res, err := l.lotusRepo.GetNewestHeight(ctx, netId)
 	if err != nil {
@@ -125,13 +113,13 @@ func (l *LotusService) GetWalletBalanceByHeight(ctx context.Context, id string, 
 	return res, nil
 }
 
-func (l *LotusService) GetClientBalanceByHeight(ctx context.Context, netId, height int64) (*types.StateMarketDeals, error) {
-	res, err := l.lotusRepo.GetClientBalanceByHeight(ctx, netId, height)
-	if err != nil {
-		l.logger.Error("error when get client balance", zap.Int64("height", height), zap.Error(err))
-		return nil, err
-	}
+// func (l *LotusService) GetClientBalanceByHeight(ctx context.Context, netId, height int64) (*types.StateMarketDeals, error) {
+// 	res, err := l.lotusRepo.GetClientBalanceByHeight(ctx, netId, height)
+// 	if err != nil {
+// 		l.logger.Error("error when get client balance", zap.Int64("height", height), zap.Error(err))
+// 		return nil, err
+// 	}
 
-	l.logger.Info("get client balance success", zap.Int64("height", height), zap.Any("balance", res))
-	return &res, nil
-}
+// 	l.logger.Info("get client balance success", zap.Int64("height", height), zap.Any("balance", res))
+// 	return &res, nil
+// }

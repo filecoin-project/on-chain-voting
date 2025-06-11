@@ -62,7 +62,7 @@ func (ev *Event) SubscribeEvent() error {
 	endBlock := header.Number.Int64()
 	if endBlock <= syncInfo.SyncedHeight {
 		if endBlock == syncInfo.SyncedHeight {
-			zap.L().Info("It has been synchronized to the latest block height", zap.Int64("latest block height", endBlock))
+			zap.L().Debug("It has been synchronized to the latest block height", zap.Int64("latest block height", endBlock))
 			return constant.ErrAlreadySyncHeight
 		}
 
@@ -115,6 +115,7 @@ func (ev *Event) FetchMatchingEventLogs(ctx context.Context, fromBlock, ToBlock 
 			common.HexToAddress(ev.Network.PowerVotingContract),
 			common.HexToAddress(ev.Network.FipContract),
 			common.HexToAddress(ev.Network.OracleContract),
+			common.HexToAddress(ev.Network.PowerVotingConfContract),
 		},
 		Topics: [][]common.Hash{
 			{
@@ -125,6 +126,8 @@ func (ev *Event) FetchMatchingEventLogs(ctx context.Context, fromBlock, ToBlock 
 				ev.Client.ABI.FipAbi.Events[constant.FipPassedEvt].ID,
 				ev.Client.ABI.OracleAbi.Events[constant.OracleUpdateGistIdsEvt].ID,
 				ev.Client.ABI.OracleAbi.Events[constant.OracleUpdateMinerIdsEvt].ID,
+				ev.Client.ABI.PowerVotingConfAbi.Events[constant.ConfRepoAddedEvt].ID,
+				ev.Client.ABI.PowerVotingConfAbi.Events[constant.ConfRepoRemovedEvt].ID,
 			},
 		},
 	}
@@ -223,7 +226,7 @@ func (ev *Event) parseEvent(ctx context.Context, vLog types.Log) error {
 			return fmt.Errorf("unpack oracle update gist ids event error: %v", err)
 		}
 
-		if err := ev.HandleOracleUpdateGistId(ctx, event, ev.Client.ChainId,blockHeader); err != nil {
+		if err := ev.HandleOracleUpdateGistId(ctx, event, ev.Client.ChainId, blockHeader); err != nil {
 			return fmt.Errorf("handle oracle update gist ids error: %v", err)
 		}
 
@@ -237,6 +240,23 @@ func (ev *Event) parseEvent(ctx context.Context, vLog types.Log) error {
 			return fmt.Errorf("handle oracle update miner ids error: %v", err)
 		}
 
+	case ev.Client.ABI.PowerVotingConfAbi.Events[constant.ConfRepoAddedEvt].ID.Hex():
+		var event ConfRepoAddedEvent
+		if err := ev.parseConfEvent(&event, constant.ConfRepoAddedEvt, vLog.Data); err != nil {
+			return fmt.Errorf("unpack conf repo added event error: %v", err)
+		}
+		if err := ev.HandleConfRepoAddedEvent(ctx, event, blockHeader); err != nil {
+			return fmt.Errorf("handle conf repo added error: %v", err)
+		}
+
+	case ev.Client.ABI.PowerVotingConfAbi.Events[constant.ConfRepoRemovedEvt].ID.Hex():
+		var event ConfRepoRemovedEvent
+		if err := ev.parseConfEvent(&event, constant.ConfRepoRemovedEvt, vLog.Data); err != nil {
+			return fmt.Errorf("unpack conf repo removed event error: %v", err)
+		}
+		if err := ev.HandleConfRepoRemovedEvent(ctx, event, blockHeader); err != nil {
+			return fmt.Errorf("handle conf repo removed error: %v", err)
+		}
 	default:
 		return fmt.Errorf("unknown event")
 	}
@@ -259,6 +279,11 @@ func (ev *Event) parseFipEvent(event any, unpackName string, log []byte) error {
 func (ev *Event) parseOracleEvent(event any, unpackName string, log []byte) error {
 	// Decode non-index parameters
 	return ev.Client.ABI.OracleAbi.UnpackIntoInterface(event, unpackName, log)
+}
+
+func (ev *Event) parseConfEvent(event any, unpackName string, log []byte) error {
+	// Decode non-index parameters
+	return ev.Client.ABI.PowerVotingConfAbi.UnpackIntoInterface(event, unpackName, log)
 }
 
 func FetchEventFromRPC(rpcUrl string) ([]types.Log, error) {

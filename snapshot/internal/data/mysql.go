@@ -19,6 +19,7 @@ import (
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 
 	"power-snapshot/config"
@@ -37,16 +38,18 @@ func NewMysql() *Mysql {
 		DontSupportRenameIndex:    true,  // Rename indexes by deleting and creating new indexes. Databases before MySQL 5.7 and MariaDB do not support rename indexes
 		DontSupportRenameColumn:   true,  // Rename columns with 'change'. Databases prior to MySQL 8 and MariaDB do not support renaming columns
 		SkipInitializeWithVersion: false, // This parameter is automatically configured based on the current MySQL version
+		
 	}), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,   // Singular table
 		},
+		Logger: logger.Default.LogMode(logger.Silent),
 	})
 
 	if err != nil {
 		panic(fmt.Errorf("mysql connect error: %v", err))
 	}
-	fmt.Printf("user: %s, password: %s, url: %s\n", config.Client.Mysql.Username, config.Client.Mysql.Password, config.Client.Mysql.Url)
+
 	db.AutoMigrate(&models.SnapshotBackupTbl{})
 
 	return &Mysql{db}

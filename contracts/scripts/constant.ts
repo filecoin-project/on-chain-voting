@@ -1,3 +1,7 @@
 export const POWER_VOTING_VOTE = "POWER_VOTING_VOTE";
 export const POWER_VOTING_FIP = "POWER_VOTING_FIP";
 export const POWER_VOTING_ORACLE = "POWER_VOTING_ORACLE";
+export const POWER_VOTING_CONFIG = "POWER_VOTING_CONFIG"
+export const CORE_ORG_REPO = 0
+export const ECOSYSTEM_ORG = 1
+export const GITHUB_USER = 2

@@ -20,6 +20,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"powervoting-server/constant"
 	"powervoting-server/data"
 	"powervoting-server/model"
 	"powervoting-server/service"
@@ -74,6 +75,42 @@ func (s *SyncRepoImpl) UpdateSyncEventInfo(ctx context.Context, addr string, hei
 		Updates(model.SyncEventTbl{SyncedHeight: height}).Error
 	if err != nil {
 		return fmt.Errorf("update sync event error: %w", err)
+	}
+
+	return nil
+}
+
+func (s *SyncRepoImpl) AddGithubRepoName(ctx context.Context, in *model.GithubRepos) (int64, error) {
+	if err := s.mydb.Model(model.GithubRepos{}).
+		WithContext(ctx).
+		Create(in).Error; err != nil {
+		if data.IsDuplicateEntryError(err) {
+			// If it's a duplicate entry, return 0 for the ID and no error.
+			return 0, nil
+		}
+		return 0, fmt.Errorf("create github repo error: %w", err)
+	}
+
+	return in.Id, nil
+}
+
+func (s *SyncRepoImpl) GetGithubRepoName(ctx context.Context, orgType int) ([]model.GithubRepos, error) {
+	var githubRepo []model.GithubRepos
+	tx := s.mydb.Model(model.GithubRepos{}).
+		WithContext(ctx).
+		Where("org_type = ? AND is_not_deleted = ?", orgType, constant.NotDeletedRepo).
+		Find(&githubRepo)
+
+	return githubRepo, tx.Error
+}
+
+func (s *SyncRepoImpl) DeleteGithubRepoName(ctx context.Context, orgId int64) error {
+	err := s.mydb.Model(model.GithubRepos{}).
+		WithContext(ctx).
+		Where("org_id = ?", orgId).
+		Updates(model.GithubRepos{IsNotDeleted: constant.DeletedRepo}).Error
+	if err != nil {
+		return fmt.Errorf("delete github repo error: %w", err)
 	}
 
 	return nil

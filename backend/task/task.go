@@ -72,11 +72,11 @@ func (j *Safejob) RunSyncEventTask() {
 	if atomic.CompareAndSwapInt32(&j.isRunningSyncEventTask, 0, 1) {
 		defer atomic.StoreInt32(&j.isRunningSyncEventTask, 0)
 
-		zap.L().Info("start sync event ")
+		zap.L().Debug("start sync event ")
 		SyncEventHandler(j.syncService)
-		zap.L().Info("sync event finished, end time:", zap.Int64("end time", time.Now().Unix()))
+		zap.L().Debug("sync event finished, end time:", zap.Int64("end time", time.Now().Unix()))
 	} else {
-		zap.L().Info("sync event task is running, continue")
+		zap.L().Warn("sync event task is running, continue")
 	}
 }
 
@@ -85,10 +85,10 @@ func (j *Safejob) RunVoteCountingTask() {
 	if atomic.CompareAndSwapInt32(&j.isRunningVoteCountingTask, 0, 1) {
 		defer atomic.StoreInt32(&j.isRunningVoteCountingTask, 0)
 
-		zap.L().Info("start sync voting count ")
+		zap.L().Debug("start sync voting count ")
 		VotingCountHandler(j.syncService)
-		zap.L().Info("sync voting count finished, end time: ", zap.Int64("end time", time.Now().Unix()))
+		zap.L().Debug("sync voting count finished, end time: ", zap.Int64("end time", time.Now().Unix()))
 	} else {
-		zap.L().Info("sync voting count task is running, continue")
+		zap.L().Warn("sync voting count task is running, continue")
 	}
 }

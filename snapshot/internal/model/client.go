@@ -15,16 +15,21 @@
 package models
 
 import (
-	"math/big"
-
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 // GoEthClient represents the structure for interacting with the Ethereum client.
 type GoEthClient struct {
-	ChainId           int64               // Unique identifier for the client
-	Name              string              // Name of the client	
-	QueryClient       []*ethclient.Client // Ethereum client instance list
-	QueryRpc          []string            // RPC endpoint for the query client
-	Amount            *big.Int            // Amount for transactions.
+	ChainId                 int64               // Unique identifier for the client
+	Name                    string              // Name of the client
+	QueryClient             []*ethclient.Client // Ethereum client instance list
+	QueryRpc                []string            // RPC endpoint for the query client
+	ABI                     *ABI                // ABI of the contract
+	PowerVotingConfContract common.Address      // Address of the PowerVotingConf contract
+}
+
+type ABI struct {
+	PowerVotingConfAbi *abi.ABI // ABI for PowerVotingConf contract
 }

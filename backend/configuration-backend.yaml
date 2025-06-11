@@ -14,6 +14,9 @@ drand:
     - "https://drand.cloudflare.com/"
   chainHash: "52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971"
 
+github:
+  token: ${GITHUB_TOKEN}
+
 mysql:
   url: ${MYSQL_NODE}
   username: ${MYSQL_USER}
@@ -29,6 +32,7 @@ network:
 
   oraclePowersContract: ${ORACLE_POWERS_CONTRACT}
   powerVotingContract: ${POWERVOTING_CONTRACT}
+  powerVotingConfContract: ${CONF_CONTRACT}
 
   fipContract: ${FIP_CONTRACT}
   fipInitEditor: ${FIP_INIT_EDITOR}
@@ -38,3 +42,4 @@ abiPath:
   oraclePowersAbi: ${ORACLE_POWERS_ABI_PATH}
   oracleAbi: ${ORACLE_ABI_PATH}
   fipAbi: ${FIP_ABI_PATH}
+  powerVotingConfAbi: ${CONF_ABI_PATH}

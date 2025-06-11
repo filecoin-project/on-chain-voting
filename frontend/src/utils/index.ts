@@ -11,16 +11,20 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+import { ethers } from 'ethers';
+import { Decimal } from 'decimal.js';
 import { filecoin, filecoinCalibration } from 'wagmi/chains';
+import { fromString, isAddress, isEthAddress } from "iso-filecoin/address"
 import {
   oracleCalibrationContractAddress,
   oracleMainNetContractAddress,
-  oraclePowerCalibrationContractAddress,
   powerVotingCalibrationContractAddress,
   powerVotingMainNetContractAddress,
   powerVotingFipMainNetContractAddress,
   powerVotingFipCalibrationContractAddress
 } from "../common/consts";
+
+
 export const stringToBase64Url = (str: string) => {
   const base64 = btoa(str);
 
@@ -28,14 +32,21 @@ export const stringToBase64Url = (str: string) => {
 }
 
 export const bigNumberToFloat = (value: number | string, decimals: number = 18) => {
-  return Number(value) ? (Number(value) / (10 ** decimals)).toFixed(2) : '0';
-}
+  const numValue = Number(value);
+  if (!numValue) return '0';
+
+  const divisor = 10 ** decimals;
+  const rawValue = numValue / divisor;
+
+  const truncatedValue = Math.floor(rawValue * 100) / 100;
+  return truncatedValue.toFixed(2);
+};
 
 /**
  * Convert value to Byte String
  * @param bytes
  */
-export const convertBytes = (bytes: number | string) => {
+export const convertBytes = (bytes: number | string, isReturnUnits?: boolean): any => {
   // Define an array of unit strings representing different byte units
   const units = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
   // Initialize the unit index to 0
@@ -52,7 +63,14 @@ export const convertBytes = (bytes: number | string) => {
 
   // Return a string representing the converted bytes with appropriate unit
   // If remainder is truthy (i.e., not zero), return the formatted string; otherwise, return '0'
-  return remainder ? `${remainder.toFixed(2)} ${units[unitIndex]}` : '0';
+  if (isReturnUnits) {
+    return {
+      value: remainder ? remainder.toFixed(2) : '0',
+      units: units[unitIndex]
+    }
+  } else {
+    return remainder ? `${remainder.toFixed(2)} ${units[unitIndex]}` : '0';
+  }
 }
 
 /**
@@ -127,10 +145,6 @@ const contractAddresses: any = {
     [filecoin.id]: oracleMainNetContractAddress,
     [filecoinCalibration.id]: oracleCalibrationContractAddress,
   },
-  oraclePower: {
-    [filecoin.id]: oraclePowerCalibrationContractAddress,
-    [filecoinCalibration.id]: oraclePowerCalibrationContractAddress,
-  },
   powerVotingFip: {
     [filecoin.id]: powerVotingFipMainNetContractAddress,
     [filecoinCalibration.id]: powerVotingFipCalibrationContractAddress,
@@ -168,29 +182,41 @@ export const hexToString = (hex: any) => {
   return pairs.map((pair: any) => String.fromCharCode(parseInt(pair, 16))).join('').replace(/[^\x20-\x7E]/g, '').trim();
 }
 
-const gcd = (a: number, b: number) => {
-  while (b !== 0) {
-    const temp = b;
-    b = a % b;
-    a = temp;
+export const getMinerOwner = async (rpc: string, minerId: string) => {
+  const provider = new ethers.JsonRpcProvider(rpc);
+  const method = "Filecoin.StateMinerInfo";
+  const params = [minerId, []];
+
+  try {
+    const minerInfo = await provider.send(method, params);
+    return {
+      owner: minerInfo.Owner
+    };
+  } catch (error) {
+    console.log(error)
+    return {
+      owner: null
+    };
   }
-  return a;
 }
 
-export const simplifyFraction = (numerator: number, denominator: number) => {
-  if (numerator === 0) return '0';
+export const batchGetMinerOwners = async (minerIds: string[], rpc: string) => {
+  return await Promise.all(minerIds.map((minerId) => getMinerOwner(rpc, minerId)));
+};
 
-  const gcdValue = gcd(numerator, denominator);
-
-  const simplifiedNumerator = numerator / gcdValue;
-  const simplifiedDenominator = denominator / gcdValue;
-
-  if (simplifiedDenominator === 1) {
-    return `${simplifiedNumerator}`;
-  }
-
-  return `${simplifiedNumerator}/${simplifiedDenominator}`;
+export const isFilAddress = (address: string | `0x${string}`) => {
+  if (!address || isEthAddress(address)) return false;
+  const filAddress = fromString(address);
+  return isAddress(filAddress);
 }
+export const multiplyWithPrecision = (number: number, multiple: number) => {
+  return new Decimal(number).times(multiple).toNumber();
+}
+
+export const getBlockExplorers = (chain: any, address: string) => {
+  return `${chain?.blockExplorers?.default.url}/wallet/${address}?network=${chain?.testnet ? "calibrationnet" : ""}`
+}
+
 
 
 

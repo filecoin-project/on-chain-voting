@@ -20,14 +20,15 @@ import (
 	"net"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
-	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"power-snapshot/api"
 	pb "power-snapshot/api/proto"
 	"power-snapshot/config"
+	"power-snapshot/constant"
 	"power-snapshot/handler"
 	"power-snapshot/internal/data"
 	"power-snapshot/internal/repo"
@@ -40,17 +41,28 @@ func main() {
 	initEvn()
 
 	// init third-part util
-	manager, err := data.NewGoEthClientManager(config.Client.Network)
+	manager, err := data.NewGoEthClientManager()
 	if err != nil {
 		panic(err)
 	}
 
+	if len(manager.GetClient().QueryClient) == 0 {
+		panic("no geth client")
+	}
+
+	contractRepo := repo.NewContractRepoImpl(manager.GetClient().QueryClient[0])
+	expDates, err := contractRepo.GetExpirationData()
+	if err != nil {
+		zap.L().Error("get expiration data failed", zap.Error(err))
+		expDates = constant.DataExpiredDuration
+	}
+
 	// init datasource
-	redisClient, err := data.NewRedisClient()
+	redisClient, err := data.NewRedisClient(expDates)
 	if err != nil {
 		panic(err)
 	}
-	defer func(redisClient *redis.Client) {
+	defer func(redisClient *data.RedisClient) {
 		err := redisClient.Close()
 		if err != nil {
 			zap.S().Error("close redis client failed", zap.Error(err))
@@ -87,8 +99,9 @@ func main() {
 	mysqlRepo := repo.NewMysqlRepoImpl(data.NewMysql())
 
 	lotusRepo := repo.NewLotusRPCRepo(redisClient)
+
 	// init service
-	syncSrv := service.NewSyncService(baseRepo, syncRepo, mysqlRepo, lotusRepo)
+	syncSrv := service.NewSyncService(baseRepo, syncRepo, mysqlRepo, lotusRepo, contractRepo, api.NewBackendGRPCClient())
 
 	go func() {
 		defer func() {

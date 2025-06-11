@@ -23,6 +23,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"powervoting-server/api/rpc"
 	"powervoting-server/model"
 	"powervoting-server/service"
 )
@@ -145,6 +146,7 @@ func (v *VoteRepoImpl) CreateVoterAddress(ctx context.Context, in *model.VoterIn
 		return 0, fmt.Errorf("create or update voter address error: %w", err)
 	}
 
+	rpc.SyncAddressPower( in.ChainId, in.Address)
 	// Return the ID of the created or updated record
 	return in.BaseField.ID, nil
 }
@@ -186,7 +188,7 @@ func (v *VoteRepoImpl) UpdateVoterByGistInfo(ctx context.Context, in *model.Vote
 			},
 			DoUpdates: clause.AssignmentColumns([]string{
 				"gist_id",
-				"github_id",
+				"github_name",
 				"gist_info",
 				"block_number",
 				"timestamp",
@@ -198,12 +200,12 @@ func (v *VoteRepoImpl) UpdateVoterByGistInfo(ctx context.Context, in *model.Vote
 
 	if err := v.mydb.Model(model.VoterInfoTbl{}).
 		WithContext(ctx).
-		Where("address <> ? and github_id = ?", in.Address, in.GithubId).
+		Where("address <> ? and github_name = ?", in.Address, in.GithubName).
 		UpdateColumns(map[string]any{
-			"gist_id":    "",
-			"github_id":  "",
-			"gist_info":  "",
-			"updated_at": time.Now(),
+			"gist_id":     "",
+			"github_name": "",
+			"gist_info":   "",
+			"updated_at":  time.Now(),
 		}).Error; err != nil {
 		return err
 	}

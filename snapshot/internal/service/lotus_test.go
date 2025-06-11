@@ -12,262 +12,135 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package service
+package service_test
 
 import (
 	"context"
-	"encoding/json"
-	"testing"
+	"errors"
 
-	gomock "github.com/golang/mock/gomock"
-	"github.com/redis/go-redis/v9"
-	"github.com/stretchr/testify/assert"
-	"github.com/ybbus/jsonrpc/v3"
-	"go.uber.org/zap"
+	"github.com/golang/mock/gomock"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
-	"power-snapshot/internal/mock"
-	"power-snapshot/internal/repo"
-	"power-snapshot/utils/types"
+	models "power-snapshot/internal/model"
+	"power-snapshot/internal/service"
+	mocks "power-snapshot/mock"
 )
 
-var (
-	address = "t410fpqsmux52n4pcfcssbeiuoz2g2jn6l3n6zf6tmii"
-	ethAddr = "0x7C24ca5FBA6f1E228a520911476746D25Be5EdbE"
-	id      = "t099523"
-)
+var _ = Describe("Lotus", func() {
+	var (
+		lotusService *service.LotusService
+		mockLotus    *mocks.MockLotusRepo
+		mockCtrl     *gomock.Controller
+	)
+	BeforeEach(func() {
+		mockCtrl = gomock.NewController(GinkgoT())
+		mockLotus = mocks.NewMockLotusRepo(mockCtrl)
+		lotusService = service.NewLotusService(mockLotus)
+	})
+	Describe("GetTipSetByHeight", func() {
+		It("should return tipset", func() {
+			mockLotus.EXPECT().
+				GetTipSetByHeight(gomock.Any(), conf.Network.ChainId, gomock.Any()).
+				Return(tipset, nil)
 
-func TestWalletBalanceByHeight(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	lotusRpcClient := mock.NewMockRPCClient(gomock.NewController(t))
-	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.ChainGetTipSetByHeight", int64(2057965), gomock.Any()).Return(&jsonrpc.RPCResponse{
-		Result: map[string]interface{}{
-			"Cids": []interface{}{
-				map[string]interface{}{
-					"/": "bafy2bzacebes5mgufnyilg5e5p2mvhftqvoplzo65zxvcjy3j62n6w4er3hmm",
+			res, err := lotusService.GetTipSetByHeight(context.Background(), conf.Network.ChainId, 1)
+			Expect(err).To(BeNil())
+			Expect(res).NotTo(BeNil())
+			Expect(res).To(Equal(tipset))
+		})
+	})
+	Describe("GetAddrBalanceBySpecialHeight", func() {
+		var (
+			amount string
+			err    error
+		)
+		JustBeforeEach(func() {
+			mockLotus.EXPECT().
+				GetAddrBalanceBySpecialHeight(gomock.Any(), gomock.Any(), conf.Network.ChainId, gomock.Any()).
+				Return(amount, err)
+		})
+		When("get balance ", func() {
+			BeforeEach(func() {
+				amount = "100"
+			})
+			It("should return addr balance", func() {
+				res, err := lotusService.GetAddrBalanceBySpecialHeight(context.Background(), "f01", conf.Network.ChainId, 1)
+				Expect(err).To(BeNil())
+				Expect(res).To(Equal("100"))
+			})
+		})
+		When("get balance error", func() {
+			BeforeEach(func() {
+				err = errors.New("error")
+			})
+			It("should return error", func() {
+				_, err := lotusService.GetAddrBalanceBySpecialHeight(context.Background(), "f01", conf.Network.ChainId, 1)
+				Expect(err).NotTo(BeNil())
+			})
+		})
+	})
+
+	Describe("GetMinerPowerByHeight", func() {
+		It("should return miner power", func() {
+			d := models.LotusMinerPower{
+				MinerPower: models.MinerPower{
+					RawBytePower:    "100",
+					QualityAdjPower: "100",
 				},
-				map[string]interface{}{
-					"/": "bafy2bzacecqarqyklux426of26bwmcvd3rjjjlsqprd3umvbjtcn6hcbjoypa",
+				TotalPower: models.TotalPower{
+					RawBytePower:    "100",
+					QualityAdjPower: "100",
 				},
-			},
-			"Blocks": 1,
-			"Height": json.Number("2057965"),
-			"Test":   1,
-		},
-		JSONRPC: "2.0",
-		Error:   nil,
-		ID:      0,
-	}, nil)
+				HasMinPower: true,
+			}
+			mockLotus.EXPECT().
+				GetMinerPowerByHeight(gomock.Any(), conf.Network.ChainId, gomock.Any(), gomock.Any()).
+				Return(d, nil)
 
-	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.StateGetActor", gomock.Any()).Return(&jsonrpc.RPCResponse{
-		Result: map[string]interface{}{
-			"Balance": "100999995981726481390",
-			"Test":    2,
-		},
-		JSONRPC: "2.0",
-		Error:   nil,
-		ID:      0,
-	}, nil)
+			res, err := lotusService.GetMinerPowerByHeight(context.Background(), conf.Network.ChainId, "f01", tipset)
+			Expect(err).To(BeNil())
+			Expect(res).NotTo(BeNil())
+			Expect(res).To(Equal(&d))
+		})
+	})
 
-	lotusRepo := repo.NewLotusRPCRepo(redis.NewClient(&redis.Options{
-		ClientName: "SanpshotTest",
-	}))
-	lotusService := NewLotusService(lotusRepo)
-	rsp, err := lotusService.GetWalletBalanceByHeight(context.Background(), "t03751", 314159, 2057965)
-	assert.Nil(t, err)
-	// expectedBalance := "467051509071593317720"
-	// assert.Equal(t, expectedBalance, rsp)
+	Describe("GetNewestHeight", func() {
+		It("should return newest height", func() {
+			mockLotus.EXPECT().
+				GetNewestHeight(gomock.Any(), conf.Network.ChainId).
+				Return(int64(1), nil)
 
-	zap.L().Info("result", zap.Any("balance", rsp))
-}
+			res, err := lotusService.GetNewestHeight(context.Background(), conf.Network.ChainId)
+			Expect(err).To(BeNil())
+			Expect(res).To(Equal(int64(1)))
 
-func TestGetMinerPowerByHeight(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	lotusRpcClient := mock.NewMockRPCClient(gomock.NewController(t))
+		})
+	})
+	Describe("GetBlockHeader", func() {
+		It("should return block header", func() {
+			blockHeader := models.BlockHeader{
+				Height:    1,
+				Timestamp: 1,
+			}
+			mockLotus.EXPECT().
+				GetBlockHeader(gomock.Any(), conf.Network.ChainId, gomock.Any()).
+				Return(blockHeader, nil)
+			res, err := lotusService.GetBlockHeader(context.Background(), conf.Network.ChainId, 1)
+			Expect(err).To(BeNil())
+			Expect(res).NotTo(BeNil())
+			Expect(res).To(Equal(&blockHeader))
+		})
+	})
 
-	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.ChainGetTipSetByHeight", int64(2057965), gomock.Any()).Return(&jsonrpc.RPCResponse{
-		Result: map[string]interface{}{
-			"Cids": []interface{}{
-				map[string]interface{}{
-					"/": "bafy2bzacebes5mgufnyilg5e5p2mvhftqvoplzo65zxvcjy3j62n6w4er3hmm",
-				},
-				map[string]interface{}{
-					"/": "bafy2bzacecqarqyklux426of26bwmcvd3rjjjlsqprd3umvbjtcn6hcbjoypa",
-				},
-			},
-			"Blocks": 1,
-			"Height": json.Number("2057965"),
-			"Test":   1,
-		},
-		JSONRPC: "2.0",
-		Error:   nil,
-		ID:      0,
-	}, nil)
-
-	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.StateMinerPower", gomock.Any()).Return(&jsonrpc.RPCResponse{
-		Result: map[string]interface{}{
-			"MinerPower": map[string]interface{}{
-				"RawBytePower":    "0",
-				"QualityAdjPower": "0",
-			},
-			"TotalPower": map[string]interface{}{
-				"RawBytePower":    "676818126372864",
-				"QualityAdjPower": "1954804254375936",
-			},
-			"HasMinPower": false,
-			"test":        3,
-		},
-		JSONRPC: "2.0",
-		Error:   nil,
-		ID:      0,
-	}, nil)
-	lotusRepo := repo.NewLotusRPCRepo(redis.NewClient(&redis.Options{
-		ClientName: "SanpshotTest",
-	}))
-	lotusService := NewLotusService(lotusRepo)
-	tipsetKey, err := lotusService.GetTipSetByHeight(context.Background(), 314159, 2057965)
-	assert.Nil(t, err)
-	rsp, err := lotusService.GetMinerPowerByHeight(context.Background(), 314159, "t03751", tipsetKey)
-	assert.Nil(t, err)
-
-	zap.L().Info("result", zap.Any("miner", rsp))
-}
-
-func TestGetClientBalanceByHeight(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	lotusRpcClient := mock.NewMockRPCClient(gomock.NewController(t))
-
-	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.ChainGetTipSetByHeight", int64(2057965), gomock.Any()).Return(&jsonrpc.RPCResponse{
-		Result: map[string]interface{}{
-			"Cids": []interface{}{
-				map[string]interface{}{
-					"/": "bafy2bzacebes5mgufnyilg5e5p2mvhftqvoplzo65zxvcjy3j62n6w4er3hmm",
-				},
-				map[string]interface{}{
-					"/": "bafy2bzacecqarqyklux426of26bwmcvd3rjjjlsqprd3umvbjtcn6hcbjoypa",
-				},
-			},
-			"Blocks": 1,
-			"Height": json.Number("2057965"),
-			"Test":   1,
-		},
-		JSONRPC: "2.0",
-		Error:   nil,
-		ID:      0,
-	}, nil)
-
-	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.StateMarketDeals", gomock.Any()).Return(&jsonrpc.RPCResponse{
-		Result: map[string]interface{}{
-			"Deals": map[string]interface{}{
-				"116140": map[string]interface{}{
-					"Proposal": map[string]interface{}{
-						"VerifiedDeal": true,
-						"EndEpoch":     json.Number("1729065330"),
-						"PieceSize":    json.Number("1048576"),
-						"Client":       "t03751",
-					},
-					"State": "",
-				},
-				"test": 4,
-			},
-		},
-		JSONRPC: "2.0",
-		Error:   nil,
-		ID:      0,
-	}, nil)
-	lotusRepo := repo.NewLotusRPCRepo(redis.NewClient(&redis.Options{
-		ClientName: "SanpshotTest",
-	}))
-	lotusService := NewLotusService(lotusRepo)
-	_, err := lotusService.GetClientBalanceByHeight(context.Background(), 314159, 2057965)
-	assert.Nil(t, err)
-}
-
-func TestGetNewestHeightAndTipset(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	lotusRpcClient := mock.NewMockRPCClient(gomock.NewController(t))
-
-	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.ChainHead").Return(&jsonrpc.RPCResponse{
-		Result: map[string]interface{}{
-			"Cids": []interface{}{
-				map[string]interface{}{
-					"/": "bafy2bzacebes5mgufnyilg5e5p2mvhftqvoplzo65zxvcjy3j62n6w4er3hmm",
-				},
-				map[string]interface{}{
-					"/": "bafy2bzacecqarqyklux426of26bwmcvd3rjjjlsqprd3umvbjtcn6hcbjoypa",
-				},
-			},
-			"Blocks": 1,
-			"Height": json.Number("2072508"),
-			"Test":   5,
-		},
-		JSONRPC: "2.0",
-		Error:   nil,
-		ID:      0,
-	}, nil)
-
-	lotusRepo := repo.NewLotusRPCRepo(redis.NewClient(&redis.Options{
-		ClientName: "SanpshotTest",
-	}))
-	lotusService := NewLotusService(lotusRepo)
-	_, err := lotusService.GetNewestHeight(context.Background(), 314159)
-	assert.Nil(t, err)
-}
-
-func TestGetBlockHeader(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	lotusRpcClient := mock.NewMockRPCClient(gomock.NewController(t))
-	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.ChainGetTipSetByHeight", int64(2057965), gomock.Any()).Return(&jsonrpc.RPCResponse{
-		Result: map[string]interface{}{
-			"Cids": []interface{}{
-				map[string]interface{}{
-					"/": "bafy2bzacebes5mgufnyilg5e5p2mvhftqvoplzo65zxvcjy3j62n6w4er3hmm",
-				},
-				map[string]interface{}{
-					"/": "bafy2bzacecqarqyklux426of26bwmcvd3rjjjlsqprd3umvbjtcn6hcbjoypa",
-				},
-			},
-			"Blocks": 1,
-			"Height": json.Number("2057965"),
-			"Test":   1,
-		},
-		JSONRPC: "2.0",
-		Error:   nil,
-		ID:      0,
-	}, nil)
-
-	lotusRpcClient.EXPECT().Call(gomock.Any(), "Filecoin.ChainGetBlock", gomock.Any()).Return(&jsonrpc.RPCResponse{
-		Result: map[string]interface{}{
-			"Blocks":    1,
-			"Height":    json.Number("2057965"),
-			"Timestamp": json.Number("1729065330"),
-			"Test":      2,
-		},
-		JSONRPC: "2.0",
-		Error:   nil,
-		ID:      0,
-	}, nil)
-
-	lotusRepo := repo.NewLotusRPCRepo(redis.NewClient(&redis.Options{
-		ClientName: "SanpshotTest",
-	}))
-	lotusService := NewLotusService(lotusRepo)
-
-	rsp, err := lotusService.GetBlockHeader(context.Background(), 314159, 2057965)
-	assert.Nil(t, err)
-	assert.Equal(t, int64(2057965), rsp.Height)
-	assert.Equal(t, int64(1729065330), rsp.Timestamp)
-
-	zap.L().Info("result", zap.Any("block", rsp))
-}
-
-func TestNewRpc(t *testing.T) {
-	rpc := jsonrpc.NewClientWithOpts("https://api.calibration.node.glif.io/rpc/v1", &jsonrpc.RPCClientOpts{})
-	resp, err:=rpc.Call(context.Background(), "Filecoin.ChainGetTipSetByHeight", 2564883, types.TipSetKey{})
-	assert.Nil(t, err)
-	assert.NotNil(t, resp)
-}
+	Describe("GetWalletBalanceByHeight", func() {
+		It("should return wallet balance", func() {
+			mockLotus.EXPECT().
+				GetWalletBalanceByHeight(gomock.Any(), "f01", conf.Network.ChainId, gomock.Any()).
+				Return("100", nil)
+			res, err := lotusService.GetWalletBalanceByHeight(context.Background(), "f01", conf.Network.ChainId, 1)
+			Expect(err).To(BeNil())
+			Expect(res).To(Equal("100"))
+		})
+	})
+})

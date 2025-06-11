@@ -14,14 +14,26 @@
 
 package api
 
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+
+	"github.com/ybbus/jsonrpc/v3"
+	"go.uber.org/zap"
+
+	"powervoting-server/config"
+	"powervoting-server/utils"
+)
 
 // ProposalListReq represents a request for listing proposals with pagination, status filter, and search functionality.
 type ProposalListReq struct {
-	Status       int    `form:"status" validate:"oneof=0 1 2 3 4"` // Status filter (0: all, 1: pending, 2: in progress, 3: counting, 4: completed)
-	SearchKey    string `form:"searchKey"`                         // Keyword for fuzzy search in proposal titles
-	Addr         string `form:"addr"`                              // The user address is used to determine whether the proposal has been voted on.
-	PageReq             // Embedded pagination request
-	ChainIdParam        // Embedded chain ID parameter
+	Status    int    `form:"status" validate:"oneof=0 1 2 3 4"` // Status filter (0: all, 1: pending, 2: in progress, 3: counting, 4: completed)
+	SearchKey string `form:"searchKey"`                         // Keyword for fuzzy search in proposal titles
+	AddressReq
+	PageReq      // Embedded pagination request
+	ChainIdParam // Embedded chain ID parameter
 }
 
 // PageReq represents a pagination request with page number and page size.
@@ -32,7 +44,7 @@ type PageReq struct {
 
 // AddressReq represents a request for retrieving a proposal draft by creator address.
 type AddressReq struct {
-	Address string `form:"address" validate:"required"` // Creator's address
+	Address string `form:"address"` // Creator's address
 }
 
 // VerifyGistReq verify that Gist is valid
@@ -50,32 +62,37 @@ type GetPowerReq struct {
 
 // ChainIdParam represents a request parameter for chain ID.
 type ChainIdParam struct {
-	ChainId int64 `form:"chainId" validate:"required"` // Chain ID
+	ChainId int64 `form:"chainId" validate:"required,gt=0"` // Chain ID
 }
 
 // ProposalReq represents a request for retrieving a specific proposal by its ID and chain ID.
 type ProposalReq struct {
-	ProposalId   int64 `form:"proposalId" validate:"required"` // Proposal ID
+	ProposalId   int64 `form:"proposalId" validate:"required,gt=0"` // Proposal ID
 	ChainIdParam       // Embedded chain ID parameter
 }
 
 // AddProposalDraftReq represents a request for creating or updating a proposal draft.
 type AddProposalDraftReq struct {
-	Creator   string `json:"creator"`   // Creator address
-	StartTime int64  `json:"startTime"` // Start time of the proposal
-	EndTime   int64  `json:"endTime"`   // End time of the proposal
-	Timezone  string `json:"timezone"`  // Timezone of the proposal
-	ChainId   int64  `json:"chainId"`   // Chain ID associated with the proposal
-	Title     string `json:"title"`     // Title of the proposal
-	Content   string `json:"content"`   // Description of the proposal
+	Creator   string `json:"creator" validate:"required"`                // Creator address
+	StartTime int64  `json:"startTime" validate:"required"`              // Start time of the proposal
+	EndTime   int64  `json:"endTime" validate:"required"`                // End time of the proposal
+	Timezone  string `json:"timezone" validate:"required"`               // Timezone of the proposal
+	Title     string `json:"title" validate:"required,min=1,max=254"`    // Title of the proposal
+	Content   string `json:"content" validate:"required,min=1,max=2000"` // Description of the proposal
+	ChainIdParam
 	ProposalPercentage
 }
 
+type DelProposalDraftReq struct {
+    AddressReq
+	ChainIdParam
+}
+
 type ProposalPercentage struct {
-	TokenHolderPercentage uint16 `json:"tokenHolderPercentage"` // Voting power percentage for token holders
-	SpPercentage          uint16 `json:"spPercentage"`          // Voting power percentage for SPs
-	ClientPercentage      uint16 `json:"clientPercentage"`      // Voting power percentage for clients
-	DeveloperPercentage   uint16 `json:"developerPercentage"`   // Voting power percentage for developers
+	TokenHolderPercentage uint16 `json:"tokenHolderPercentage" validate:"number,is-integer"` // Voting power percentage for token holders
+	SpPercentage          uint16 `json:"spPercentage" validate:"number,is-integer"`          // Voting power percentage for SPs
+	ClientPercentage      uint16 `json:"clientPercentage" validate:"number,is-integer"`      // Voting power percentage for clients
+	DeveloperPercentage   uint16 `json:"developerPercentage" validate:"number,is-integer"`   // Voting power percentage for developers
 }
 
 type FipProposalListReq struct {
@@ -108,4 +125,33 @@ func (p *PageReq) Offset() int {
 
 	// Calculate the offset
 	return (p.Page - 1) * p.PageSize
+}
+
+func (a *AddressReq) ToEthAddr() (string, error) {
+	if a == nil {
+		return "", nil
+	}
+
+	if a.Address == "" {
+		return "", nil
+	}
+	
+	lotusClient := jsonrpc.NewClientWithOpts(config.Client.Network.Rpc, &jsonrpc.RPCClientOpts{})
+
+	if strings.HasPrefix(a.Address, "0x") {
+		return utils.EthStandardAddressToHex(a.Address), nil
+	}
+
+	resp, err := lotusClient.Call(context.Background(), "Filecoin.FilecoinAddressToEthAddress", a.Address)
+	if err != nil {
+		zap.L().Error("FilcoinAddressToEthAddress: lotus rpc error", zap.String("address", a.Address), zap.Error(err))
+		return "", errors.New("lotus rpc error")
+	}
+
+	if resp.Error != nil {
+		zap.L().Error("FilcoinAddressToEthAddress error", zap.String("address", a.Address), zap.Error(resp.Error))
+		return "", fmt.Errorf("get eth address error: %s", resp.Error.Message)
+	}
+
+	return utils.EthStandardAddressToHex(resp.Result.(string)), nil
 }

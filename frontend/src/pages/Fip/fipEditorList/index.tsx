@@ -24,9 +24,12 @@ import {
   getFipListApi,
   web3AvatarUrl
 } from "../../../common/consts";
+import { useAddresses } from "iso-filecoin-react"
 import axios from "axios";
+import { getBlockExplorers, isFilAddress } from "../../../utils"
 const FipEditorList = () => {
   const { isConnected, address, chain } = useAccount();
+  const { address0x } = useAddresses({ address: address as string })
   const { t } = useTranslation();
   const chainId = chain?.id || calibrationChainId;
   const navigate = useNavigate();
@@ -43,7 +46,11 @@ const FipEditorList = () => {
     }
     setLoading(true)
     const { data: { data: fipList } } = await axios.get(getFipListApi, { params });
-    setFipList(fipList, address)
+    if (isFilAddress(address!) && address0x.data) {
+      setFipList(fipList, address0x.data.toString())
+    } else {
+      setFipList(fipList, address)
+    }
     if (fipList.length > 5) {
       setShowList(fipList.slice(0, pageSize));
     } else {
@@ -69,7 +76,7 @@ const FipEditorList = () => {
               className="text-black hover:text-blue"
               target="_blank"
               rel="noopener"
-              href={`${chain?.blockExplorers?.default.url}/address/${value}`}
+              href={getBlockExplorers(chain, value)}
             >
               {value}
             </a>

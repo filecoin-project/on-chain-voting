@@ -77,10 +77,9 @@ func ObjToString(obj any) string {
 	return string(res)
 }
 
-
 func StringToBase64URL(str string) string {
 	base64Str := base64.RawStdEncoding.EncodeToString([]byte(str))
-	
+
 	base64Url := strings.NewReplacer(
 		"+", "-",
 		"/", "_",
@@ -90,9 +89,18 @@ func StringToBase64URL(str string) string {
 }
 
 func ConvertTopics(topics []string) []common.Hash {
-    hashes := make([]common.Hash, len(topics))
-    for i, t := range topics {
-        hashes[i] = common.HexToHash(t)
-    }
-    return hashes
+	hashes := make([]common.Hash, len(topics))
+	for i, t := range topics {
+		hashes[i] = common.HexToHash(t)
+	}
+	return hashes
+}
+
+func StringToDecimal(s string) decimal.Decimal {
+	return decimal.NewFromBigInt(StringConvToBigInt(s), 0)
+}
+
+func EthStandardAddressToHex(v string) string {
+	address := common.HexToAddress(v)
+	return address.Hex()
 }

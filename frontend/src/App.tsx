@@ -16,7 +16,11 @@ import {
   lightTheme,
   RainbowKitProvider,
 } from "@rainbow-me/rainbowkit";
+import { useConnect as FilUseConnect, useAddresses } from "iso-filecoin-react"
 import { ConfigProvider, FloatButton, theme } from 'antd';
+import {
+  useAccount as useFilAccount
+} from 'iso-filecoin-react'
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 import enUS from 'antd/locale/en_US';
@@ -25,7 +29,7 @@ import { useTranslation } from 'react-i18next';
 import { useEffect, useRef } from "react";
 import { useLocation, useRoutes } from "react-router-dom";
 import "tailwindcss/tailwind.css";
-import { useAccount } from "wagmi";
+import { useAccount, useConnect } from "wagmi";
 import timezones from './json/timezons.json';
 import { calibrationChainId, getFipListApi } from "./common/consts"
 import { useVoterInfoSet } from "./common/hooks"
@@ -36,6 +40,7 @@ import Footer from './components/Footer';
 import './lang/config';
 import routes from "./router";
 import axios from "axios";
+import { isFilAddress } from "./utils"
 
 const lang = localStorage.getItem("lang") || "en"
 dayjs.locale(lang === 'en' ? lang : "zh-cn")
@@ -43,10 +48,31 @@ dayjs.locale(lang === 'en' ? lang : "zh-cn")
 const App: React.FC = () => {
   // Destructure values from custom hooks
   const { chain, address, isConnected } = useAccount();
+  const { adapter, state} = useFilAccount();
+  const { connect, connectors } = useConnect()
+  const { address0x} = useAddresses({ address: address as string });
+  const { mutate: FilConnect, adapters } = FilUseConnect();
   const chainId = chain?.id || calibrationChainId;
   const prevAddressRef = useRef(address);
   const setFipList = useFipList((state: any) => state.setFipList)
   const { i18n } = useTranslation();
+  const adapterId = window.localStorage.getItem('adapter');
+
+  useEffect(()=>{
+    if  (state === "connected" && isConnected){
+      connect({connector:connectors.find(item => item.id === adapterId) || connectors[0]})
+    }
+  },[isConnected, state])
+
+  useEffect(() => {
+    if (isConnected && isFilAddress(address!)) {
+      if (adapter) {
+        FilConnect({ adapter: adapter });
+      } else {
+        FilConnect({ adapter: adapters.find(item => item.id === adapterId) || adapters[0] });
+      }
+    }
+  }, [isConnected, adapter, address])
 
   // Render routes based on URL
   const element = useRoutes(routes);
@@ -89,7 +115,7 @@ const App: React.FC = () => {
   // Reload the page if address changes
   useEffect(() => {
     const prevAddress = prevAddressRef.current;
-    if (address && prevAddress !== address) {
+    if (address && address.indexOf('0x') > 0 && prevAddress !== address) {
       window.location.reload();
     }
   }, [address]);
@@ -112,7 +138,11 @@ const App: React.FC = () => {
       chainId,
     }
     const { data: { data: fipList } } = await axios.get(getFipListApi, { params });
-    setFipList(fipList, address)
+    if (isFilAddress(address!) && address0x.data) {
+      setFipList(fipList, address0x.data.toString())
+    } else {
+      setFipList(fipList, address)
+    }
   }
   useEffect(() => {
     if (!address || !chainId || !isConnected) {
@@ -121,6 +151,7 @@ const App: React.FC = () => {
     }
     getFipList()
   }, [address, chainId, isConnected])
+
   const lang = localStorage.getItem("lang") || "en";
 
   return (

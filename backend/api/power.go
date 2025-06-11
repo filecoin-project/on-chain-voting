@@ -27,17 +27,24 @@ func GetAddressPower(c *constant.Context) {
 	// Declare a variable of type request.GetPower to hold the request parameters.
 	var req api.GetPowerReq
 	if err := c.BindAndValidate(&req); err != nil {
-		zap.L().Error("GetAddressPower bind parmas error: ", zap.Error(err))
+		zap.L().Error("GetAddressPower bind parmas error: ", zap.Errors("errors", err.Errors()))
 		ParamError(c.Context)
 		return
 	}
 
+	ethAddr, err := req.AddressReq.ToEthAddr()
+	if err != nil {
+		zap.L().Error("GetAddressPower invalid address: ", zap.String("address", req.AddressReq.Address), zap.Error(err))
+		Error(c.Context, err)
+		return
+	}
+
 	// Call the client's GetAddressPowerByDay method to retrieve power information.
-	power, err := snapshot.GetAddressPowerByDay(req.ChainId, req.Address, req.PowerDay)
+	power, err := snapshot.GetAddressPowerByDay(req.ChainId, ethAddr, req.PowerDay)
 	if err != nil {
 		zap.L().Error(
 			"get snapshot power error ",
-			zap.String("address", req.Address),
+			zap.String("address", ethAddr),
 			zap.String("power day", req.PowerDay),
 			zap.Int64("chain id", req.ChainId),
 			zap.Error(err),

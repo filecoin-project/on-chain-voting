@@ -19,10 +19,11 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from "react-router-dom";
 import { useFipList } from '../../../common/store';
-import { isAddress } from 'viem';
+import { isAddress, UserRejectedRequestError } from 'viem';
 import type { BaseError } from "wagmi";
+import { useSendMessage } from "iso-filecoin-react";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
-import votingFipeditorAbi from "../../../common/abi/power-voting-fipeditor.json";
+import votingFipEditorAbi from "../../../common/abi/power-voting-fipeditor.json";
 import {
   calibrationChainId,
   FIP_ALREADY_EXECUTE_MSG,
@@ -35,12 +36,13 @@ import {
   NO_FIP_EDITOR_APPROVE_ADDRESS_MSG,
   NO_FIP_EDITOR_REVOKE_ADDRESS_MSG,
   NO_FIP_INfO_MSG,
-  STORING_DATA_MSG
-} from "../../../common/consts";
+  STORING_DATA_MSG,
+} from "../../../common/consts"
 import LoadingButton from '../../../components/LoadingButton';
 import Table from '../../../components/Table';
-import { getContractAddress, hexToString } from "../../../utils";
+import { getContractAddress, hexToString, isFilAddress } from "../../../utils"
 import axios from "axios";
+import { useFilAddressMessage } from "../../../common/hooks.ts"
 
 const FipEditorPropose = () => {
   const { isConnected, address, chain } = useAccount();
@@ -58,7 +60,7 @@ const FipEditorPropose = () => {
   const [fipProposalType, setFipEditorProposeType] = useState(FIP_EDITOR_APPROVE_TYPE);
 
   const { fipList, isFipEditorAddress } = useFipList((state: any) => state.data);
-
+  const { mutateAsync: sendMessage } = useSendMessage();
   const {
     data: hash,
     writeContract,
@@ -247,14 +249,46 @@ const FipEditorPropose = () => {
       fipProposalType, // Proposal type (approve or revoke)
     ];
 
-    // Write the contract based on the proposal type
-    //TODO
-    writeContract({
-      abi: votingFipeditorAbi,
-      address: getContractAddress(chainId, 'powerVotingFip'),
-      functionName: 'createFipEditorProposal',
-      args: proposalArgs,
-    });
+    if (address && isFilAddress(address)) {
+      try {
+        const { message } = await useFilAddressMessage({
+          abi: votingFipEditorAbi,
+          contractAddress: getContractAddress(chainId, 'powerVotingFip'),
+          address: address as string,
+          functionName: "createFipEditorProposal",
+          functionParams: [...proposalArgs],
+        })
+        await sendMessage(message);
+        messageApi.open({
+          type: "success",
+          content: t(STORING_DATA_MSG)
+        })
+      } catch (error) {
+        console.log(error)
+        if (error as UserRejectedRequestError) {
+          messageApi.open({
+            type: "warning",
+            content: t("content.rejectedSignature")
+          })
+        } else {
+          messageApi.open({
+            type: "error",
+            content: (error as BaseError)?.shortMessage || JSON.stringify(error)
+          })
+        }
+      } finally {
+        setLoading(false);
+      }
+
+    } else {
+      writeContract({
+        abi: votingFipEditorAbi,
+        address: getContractAddress(chainId, 'powerVotingFip'),
+        functionName: 'createFipEditorProposal',
+        args: proposalArgs,
+      });
+    }
+
     setLoading(false);
   }
 

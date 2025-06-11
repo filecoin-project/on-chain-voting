@@ -17,7 +17,12 @@ dist.zip
 
 # env
 .env
-.env.example
+
+# nginx
+nginx.conf
+
+#configuration
+configuration.yaml
 
 # misc
 .eslintcache

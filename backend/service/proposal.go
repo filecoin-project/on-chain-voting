@@ -66,6 +66,7 @@ type ProposalRepo interface {
 	//   - error: An error if the creation operation fails; otherwise, nil.
 	CreateProposalDraft(ctx context.Context, in *model.ProposalDraftTbl) (int64, error)
 
+	DeleteProposalDraft(ctx context.Context, req api.DelProposalDraftReq) error
 	// GetProposalDraftByAddress retrieves a proposal draft by the creator's address.
 	//
 	// Parameters:
@@ -112,12 +113,24 @@ type ProposalRepo interface {
 	//   - error: An error if the query operation fails; otherwise, nil.
 	GetUncountedProposalList(ctx context.Context, chainId int64, timestamp int64) ([]model.ProposalTbl, error)
 
+	// GetGitHubNameByCreaters retrieves a list of GitHub usernames associated with the given creators.
+	//
+	// Parameters:
+	//   - ctx: Context for request cancellation and timeout.
+	//   - creators:  A list of creator addresses to query.
+	//
+	// Returns:
+	//   - map[string]string: A map where the key is the creator address and the value is the corresponding GitHub username.
+	//   - error: An error if the query operation fails; otherwise, nil.
+	GetGitHubNameByCreaters(ctx context.Context, creators []string) (map[string]model.GiuthubInfo, error)
 }
 
 // IProposalService defines the interface for managing proposal-related operations.
 // It provides methods for creating, retrieving, and listing proposals and proposal drafts.
 type IProposalService interface {
 	AddDraft(ctx context.Context, req *api.AddProposalDraftReq) error
+
+	DeleteDraft(ctx context.Context, req api.DelProposalDraftReq) error
 
 	GetDraft(ctx context.Context, req api.AddressReq) (*api.ProposalDraftRep, error)
 
@@ -159,21 +172,45 @@ func (p *ProposalService) ProposalList(ctx context.Context, req api.ProposalList
 		return nil, errors.New("fail to get proposal list")
 	}
 
+	var (
+		createrAddrs []string
+		createrMaps  = make(map[string]string)
+	)
+
+	for _, proposal := range proposals {
+		_, exist := createrMaps[proposal.Creator]
+		if !exist {
+			createrAddrs = append(createrAddrs, proposal.Creator)
+			createrMaps[proposal.Creator] = proposal.Creator
+		}
+	}
+
+	githubNames, err := p.repo.GetGitHubNameByCreaters(ctx, createrAddrs)
+	if err != nil {
+		zap.L().Error("GetGitHubNameByCreaters error", zap.Error(err))
+	}
+
 	// Transform proposals into the response format
 	var list []api.ProposalRep
 	for _, proposal := range proposals {
+		githubInfo, exits := githubNames[proposal.Creator]
+		if !exits {
+			githubInfo = model.GiuthubInfo{}
+		}
 		temp := api.ProposalRep{
-			ProposalId: proposal.ProposalId,
-			ChainId:    proposal.ChainId,
-			Content:    proposal.Content,
-			StartTime:  proposal.StartTime,
-			EndTime:    proposal.EndTime,
-			Voted:      proposal.Voted != nil,
-			Creator:    proposal.Creator,
-			Title:      proposal.Title,
-			Status:     constant.ProposalStatusPending,
-			CreatedAt:  proposal.CreatedAt.Unix(),
-			UpdatedAt:  proposal.UpdatedAt.Unix(),
+			ProposalId:   proposal.ProposalId,
+			ChainId:      proposal.ChainId,
+			Content:      proposal.Content,
+			StartTime:    proposal.StartTime,
+			EndTime:      proposal.EndTime,
+			Voted:        proposal.Voted != nil,
+			Creator:      proposal.Creator,
+			Title:        proposal.Title,
+			Status:       constant.ProposalStatusPending,
+			CreatedAt:    proposal.CreatedAt.Unix(),
+			UpdatedAt:    proposal.UpdatedAt.Unix(),
+			GithubName:   githubInfo.GithubName,
+			GithubAvatar: githubInfo.GithubAvatar,
 			VotePercentage: api.ProposalVotePercentage{
 				Reject:  proposal.RejectPercentage,
 				Approve: proposal.ApprovePercentage,
@@ -224,6 +261,21 @@ func (p *ProposalService) ProposalDetail(ctx context.Context, req api.ProposalRe
 		return nil, fmt.Errorf("no proposal found by id: %d", req.ProposalId)
 	}
 
+	githubMap, err := p.repo.GetGitHubNameByCreaters(ctx, []string{proposal.Creator})
+	if err != nil {
+		zap.L().Error(
+			"GetGitHubNameByCreaters error",
+			zap.Int64("proposalId", req.ProposalId),
+			zap.String("creator", proposal.Creator),
+			zap.Error(err),
+		)
+	}
+
+	githubInfo, exits := githubMap[proposal.Creator]
+	if !exits {
+		githubInfo = model.GiuthubInfo{}
+	}
+
 	status := constant.ProposalStatusPending
 	if proposal.Counted == constant.ProposalCreate {
 		if proposal.StartTime < time.Now().Unix() && proposal.EndTime > time.Now().Unix() {
@@ -237,16 +289,18 @@ func (p *ProposalService) ProposalDetail(ctx context.Context, req api.ProposalRe
 
 	// Transform the proposal data into the response format
 	return &api.ProposalRep{
-		ProposalId: proposal.ProposalId,
-		ChainId:    proposal.ChainId,
-		Content:    proposal.Content,
-		StartTime:  proposal.StartTime,
-		EndTime:    proposal.EndTime,
-		Creator:    proposal.Creator,
-		Title:      proposal.Title,
-		Status:     status,
-		CreatedAt:  proposal.CreatedAt.Unix(),
-		UpdatedAt:  proposal.UpdatedAt.Unix(),
+		ProposalId:   proposal.ProposalId,
+		GithubName:   githubInfo.GithubName,
+		GithubAvatar: githubInfo.GithubAvatar,
+		ChainId:      proposal.ChainId,
+		Content:      proposal.Content,
+		StartTime:    proposal.StartTime,
+		EndTime:      proposal.EndTime,
+		Creator:      proposal.Creator,
+		Title:        proposal.Title,
+		Status:       status,
+		CreatedAt:    proposal.CreatedAt.Unix(),
+		UpdatedAt:    proposal.UpdatedAt.Unix(),
 		VotePercentage: api.ProposalVotePercentage{
 			Approve: proposal.ApprovePercentage,
 			Reject:  proposal.RejectPercentage,
@@ -341,4 +395,14 @@ func (p *ProposalService) GetDraft(ctx context.Context, req api.AddressReq) (*ap
 		ClientPercentage:      res.ClientPercentage,
 		DeveloperPercentage:   res.DeveloperPercentage,
 	}, nil
+}
+
+func (p *ProposalService) DeleteDraft(ctx context.Context, req api.DelProposalDraftReq) error {
+	err := p.repo.DeleteProposalDraft(ctx, req)
+	if err != nil {
+		zap.L().Error("DeleteProposalDraft error", zap.Error(err))
+		return errors.New("fail to delete proposal draft")
+	}
+
+	return nil
 }

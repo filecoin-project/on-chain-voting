@@ -20,6 +20,7 @@ import (
 	"github.com/ybbus/jsonrpc/v3"
 
 	models "power-snapshot/internal/model"
+	"power-snapshot/utils/types"
 )
 
 type BaseRepo interface {
@@ -27,12 +28,19 @@ type BaseRepo interface {
 	// Mapping of dates (YYYYMMDD) to block heights. (e.g. {"20250301": 123456})
 	GetDateHeightMap(ctx context.Context, netId int64) (map[string]int64, error)
 	SetDateHeightMap(ctx context.Context, netId int64, height map[string]int64) error
-	SetDeveloperWeights(ctx context.Context, dayStr string, commits []models.Nodes) error
-	GetDeveloperWeights(ctx context.Context, dayStr string) ([]models.Nodes, error)
+	SaveToLocalFile(ctx context.Context, netId int64, dayStr string, t string, data any) error
+	GetDeveloperWeights(ctx context.Context, netId int64, dayStr string) ([]models.Nodes, error)
+	GetDealsFromLocal(ctx context.Context, netId int64, dayStr string) (types.StateMarketDeals, error)
 }
 
 type MysqlRepo interface {
 	CreateSnapshotBackup(ctx context.Context, in models.SnapshotBackupTbl) error
 	GetSnapshotBackupList(ctx context.Context, chainId int64) ([]models.SnapshotBackupTbl, error)
 	UpdateSnapshotBackup(ctx context.Context, in models.SnapshotBackupTbl) error
+}
+
+type ContractRepo interface {
+	SetSnapshotHeight(dateStr string, height uint64) error
+	GetSnapshotHeight(dateStr string) (int64, error)
+	GetExpirationData() (int, error)
 }

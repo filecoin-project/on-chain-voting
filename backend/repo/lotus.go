@@ -6,8 +6,10 @@ import (
 	"strings"
 
 	"github.com/ybbus/jsonrpc/v3"
+	"go.uber.org/zap"
 
 	"powervoting-server/config"
+	"powervoting-server/model"
 	"powervoting-server/utils/types"
 )
 
@@ -21,7 +23,7 @@ func NewLotusRPCRepo() *LotusRPCRepo {
 	}
 }
 
-func (l *LotusRPCRepo) filecoinAddressToID(ctx context.Context, addr string) (string, error) {
+func (l *LotusRPCRepo) FilecoinAddressToID(ctx context.Context, addr string) (string, error) {
 	resp, err := l.client.Call(ctx, "Filecoin.StateLookupID", addr, types.TipSetKey{})
 	if err != nil {
 		return "", err
@@ -34,7 +36,7 @@ func (l *LotusRPCRepo) filecoinAddressToID(ctx context.Context, addr string) (st
 	return resp.Result.(string), nil
 }
 
-func (l *LotusRPCRepo) ethAddrToFilcoinAddr(ctx context.Context, addr string) (string, error) {
+func (l *LotusRPCRepo) EthAddrToFilcoinAddr(ctx context.Context, addr string) (string, error) {
 	if !strings.HasPrefix(addr, "0x") {
 		return addr, nil
 	}
@@ -66,21 +68,22 @@ func (l *LotusRPCRepo) getOwnerByMinerId(ctx context.Context, minerId string) (s
 }
 
 func (l *LotusRPCRepo) GetActorIdByAddress(ctx context.Context, addr string) (string, error) {
-	filcoinAddr, err := l.ethAddrToFilcoinAddr(ctx, addr)
+	filcoinAddr, err := l.EthAddrToFilcoinAddr(ctx, addr)
 	if err != nil {
 		return "", err
 	}
 
-	return l.filecoinAddressToID(ctx, filcoinAddr)
+	return l.FilecoinAddressToID(ctx, filcoinAddr)
 }
 
-func (l *LotusRPCRepo) GetValidMinerIds(ctx context.Context, actorId string, minerIds []uint64) ([]string, error) {
-	var ids []string
+func (l *LotusRPCRepo) GetValidMinerIds(ctx context.Context, actorId string, minerIds []uint64) (model.StringSlice, error) {
+	var ids model.StringSlice
 	for _, id := range minerIds {
 		minerIdStr := fmt.Sprintf("%s%d", config.Client.Network.MinerIdPrefix, id)
 		owner, err := l.getOwnerByMinerId(ctx, minerIdStr)
 		if err != nil {
-			return nil, err
+			zap.L().Error(fmt.Sprintf("GetValidMinerIds for actorId: %s", actorId), zap.String("Invalid miner id", minerIdStr), zap.Error(err))
+			continue
 		}
 
 		if owner == actorId {
@@ -89,4 +92,21 @@ func (l *LotusRPCRepo) GetValidMinerIds(ctx context.Context, actorId string, min
 	}
 
 	return ids, nil
+}
+
+func (l *LotusRPCRepo) FilecoinAddrToEthAddr(ctx context.Context, addr string) (string, error) {
+	if strings.HasPrefix(addr, "0x") {
+		return addr, nil
+	}
+
+	resp, err := l.client.Call(ctx, "Filecoin.FilecoinAddressToEthAddress", addr)
+	if err != nil {
+		return "", err
+	}
+
+	if resp.Error != nil {
+		return "", resp.Error
+	}
+
+	return resp.Result.(string), nil
 }

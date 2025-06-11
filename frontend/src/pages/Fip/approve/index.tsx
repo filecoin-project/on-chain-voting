@@ -21,6 +21,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useFipList, useTransactionHash } from '../../../common/store';
 import type { BaseError } from "wagmi";
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { UserRejectedRequestError } from "viem";
+import { useSendMessage, useAddresses } from "iso-filecoin-react"
 import votingFipeditorAbi from "../../../common/abi/power-voting-fipeditor.json";
 import {
   HAVE_APPROVED_MSG,
@@ -33,10 +35,13 @@ import {
 } from "../../../common/consts";
 import EllipsisMiddle from "../../../components/EllipsisMiddle";
 import Loading from "../../../components/Loading";
-import { getContractAddress } from "../../../utils";
+import { getBlockExplorers, getContractAddress, isFilAddress } from "../../../utils"
 import "./index.less";
+import { useFilAddressMessage } from "../../../common/hooks.ts"
 const FipEditorApprove = () => {
   const { isConnected, address, chain } = useAccount();
+  const { address0x } = useAddresses({ address: address as string })
+  const { mutateAsync: sendMessage } = useSendMessage();
   const { t } = useTranslation();
   const chainId = chain?.id || calibrationChainId;
   const navigate = useNavigate();
@@ -49,6 +54,8 @@ const FipEditorApprove = () => {
   const [totalSize, setTotalSize] = useState(0)
   const [loading, setLoading] = useState(false);
   const [currentProposalId, setCurrentProposalId] = useState(null);
+  const [filOperationSuccess, setFilOperationSuccess] = useState(false);
+
   const { fipList, isFipEditorAddress } = useFipList((state: any) => state.data);
   const setStoringHash = useTransactionHash((state: any) => state.setTransactionHash)
   const storingHash = useTransactionHash((state: any) => state.transactionHash)
@@ -84,7 +91,7 @@ const FipEditorApprove = () => {
               className="text-black hover:text-black"
               target="_blank"
               rel="noopener"
-              href={`${chain?.blockExplorers?.default.url}/address/${value}`}
+              href={getBlockExplorers(chain, value)}
             >
               {EllipsisMiddle({ suffixCount: 8, children: value })}
             </a>
@@ -114,7 +121,7 @@ const FipEditorApprove = () => {
               className="text-black hover:text-black"
               target="_blank"
               rel="noopener"
-              href={`${chain?.blockExplorers?.default.url}/address/${value}`}
+              href={getBlockExplorers(chain, value)}
             >
               {EllipsisMiddle({ suffixCount: 8, children: value })}
             </a>
@@ -238,7 +245,11 @@ const FipEditorApprove = () => {
       chainId,
     }
     const { data: { data: fipList } } = await axios.get(getFipListApi, { params });
-    setFipList(fipList, address)
+    if (isFilAddress(address!) && address0x.data) {
+      setFipList(fipList, address0x.data.toString())
+    } else {
+      setFipList(fipList, address)
+    }
   }
   useEffect(() => {
     if (chainId) {
@@ -246,12 +257,14 @@ const FipEditorApprove = () => {
       getFipList()
       initState();
     }
-  }, [chain, page, address, isSuccess]);
+  }, [chain, page, address]);
+
   useEffect(() => {
     if (isFetched) {
-      if (isSuccess) {
+      if (isSuccess || filOperationSuccess) {
         getFipList()
         initState();
+        setStoringHash({ 'approve': undefined })
       }
       // If the transaction fails, show an error message
       if (isError) {
@@ -261,10 +274,10 @@ const FipEditorApprove = () => {
         })
       }
     }
-  }, [isFetched]);
+  }, [isFetched, isSuccess, filOperationSuccess]);
 
   useEffect(() => {
-    if (writeContractSuccess) {
+    if (writeContractSuccess || filOperationSuccess) {
       messageApi.open({
         type: 'success',
         content: t(STORING_DATA_MSG),
@@ -274,14 +287,14 @@ const FipEditorApprove = () => {
         navigate("/home")
       }, 1000);
     }
-  }, [writeContractSuccess]);
+  }, [writeContractSuccess, filOperationSuccess]);
 
 
   const handlePageChange = (page: number) => {
     setPage(page);
   }
 
-  const confirm = (record: any) => {
+  const confirm = async (record: any) => {
     if (record.votedAddresss.includes(address)) {
       messageApi.open({
         type: 'warning',
@@ -289,16 +302,47 @@ const FipEditorApprove = () => {
       });
       return;
     }
-    writeContract({
-      abi: votingFipeditorAbi,
-      address: getContractAddress(chainId, 'powerVotingFip'),
-      functionName: 'voteFipEditorProposal',
-      args: [
-        record.proposalId,
-      ],
-    });
+
+    if (address && isFilAddress(address)) {
+      try {
+        const { message } = await useFilAddressMessage({
+          abi: votingFipeditorAbi,
+          contractAddress: getContractAddress(chainId || calibrationChainId, 'powerVotingFip'),
+          address: address as string,
+          functionName: "voteFipEditorProposal",
+          functionParams: [record.proposalId],
+        })
+        await sendMessage(message);
+        setFilOperationSuccess(true);
+      } catch (error) {
+        if (error as UserRejectedRequestError) {
+          messageApi.open({
+            type: "warning",
+            content: t("content.rejectedSignature")
+          })
+        } else {
+          messageApi.open({
+            type: "error",
+            content: (error as BaseError)?.shortMessage || JSON.stringify(error)
+          })
+        }
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      writeContract({
+        abi: votingFipeditorAbi,
+        address: getContractAddress(chainId, 'powerVotingFip'),
+        functionName: 'voteFipEditorProposal',
+        args: [
+          record.proposalId,
+        ],
+      });
+    }
     setCurrentProposalId(record.proposalId);
   };
+
+
   return (
     <div className="px-3 mb-6 md:px-0">
       {contextHolder}

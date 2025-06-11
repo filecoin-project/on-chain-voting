@@ -15,6 +15,8 @@
 package router
 
 import (
+	"reflect"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 
@@ -47,10 +49,11 @@ func InitRouters(r *gin.Engine, proposalService service.IProposalService, voteSe
 func proposalRouter(rg *gin.RouterGroup, ph *api.ProposalHandler, vh *api.VoteHandler) {
 	rg.GET("/proposal/votes", wrap(vh.GetCountedVotesInfo)) // Get counted votes for a proposal
 
-	rg.GET("/proposal/list", wrap(ph.GetProposalList))      // Get a list of proposals
-	rg.GET("/proposal/details", wrap(ph.GetProposalDetail)) // Get details of a specific proposal
-	rg.POST("/proposal/draft/add", wrap(ph.PostDraft))      // Add a new proposal draft
-	rg.GET("/proposal/draft/get", wrap(ph.GetDraft))        // Get a specific proposal draft
+	rg.GET("/proposal/list", wrap(ph.GetProposalList))        // Get a list of proposals
+	rg.GET("/proposal/details", wrap(ph.GetProposalDetail))   // Get details of a specific proposal
+	rg.POST("/proposal/draft/add", wrap(ph.PostDraft))        // Add a new proposal draft
+	rg.DELETE("/proposal/draft/delete", wrap(ph.DeleteDraft)) // Delete a specific proposal draft
+	rg.GET("/proposal/draft/get", wrap(ph.GetDraft))          // Get a specific proposal draft
 }
 
 // powerRouter defines routes related to power distribution and management.
@@ -60,16 +63,31 @@ func powerRouter(rg *gin.RouterGroup) {
 
 // fipEditor sets up routes for handling FIP (Federated Identity Proposal) related operations.
 func fipEditor(rg *gin.RouterGroup, fh *api.FipHandle, vh *api.VoteHandler) {
-	rg.GET("/fipProposal/list", wrap(fh.GetFipProposalList))           // Get a list of fipProposals
-	rg.GET("/fipEditor/list", wrap(fh.GetFipEditorList))               // Get a list of fipEditors
-	rg.GET("/fipEditor/gistAuthorized", wrap(vh.GetFipEditorGistInfo)) // Get FIP editor gist info
+	rg.GET("/fipProposal/list", wrap(fh.GetFipProposalList)) // Get a list of fipProposals
+	rg.GET("/fipEditor/list", wrap(fh.GetFipEditorList))     // Get a list of fipEditors
+	rg.GET("/voter/info", wrap(vh.GetFipEditorGistInfo))     // Get FIP editor gist info
 	rg.GET("/fipEditor/checkGist", wrap(vh.VerifyGistValid))
 	// The wrap function is used to handle the request and response, passing the fh.GetFipEditorList handler.
 }
 
 // wrap is a utility function to wrap handlers with additional context and validation.
 func wrap(h func(c *constant.Context)) gin.HandlerFunc {
+	validate := validator.New()
+	validate.RegisterValidation("is-integer", func(fl validator.FieldLevel) bool {
+		field := fl.Field()
+		switch field.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return true
+		case reflect.Float32, reflect.Float64:
+			floatValue := field.Float()
+			return floatValue == float64(int64(floatValue))
+		default:
+			return false
+		}
+	})
+
 	return func(c *gin.Context) {
-		h(&constant.Context{Context: c, Validate: validator.New()}) // Pass context and validator to the handler
+		h(&constant.Context{Context: c, Validate: validate}) // Pass context and validator to the handler
 	}
 }

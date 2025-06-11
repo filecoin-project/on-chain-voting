@@ -37,4 +37,4 @@ else
     echo "Container $IMAGE_NAME does not exist or is already stopped."
 fi
 
-docker run --name $IMAGE_NAME -v ./configuration.yaml:/dist/configuration.yaml -p $PORT:$PORT -d $IMAGE_NAME
+docker run --name $IMAGE_NAME -p $PORT:$PORT -v /mnt/fil/mainnet/snapshot/weights:/dist/data/weights -d $IMAGE_NAME

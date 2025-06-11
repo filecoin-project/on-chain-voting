@@ -19,23 +19,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	filecoinAddress "github.com/filecoin-project/go-address"
 	"github.com/redis/go-redis/v9"
 	"github.com/ybbus/jsonrpc/v3"
+	"go.uber.org/zap"
 
 	"power-snapshot/config"
 	"power-snapshot/constant"
+	"power-snapshot/internal/data"
 	models "power-snapshot/internal/model"
 	"power-snapshot/utils/types"
 )
 
 type LotusRPCRepo struct {
 	rpcClient   jsonrpc.RPCClient
-	redisClient *redis.Client
+	redisClient *data.RedisClient
 }
 
-func NewLotusRPCRepo(redisClient *redis.Client) *LotusRPCRepo {
+func NewLotusRPCRepo(redisClient *data.RedisClient) *LotusRPCRepo {
 	return &LotusRPCRepo{
 		rpcClient:   jsonrpc.NewClientWithOpts(config.Client.Network.QueryRpc[0], &jsonrpc.RPCClientOpts{}),
 		redisClient: redisClient,
@@ -44,7 +47,9 @@ func NewLotusRPCRepo(redisClient *redis.Client) *LotusRPCRepo {
 
 func (l *LotusRPCRepo) GetTipSetByHeight(ctx context.Context, netId, height int64) ([]any, error) {
 	key := fmt.Sprintf(constant.RedisTipset, netId)
-	res, err := l.redisClient.HGet(ctx, key, strconv.FormatInt(height, 10)).Result()
+
+
+	res, err := l.redisClient.HGet(ctx, key, strconv.FormatInt(height, 10))
 	if err != nil {
 		if err != redis.Nil {
 			return nil, err
@@ -65,7 +70,8 @@ func (l *LotusRPCRepo) GetTipSetByHeight(ctx context.Context, netId, height int6
 	}
 
 	if resp.Error != nil {
-		return nil, resp.Error
+		zap.L().Error("get tipset by height error", zap.Int64("height", height), zap.Error(resp.Error))
+		return []any{}, nil
 	}
 
 	rMap, ok := resp.Result.(map[string]interface{})
@@ -75,17 +81,10 @@ func (l *LotusRPCRepo) GetTipSetByHeight(ctx context.Context, netId, height int6
 
 	resTipSet := rMap["Cids"].([]interface{})
 
-	jsonData, err := json.Marshal(resTipSet)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = l.redisClient.HSet(ctx, key, strconv.FormatInt(height, 10), string(jsonData)).Err(); err != nil {
-		return nil, err
-	}
 
 	return resTipSet, nil
 }
+
 
 func (l *LotusRPCRepo) GetAddrBalanceBySpecialHeight(ctx context.Context, addr string, netId, height int64) (string, error) {
 	tipSetKey, err := l.GetTipSetByHeight(ctx, netId, height)
@@ -140,32 +139,6 @@ func (l *LotusRPCRepo) GetMinerPowerByHeight(ctx context.Context, netId int64, a
 	}
 
 	return minerPower, nil
-}
-
-func (l *LotusRPCRepo) GetClientBalanceBySpecialHeight(ctx context.Context, netId, height int64) (models.StateMarketDeals, error) {
-	tipSetKey, err := l.GetTipSetByHeight(ctx, netId, height)
-	if err != nil {
-		return models.StateMarketDeals{}, err
-	}
-
-	tipSetList := append([]any{}, tipSetKey)
-
-	var t models.StateMarketDeals
-	resp, err := l.rpcClient.Call(ctx, "Filecoin.StateMarketDeals", tipSetList)
-	if err != nil {
-		return models.StateMarketDeals{}, err
-	}
-
-	tmp, err := json.Marshal(resp.Result)
-	if err != nil {
-		return models.StateMarketDeals{}, err
-	}
-
-	if err := json.Unmarshal(tmp, &t); err != nil {
-		return models.StateMarketDeals{}, err
-	}
-
-	return t, nil
 }
 
 func (l *LotusRPCRepo) GetNewestHeight(ctx context.Context, netId int64) (height int64, err error) {
@@ -228,16 +201,18 @@ func (l *LotusRPCRepo) GetWalletBalanceByHeight(ctx context.Context, id string, 
 		return "0", err
 	}
 
-	addressStr, err := filecoinAddress.NewFromString(id)
+	resp, err := l.rpcClient.Call(ctx, "Filecoin.StateGetActor", id, tipSetKey)
 	if err != nil {
 		return "0", err
 	}
 
-	tipSetList := append([]any{}, addressStr, tipSetKey)
+	if resp.Error != nil {
+		if strings.HasPrefix(resp.Error.Message, "load state tree") || strings.HasPrefix(resp.Error.Message, "actor not found") {
+			zap.L().Error("get wallet balance failed", zap.String("actor id", id), zap.String("error", resp.Error.Message))
+			return "0", nil
+		}
 
-	resp, err := l.rpcClient.Call(ctx, "Filecoin.StateGetActor", &tipSetList)
-	if err != nil {
-		return "0", err
+		return "0", resp.Error
 	}
 
 	tmp, err := json.Marshal(resp.Result)
@@ -253,28 +228,29 @@ func (l *LotusRPCRepo) GetWalletBalanceByHeight(ctx context.Context, id string, 
 	return t.Balance, nil
 }
 
-func (l *LotusRPCRepo) GetClientBalanceByHeight(ctx context.Context, netId, height int64) (types.StateMarketDeals, error) {
+func (l *LotusRPCRepo) GetDealsByHeight(ctx context.Context, netId, height int64) (types.StateMarketDeals, error) {
 	tipSetKey, err := l.GetTipSetByHeight(ctx, netId, height)
 	if err != nil {
-		return types.StateMarketDeals{}, err
+		return nil, err
 	}
 
 	tipSetList := append([]any{}, tipSetKey)
 
-	var t types.StateMarketDeals
+	var deals types.StateMarketDeals
 	resp, err := l.rpcClient.Call(ctx, "Filecoin.StateMarketDeals", tipSetList)
 	if err != nil {
-		return types.StateMarketDeals{}, err
+		return nil, err
 	}
 
 	tmp, err := json.Marshal(resp.Result)
 	if err != nil {
-		return types.StateMarketDeals{}, err
+		return nil, err
 	}
 
-	if err := json.Unmarshal(tmp, &t); err != nil {
-		return types.StateMarketDeals{}, err
+	if err := json.Unmarshal(tmp, &deals); err != nil {
+		return nil, err
 	}
 
-	return t, nil
+	return deals, nil
 }
+

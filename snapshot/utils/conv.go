@@ -16,7 +16,9 @@ package utils
 
 import (
 	"math/big"
+	"strconv"
 
+	"github.com/ethereum/go-ethereum/common"
 	"go.uber.org/zap"
 )
 
@@ -24,7 +26,7 @@ func StringToBigInt(v string) *big.Int {
 	if len(v) == 0 {
 		return big.NewInt(0)
 	}
-	
+
 	res, ok := big.NewInt(0).SetString(v, 10)
 	if ok {
 		return res
@@ -32,4 +34,17 @@ func StringToBigInt(v string) *big.Int {
 
 	zap.L().Warn("failed to convert string to big.Int", zap.Any("convert value", v))
 	return big.NewInt(0)
+}
+
+func SafeParseInt64(v string) int64 {
+	res, err := strconv.ParseInt(v, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return res
+}
+
+func EthStandardAddressToHex(v string) string {
+	address := common.HexToAddress(v)
+	return address.Hex()
 }
