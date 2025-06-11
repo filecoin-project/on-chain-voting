@@ -30,13 +30,15 @@ import (
 
 type RpcService struct {
 	voteRepo  VoteRepo
+	syncRepo  SyncRepo
 	lotusRepo LotusRepo
 	logger    *zap.Logger
 }
 
-func NewRpcService(voteRepo VoteRepo, lotusRepo LotusRepo) *RpcService {
+func NewRpcService(voteRepo VoteRepo, syncRepo SyncRepo, lotusRepo LotusRepo) *RpcService {
 	return &RpcService{
 		voteRepo:  voteRepo,
+		syncRepo:  syncRepo,
 		lotusRepo: lotusRepo,
 		logger:    zap.L().With(zap.String("service", "RPC")),
 	}
@@ -148,4 +150,14 @@ func (r *RpcService) GetVoterInfoByAddress(ctx context.Context, address string) 
 	}
 
 	return voterInfo, nil
+}
+
+func (r *RpcService) GetGithubRepoName(ctx context.Context, orgType int) ([]model.GithubRepos, error) {
+	res, err := r.syncRepo.GetGithubRepoName(ctx, orgType)
+	if err != nil {
+		zap.L().Error("GetGithubRepoName failed", zap.Error(err))
+		return nil, err
+	}
+
+	return res, nil
 }

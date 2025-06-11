@@ -45,3 +45,18 @@ func (b *BackendRpc) GetVoterInfo(ctx context.Context, req *pb.GetVoterInfoReque
 	}, nil
 
 }
+
+func (b *BackendRpc) GetGithubRepoInfo(ctx context.Context, req *pb.GetGithubRepoInfoRequest) (*pb.GetGithubRepoInfoResponse, error) {
+	repoInfo, err := b.rpcSrv.GetGithubRepoName(ctx, int(req.OrgType))
+	if err != nil {
+		return &pb.GetGithubRepoInfoResponse{}, status.Error(codes.Internal, err.Error())
+	}
+
+	var repoNames []string
+	for _, repo := range repoInfo {
+		repoNames = append(repoNames, repo.RepoName)
+	}
+	return &pb.GetGithubRepoInfoResponse{
+		RepoNames: repoNames,
+	}, nil
+}

@@ -63,7 +63,7 @@ func main() {
 	go task.TaskScheduler(syncService)
 
 	// initialization grpc server
-	go RpcServer(rpc.NewBackendRpc(service.NewRpcService(voteRepoImpl, lotusRepoImpl)))
+	go RpcServer(rpc.NewBackendRpc(service.NewRpcService(voteRepoImpl, syncRepoImpl, lotusRepoImpl)))
 	// default gin web
 	r := gin.Default()
 	r.Use(Cors())

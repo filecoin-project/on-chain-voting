@@ -52,13 +52,14 @@ func GetClient(syncService service.ISyncService, chainId int64) (*model.GoEthCli
 	network := config.Client.Network
 
 	clientConfig := model.ClientConfig{
-		ChainId:              network.ChainId,
-		Name:                 network.Name,
-		Rpc:                  network.Rpc,
-		PowerVotingContract:  network.PowerVotingContract,
-		OracleContract:       network.OracleContract,
-		SyncEventStartHeight: network.SyncEventStartHeight,
-		FipContract:          network.FipContract,
+		ChainId:                 network.ChainId,
+		Name:                    network.Name,
+		Rpc:                     network.Rpc,
+		PowerVotingContract:     network.PowerVotingContract,
+		OracleContract:          network.OracleContract,
+		SyncEventStartHeight:    network.SyncEventStartHeight,
+		FipContract:             network.FipContract,
+		PowerVotingConfContract: network.PowerVotingConfContract,
 	}
 
 	if err := syncService.CreateFipEditor(context.Background(), &model.FipEditorTbl{
@@ -82,7 +83,7 @@ func GetClient(syncService service.ISyncService, chainId int64) (*model.GoEthCli
 
 	zap.L().Info("network init", zap.String("network id", strconv.FormatInt(chainId, 10)))
 
-	ethClient, err := getGoEthClient(clientConfig, config.Client.ABIPath)
+	ethClient, err := getGoEthClient(clientConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +94,7 @@ func GetClient(syncService service.ISyncService, chainId int64) (*model.GoEthCli
 }
 
 // getGoEthClient initializes a Go-ethereum client with the provided configuration.
-func getGoEthClient(clientConfig model.ClientConfig, abiPath config.ABIPath) (model.GoEthClient, error) {
+func getGoEthClient(clientConfig model.ClientConfig) (model.GoEthClient, error) {
 	client, err := ethclient.Dial(clientConfig.Rpc)
 	if err != nil {
 		zap.L().Error("ethclient.Dial error: ", zap.Error(err))
@@ -105,19 +106,24 @@ func getGoEthClient(clientConfig model.ClientConfig, abiPath config.ABIPath) (mo
 	oracleContract := common.HexToAddress(clientConfig.OracleContract)
 	orcalePowersContract := common.HexToAddress(clientConfig.OraclePowersContract)
 	fipContract := common.HexToAddress(clientConfig.FipContract)
+	powerVotingConfContract := common.HexToAddress(clientConfig.PowerVotingConfContract)
+
+	abiPath := config.Client.ABIPath
 	// generate goEthClient
 	goEthClient := model.GoEthClient{
-		ChainId:              clientConfig.ChainId,
-		Name:                 clientConfig.Name,
-		Client:               client,
-		PowerVotingContract:  powerVotingContract,
-		OracleContract:       oracleContract,
-		OraclePowersContract: orcalePowersContract,
-		FipContract:          fipContract,
+		ChainId:                 clientConfig.ChainId,
+		Name:                    clientConfig.Name,
+		Client:                  client,
+		PowerVotingContract:     powerVotingContract,
+		OracleContract:          oracleContract,
+		OraclePowersContract:    orcalePowersContract,
+		FipContract:             fipContract,
+		PowerVotingConfContract: powerVotingConfContract,
 		ABI: &model.ABI{
-			PowerVotingAbi:  GetAbiFromLocalFile(abiPath.PowerVotingAbi),
-			OracleAbi:       GetAbiFromLocalFile(abiPath.OracleAbi),
-			FipAbi:          GetAbiFromLocalFile(abiPath.FipAbi),
+			PowerVotingAbi:     GetAbiFromLocalFile(abiPath.PowerVotingAbi),
+			OracleAbi:          GetAbiFromLocalFile(abiPath.OracleAbi),
+			FipAbi:             GetAbiFromLocalFile(abiPath.FipAbi),
+			PowerVotingConfAbi: GetAbiFromLocalFile(abiPath.PowerVotingConfAbi),
 		},
 	}
 	return goEthClient, nil

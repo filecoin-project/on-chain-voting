@@ -32,6 +32,7 @@ network:
 
   oraclePowersContract: ${ORACLE_POWERS_CONTRACT}
   powerVotingContract: ${POWERVOTING_CONTRACT}
+  powerVotingConfContract: ${CONF_CONTRACT}
 
   fipContract: ${FIP_CONTRACT}
   fipInitEditor: ${FIP_INIT_EDITOR}
@@ -41,3 +42,4 @@ abiPath:
   oraclePowersAbi: ${ORACLE_POWERS_ABI_PATH}
   oracleAbi: ${ORACLE_ABI_PATH}
   fipAbi: ${FIP_ABI_PATH}
+  powerVotingConfAbi: ${CONF_ABI_PATH}

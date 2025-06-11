@@ -50,15 +50,16 @@ type Github struct {
 
 // Network represents the configuration for a specific network.
 type Network struct {
-	ChainId              int64  // Unique identifier for the network
-	Name                 string // Name of the network
-	Rpc                  string // RPC endpoint for the network
-	PowerVotingContract  string // Contract address for PowerVoting
-	SyncEventStartHeight int64  // Deployment height of the PowerVoting contract
-	OracleContract       string // Contract address for Oracle
-	FipContract          string // Contract address for FIP
-	FipInitEditor        string // Initial editor for FIP
-	MinerIdPrefix        string // Prefix for miner IDs
+	ChainId                 int64  // Unique identifier for the network
+	Name                    string // Name of the network
+	Rpc                     string // RPC endpoint for the network
+	PowerVotingContract     string // Contract address for PowerVoting
+	SyncEventStartHeight    int64  // Deployment height of the PowerVoting contract
+	OracleContract          string // Contract address for Oracle
+	FipContract             string // Contract address for FIP
+	PowerVotingConfContract string // Contract address for PowerVotingConf
+	FipInitEditor           string // Initial editor for FIP
+	MinerIdPrefix           string // Prefix for miner IDs
 }
 
 type Snapshot struct {
@@ -66,7 +67,8 @@ type Snapshot struct {
 }
 
 type ABIPath struct {
-	PowerVotingAbi  string // ABI (Application Binary Interface) for PowerVoting contract
-	OracleAbi       string // ABI for Oracle contract
-	FipAbi          string // ABI for FIP contract
+	PowerVotingAbi     string // ABI (Application Binary Interface) for PowerVoting contract
+	OracleAbi          string // ABI for Oracle contract
+	FipAbi             string // ABI for FIP contract
+	PowerVotingConfAbi string // ABI for PowerVotingConf contract
 }

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/ybbus/jsonrpc/v3"
+	"go.uber.org/zap"
 
 	"powervoting-server/config"
 	"powervoting-server/model"
@@ -81,7 +82,8 @@ func (l *LotusRPCRepo) GetValidMinerIds(ctx context.Context, actorId string, min
 		minerIdStr := fmt.Sprintf("%s%d", config.Client.Network.MinerIdPrefix, id)
 		owner, err := l.getOwnerByMinerId(ctx, minerIdStr)
 		if err != nil {
-			return nil, err
+			zap.L().Error(fmt.Sprintf("GetValidMinerIds for actorId: %s", actorId), zap.String("Invalid miner id", minerIdStr), zap.Error(err))
+			continue
 		}
 
 		if owner == actorId {
@@ -92,3 +94,19 @@ func (l *LotusRPCRepo) GetValidMinerIds(ctx context.Context, actorId string, min
 	return ids, nil
 }
 
+func (l *LotusRPCRepo) FilecoinAddrToEthAddr(ctx context.Context, addr string) (string, error) {
+	if strings.HasPrefix(addr, "0x") {
+		return addr, nil
+	}
+
+	resp, err := l.client.Call(ctx, "Filecoin.FilecoinAddressToEthAddress", addr)
+	if err != nil {
+		return "", err
+	}
+
+	if resp.Error != nil {
+		return "", resp.Error
+	}
+
+	return resp.Result.(string), nil
+}

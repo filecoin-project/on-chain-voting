@@ -24,6 +24,7 @@ import (
 	"go.uber.org/zap"
 
 	"powervoting-server/config"
+	"powervoting-server/utils"
 )
 
 // ProposalListReq represents a request for listing proposals with pagination, status filter, and search functionality.
@@ -76,17 +77,22 @@ type AddProposalDraftReq struct {
 	StartTime int64  `json:"startTime" validate:"required"`              // Start time of the proposal
 	EndTime   int64  `json:"endTime" validate:"required"`                // End time of the proposal
 	Timezone  string `json:"timezone" validate:"required"`               // Timezone of the proposal
-	Title     string `json:"title" validate:"required,min=2,max=254"`    // Title of the proposal
-	Content   string `json:"content" validate:"required,min=2,max=2000"` // Description of the proposal
+	Title     string `json:"title" validate:"required,min=1,max=254"`    // Title of the proposal
+	Content   string `json:"content" validate:"required,min=1,max=2000"` // Description of the proposal
 	ChainIdParam
 	ProposalPercentage
 }
 
+type DelProposalDraftReq struct {
+    AddressReq
+	ChainIdParam
+}
+
 type ProposalPercentage struct {
 	TokenHolderPercentage uint16 `json:"tokenHolderPercentage" validate:"number,is-integer"` // Voting power percentage for token holders
-	SpPercentage          uint16 `json:"spPercentage" validate:"number,is-integer"`           // Voting power percentage for SPs
-	ClientPercentage      uint16 `json:"clientPercentage" validate:"number,is-integer"`       // Voting power percentage for clients
-	DeveloperPercentage   uint16 `json:"developerPercentage" validate:"number,is-integer"`    // Voting power percentage for developers
+	SpPercentage          uint16 `json:"spPercentage" validate:"number,is-integer"`          // Voting power percentage for SPs
+	ClientPercentage      uint16 `json:"clientPercentage" validate:"number,is-integer"`      // Voting power percentage for clients
+	DeveloperPercentage   uint16 `json:"developerPercentage" validate:"number,is-integer"`   // Voting power percentage for developers
 }
 
 type FipProposalListReq struct {
@@ -122,10 +128,18 @@ func (p *PageReq) Offset() int {
 }
 
 func (a *AddressReq) ToEthAddr() (string, error) {
+	if a == nil {
+		return "", nil
+	}
+
+	if a.Address == "" {
+		return "", nil
+	}
+	
 	lotusClient := jsonrpc.NewClientWithOpts(config.Client.Network.Rpc, &jsonrpc.RPCClientOpts{})
 
 	if strings.HasPrefix(a.Address, "0x") {
-		return a.Address, nil
+		return utils.EthStandardAddressToHex(a.Address), nil
 	}
 
 	resp, err := lotusClient.Call(context.Background(), "Filecoin.FilecoinAddressToEthAddress", a.Address)
@@ -139,5 +153,5 @@ func (a *AddressReq) ToEthAddr() (string, error) {
 		return "", fmt.Errorf("get eth address error: %s", resp.Error.Message)
 	}
 
-	return resp.Result.(string), nil
+	return utils.EthStandardAddressToHex(resp.Result.(string)), nil
 }

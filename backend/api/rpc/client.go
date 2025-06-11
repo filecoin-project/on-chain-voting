@@ -23,20 +23,27 @@ var (
 	clientOnce     sync.Once
 )
 
+func SetSnapshotClient(client pb.SnapshotClient) {
+	snapshotClient = client
+}
+
 // getClient returns a singleton gRPC client instance.
 func getClient() pb.SnapshotClient {
 	clientOnce.Do(func() {
-
-		conn, err := grpc.Dial(
-			config.Client.Snapshot.Rpc,
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithBlock(),
-		)
-		if err != nil {
-			zap.L().Error("failed to connect to gRPC server", zap.Error(err))
+		if snapshotClient == nil {
+			conn, err := grpc.Dial(
+				config.Client.Snapshot.Rpc,
+				grpc.WithTransportCredentials(insecure.NewCredentials()),
+				grpc.WithBlock(),
+			)
+			if err != nil {
+				zap.L().Error("failed to connect to gRPC server", zap.Error(err))
+			}
+			snapshotClient = pb.NewSnapshotClient(conn)
 		}
-		snapshotClient = pb.NewSnapshotClient(conn)
+
 	})
+
 	return snapshotClient
 }
 
@@ -182,9 +189,14 @@ func SyncAddressPower(chainId int64, ethAddr string) {
 	ctx, cancel := context.WithTimeout(context.Background(), constant.RequestTimeout)
 	defer cancel()
 
-	grpcReq := &pb.SyncAddrPowerRequest{}
+	grpcReq := &pb.SyncAddrPowerRequest{
+		NetId: chainId,
+		Address: ethAddr,
+	}
 	if _, err := getClient().SyncAddrPower(ctx, grpcReq); err != nil {
 		zap.L().Error("failed to sync address power", zap.Error(err))
 	}
 
 }
+
+

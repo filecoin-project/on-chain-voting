@@ -22,16 +22,25 @@ import (
 
 	"github.com/drand/tlock"
 	drandhttp "github.com/drand/tlock/networks/http"
-
 	"go.uber.org/zap"
 
 	"powervoting-server/config"
 )
 
+type IEncrypted interface {
+	DecodeVoteResult(voteInfo string) (string, error)
+	Decrypt(decStr string) ([]byte, error)
+}
+
+type Encrypted struct{}
+
+func NewEncrypted() Encrypted  {
+	return Encrypted{}
+}
 // It decrypts the encrypted data, unmarshals it into a structured format,
 // and constructs a list of vote counts for each option.
 // The function returns the decoded vote list or an error if the decoding fails.
-func DecodeVoteResult(voteInfo string) (string, error) {
+func (e Encrypted) DecodeVoteResult(voteInfo string) (string, error) {
 	var (
 		decrypt []byte
 		err     error
@@ -39,7 +48,7 @@ func DecodeVoteResult(voteInfo string) (string, error) {
 	retry_times := 5
 
 	for i := 0; i < retry_times; i++ {
-		decrypt, err = Decrypt(voteInfo)
+		decrypt, err = e.Decrypt(voteInfo)
 		if i == retry_times-1 && err != nil {
 			zap.L().Error("decrypt error:", zap.Error(err))
 			return "", err
@@ -68,7 +77,7 @@ func DecodeVoteResult(voteInfo string) (string, error) {
 // It replaces escape characters in the IPFS string, constructs a drand network,
 // and decrypts the data using T-lock encryption.
 // The function returns the decrypted data or an error if decryption fails.
-func Decrypt(decStr string) ([]byte, error) {
+func (e Encrypted) Decrypt(decStr string) ([]byte, error) {
 	// Construct a network that can talk to a drand network. Example using the mainnet fastnet network.
 	replace := strings.ReplaceAll(decStr, "\\n", "\n")
 	replace2 := strings.ReplaceAll(replace, "\"", "")
@@ -98,4 +107,3 @@ func Decrypt(decStr string) ([]byte, error) {
 	}
 	return data, nil
 }
-

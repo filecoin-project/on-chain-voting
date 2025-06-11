@@ -101,3 +101,17 @@ type EventLog struct {
 	TransactionIndex int      `json:"transactionIndex"`
 	BlockNumber      int64    `json:"blockNumber"`
 }
+
+type ConfRepoAddedEvent struct {
+	Id       *big.Int       `json:"id"`
+	RepoInfo GithubRepoInfo `json:"repoInfo"`
+}
+
+type ConfRepoRemovedEvent struct {
+	Id       *big.Int       `json:"id"`
+}
+
+type GithubRepoInfo struct {
+	RepoName string `json:"repoName"`
+	OrgType  uint8   `json:"orgType"`
+}

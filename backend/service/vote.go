@@ -174,7 +174,10 @@ func (f *VoteService) GetFipEditorGistInfo(ctx context.Context, req api.AddressR
 	}
 
 	if voterInfo.GistId == "" {
-		return nil, nil
+		return &api.FipEditorGistInfoRep{
+			MinerIds: voterInfo.MinerIds,
+			ActorId:  voterInfo.OwnerId,
+		}, nil
 	}
 
 	gist, err := utils.FetchGistInfoByGistId(voterInfo.GistId)
@@ -217,7 +220,7 @@ func (f *VoteService) GetFipEditorGistInfo(ctx context.Context, req api.AddressR
 	sigObj, err := utils.ParseGistContent(gist.Files)
 	return &api.FipEditorGistInfoRep{
 		GistId: voterInfo.GistId,
-		GistSigObj: model.SigObject{
+		GistSigObj: &model.SigObject{
 			GitHubName:    sigObj.SigObject.GitHubName,
 			WalletAddress: sigObj.SigObject.WalletAddress,
 			Timestamp:     sigObj.SigObject.Timestamp,

@@ -62,6 +62,35 @@ type SyncRepo interface {
 	//   - *model.SyncEventTbl: The synchronization event data if found.
 	//   - error: An error if the query operation fails; otherwise, nil.
 	GetSyncEventInfo(ctx context.Context, addr string) (*model.SyncEventTbl, error)
+	// AddGithubRepoName adds a new github repo name to the database.
+	//
+	// Parameters:
+	//   - ctx: Context for request cancellation and timeout.
+	//   - in: repo input
+	//
+	// Returns:
+	//   - int64: insert id
+	AddGithubRepoName(ctx context.Context, in *model.GithubRepos) (int64, error)
+	// GetGithubRepoName retrieves github repo name for a given org type.
+	//
+	// Parameters:
+	//   - ctx: Context for request cancellation and timeout.
+	//   - orgType: The org type associated with the github repo.
+	//
+	// Returns:
+	//   - []model.GithubRepos: The github repo data if found.
+	//   - error: An error if the query operation fails; otherwise, nil.
+	GetGithubRepoName(ctx context.Context, orgType int) ([]model.GithubRepos, error)
+	// DeleteGithubRepoName deletes a github repo name for a given org type and org id.
+	//
+	// Parameters:
+	//   - ctx: Context for request cancellation and timeout.
+	//   - orgType: The org type associated with the github repo.
+	//   - orgId: The org id associated with the github repo.
+	//
+	// Returns:
+	//   - error: An error if the delete operation fails; otherwise, nil.
+	DeleteGithubRepoName(ctx context.Context, orgId int64) error
 }
 
 type LotusRepo interface {
@@ -69,6 +98,7 @@ type LotusRepo interface {
 	GetValidMinerIds(ctx context.Context, minerId string, minerIds []uint64) (model.StringSlice, error)
 	EthAddrToFilcoinAddr(ctx context.Context, addr string) (string, error)
 	FilecoinAddressToID(ctx context.Context, addr string) (string, error)
+	FilecoinAddrToEthAddr(ctx context.Context, addr string) (string, error)
 }
 type ISyncService interface {
 	UpdateSyncEventInfo(ctx context.Context, addr string, height int64) error
@@ -90,6 +120,8 @@ type ISyncService interface {
 
 	UpdateVoterAndProposalGithubNameByGistInfo(ctx context.Context, voterInfo *model.VoterInfoTbl) error
 	UpdateVoterByMinerIds(ctx context.Context, voterAddress string, minerIds []uint64) error
+	AddGithubRepoName(ctx context.Context, orgType int, repoName string, orgId, addTimestamp int64) error
+	DeleteGithubRepoName(ctx context.Context, orgId int64) error
 }
 
 // SyncService provides functionality for synchronizing data across repositories.
@@ -299,6 +331,7 @@ func (s *SyncService) GetUncountedVotedList(ctx context.Context, chainId, propos
 		return nil, err
 	}
 
+	zap.L().Info("GetUncountedVotedList", zap.Int64("chainId", chainId), zap.Int64("proposalId", proposalId), zap.Int("count", len(res)))
 	return res, nil
 }
 
@@ -546,16 +579,43 @@ func (s *SyncService) UpdateVoterByMinerIds(ctx context.Context, voterAddress st
 		return err
 	}
 
+	zap.L().Info("start verify minerIds", zap.Any("minerIds", minerIds))
 	validMinerIds, err := s.lotusRepo.GetValidMinerIds(ctx, actorId, minerIds)
 
+	zap.L().Info("end verify minerIds", zap.Any("validMinerIds", validMinerIds))
 	if err := s.voteRepo.UpdateVoterByMinerInfo(ctx, &model.VoterInfoTbl{
 		Address:  voterAddress,
 		MinerIds: validMinerIds,
 		OwnerId:  actorId,
 	}); err != nil {
-
 		zap.L().Error("UpdateVoterByMinerIds failed", zap.Error(err))
+		return err
+	}
 
+	return nil
+}
+
+func (s *SyncService) AddGithubRepoName(ctx context.Context, orgType int, repoName string, orgId, addTimestamp int64) error {
+	in := &model.GithubRepos{
+		OrgType:      orgType,
+		RepoName:     repoName,
+		AddTime:      addTimestamp,
+		OrgId:        orgId,
+		IsNotDeleted: constant.NotDeletedRepo,
+	}
+
+	_, err := s.repo.AddGithubRepoName(ctx, in)
+	if err != nil {
+		zap.L().Error("AddGithubRepoName failed", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
+func (s *SyncService) DeleteGithubRepoName(ctx context.Context, orgId int64) error {
+	if err := s.repo.DeleteGithubRepoName(ctx, orgId); err != nil {
+		zap.L().Error("DeleteGithubRepoName failed", zap.Error(err))
 		return err
 	}
 

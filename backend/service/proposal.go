@@ -66,6 +66,7 @@ type ProposalRepo interface {
 	//   - error: An error if the creation operation fails; otherwise, nil.
 	CreateProposalDraft(ctx context.Context, in *model.ProposalDraftTbl) (int64, error)
 
+	DeleteProposalDraft(ctx context.Context, req api.DelProposalDraftReq) error
 	// GetProposalDraftByAddress retrieves a proposal draft by the creator's address.
 	//
 	// Parameters:
@@ -129,6 +130,8 @@ type ProposalRepo interface {
 type IProposalService interface {
 	AddDraft(ctx context.Context, req *api.AddProposalDraftReq) error
 
+	DeleteDraft(ctx context.Context, req api.DelProposalDraftReq) error
+
 	GetDraft(ctx context.Context, req api.AddressReq) (*api.ProposalDraftRep, error)
 
 	ProposalDetail(ctx context.Context, req api.ProposalReq) (*api.ProposalRep, error)
@@ -181,7 +184,6 @@ func (p *ProposalService) ProposalList(ctx context.Context, req api.ProposalList
 			createrMaps[proposal.Creator] = proposal.Creator
 		}
 	}
-
 
 	githubNames, err := p.repo.GetGitHubNameByCreaters(ctx, createrAddrs)
 	if err != nil {
@@ -393,4 +395,14 @@ func (p *ProposalService) GetDraft(ctx context.Context, req api.AddressReq) (*ap
 		ClientPercentage:      res.ClientPercentage,
 		DeveloperPercentage:   res.DeveloperPercentage,
 	}, nil
+}
+
+func (p *ProposalService) DeleteDraft(ctx context.Context, req api.DelProposalDraftReq) error {
+	err := p.repo.DeleteProposalDraft(ctx, req)
+	if err != nil {
+		zap.L().Error("DeleteProposalDraft error", zap.Error(err))
+		return errors.New("fail to delete proposal draft")
+	}
+
+	return nil
 }

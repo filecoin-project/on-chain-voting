@@ -27,6 +27,11 @@ type MockProposalService struct {
 	mock.Mock
 }
 
+// DeleteDraft implements service.IProposalService.
+func (m *MockProposalService) DeleteDraft(ctx context.Context, req api.DelProposalDraftReq) error {
+	panic("unimplemented")
+}
+
 type MockFipService struct {
 	mock.Mock
 }

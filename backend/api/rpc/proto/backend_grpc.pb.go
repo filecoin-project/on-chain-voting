@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	Backend_GetAllVoterAddresss_FullMethodName = "/rpc.Backend/GetAllVoterAddresss"
 	Backend_GetVoterInfo_FullMethodName        = "/rpc.Backend/GetVoterInfo"
+	Backend_GetGithubRepoInfo_FullMethodName   = "/rpc.Backend/GetGithubRepoInfo"
 )
 
 // BackendClient is the client API for Backend service.
@@ -29,6 +30,7 @@ const (
 type BackendClient interface {
 	GetAllVoterAddresss(ctx context.Context, in *GetAllVoterAddressRequest, opts ...grpc.CallOption) (*GetAllVoterAddressResponse, error)
 	GetVoterInfo(ctx context.Context, in *GetVoterInfoRequest, opts ...grpc.CallOption) (*GetVoterInfoResponse, error)
+	GetGithubRepoInfo(ctx context.Context, in *GetGithubRepoInfoRequest, opts ...grpc.CallOption) (*GetGithubRepoInfoResponse, error)
 }
 
 type backendClient struct {
@@ -57,12 +59,22 @@ func (c *backendClient) GetVoterInfo(ctx context.Context, in *GetVoterInfoReques
 	return out, nil
 }
 
+func (c *backendClient) GetGithubRepoInfo(ctx context.Context, in *GetGithubRepoInfoRequest, opts ...grpc.CallOption) (*GetGithubRepoInfoResponse, error) {
+	out := new(GetGithubRepoInfoResponse)
+	err := c.cc.Invoke(ctx, Backend_GetGithubRepoInfo_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BackendServer is the server API for Backend service.
 // All implementations must embed UnimplementedBackendServer
 // for forward compatibility
 type BackendServer interface {
 	GetAllVoterAddresss(context.Context, *GetAllVoterAddressRequest) (*GetAllVoterAddressResponse, error)
 	GetVoterInfo(context.Context, *GetVoterInfoRequest) (*GetVoterInfoResponse, error)
+	GetGithubRepoInfo(context.Context, *GetGithubRepoInfoRequest) (*GetGithubRepoInfoResponse, error)
 	mustEmbedUnimplementedBackendServer()
 }
 
@@ -75,6 +87,9 @@ func (UnimplementedBackendServer) GetAllVoterAddresss(context.Context, *GetAllVo
 }
 func (UnimplementedBackendServer) GetVoterInfo(context.Context, *GetVoterInfoRequest) (*GetVoterInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetVoterInfo not implemented")
+}
+func (UnimplementedBackendServer) GetGithubRepoInfo(context.Context, *GetGithubRepoInfoRequest) (*GetGithubRepoInfoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetGithubRepoInfo not implemented")
 }
 func (UnimplementedBackendServer) mustEmbedUnimplementedBackendServer() {}
 
@@ -125,6 +140,24 @@ func _Backend_GetVoterInfo_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Backend_GetGithubRepoInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetGithubRepoInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BackendServer).GetGithubRepoInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Backend_GetGithubRepoInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BackendServer).GetGithubRepoInfo(ctx, req.(*GetGithubRepoInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Backend_ServiceDesc is the grpc.ServiceDesc for Backend service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -139,6 +172,10 @@ var Backend_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetVoterInfo",
 			Handler:    _Backend_GetVoterInfo_Handler,
+		},
+		{
+			MethodName: "GetGithubRepoInfo",
+			Handler:    _Backend_GetGithubRepoInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

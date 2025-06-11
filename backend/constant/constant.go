@@ -56,11 +56,28 @@ const (
 	FipVoteEvt              = "FipEditorProposalVoteEvent"
 	OracleUpdateGistIdsEvt  = "UpdateGistIdsEvent"
 	OracleUpdateMinerIdsEvt = "UpdateMinerIdsEvent"
+	ConfRepoAddedEvt        = "GithubRepoAdded"
+	ConfRepoRemovedEvt      = "GithubRepoRemoved"
 	// mysql duplicate error code
 	MysqlDuplicateEntryErrorCode = 1062
 
-	KTBLS       = "bls"       // BLS key type.
-	KTSecp256k1 = "secp256k1" // Secp256k1 key type.
-	SigTypeSecp256k1 = 1 // Signature type for Secp256k1.
-	SigTypeBLS       = 2 // Signature type for BLS.
+	KTBLS            = "bls"       // BLS key type.
+	KTSecp256k1      = "secp256k1" // Secp256k1 key type.
+	SigTypeSecp256k1 = 1           // Signature type for Secp256k1.
+	SigTypeBLS       = 2           // Signature type for BLS.
+	VotingAlgorithm  = `((SpPower / totalPower) * SpPercentage + (DeveloperPower / totalPower) * DeveloperPercentage + (ClientPower / totalPower) * ClientPercentage + (TokenPower / totalPower) * TokenHolderPercentage) / percentage * 100%`
+)
+
+const (
+	ConfRepoTCore = iota
+	ConfRepoTEcosystem
+	ConfRepoTUser
+	CoreOrgRepo  = "CoreOrgRepo"
+	EcosystemOrg = "EcosystemOrg"
+	GithubUser   = "GithubUser"
+)
+
+const (
+	NotDeletedRepo = iota
+	DeletedRepo
 )

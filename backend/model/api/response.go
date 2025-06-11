@@ -128,8 +128,8 @@ type FipEditorRep struct {
 }
 
 type FipEditorGistInfoRep struct {
-	GistId     string          `json:"gistId"`
-	GistSigObj model.SigObject `json:"gistSigObj"`
-	MinerIds   []string        `json:"minerIds"`
-	ActorId    string          `json:"actorId"`
+	GistId     string           `json:"gistId"`
+	GistSigObj *model.SigObject `json:"gistSigObj"`
+	MinerIds   []string         `json:"minerIds"`
+	ActorId    string           `json:"actorId"`
 }
