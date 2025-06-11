@@ -37,7 +37,7 @@ func ClaimMinerActorIdsCmd(client *service.RPCClient) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("from", "", "Wallet address to claim the miner actor IDs.")
+	cmd.Flags().String("from", "", "Wallet address to claim the miner actor IDs(optional)")
 
 	return cmd
 }
