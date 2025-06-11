@@ -2,6 +2,8 @@ package power
 
 import (
 	"context"
+	"fil-vote/config"
+	"fil-vote/model"
 	"fil-vote/service"
 	"fmt"
 	"github.com/olekukonko/tablewriter"
@@ -10,43 +12,6 @@ import (
 	"math/big"
 	"os"
 )
-
-// Conversion constants for FIL denominations
-const (
-	attoFIL  = 1
-	femtoFIL = attoFIL * 1_000
-	picoFIL  = femtoFIL * 1_000
-	nanoFIL  = picoFIL * 1_000
-	microFIL = nanoFIL * 1_000
-	milliFIL = microFIL * 1_000
-	FIL      = milliFIL * 1_000
-)
-
-// Convert to FIL denomination
-func convertToFIL(value *big.Int) string {
-	if value.Cmp(big.NewInt(FIL)) >= 0 {
-		// Convert to FIL
-		return fmt.Sprintf("%s FIL", new(big.Float).Quo(new(big.Float).SetInt(value), big.NewFloat(FIL)).Text('f', 2))
-	} else if value.Cmp(big.NewInt(milliFIL)) >= 0 {
-		// Convert to milliFIL
-		return fmt.Sprintf("%s milliFIL", new(big.Float).Quo(new(big.Float).SetInt(value), big.NewFloat(milliFIL)).Text('f', 2))
-	} else if value.Cmp(big.NewInt(microFIL)) >= 0 {
-		// Convert to microFIL
-		return fmt.Sprintf("%s microFIL", new(big.Float).Quo(new(big.Float).SetInt(value), big.NewFloat(microFIL)).Text('f', 2))
-	} else if value.Cmp(big.NewInt(nanoFIL)) >= 0 {
-		// Convert to nanoFIL
-		return fmt.Sprintf("%s nanoFIL", new(big.Float).Quo(new(big.Float).SetInt(value), big.NewFloat(nanoFIL)).Text('f', 2))
-	} else if value.Cmp(big.NewInt(picoFIL)) >= 0 {
-		// Convert to picoFIL
-		return fmt.Sprintf("%s picoFIL", new(big.Float).Quo(new(big.Float).SetInt(value), big.NewFloat(picoFIL)).Text('f', 2))
-	} else if value.Cmp(big.NewInt(femtoFIL)) >= 0 {
-		// Convert to femtoFIL
-		return fmt.Sprintf("%s femtoFIL", new(big.Float).Quo(new(big.Float).SetInt(value), big.NewFloat(femtoFIL)).Text('f', 2))
-	} else {
-		// Convert to attoFIL
-		return fmt.Sprintf("%s attoFIL", value.String())
-	}
-}
 
 func LsCmd(client *service.RPCClient) *cobra.Command {
 	cmd := &cobra.Command{
@@ -98,7 +63,7 @@ func LsCmd(client *service.RPCClient) *cobra.Command {
 				tokenHolderPower := new(big.Int)
 				// Assume power.Data.TokenHolderPower is in attoFIL, and convert it
 				tokenHolderPower.SetString(power.Data.TokenHolderPower, 10)
-				convertedTokenHolderPower := convertToFIL(tokenHolderPower)
+				convertedTokenHolderPower := model.ConvertToFIL(tokenHolderPower, config.Client.Network.ChainID)
 
 				// Add row to the table with the converted Token Holder Power
 				table.Append([]string{
