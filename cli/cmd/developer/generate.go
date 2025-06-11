@@ -90,7 +90,7 @@ func GenerateCmd(client *service.RPCClient) *cobra.Command {
 				githubName, data.WalletAddress, data.WalletAddress, data.GithubName, data.Timestamp, hexString)
 
 			fmt.Println(proof)
-			fmt.Println("Please paste the above text first and obtain gistId: https://gist.github.com/")
+			fmt.Println("\nPlease paste the above text first and obtain gistId: https://gist.github.com/")
 
 		},
 	}
