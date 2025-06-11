@@ -12,10 +12,13 @@ const (
 	GB
 	TB
 	PiB
+	EiB
 )
 
 func ConvertSize(size int64) string {
 	switch {
+	case size >= EiB:
+		return fmt.Sprintf("%.2f EiB", float64(size)/float64(EiB))
 	case size >= PiB:
 		return fmt.Sprintf("%.2f PiB", float64(size)/float64(PiB))
 	case size >= TB:
