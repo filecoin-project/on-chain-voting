@@ -19,6 +19,11 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
+    filecoin_devnet: {
+      url: "https://filecoin-calibration.chainup.net/rpc/v1",
+      chainId: 314159,
+      accounts: [PRIVATE_KEY_TESTNET],
+    },
     filecoin_testnet: {
       url: "https://filecoin-calibration.chainup.net/rpc/v1",
       chainId: 314159,
