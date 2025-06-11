@@ -73,7 +73,7 @@ func UpdateMinerIds(client *RPCClient, from string, minerIds []uint64) (string, 
 
 	// Prompt the user for confirmation to proceed with the vote
 	for {
-		fmt.Print("Do you want to proceed with the vote? Type 'yes' to confirm or 'no' to cancel: ")
+		fmt.Print("Do you want to continue binding miner? Type 'yes' to confirm or 'no' to cancel: ")
 
 		// Read user input
 		reader := bufio.NewReader(os.Stdin)
