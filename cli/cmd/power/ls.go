@@ -75,7 +75,7 @@ func LsCmd(client *service.RPCClient) *cobra.Command {
 
 			// Prepare the table for output
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Wallet", "Developer Power", "SP Power", "Client Power", "Token Holder Power"})
+			table.SetHeader([]string{"Wallet", "SP Power", "Client Power", "Developer Power", "Token Holder Power"})
 			table.SetBorder(true)
 			table.SetRowLine(true)
 			table.SetAutoFormatHeaders(true)
