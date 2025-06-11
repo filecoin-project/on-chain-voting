@@ -31,7 +31,7 @@ func makeGETRequest(url string) ([]byte, error) {
 
 // GetProposalList sends a GET request to retrieve a list of proposals and returns a list of Proposal models
 func GetProposalList(page, pageSize int) (model.ProposalsResponse, error) {
-	url := fmt.Sprintf(config.Client.Network.PowerBackendURL+model.BaseProposalAPIPath+"list?status=0&searchKey=&chainId=%d&page=%d&pageSize=%d", config.Client.Network.ChainID, page, pageSize)
+	url := fmt.Sprintf(config.Client.Network.PowerBackendURL+model.BaseProposalAPIPath+"/proposal/list?status=0&searchKey=&chainId=%d&page=%d&pageSize=%d", config.Client.Network.ChainID, page, pageSize)
 	body, err := makeGETRequest(url)
 	if err != nil {
 		return model.ProposalsResponse{}, err
@@ -48,7 +48,7 @@ func GetProposalList(page, pageSize int) (model.ProposalsResponse, error) {
 
 // GetProposalByID retrieves a proposal by its ID
 func GetProposalByID(proposalId int64) (model.Proposal, error) {
-	url := fmt.Sprintf(config.Client.Network.PowerBackendURL+model.BaseProposalAPIPath+"details?chainId=%d&proposalId=%d", config.Client.Network.ChainID, proposalId)
+	url := fmt.Sprintf(config.Client.Network.PowerBackendURL+model.BaseProposalAPIPath+"/proposal/details?chainId=%d&proposalId=%d", config.Client.Network.ChainID, proposalId)
 	body, err := makeGETRequest(url)
 	if err != nil {
 		return model.Proposal{}, err
