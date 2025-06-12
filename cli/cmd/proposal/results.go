@@ -4,6 +4,7 @@ import (
 	"fil-vote/config"
 	"fil-vote/model"
 	"fil-vote/service"
+	"fil-vote/utils"
 	"fmt"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
@@ -75,7 +76,7 @@ func logError(message string, err error, proposalID interface{}) {
 // printProposalContents prints the proposal and votes in a formatted table
 func printProposalContents(proposal model.Proposal, votes []model.Vote) {
 	voteTable := tablewriter.NewWriter(os.Stdout)
-	voteTable.SetHeader([]string{"Voter Address", "Token Power", "Power Percentage", "Result"})
+	voteTable.SetHeader([]string{"Voter Address", "SP Power", "Client Power", "Developer Power", "TokenHolder Power", "Power Percentage", "Result"})
 	voteTable.SetBorder(true)
 	voteTable.SetRowLine(true)
 	voteTable.SetAutoFormatHeaders(true)
@@ -83,11 +84,18 @@ func printProposalContents(proposal model.Proposal, votes []model.Vote) {
 	voteTable.SetColumnSeparator("|")
 	voteTable.SetColumnAlignment([]int{tablewriter.ALIGN_CENTER, tablewriter.ALIGN_LEFT, tablewriter.ALIGN_CENTER, tablewriter.ALIGN_CENTER})
 
-	// Get total token power once and convert it for percentage calculations
-	tokenHolderPower, err := convertStringToBigInt(proposal.TotalPower.TokenHolderPower)
-	if err != nil {
-		logError("Failed to convert TokenHolderPower", err, proposal.TotalPower.TokenHolderPower)
-		return
+	totalPercent := 0
+	if proposal.TotalPower.TokenHolderPower != "0" {
+		totalPercent += proposal.Percentage.TokenHolderPercentage
+	}
+	if proposal.TotalPower.ClientPower != "0" {
+		totalPercent += proposal.Percentage.ClientPercentage
+	}
+	if proposal.TotalPower.DeveloperPower != "0" {
+		totalPercent += proposal.Percentage.DeveloperPercentage
+	}
+	if proposal.TotalPower.SpPower != "0" {
+		totalPercent += proposal.Percentage.SpPercentage
 	}
 
 	// Iterate over the votes and calculate the power percentage
@@ -97,49 +105,78 @@ func printProposalContents(proposal model.Proposal, votes []model.Vote) {
 			logError("Failed to convert TokenHolderPower", err, v.TokenHolderPower)
 			return
 		}
+		convertedTokenHolderPower := utils.ConvertToFIL(tokenPower, config.Client.Network.ChainID)
 
-		tokenPowerInTFIL := new(big.Float).SetInt(tokenPower)
-		tokenPowerInTFIL = tokenPowerInTFIL.Quo(tokenPowerInTFIL, big.NewFloat(1e18))
+		spPower, _ := new(big.Int).SetString(v.SpPower, 10)
+		clientPower, _ := new(big.Int).SetString(v.ClientPower, 10)
+		developerPower, _ := new(big.Int).SetString(v.DeveloperPower, 10)
+		tokenHolderPower, _ := new(big.Int).SetString(v.TokenHolderPower, 10)
 
-		var tokenPowerWithUnit string
-		if config.Client.Network.ChainID == 314 {
-			tokenPowerWithUnit = fmt.Sprintf("%.2f FIL", tokenPowerInTFIL)
-		} else if config.Client.Network.ChainID == 314159 {
-			tokenPowerWithUnit = fmt.Sprintf("%.2f tFIL", tokenPowerInTFIL)
+		totalSpPower, _ := new(big.Int).SetString(proposal.TotalPower.SpPower, 10)
+		totalClientPower, _ := new(big.Int).SetString(proposal.TotalPower.ClientPower, 10)
+		totalDeveloperPower, _ := new(big.Int).SetString(proposal.TotalPower.DeveloperPower, 10)
+		totalTokenHolderPower, _ := new(big.Int).SetString(proposal.TotalPower.TokenHolderPower, 10)
+
+		powerPercent := new(big.Float)
+		if tokenHolderPower.Cmp(big.NewInt(0)) != 0 && totalTokenHolderPower.Cmp(big.NewInt(0)) != 0 {
+			tokenHolderPowerPercentage := new(big.Float).SetInt(tokenHolderPower)
+			tokenHolderPowerPercentage.Quo(tokenHolderPowerPercentage, new(big.Float).SetInt(totalTokenHolderPower))
+			tokenHolderPercentage := new(big.Float).SetInt64(int64(proposal.Percentage.TokenHolderPercentage))
+			tokenHolderPowerPercentage.Mul(tokenHolderPowerPercentage, tokenHolderPercentage)
+			powerPercent.Add(powerPercent, tokenHolderPowerPercentage)
 		}
 
-		// Calculate the percentage of token power
-		percentage := calculatePercentage(tokenPower, tokenHolderPower)
+		if spPower.Cmp(big.NewInt(0)) != 0 && totalSpPower.Cmp(big.NewInt(0)) != 0 {
+			spPowerPercentage := new(big.Float).SetInt(spPower)
+			spPowerPercentage.Quo(spPowerPercentage, new(big.Float).SetInt(totalSpPower))
+			spPercentage := new(big.Float).SetInt64(int64(proposal.Percentage.SpPercentage))
+			spPowerPercentage.Mul(spPowerPercentage, spPercentage)
+			powerPercent.Add(powerPercent, spPowerPercentage)
+		}
+
+		if clientPower.Cmp(big.NewInt(0)) != 0 && totalClientPower.Cmp(big.NewInt(0)) != 0 {
+			clientPowerPercentage := new(big.Float).SetInt(clientPower)
+			clientPowerPercentage.Quo(clientPowerPercentage, new(big.Float).SetInt(totalClientPower))
+			clientPercentage := new(big.Float).SetInt64(int64(proposal.Percentage.ClientPercentage))
+			clientPowerPercentage.Mul(clientPowerPercentage, clientPercentage)
+			powerPercent.Add(powerPercent, clientPowerPercentage)
+		}
+
+		if developerPower.Cmp(big.NewInt(0)) != 0 && totalDeveloperPower.Cmp(big.NewInt(0)) != 0 {
+			developerPowerPercentage := new(big.Float).SetInt(developerPower)
+			developerPowerPercentage.Quo(developerPowerPercentage, new(big.Float).SetInt(totalDeveloperPower))
+			developerPercentage := new(big.Float).SetInt64(int64(proposal.Percentage.DeveloperPercentage))
+			developerPowerPercentage.Mul(developerPowerPercentage, developerPercentage)
+			powerPercent.Add(powerPercent, developerPowerPercentage)
+		}
+
+		if powerPercent.Cmp(big.NewFloat(0)) != 0 {
+			totalPercentFloat := new(big.Float).SetInt64(int64(totalPercent))
+			powerPercent.Quo(powerPercent, totalPercentFloat)
+			powerPercent.Mul(powerPercent, big.NewFloat(100))
+		} else {
+			powerPercent = new(big.Float)
+		}
 
 		// Determine the result of the vote (Approve/Reject)
 		votedResult := getVotedResult(v.VotedResult)
 
+		spPowerInt, err := strconv.ParseInt(v.SpPower, 10, 64)
+		convertedSpPower := utils.ConvertSize(spPowerInt)
+
 		// Add the vote data to the vote table
 		voteTable.Append([]string{
 			v.VoterAddress,
-			tokenPowerWithUnit,
-			percentage,
+			convertedSpPower,
+			v.ClientPower,
+			v.DeveloperPower,
+			convertedTokenHolderPower,
+			fmt.Sprintf("%.2f%%", powerPercent),
 			votedResult,
 		})
 	}
 
-	// Render the vote table
 	voteTable.Render()
-}
-
-// calculatePercentage computes the percentage of token power in relation to total token holder power
-func calculatePercentage(tokenPower, tokenHolderPower *big.Int) string {
-	// Special case: If tokenPower is zero, return 0%
-	if tokenPower.Cmp(big.NewInt(0)) == 0 {
-		return "0.00%"
-	}
-
-	percentage := new(big.Float).SetInt(tokenPower)
-	percentage.Quo(percentage, new(big.Float).SetInt(tokenHolderPower))
-	percentage.Mul(percentage, big.NewFloat(100)) // Convert to percentage
-
-	// Format percentage to 2 decimal places
-	return fmt.Sprintf("%.2f%%", percentage)
 }
 
 // getVotedResult converts the vote result into a string (Approve/Reject)
