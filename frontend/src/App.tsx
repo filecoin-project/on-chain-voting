@@ -158,7 +158,7 @@ const App: React.FC = () => {
     <RainbowKitProvider
       locale={lang === "en" ? "en-US" : "zh-CN"}
       theme={lightTheme({
-        accentColor: "#7b3fe4",
+        accentColor: "#1677ff",
         accentColorForeground: "white",
       })}
       modalSize="compact"
@@ -173,7 +173,7 @@ const App: React.FC = () => {
       }} locale={lang === "en" ? enUS : zhCN}>
         <div className="layout font-body">
           {!isLanding && <Header changeLang={handleChange} />}
-          <div className='content w-[1000px] mx-auto pt-10 pb-10'>
+          <div className='content w-full mx-auto max-w-[1032px] pt-10 px-8 pb-24'>
             {
               element
             }
