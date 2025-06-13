@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	filecoinAddress "github.com/filecoin-project/go-address"
@@ -47,7 +48,7 @@ func NewLotusRPCRepo(redisClient *redis.Client) *LotusRPCRepo {
 func (l *LotusRPCRepo) GetTipSetByHeight(ctx context.Context, netId, height int64) ([]any, error) {
 	key := fmt.Sprintf(constant.RedisTipset, netId)
 	defer func() {
-		go l.cleanExpiredHeights(ctx, netId)
+		go l.cleanExpiredHeights(context.Background(), netId)
 	}()
 
 	res, err := l.redisClient.HGet(ctx, key, strconv.FormatInt(height, 10)).Result()
@@ -113,8 +114,9 @@ func (l *LotusRPCRepo) cleanExpiredHeights(ctx context.Context, netId int64) {
 				toDelete = append(toDelete, heightStr)
 			}
 		}
-
 		if len(toDelete) > 0 {
+
+			zap.L().Info("cleaning expired heights", zap.Int("count", len(toDelete)), zap.Any("cleaned heights", toDelete))
 			if err := l.redisClient.HDel(ctx, key, toDelete...).Err(); err != nil {
 				zap.L().Error("HDEL failed", zap.Strings("keys", toDelete), zap.Error(err))
 			} else {
@@ -203,30 +205,31 @@ func (l *LotusRPCRepo) GetMinerPowerByHeight(ctx context.Context, netId int64, a
 	return minerPower, nil
 }
 
+// FIXME: StateMarketDeals is verry large, need to optimize
 func (l *LotusRPCRepo) GetClientBalanceBySpecialHeight(ctx context.Context, netId, height int64) (models.StateMarketDeals, error) {
-	tipSetKey, err := l.GetTipSetByHeight(ctx, netId, height)
-	if err != nil {
-		return models.StateMarketDeals{}, err
-	}
+	// tipSetKey, err := l.GetTipSetByHeight(ctx, netId, height)
+	// if err != nil {
+	// 	return models.StateMarketDeals{}, err
+	// }
 
-	tipSetList := append([]any{}, tipSetKey)
+	// tipSetList := append([]any{}, tipSetKey)
 
-	var t models.StateMarketDeals
-	resp, err := l.rpcClient.Call(ctx, "Filecoin.StateMarketDeals", tipSetList)
-	if err != nil {
-		return models.StateMarketDeals{}, err
-	}
+	// var t models.StateMarketDeals
+	// resp, err := l.rpcClient.Call(ctx, "Filecoin.StateMarketDeals", tipSetList)
+	// if err != nil {
+	// 	return models.StateMarketDeals{}, err
+	// }
 
-	tmp, err := json.Marshal(resp.Result)
-	if err != nil {
-		return models.StateMarketDeals{}, err
-	}
+	// tmp, err := json.Marshal(resp.Result)
+	// if err != nil {
+	// 	return models.StateMarketDeals{}, err
+	// }
 
-	if err := json.Unmarshal(tmp, &t); err != nil {
-		return models.StateMarketDeals{}, err
-	}
+	// if err := json.Unmarshal(tmp, &t); err != nil {
+	// 	return models.StateMarketDeals{}, err
+	// }
 
-	return t, nil
+	return models.StateMarketDeals{}, nil
 }
 
 func (l *LotusRPCRepo) GetNewestHeight(ctx context.Context, netId int64) (height int64, err error) {
@@ -295,6 +298,11 @@ func (l *LotusRPCRepo) GetWalletBalanceByHeight(ctx context.Context, id string, 
 	}
 
 	if resp.Error != nil {
+		if strings.HasPrefix(resp.Error.Message, "load state tree") || strings.HasPrefix(resp.Error.Message, "actor not found") {
+			zap.L().Error("get wallet balance failed", zap.String("actor id", id), zap.String("error", resp.Error.Message))
+			return "0", nil
+		}
+		
 		return "0", resp.Error
 	}
 
@@ -311,29 +319,29 @@ func (l *LotusRPCRepo) GetWalletBalanceByHeight(ctx context.Context, id string, 
 	return t.Balance, nil
 }
 
+// FIXME: StateMarketDeals is verry large, need to optimize
 func (l *LotusRPCRepo) GetClientBalanceByHeight(ctx context.Context, netId, height int64) (types.StateMarketDeals, error) {
-	tipSetKey, err := l.GetTipSetByHeight(ctx, netId, height)
-	if err != nil {
-		return types.StateMarketDeals{}, err
-	}
+	// tipSetKey, err := l.GetTipSetByHeight(ctx, netId, height)
+	// if err != nil {
+	// 	return types.StateMarketDeals{}, err
+	// }
 
-	tipSetList := append([]any{}, tipSetKey)
+	// tipSetList := append([]any{}, tipSetKey)
 
-	var t types.StateMarketDeals
-	resp, err := l.rpcClient.Call(ctx, "Filecoin.StateMarketDeals", tipSetList)
-	if err != nil {
-		return types.StateMarketDeals{}, err
-	}
+	// var t types.StateMarketDeals
+	// resp, err := l.rpcClient.Call(ctx, "Filecoin.StateMarketDeals", tipSetList)
+	// if err != nil {
+	// 	return types.StateMarketDeals{}, err
+	// }
 
-	tmp, err := json.Marshal(resp.Result)
-	if err != nil {
-		return types.StateMarketDeals{}, err
-	}
+	// tmp, err := json.Marshal(resp.Result)
+	// if err != nil {
+	// 	return types.StateMarketDeals{}, err
+	// }
 
-	if err := json.Unmarshal(tmp, &t); err != nil {
-		return types.StateMarketDeals{}, err
-	}
+	// if err := json.Unmarshal(tmp, &t); err != nil {
+	// 	return types.StateMarketDeals{}, err
+	// }
 
-	return t, nil
+	return types.StateMarketDeals{}, nil
 }
-

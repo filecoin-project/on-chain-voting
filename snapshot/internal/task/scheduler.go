@@ -40,12 +40,12 @@ func TaskScheduler(syncService *service.SyncService) {
 		syncService: syncService,
 	}
 
-	_, err := crontab.AddFunc("0 0 1 * * ?", job.RunSyncPower)
+	_, err := crontab.AddFunc("0 5 0/1 * * ?", job.RunSyncPower)
 	if err != nil {
 		zap.L().Error("failed to add RunSyncPower task to scheduler", zap.Error(err))
 	}
 
-	_, err = crontab.AddFunc("0 0 0/1 * * ?", job.RunSyncDevWeightStepDay)
+	_, err = crontab.AddFunc("0 5 0/1 * * ?", job.RunSyncDevWeightStepDay)
 	if err != nil {
 		zap.L().Error("failed to add RunSyncDevWeightStepDay task to scheduler", zap.Error(err))
 	}

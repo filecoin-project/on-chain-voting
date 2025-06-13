@@ -1,4 +1,4 @@
-import { POWER_VOTING_ORACLE, POWER_VOTING_POWER } from "./constant";
+import { POWER_VOTING_ORACLE, } from "./constant";
 import { getConstantJson } from "./utils";
 const { ethers, upgrades } = require("hardhat");
 

@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-module/carbon"
 	"github.com/nats-io/nats.go/jetstream"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -67,7 +68,7 @@ func (m *mockBaseRepo) GetLotusClientByHashKey(ctx context.Context, netID int64,
 	return jsonrpc.NewClient(client.QueryRpc[index]), nil
 }
 
-func (s *mockBaseRepo) SetDeveloperWeights(ctx context.Context, dayStr string, commits []models.Nodes) error {
+func (s *mockBaseRepo) SaveDeveloperWeightsToFile(ctx context.Context, dayStr string, commits []models.Nodes) error {
 	return nil
 }
 
@@ -443,14 +444,14 @@ func TestUploadSnapshotInfoByDay(t *testing.T) {
 
 func TestGetBalance(t *testing.T) {
 	ser := getSyncService(t)
-	a, b, err := ser.GetActorBalance(context.Background(), "t0161980", 314159, 2599001)
+	a, b, err := ser.GetActorBalance(context.Background(), "f03091589", 314, 4921079)
 	assert.NoError(t, err)
 	fmt.Printf("a:%s\n b:%s\n", a, b)
 }
 
 func TestSyncWorker(t *testing.T) {
 	ser := getSyncService(t)
-	message, err := ser.syncRepo.GetTask(context.Background(), 314159)
+	message, err := ser.syncRepo.GetTask(context.Background(), 314)
 	assert.NoError(t, err)
 	for taskMsg := range message.Messages() {
 		zap.L().Info("task", zap.Any("task", taskMsg))
@@ -467,3 +468,38 @@ func TestSyncWorker(t *testing.T) {
 		}
 	}
 }
+
+
+func TestGetAllAddrSyncedDateMap(t *testing.T) {
+	config.InitConfig("../../")
+	redis, err := data.NewRedisClient()
+	assert.NoError(t, err)
+
+	client, err := data.NewJetstreamClient()
+	assert.NoError(t, err)
+
+	repo, err := repo.NewSyncRepoImpl(
+		314159,
+		redis,
+		client,
+	)
+
+	res, err := repo.GetAllAddrSyncedDateMap(
+		context.Background(),
+		314159,
+	)
+	assert.NoError(t, err)
+	fmt.Println(res)
+}
+
+func TestSyncDeveloperDay(t *testing.T)  {
+	start := carbon.Now().SubDays(constant.DataExpiredDuration).EndOfDay()
+	// Calculate the end date as yesterday and set it to the end of the day.
+	end := carbon.Now().Yesterday().EndOfDay()
+
+	for end.Gte(start) {
+		fmt.Println(end.ToDateString())
+		end = end.SubDay()
+	}
+}
+

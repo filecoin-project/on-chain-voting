@@ -22,14 +22,11 @@
     "@zondax/ledger-filecoin": "^2.0.4",
     "add": "^2.0.6",
     "antd": "5.17.3",
-    "axios": "^1.7.4",
-    "buffer": "^6.0.3",
+    "axios": "^1.8.4",
     "cbor": "^10.0.3",
     "classnames": "latest",
-    "cross-env": "^7.0.3",
     "dayjs": "^1.11.9",
     "decimal.js": "^10.5.0",
-    "dotenv": "^16.4.5",
     "ethers": "^6.13.5",
     "filsnap-adapter": "^3.2.0",
     "html-webpack-plugin": "^5.5.0",
@@ -65,6 +62,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@types/node": "^22.13.13",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.0.11",
     "@types/react-router-dom": "^5.3.3",
@@ -72,6 +70,7 @@
     "@typescript-eslint/parser": "^7.10.0",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "latest",
+    "buffer": "^6.0.3",
     "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^6.7.3",
     "eslint": "^8.57.0",
@@ -90,5 +89,6 @@
     "vite-plugin-node-polyfills": "^0.23.0",
     "vitest": "^1.6.0",
     "webpack": "5.94.0"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

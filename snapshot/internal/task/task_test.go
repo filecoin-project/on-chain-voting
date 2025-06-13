@@ -18,14 +18,14 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
-
 	"power-snapshot/config"
 	"power-snapshot/internal/data"
 	"power-snapshot/internal/repo"
 	"power-snapshot/internal/service"
+
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+
 )
 
 func TestRepeatTask(t *testing.T) {
@@ -77,3 +77,14 @@ func TestSyncDev(t *testing.T) {
 
 	getSafeJob(t).SyncDevWeightStepDay()
 }
+
+type TestGithubRateLimit struct {
+}
+
+func (g TestGithubRateLimit) CheckRateLimitBeforeRequest(token string) (int32, int32) {
+	if token == "token1" {
+		return 2, 10
+	}
+	return 5, 100
+}
+

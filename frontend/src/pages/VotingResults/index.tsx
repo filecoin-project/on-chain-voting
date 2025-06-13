@@ -39,7 +39,7 @@ import type { ProposalOption, ProposalVotes } from "../../common/types";
 import EllipsisMiddle from "../../components/EllipsisMiddle";
 import MDEditor from '../../components/MDEditor';
 import VoteList from "../../components/VoteList";
-import { getBlockExplorers } from "../../utils"
+import { formatNumberWithCommas, getBlockExplorers } from "../../utils"
 
 const VotingResults = () => {
   const { chain, isConnected, address } = useAccount();
@@ -179,7 +179,7 @@ const VotingResults = () => {
           </button>
         </div>
         <div className='px-3 md:px-0'>
-          <h1 className='mb-6 text-2xl font-semibold text-[#313D4F] break-words break-all leading-12'>
+          <h1 className='mb-6 text-2xl font-semibold text-[#313D4F] break-words leading-12'>
             {votingData?.title}
           </h1>
           {
@@ -245,11 +245,11 @@ const VotingResults = () => {
               <div className='space-y-1 text-sm font-medium'>
                 <div className='flex justify-between'>
                   <div>{t('content.startTime')}</div>
-                  <span className='text-[#313D4F] text-sm font-normal'>{votingData?.startTime && dayjs(votingData.startTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
+                  <span className='text-[#313D4F] text-sm font-normal'>{votingData?.startTime && dayjs(votingData.startTime * 1000).format('MMM. D, YYYY, h:mm A')}</span>
                 </div>
                 <div className='flex justify-between'>
                   <div>{t('content.endTime')}</div>
-                  <span className='text-[#313D4F] text-sm font-normal'>{votingData?.endTime && dayjs(votingData.endTime * 1000).format('MMM.D, YYYY, h:mm A')}</span>
+                  <span className='text-[#313D4F] text-sm font-normal'>{votingData?.endTime && dayjs(votingData.endTime * 1000).format('MMM. D, YYYY, h:mm A')}</span>
                 </div>
                 <div className='flex justify-between'>
                   <div>{t('content.timezone')}</div>
@@ -257,7 +257,8 @@ const VotingResults = () => {
                 </div>
                 <div className='flex justify-between'>
                   <div className='text-sm font-medium'>{t('content.snapshotBlockHeight')}</div>
-                  <span className='text-[#313D4F] font-normal'>{votingData.snapshotInfo?.snapshotHeight || '-'}</span>
+                  <span className='text-[#313D4F] font-normal'>{formatNumberWithCommas({ value: votingData.snapshotInfo?.snapshotHeight }) || "-"}
+                  </span>
                 </div>
               </div>
             </div>

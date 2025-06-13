@@ -2,7 +2,10 @@ package main
 
 import (
 	"fil-vote/cmd"
+	"fil-vote/cmd/developer"
+	"fil-vote/cmd/power"
 	"fil-vote/cmd/proposal"
+	"fil-vote/cmd/storage"
 	"fil-vote/cmd/wallet"
 	"fil-vote/config"
 	"fil-vote/service"
@@ -30,6 +33,12 @@ func main() {
 
 	// Add the "proposal" command to the root command
 	addCommandToRoot(rootCmd, proposal.NewProposalCmd(client))
+
+	addCommandToRoot(rootCmd, storage.NewStorageCmd(client))
+
+	addCommandToRoot(rootCmd, developer.NewDeveloperCmd(client))
+
+	addCommandToRoot(rootCmd, power.NewPowerCmd(client))
 
 	// Execute the root command
 	if err := rootCmd.Execute(); err != nil {

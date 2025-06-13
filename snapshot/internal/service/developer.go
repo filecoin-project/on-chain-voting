@@ -18,9 +18,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -118,29 +118,37 @@ var GithubUser = []string{
 func FetchDeveloperWeights(fromTime time.Time) (map[string]int64, []models.Nodes, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	eg, ctx := errgroup.WithContext(ctx)
+	eg, errCtx := errgroup.WithContext(ctx)
 
 	var coreFilecoin, ecosystem map[string]int64
 	var coreCommits, ecosystemCommits, commitsResult []models.Nodes
-	tokenManager := NewGitHubTokenManager(config.Client.Github.Token)
+	tokenManager := NewGitHubTokenManager(config.Client.Github.Token, GithubRateLimit{})
+
+	if tokenManager.GetAllTokenCap() < constant.MinimumTokenCapacity {
+		zap.L().Warn(
+			"Current token capacity is less than minimum token capacity",
+			zap.Int32("current token capacity", tokenManager.GetAllTokenCap()),
+			zap.Int32("minimum token capacity", constant.MinimumTokenCapacity),
+		)
+		return nil, nil, constant.ErrorNoTokenAvailable
+	}
 
 	eg.Go(func() error {
 		var err error
 		coreFilecoinRepos := GetRepoNames(CoreFilecoinOrg, nil, tokenManager)
-		coreFilecoin, coreCommits, err = getDeveloperWeights(ctx, coreFilecoinRepos, 2, fromTime, tokenManager)
+		coreFilecoin, coreCommits, err = getDeveloperWeights(errCtx, coreFilecoinRepos, 2, fromTime, tokenManager)
 		return err
 	})
 
 	eg.Go(func() error {
 		var err error
 		ecosystemRepos := GetRepoNames(EcosystemOrg, GithubUser, tokenManager)
-		ecosystem, ecosystemCommits, err = getDeveloperWeights(ctx, ecosystemRepos, 1, fromTime, tokenManager)
+		ecosystem, ecosystemCommits, err = getDeveloperWeights(errCtx, ecosystemRepos, 1, fromTime, tokenManager)
 		return err
 	})
 
 	err := eg.Wait()
 	if err != nil {
-		zap.L().Error("!!!!!!Error getting developer weights", zap.Error(err))
 		return nil, nil, err
 	}
 
@@ -155,15 +163,20 @@ func FetchDeveloperWeights(fromTime time.Time) (map[string]int64, []models.Nodes
 func getDeveloperWeights(ctx context.Context, repositories []string, weight int, fromTime time.Time, tokenManager *GitHubTokenManager) (map[string]int64, []models.Nodes, error) {
 	const maxConcurrency = 10
 	var (
-		wg          sync.WaitGroup
-		mu          sync.Mutex
-		errCh       = make(chan error, len(repositories))
-		weightsCh   = make(chan map[string]int64, len(repositories))
-		commitsPool []models.Nodes
-		sem         = make(chan struct{}, maxConcurrency)
+		mu           sync.Mutex
+		stopTag      int32
+		finalWeights = make(map[string]int64)
+		commitsPool  []models.Nodes
+		errs         []error
+		eg           errgroup.Group
 	)
-
+	eg.SetLimit(maxConcurrency)
 	for index, repo := range repositories {
+		if atomic.LoadInt32(&stopTag) == 1 {
+			zap.L().Error("!!!!!! Failed to process repos, break loop !!!!!", zap.Error(constant.ErrorNoTokenAvailable))
+			return nil, nil, constant.ErrorNoTokenAvailable
+		}
+
 		parts := strings.Split(repo, "/")
 		if len(parts) != 2 {
 			zap.L().Warn("invalid repository format", zap.String("repo", repo))
@@ -171,55 +184,42 @@ func getDeveloperWeights(ctx context.Context, repositories []string, weight int,
 		}
 		org, repoName := parts[0], parts[1]
 
-		wg.Add(1)
-		go func(org, repo string) {
-			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
-
-			weightMap, commits, err := getRepoData(ctx, index, len(repositories), org, repo, fromTime, tokenManager)
+		eg.Go(func() error {
+			weightMap, commits, err := getRepoData(ctx, index, len(repositories), org, repoName, fromTime, tokenManager)
 			if err != nil {
-				errCh <- fmt.Errorf("repo %s error: %w", repo, err)
-				return
+				if errors.Is(err, constant.ErrorNoTokenAvailable) {
+					atomic.StoreInt32(&stopTag, 1)
+				}
+
+				mu.Lock()
+				errs = append(errs, fmt.Errorf("repo %s/%s error: %w", org, repoName, err))
+				mu.Unlock()
+
+				return nil
 			}
 
 			mu.Lock()
 			commitsPool = append(commitsPool, commits...)
+			for user, cnt := range weightMap {
+				if cnt >= 2 {
+					finalWeights[user] = int64(weight)
+				}
+			}
 			mu.Unlock()
-
-			select {
-			case weightsCh <- weightMap:
-			case <-ctx.Done():
-			}
-		}(org, repoName)
+			return nil
+		})
 	}
 
-	go func() {
-		wg.Wait()
-		close(weightsCh)
-		close(errCh)
-	}()
-
-	finalWeights := make(map[string]int64)
-	for w := range weightsCh {
-		for user, cnt := range w {
-			if cnt >= 2 {
-				finalWeights[user] = int64(weight)
-			}
-		}
-	}
-
-	var errs []error
-	for err := range errCh {
-		errs = append(errs, err)
-	}
+	_ = eg.Wait()
 	if len(errs) > 0 {
-		return finalWeights, commitsPool, fmt.Errorf("%d errors occurred: %v", len(errs), errors.Join(errs...))
+		zap.L().Error("!!!!!! Failed to process repos !!!!!!", zap.Int("err count", len(errs)), zap.Errors("errors", errs))
+		if len(errs) > 3 {
+			return finalWeights, commitsPool, fmt.Errorf("%d errors occurred: %v", len(errs), errors.Join(errs...))
+		}
 	}
 
 	return finalWeights, commitsPool, nil
 }
-
 func getRepoData(ctx context.Context, index, repoCount int, org, repo string, fromTime time.Time, tokenManager *GitHubTokenManager) (map[string]int64, []models.Nodes, error) {
 	queryStart := utils.AddMonths(fromTime, -constant.GithubDataWithinXMonths)
 	since := queryStart.Format(time.RFC3339)
@@ -229,7 +229,7 @@ func getRepoData(ctx context.Context, index, repoCount int, org, repo string, fr
 
 // getDeveloperWeightsByRepo calculates the weights of developers for a specific repository.
 func getDeveloperWeightsByRepo(ctx context.Context, index, repoCount int, organization, repository, since string, tokenManager *GitHubTokenManager) (map[string]int64, []models.Nodes, error) {
-	commits, err := getContributorsWithRetry(ctx, index, repoCount, organization, repository, since, tokenManager, 5*time.Second)
+	commits, err := getContributorsWithRetry(ctx, index, repoCount, organization, repository, since, tokenManager, time.Second)
 	if err != nil {
 		zap.L().Error("failed to get contributors", zap.Error(err))
 		return nil, nil, err
@@ -248,8 +248,83 @@ func getDeveloperWeightsByRepo(ctx context.Context, index, repoCount int, organi
 	return weightMap, commits, nil
 }
 
+// getContributorsWithRetry retries fetching contributors for a repository with backoff and retry logic.
+func getContributorsWithRetry(ctx context.Context, index, repoCount int, organization, repository, since string, tokenManager *GitHubTokenManager, retryInterval time.Duration) ([]models.Nodes, error) {
+	retries := len(config.Client.Github.Token) + 1
+
+	var commits []models.Nodes
+	var lastErr error
+	for attempt := 0; attempt < retries; attempt++ {
+		select {
+		case <-ctx.Done():
+			zap.L().Warn("Operation canceled",
+				zap.Error(ctx.Err()),
+				zap.Int("attempt", attempt))
+			return nil, ctx.Err()
+		default:
+			reqToken := tokenManager.GetAvailableToken()
+			if reqToken == "" {
+				zap.L().Warn("All tokens are reached with the usage rate limit, wait for an hour and try again")
+				return nil, constant.ErrorNoTokenAvailable
+			}
+
+			commits, lastErr = getContributors(organization, repository, since, reqToken)
+			if lastErr == nil {
+				break
+			}
+
+			if strings.Contains(lastErr.Error(), "API rate limit exceeded") {
+				zap.L().Warn("Rate limit exceeded, refreshing token")
+				tokenManager.RefreshToken()
+			}
+
+			zap.L().Warn("Retrying...",
+				zap.Int("fetch index", index),
+				zap.String("repo", fmt.Sprintf("%s/%s", organization, repository)),
+				zap.Int("attempt", attempt+1),
+				zap.Duration("wait", retryInterval),
+				zap.Error(lastErr))
+
+			time.Sleep(retryInterval)
+		}
+	}
+
+	if lastErr != nil {
+		zap.L().Error("Permanent failure after retries",
+			zap.Int("max_retries", retries),
+			zap.Error(lastErr))
+		return nil, fmt.Errorf("after %d retries: %w", retries, lastErr)
+	}
+
+	zap.L().Info("Finalizing data processing",
+		zap.Int("count", len(commits)),
+		zap.String("organization", organization),
+		zap.String("repository", repository),
+		zap.String("Syncd progress", fmt.Sprintf("%d/%d", index+1, repoCount)),
+	)
+
+	return commits, nil
+}
+
+// addMerge Merge weights.
+func addMerge(coreFilecoin, ecosystem map[string]int64) map[string]int64 {
+	result := make(map[string]int64)
+
+	for coreFilecoinAccount, coreFilecoinWeight := range coreFilecoin {
+		result[coreFilecoinAccount] = coreFilecoinWeight
+	}
+
+	for ecosystemAccount, ecosystemWeight := range ecosystem {
+		if _, ok := result[ecosystemAccount]; !ok {
+			result[ecosystemAccount] = ecosystemWeight
+		}
+	}
+
+	return result
+}
+
 // getContributors retrieves the commit history of a repository from GitHub GraphQL API.
-func getContributors(ctx context.Context, owner, name, since, token string) ([]models.Nodes, error) {
+func getContributors(owner, name, since, token string) ([]models.Nodes, error) {
 	client := resty.New().
 		SetTimeout(30 * time.Second).
 		SetRetryCount(3).
@@ -265,7 +340,6 @@ func getContributors(ctx context.Context, owner, name, since, token string) ([]m
 		var response models.Developer
 		resp, err := client.R().
 			SetAuthToken(token).
-			SetContext(ctx).
 			SetHeaders(map[string]string{
 				"Content-Type": "application/json",
 				"Accept":       "application/vnd.github.v3+json",
@@ -327,87 +401,8 @@ func getContributors(ctx context.Context, owner, name, since, token string) ([]m
 		}
 
 		endCursor = &history.PageInfo.EndCursor
-		time.Sleep(1 * time.Second)
+		time.Sleep(time.Second)
 	}
 
 	return allNodes, nil
-}
-
-// getContributorsWithRetry retries fetching contributors for a repository with backoff and retry logic.
-func getContributorsWithRetry(ctx context.Context, index, repoCount int, organization, repository, since string, tokenManager *GitHubTokenManager, retryInterval time.Duration) ([]models.Nodes, error) {
-	reqToken := tokenManager.GetAvailableToken()
-	if reqToken == "" {
-		zap.L().Warn("All tokens are reached with the usage rate limit, wait for an hour and try again")
-		time.Sleep(1 * time.Hour)
-	}
-
-	defer tokenManager.DecreaseUsage(reqToken)
-
-	var commits []models.Nodes
-	var lastErr error
-	for attempt := 0; attempt < constant.MaxGithubGraphRequetRetries; attempt++ {
-		select {
-		case <-ctx.Done():
-			zap.L().Warn("Operation canceled",
-				zap.Error(ctx.Err()),
-				zap.Int("attempt", attempt))
-			continue
-		default:
-			commits, lastErr = getContributors(ctx, organization, repository, since, reqToken)
-			if lastErr == nil {
-				break
-			}
-
-			if strings.Contains(lastErr.Error(), "API rate limit exceeded") {
-				zap.L().Warn("Rate limit exceeded, refreshing token")
-				tokenManager.RefreshToken()
-				reqToken = tokenManager.GetAvailableToken()
-			}
-
-			if tokenManager.graphQLCap[reqToken].Get() == 0 {
-				reqToken = tokenManager.GetAvailableToken()
-			}
-
-			waitTime := time.Duration(math.Pow(2, float64(attempt))) * retryInterval
-			zap.L().Warn("Retrying...",
-				zap.Int("attempt", attempt+1),
-				zap.Duration("wait", waitTime),
-				zap.Error(lastErr))
-
-			time.Sleep(waitTime)
-		}
-	}
-
-	if lastErr != nil {
-		zap.L().Error("Permanent failure after retries",
-			zap.Int("max_retries", constant.MaxGithubGraphRequetRetries),
-			zap.Error(lastErr))
-		return nil, fmt.Errorf("after %d retries: %w", constant.MaxGithubGraphRequetRetries, lastErr)
-	}
-
-	zap.L().Info("Finalizing data processing",
-		zap.Int("count", len(commits)),
-		zap.String("organization", organization),
-		zap.String("repository", repository),
-		zap.String("Syncd progress", fmt.Sprintf("%d/%d", index+1, repoCount)),
-	)
-
-	return commits, nil
-}
-
-// addMerge Merge weights.
-func addMerge(coreFilecoin, ecosystem map[string]int64) map[string]int64 {
-	result := make(map[string]int64)
-
-	for coreFilecoinAccount, coreFilecoinWeight := range coreFilecoin {
-		result[coreFilecoinAccount] = coreFilecoinWeight
-	}
-
-	for ecosystemAccount, ecosystemWeight := range ecosystem {
-		if _, ok := result[ecosystemAccount]; !ok {
-			result[ecosystemAccount] = ecosystemWeight
-		}
-	}
-
-	return result
 }

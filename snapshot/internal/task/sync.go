@@ -38,6 +38,7 @@ func (j *Safejob) SyncPower() {
 	err := j.syncService.SyncDateHeight(ctx, config.Client.Network.ChainId)
 	if err != nil {
 		zap.L().Error("failed to sync date height, it will skipped ", zap.Error(err), zap.Int64("network_id", config.Client.Network.ChainId))
+		return
 	}
 
 	err = j.syncService.SyncAllAddrPower(ctx, config.Client.Network.ChainId)
@@ -60,21 +61,22 @@ func (j *Safejob) SyncDevWeightStepDay() {
 
 	// find latest index
 
-	for i := start; i.Timestamp() <= end.Timestamp(); i = i.AddDay() {
-		exist, err := j.syncService.ExistDeveloperWeight(ctx, i.ToShortDateString())
+	for end.Gte(start) {
+		exist, err := j.syncService.ExistDeveloperWeight(ctx, end.ToShortDateString())
 		if err != nil {
-			zap.L().Error("SyncDevWeightStepDay", zap.String("date", i.ToShortDateString()))
+			zap.L().Error("SyncDevWeightStepDay", zap.String("date", end.ToShortDateString()))
 			return
 		}
 		if !exist {
-			err := j.syncService.SyncDeveloperWeight(ctx, i.ToShortDateString())
+			err := j.syncService.SyncDeveloperWeight(ctx, end.ToShortDateString())
 			if err != nil {
 				return
 			}
+
 			break
 		}
+		end = end.SubDay()
 	}
-
 }
 
 // UploadPowerToIPFS returns a function that uploads power data to IPFS.

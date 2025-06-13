@@ -19,10 +19,12 @@ type Network struct {
 	RPC                 string // RPC endpoint for the network
 	Token               string // Token used in the network
 	PowerVotingContract string // Contract address for PowerVoting
+	OracleContract      string // Contract address for Oracle
 	PowerBackendURL     string // Backend URL for power service
 }
 
 // ABIPath holds the path or identifier for the PowerVoting contract's ABI.
 type ABIPath struct {
 	PowerVotingABI string // ABI for PowerVoting contract
+	OracleABI      string // ABI for Oracle contract
 }

@@ -11,7 +11,9 @@ const (
 
 	Approve             = "approve"
 	Reject              = "reject"
-	BaseProposalAPIPath = "/api/proposal/"
+	BaseProposalAPIPath = "/api"
+
+	GithubAPI = "https://api.github.com/users/"
 )
 
 const (

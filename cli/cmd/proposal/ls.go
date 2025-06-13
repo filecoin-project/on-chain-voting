@@ -118,8 +118,7 @@ func processProposalID(input string, scanner *bufio.Scanner) {
 		if input == "q" {
 			return // If 'q' is pressed, return to the list
 		} else {
-			// Otherwise, keep displaying the details
-			displayProposalDetails(proposal)
+			fmt.Println("\nEnter 'q' to return to the proposal list or any other key to continue.")
 		}
 	}
 }

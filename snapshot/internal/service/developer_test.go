@@ -152,3 +152,17 @@ func TestContext(t *testing.T) {
 
 	fmt.Println("All workers finish")
 }
+
+// func TestGetContributors(t *testing.T) {
+// 	// ZearnLabs/DefiLlama-Adapters
+// 	config.InitConfig("../../")
+// 	res, err := getContributors(
+// 		"",
+// 		"",
+// 		"",
+// 		"",
+// 	)
+
+// 	assert.Nil(t, err)
+// 	assert.NotEmpty(t, res)
+// }

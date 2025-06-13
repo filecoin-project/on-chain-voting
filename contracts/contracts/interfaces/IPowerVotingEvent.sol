@@ -34,3 +34,4 @@ interface IPowerVotingEvent {
      */
     event ProposalCreate(uint256 id, ProposalEventInfo proposal);
 }
+

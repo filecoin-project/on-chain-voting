@@ -17,11 +17,11 @@ package service
 import (
 	"fmt"
 	"log"
+	"power-snapshot/config"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"power-snapshot/config"
 )
 
 func TestGetRepoNames(t *testing.T) {
@@ -34,7 +34,7 @@ func TestGetRepoNames(t *testing.T) {
 		log.Fatalf("Failed to load config: %v", err)
 		return
 	}
-	tokenManager := NewGitHubTokenManager(config.Client.Github.Token)
+	tokenManager := NewGitHubTokenManager(config.Client.Github.Token, GithubRateLimit{})
 	allRepos := GetRepoNames(EcosystemOrg, GithubUser, tokenManager)
 	fmt.Println(len(allRepos))
 

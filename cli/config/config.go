@@ -10,6 +10,7 @@ import (
 
 var Client model.Config
 var PowerVotingAbi abi.ABI
+var OracleAbi abi.ABI
 
 // InitConfig initializes the configuration by reading from a YAML file located at the specified path.
 func InitConfig(path string) error {
@@ -34,10 +35,21 @@ func InitConfig(path string) error {
 	// open abi file and parse json
 	powerVotingFile, err := os.Open(Client.ABIPath.PowerVotingABI)
 	if err != nil {
-		zap.L().Error("open abi file error: ", zap.Error(err))
+		zap.L().Error("open power voting abi file error: ", zap.Error(err))
 		return err
 	}
 	PowerVotingAbi, err = abi.JSON(powerVotingFile)
+	if err != nil {
+		zap.L().Error("abi.JSON error: ", zap.Error(err))
+		return err
+	}
+
+	oracleFile, err := os.Open(Client.ABIPath.OracleABI)
+	if err != nil {
+		zap.L().Error("open oracle abi file error: ", zap.Error(err))
+		return err
+	}
+	OracleAbi, err = abi.JSON(oracleFile)
 	if err != nil {
 		zap.L().Error("abi.JSON error: ", zap.Error(err))
 		return err
