@@ -62,15 +62,16 @@ const Footer = () => {
   ]
 
   return (
-    <footer className='h-[265px] flex px-8 items-center justify-between bg-[#000000]'>
-      <div className='flex-column items-center pl-[64px]'>
-        <p className='text-[12px] font-normal text-[#ffffff]'>{t('content.poweredBy')}</p>
+    <footer className='p-8 bg-[#000000]'>
+      <div className='max-w-[1032px] mx-auto md:grid-cols-2 items-center justify-center md:grid-rows-1 grid grid-rows-2 gap-4 w-full gap-8'>
+        <div className='order-2 md:order-1 grid grid-rows-3 gap-4 items-center max-w-[32rem]'>
+        <p className='text-sm font-normal text-[#ffffff]'>{t('content.poweredBy')}</p>
 
-        <div className="flex mt-[35px]">
+        <div className="grid grid-cols-2 gap-2">
           <a target="_blank"
-            rel="noopener" href="https://www.storswift.com"><img src="/images/logo_1.png" alt="" className='w-[144px] h-[31px] mr-8' /></a>
+            rel="noopener" href="https://www.storswift.com"><img src="/images/logo_1.png" alt="" className='w-[144px] h-[31px] shrink-0' /></a>
           <a target="_blank"
-            rel="noopener" href="https://fil.org/"><img src="/images/logo_2.png" alt="" className='w-[120px] mr-8' /></a>
+            rel="noopener" href="https://fil.org/"><img src="/images/logo_2.png" alt="" className='w-[120px] shrink-0' /></a>
         </div>
 
         <div style={{
@@ -78,14 +79,13 @@ const Footer = () => {
           fontWeight: "bold",
           color: "#7F8FA3",
           maxWidth: "32rem",
-          marginTop: "32px"
         }}>
-          <p className='text-[12px] font-normal'>{t('content.allRightReserved')}</p>
+          <p className='text-sm font-normal'>{t('content.allRightReserved')}</p>
         </div>
-      </div>
-      <div className='flex pr-[64px]'>
-        <div className='mr-[91px]'>
-          <h4 className='text-xl text-[#ffffff] mb-[12px]'>{t('content.partners')}</h4>
+        </div>
+        <div className='order-1 md:order-2 grid grid-cols-3 gap-8'>
+        <div >
+          <h4 className='text-sm text-[#ffffff] mb-[12px]'>{t('content.partners')}</h4>
           <div className='justify-center text-xs'>
             {resources.map((partner, index) => (
               <a key={index} className='flex items-center hover:text-blue-300 mt-[16px] text-[#989898]' href={partner.href} target='_blank' rel="noreferrer" >
@@ -94,8 +94,8 @@ const Footer = () => {
             ))}
           </div>
         </div>
-        <div className='mr-[91px]'>
-          <h4 className='text-xl text-[#ffffff] mb-[12px]'>{t('content.contactSupport')}</h4>
+        <div >
+          <h4 className='text-sm text-[#ffffff] mb-[12px]'>{t('content.contactSupport')}</h4>
           <div className='justify-center text-xs'>
             {contact.map((partner, index) => (
               <a key={index} className='flex items-center hover:text-blue-300 mt-[16px] text-[#989898]' href={partner.href} target='_blank' rel="noreferrer" >
@@ -105,13 +105,14 @@ const Footer = () => {
           </div>
         </div>
         <div >
-          <h4 className='text-xl text-[#ffffff] mb-[12px]'>{t('content.legal')}</h4>
+          <h4 className='text-sm text-[#ffffff] mb-[12px]'>{t('content.legal')}</h4>
           <div className='justify-center text-xs'>
             {legal.map((partner, index) => (
               <a key={index} className='flex items-center hover:text-blue-300 mt-[16px] text-[#989898]' href={partner.href} target='_blank' rel="noreferrer" >
                 {partner.text}
               </a>
             ))}
+          </div>
           </div>
         </div>
       </div>

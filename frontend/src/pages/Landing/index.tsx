@@ -15,6 +15,7 @@
 import { Collapse } from "antd";
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from "react-router-dom";
+import "../../common/styles/homepage.less";
 const { Panel } = Collapse;
 
 const Landing = () => {
@@ -96,61 +97,70 @@ const Landing = () => {
         navigate("/home");
     }
 
-    return <div className="w-full justify-center">
-        <div className='flex w-full items-center justify-center'>
-            <div className='flex-shrink-0'>
-                <img height={"50px"} width={"50px"} src="/images/logo.png" alt="" />
+    return <div className="w-full justify-center space-y-16">
+        <div className="space-y-10 mx-auto max-w-2xl">
+            <div className='flex w-full items-center justify-center'>
+                <div className='flex-shrink-0'>
+                    <img height={"50px"} width={"50px"} src="/images/logo.png" alt="" />
+                </div>
+                <div className='ml-3 flex items-baseline'>
+                    <span className='text-black text-2xl font-semibold hover:opacity-80'>
+                        Power Voting
+                    </span>
+                </div>
             </div>
-            <div className='ml-3 flex items-baseline space-x-20'>
-                <span
-                  className='text-black text-2xl font-semibold hover:opacity-80'
-                >
-                    Power Voting
-                </span>
-            </div>
-        </div>
-        <div className="mt-10 text-black font-bold text-[54px] text-center">
-            {
-                t('content.headTitle')
-            }
-        </div>
-        <div className="mt-10 text-[#445063] text-[24px] px-[60px] text-center">
-            {
-                t('content.headContent')
-            }
-        </div>
-        <div className="mt-5 w-full flex items-center justify-center">
-            <div className="cursor-pointer flex items-center justify-center text-center rounded w-[128px] h-[31px] border-solid border-[1px] border-[#DFDFDF] bg-white text-[#575757]">
+            <h1 className="text-black font-bold text-3xl sm:text-4xl md:text-5xl lg:text-[54px] text-center leading-tight">
                 {
-                    t('content.headButtonLeft')
+                    t('content.headTitle')
                 }
-            </div>
-            <div onClick={goHome} className="cursor-pointer flex items-center justify-center ml-5 text-center rounded w-[128px] h-[31px] bg-[#0190FF] text-[#ffffff]">
+            </h1>
+            <p className="text-[#445063] text-base sm:text-lg md:text-xl lg:text-[24px] text-center leading-relaxed">
                 {
-                    t('content.headButtonRight')
+                    t('content.headContent')
                 }
+            </p>
+            <div className="w-full flex items-center justify-center">
+                {/* <div className="px-6 py-3 cursor-pointer flex items-center justify-center text-center rounded border-solid border-[1px] border-[#DFDFDF] bg-white text-[#575757]">
+                    {
+                        t('content.headButtonLeft')
+                    }
+                </div> */}
+                <div onClick={goHome} className="px-6 py-3 cursor-pointer flex items-center justify-center ml-5 text-center rounded bg-primary text-white">
+                    {
+                        t('content.headButtonRight')
+                    }
+                </div>
             </div>
         </div>
 
-        <img className="mt-20" width={"100%"} src="/images/landing_1.png" alt="" />
+        <div className="rounded-3xl primary-shadow">
+            <img
+                className="rounded-3xl"
+                src="/images/landing_1.png"
+                alt=""
+            />
+        </div>
 
-        <div className="mt-40 text-[#000000] text-[40px] px-[60px] text-center mb-[10px]">
+
+
+
+        <div className="text-[#000000] text-[40px] text-center leading-tight">
             Frequently Asked Questions
         </div>
 
         <Collapse
-          expandIconPosition={"end"}
-          bordered={false}
+        expandIconPosition={"end"}
+        bordered={false}
 
-          style={{
-              background: "#F9F9F9",
-          }}>
+        style={{
+            background: "#F9F9F9",
+        }}>
             {
                 QUESTIONS.map((v, i) => {
                     return <Panel
-                      className="text-[20px]"
-                      header={v.title} key={i}>
-                        <span className="text-[16px]"> {v.answer}</span>
+                    className="text-[20px]"
+                    header={v.title} key={i}>
+                        <span className="text-[16px] leading-relaxed"> {v.answer}</span>
 
                     </Panel>
                 })

@@ -241,23 +241,23 @@ const Header = (props: any) => {
   return (
     <>
       <header className="h-[96px] bg-[#ffffff] border-b border-solid border-[#DFDFDF]">
-        <div className="w-full h-[88px] flex items-center" style={{ justifyContent: "space-evenly" }}>
-          <div className="flex items-center">
+        <div className="w-full h-[88px] max-w-7xl mx-auto flex items-center" style={{ justifyContent: "space-between" }}>
+          <div className="flex items-center space-x-3">
             <div className="flex-shrink-0">
               <Link to="/">
                 <img className="logo" src="/images/logo.png" alt="" />
               </Link>
             </div>
-            <div className="ml-6 flex items-baseline space-x-20">
+            <div className="flex items-baseline">
               <Link
                 to="/"
-                className="text-black text-2xl font-semibold hover:opacity-80"
+                className="text-black text-base font-semibold hover:opacity-80"
               >
                 {t("content.powerVoting")}
               </Link>
             </div>
             {(location.pathname === "/home" || location.pathname === "/") &&
-              <div className="ml-6">
+              <div>
                 <Input
                   placeholder={t("content.searchProposals")}
                   size="large"
@@ -268,13 +268,13 @@ const Header = (props: any) => {
                   onChange={(e) => setSearchValue(e.currentTarget.value)}
                   onPressEnter={() => setSearchValue(searchValue)}
                   value={searchValue}
-                  className={`${isFocus ? "w-[270px]" : "w-[180px]"} font-medium text-base item-center text-slate-800 bg-[#f7f7f7] rounded-lg`}
+                  className={`font-medium max-w-80 text-base placeholder:text-sm item-center text-slate-800 bg-[#f7f7f7] rounded-lg`}
                 />
               </div>
             }
 
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center space-x-4">
             <Dropdown
               menu={{
                 items
@@ -283,19 +283,19 @@ const Header = (props: any) => {
               arrow
             >
               <button
-                className="h-[40px] bg-sky-500 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-xl mr-4"
+                className="h-[40px] border-2 border-solid border-primary hover:bg-primary/20 hover:border-primary/90 text-primary font-bold py-2 px-4 rounded-xl"
               >
                 {t("content.tools")}
               </button>
             </Dropdown>
-            <div className="connect flex items-center justify-center">
+            <div className="connect flex items-center justify-center space-x-4">
               <ConnectButton showBalance={false} label={t("content.connectWallet")} />
               {
                 address0x.data && isFilAddress(address!) && <a
                   target='_blank'
                   rel="noopener noreferrer"
                   href={getBlockExplorers(chain, address!)}
-                  className="ml-4 py-2 text-[#25292E] text-[14px] font-[700] flex items-center">
+                  className=" text-[#25292E] text-[14px] font-[700] flex items-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
 
@@ -328,11 +328,11 @@ const Header = (props: any) => {
                   <Typography.Paragraph style={{ margin: 0 }} copyable={{ text: address0x.data.toString() }}>({address0x.data.toString().substring(0, 4)}...{address0x.data.toString().substring(38)})</Typography.Paragraph>
                 </a>
               }
-              <div className="px-4 py-2 h-full flex flex-nowrap text-sm">
+              <div className="h-full flex flex-nowrap text-sm space-x-2">
                 {languageOptions.map((item) => {
                   return (
                     <div key={item.label}
-                      className={`h-full mr-1.5 cursor-pointer text-black font-semibold ${item.value === lang ? "border-solid border-b-2 border-current" : "border-none"}`}
+                      className={`h-full cursor-pointer text-black font-semibold ${item.value === lang ? "border-solid border-b-2 border-current" : "border-none"}`}
                       onClick={() => changeLanguage(item.value)}>
                       <div className="h-5 leading-6 text-center my-*">{item.label}</div>
                     </div>

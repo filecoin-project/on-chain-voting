@@ -18,14 +18,14 @@ export default function ListFilter (props: { name: string, value: number, list: 
 
   return (
     <div className='flex text-base py-4'>
-      <div className='flex'>
+      <div className='flex space-x-4'>
         {list.map((item: any, index: number) => {
           return (
             <button
               onClick={() => onChange(item.value)}
               type='button'
               key={index}
-              className={`ml-[20px]  hover:text-blue-300 cursor-pointer relative ${value === item.value
+              className={`hover:text-blue-300 cursor-pointer relative ${value === item.value
                   ? 'text-#005292 before:absolute before:inset-x-0 before:-bottom-4 before:h-1 before:bg-[#2DA1F7]'
               : 'text-[#4B535B]'}`}
             >
