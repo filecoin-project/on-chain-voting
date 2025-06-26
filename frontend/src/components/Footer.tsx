@@ -53,27 +53,21 @@ const Footer = () => {
     {
       href: "",
       text: `${t('content.codeConduct')} ↗`
-    }
-    ,
-    {
-      href: "",
-      text: " "
-    }
+    },
   ]
 
   return (
     <footer className='p-8 bg-[#000000]'>
-      <div className='max-w-[1032px] mx-auto md:grid-cols-2 items-center justify-center md:grid-rows-1 grid grid-rows-2 gap-4 w-full gap-8'>
+      <div className='max-w-[1032px] mx-auto md:grid-cols-2 items-center justify-center md:grid-rows-1 grid grid-rows-2 w-full gap-8'>
         <div className='order-2 md:order-1 grid grid-rows-3 gap-4 items-center max-w-[32rem]'>
         <p className='text-sm font-normal text-[#ffffff]'>{t('content.poweredBy')}</p>
 
         <div className="grid grid-cols-2 gap-2">
           <a target="_blank"
-            rel="noopener" href="https://www.storswift.com"><img src="/images/logo_1.png" alt="" className='w-[144px] h-[31px] shrink-0' /></a>
+            rel="noopener" href="https://www.storswift.com"><img src="/images/logo_1.png" alt="StorSwift company logo" className='w-[144px] h-[31px] shrink-0' /></a>
           <a target="_blank"
-            rel="noopener" href="https://fil.org/"><img src="/images/logo_2.png" alt="" className='w-[120px] shrink-0' /></a>
+            rel="noopener" href="https://fil.org/"><img src="/images/logo_2.png" alt="Filecoin Foundation logo" className='w-[120px] shrink-0' /></a>
         </div>
-
         <div style={{
           fontSize: "1.1rem",
           fontWeight: "bold",

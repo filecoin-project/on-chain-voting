@@ -349,14 +349,16 @@ const Home = () => {
           renderList(votingList)
         }
         <Row justify='end'>
-          <Pagination
-            simple
-            showSizeChanger={false}
-            current={page}
-            pageSize={5}
-            total={totalPage}
-            onChange={handlePageChange}
-          />
+          <nav aria-label="Pagination Navigation" role="navigation">
+            <Pagination
+              simple
+              showSizeChanger={false}
+              current={page}
+              pageSize={5}
+              total={totalPage}
+              onChange={handlePageChange}
+            />
+          </nav>
         </Row>
       </div>
     );

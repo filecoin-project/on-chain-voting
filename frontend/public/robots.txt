@@ -1,0 +1,10 @@
+# robots.txt for Power Voting Platform
+User-agent: *
+Disallow: /api/
+Disallow: /power_voting/api/
+
+# Allow all other paths by default
+Allow: /
+
+# Sitemap location
+Sitemap: https://vote.storswift.io/sitemap.xml
