@@ -74,6 +74,15 @@ export const convertBytes = (bytes: number | string, isReturnUnits?: boolean): a
 }
 
 /**
+ * Utility function to conditionally add classes
+ * @param classes
+ * @returns
+ */
+export const cn = (...classes: (string | boolean | undefined)[]) => {
+  return classes.filter(Boolean).join(' ');
+};
+
+/**
  * Check duplicate value
  * @param array
  */

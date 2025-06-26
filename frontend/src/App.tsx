@@ -16,11 +16,11 @@ import {
   lightTheme,
   RainbowKitProvider,
 } from "@rainbow-me/rainbowkit";
-import { useConnect as FilUseConnect, useAddresses } from "iso-filecoin-react"
+import { useConnect as FilUseConnect, useAddresses } from "iso-filecoin-react";
 import { ConfigProvider, FloatButton, theme } from 'antd';
 import {
   useAccount as useFilAccount
-} from 'iso-filecoin-react'
+} from 'iso-filecoin-react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 import enUS from 'antd/locale/en_US';
@@ -31,8 +31,8 @@ import { useLocation, useRoutes } from "react-router-dom";
 import "tailwindcss/tailwind.css";
 import { useAccount, useConnect } from "wagmi";
 import timezones from './json/timezons.json';
-import { calibrationChainId, getFipListApi } from "./common/consts"
-import { useVoterInfoSet } from "./common/hooks"
+import { calibrationChainId, getFipListApi } from "./common/consts";
+import { useVoterInfoSet } from "./common/hooks";
 import { useCurrentTimezone, useFipList, useVoterInfo } from "./common/store";
 import "./common/styles/reset.less";
 import Header from "./components/Header";
@@ -40,7 +40,7 @@ import Footer from './components/Footer';
 import './lang/config';
 import routes from "./router";
 import axios from "axios";
-import { isFilAddress } from "./utils"
+import { cn, isFilAddress } from "./utils";
 
 const lang = localStorage.getItem("lang") || "en"
 dayjs.locale(lang === 'en' ? lang : "zh-cn")
@@ -173,7 +173,7 @@ const App: React.FC = () => {
       }} locale={lang === "en" ? enUS : zhCN}>
         <div className="layout font-body">
           {!isLanding && <Header changeLang={handleChange} />}
-          <div className='content w-full mx-auto max-w-[1032px] pt-10 px-8 pb-24'>
+          <div className={cn('content w-full mx-auto max-w-[1032px] pt-10 pb-24', isLanding && 'px-8')}>
             {
               element
             }

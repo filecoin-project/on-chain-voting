@@ -240,23 +240,26 @@ const Header = (props: any) => {
 
   return (
     <>
-      <header className="bg-[#ffffff] border-b border-solid border-[#DFDFDF] w-full h-[88px] grid grid-cols-2 gap-8 items-center justify-between">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <Link to="/">
-                <img className="logo" src="/images/logo.png" alt="Power Voting Platform Logo" />
-              </Link>
-            </div>
-            <div className="flex items-baseline">
-              <Link
-                to="/"
-                className="text-black text-base font-semibold hover:opacity-80"
-              >
-                {t("content.powerVoting")}
-              </Link>
+      <header className="bg-[#ffffff] border-b border-solid border-[#DFDFDF] w-full h-[88px] flex items-center justify-between">
+        <div className="mx-auto w-full max-w-[1032px] grid grid-cols-2 gap-8 items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="flex-shrink-0">
+                <Link to="/">
+                  <img className="logo" src="/images/logo.png" alt="Power Voting Platform Logo" />
+                </Link>
+              </div>
+              <div className="flex items-baseline">
+                <Link
+                  to="/"
+                  className="text-black text-base font-semibold hover:opacity-80"
+                >
+                  {t("content.powerVoting")}
+                </Link>
+              </div>
             </div>
             {(location.pathname === "/home" || location.pathname === "/") &&
-              <div>
+              <div className="flex-1">
                 <Input
                   placeholder={t("content.searchProposals")}
                   size="large"
@@ -273,60 +276,63 @@ const Header = (props: any) => {
             }
 
           </div>
-          <div className="flex items-center space-x-4">
-            <Dropdown
-              menu={{
-                items
-              }}
-              placement="bottomLeft"
-              arrow
-            >
-              <button
-                className="h-[40px] border-2 border-solid border-primary hover:bg-primary/20 hover:border-primary/90 text-primary font-bold py-2 px-4 rounded-xl"
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Dropdown
+                menu={{
+                  items
+                }}
+                placement="bottomLeft"
+                arrow
               >
-                {t("content.tools")}
-              </button>
-            </Dropdown>
-            <div className="connect flex items-center justify-center space-x-4">
-              <ConnectButton showBalance={false} label={t("content.connectWallet")} />
-              {
-                address0x.data && isFilAddress(address!) && <a
-                  target='_blank'
-                  rel="noopener noreferrer"
-                  href={getBlockExplorers(chain, address!)}
-                  className=" text-[#25292E] text-[14px] font-[700] flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-
-                    width={props.width ?? 24}
-                    height={props.height ?? 24}
-                    viewBox="0 0 24 24"
-                  >
-                    <title>Ethereum Token</title>
-                    <path
-                      fill="currentColor"
-                      d="M12 3v6.652l5.625 2.516zm0 0l-5.625 9.166L12 9.652zm0 13.478V21l5.625-7.785zM12 21v-4.522l-5.625-3.263z"
-                    />
-                    <path
-                      fill="currentColor"
-                      d="m12 15.43l5.625-3.263L12 9.652zm-5.625-3.263L12 15.43V9.652z"
-                    />
-                    <path
-                      fill="currentColor"
-                      fillRule="evenodd"
-                      d="m12 15.43l-5.625-3.262L12 3l5.625 9.166zm-5.25-3.528l5.162-8.41v6.115zm-.077.229l5.239-2.327v5.364zm5.418-2.327v5.364l5.233-3.037zm0-.197l5.162 2.295l-5.162-8.41z"
-                      clipRule="evenodd"
-                    />
-                    <path
-                      fill="currentColor"
-                      fillRule="evenodd"
-                      d="m12 16.407l-5.625-3.195L12 21l5.625-7.789zm-4.995-2.633l4.906 2.79v4.005zm5.085 2.79v4.005l4.904-6.795z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <Typography.Paragraph style={{ margin: 0 }} copyable={{ text: address0x.data.toString() }}>({address0x.data.toString().substring(0, 4)}...{address0x.data.toString().substring(38)})</Typography.Paragraph>
-                </a>
-              }
+                <button
+                  className="h-[40px] border-2 border-solid border-primary hover:bg-primary/20 hover:border-primary/90 text-primary font-bold py-2 px-4 rounded-xl"
+                >
+                  {t("content.tools")}
+                </button>
+              </Dropdown>
+              <div className="connect flex flex-1 items-center justify-between space-x-4">
+                <ConnectButton showBalance={false} label={t("content.connectWallet")} />
+                {
+                  address0x.data && isFilAddress(address!) && <a
+                    target='_blank'
+                    rel="noopener noreferrer"
+                    href={getBlockExplorers(chain, address!)}
+                    className=" text-[#25292E] text-[14px] font-[700] flex items-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width={props.width ?? 24}
+                      height={props.height ?? 24}
+                      viewBox="0 0 24 24"
+                    >
+                      <title>Ethereum Token</title>
+                      <path
+                        fill="currentColor"
+                        d="M12 3v6.652l5.625 2.516zm0 0l-5.625 9.166L12 9.652zm0 13.478V21l5.625-7.785zM12 21v-4.522l-5.625-3.263z"
+                      />
+                      <path
+                        fill="currentColor"
+                        d="m12 15.43l5.625-3.263L12 9.652zm-5.625-3.263L12 15.43V9.652z"
+                      />
+                      <path
+                        fill="currentColor"
+                        fillRule="evenodd"
+                        d="m12 15.43l-5.625-3.262L12 3l5.625 9.166zm-5.25-3.528l5.162-8.41v6.115zm-.077.229l5.239-2.327v5.364zm5.418-2.327v5.364l5.233-3.037zm0-.197l5.162 2.295l-5.162-8.41z"
+                        clipRule="evenodd"
+                      />
+                      <path
+                        fill="currentColor"
+                        fillRule="evenodd"
+                        d="m12 16.407l-5.625-3.195L12 21l5.625-7.789zm-4.995-2.633l4.906 2.79v4.005zm5.085 2.79v4.005l4.904-6.795z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <Typography.Paragraph style={{ margin: 0 }} copyable={{ text: address0x.data.toString() }}>({address0x.data.toString().substring(0, 4)}...{address0x.data.toString().substring(38)})</Typography.Paragraph>
+                  </a>
+                }
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
               <div className="h-full flex flex-nowrap text-sm space-x-2">
                 {languageOptions.map((item) => {
                   return (
@@ -349,34 +355,35 @@ const Header = (props: any) => {
               </a>
             </div>
           </div>
-          <Modal
-            width={520}
-            open={modalOpen}
-            title={false}
-            destroyOnClose={true}
-            closeIcon={false}
-            onCancel={() => {
-              setModalOpen(false)
-            }}
-            footer={false}
-            style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
-          >
-            <p>{t(STORING_DATA_MSG)} {t("content.pleaseWait")}:&nbsp;
-              <Countdown
-                date={0}
-                renderer={({ minutes, seconds, completed }) => {
-                  if (completed) {
-                    // Render a completed state
-                    setModalOpen(false)
-                  } else {
-                    // Render a countdown
-                    return <span>{minutes}:{seconds}</span>
-                  }
-                }}
-              />
-            </p>
-          </Modal>
+        </div>
       </header>
+      <Modal
+        width={520}
+        open={modalOpen}
+        title={false}
+        destroyOnClose={true}
+        closeIcon={false}
+        onCancel={() => {
+          setModalOpen(false)
+        }}
+        footer={false}
+        style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+      >
+        <p>{t(STORING_DATA_MSG)} {t("content.pleaseWait")}:&nbsp;
+          <Countdown
+            date={0}
+            renderer={({ minutes, seconds, completed }) => {
+              if (completed) {
+                // Render a completed state
+                setModalOpen(false)
+              } else {
+                // Render a countdown
+                return <span>{minutes}:{seconds}</span>
+              }
+            }}
+          />
+        </p>
+      </Modal>
     </>
   )
 }
