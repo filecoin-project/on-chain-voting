@@ -270,7 +270,7 @@ const Header = (props: any) => {
                   onChange={(e) => setSearchValue(e.currentTarget.value)}
                   onPressEnter={() => setSearchValue(searchValue)}
                   value={searchValue}
-                  className={`font-medium max-w-80 text-base placeholder:text-sm item-center text-slate-800 bg-[#f7f7f7] rounded-lg`}
+                  className={`font-medium min-w-16 text-base placeholder:text-sm item-center text-slate-800 bg-[#f7f7f7] rounded-lg`}
                 />
               </div>
             }
