@@ -5,6 +5,7 @@ go 1.23.0
 require (
 	github.com/drand/tlock v1.2.0
 	github.com/ethereum/go-ethereum v1.15.6
+	github.com/filecoin-project/go-state-types v0.16.0-rc2
 	github.com/filecoin-project/lotus v1.31.1
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/spf13/cobra v1.9.1
@@ -34,7 +35,6 @@ require (
 	github.com/filecoin-project/go-hamt-ipld v0.1.5 // indirect
 	github.com/filecoin-project/go-hamt-ipld/v2 v2.0.0 // indirect
 	github.com/filecoin-project/go-hamt-ipld/v3 v3.4.0 // indirect
-	github.com/filecoin-project/go-state-types v0.16.0-rc2 // indirect
 	github.com/filecoin-project/specs-actors v0.9.15 // indirect
 	github.com/filecoin-project/specs-actors/v2 v2.3.6 // indirect
 	github.com/filecoin-project/specs-actors/v3 v3.1.2 // indirect
@@ -43,7 +43,7 @@ require (
 	github.com/filecoin-project/specs-actors/v6 v6.0.2 // indirect
 	github.com/filecoin-project/specs-actors/v7 v7.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
-	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
