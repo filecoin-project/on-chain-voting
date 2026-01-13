@@ -1,10 +1,11 @@
 module fil-vote
 
-go 1.23.0
+go 1.24.0
 
 require (
 	github.com/drand/tlock v1.2.0
-	github.com/ethereum/go-ethereum v1.15.6
+	github.com/ethereum/go-ethereum v1.16.8
+	github.com/filecoin-project/go-state-types v0.16.0-rc2
 	github.com/filecoin-project/lotus v1.31.1
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/spf13/cobra v1.9.1
@@ -17,6 +18,7 @@ require (
 require (
 	filippo.io/age v1.1.1 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
+	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20251001021608-1fe7b43fc4d6 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
@@ -34,7 +36,6 @@ require (
 	github.com/filecoin-project/go-hamt-ipld v0.1.5 // indirect
 	github.com/filecoin-project/go-hamt-ipld/v2 v2.0.0 // indirect
 	github.com/filecoin-project/go-hamt-ipld/v3 v3.4.0 // indirect
-	github.com/filecoin-project/go-state-types v0.16.0-rc2 // indirect
 	github.com/filecoin-project/specs-actors v0.9.15 // indirect
 	github.com/filecoin-project/specs-actors/v2 v2.3.6 // indirect
 	github.com/filecoin-project/specs-actors/v3 v3.1.2 // indirect
@@ -97,11 +98,11 @@ require (
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	go.dedis.ch/fixbuf v1.0.3 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.35.0 // indirect
+	golang.org/x/crypto v0.36.0 // indirect
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c // indirect
-	golang.org/x/net v0.36.0 // indirect
+	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/sync v0.12.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241223144023-3abc09e42ca8 // indirect
